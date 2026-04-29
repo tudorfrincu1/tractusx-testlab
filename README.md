@@ -47,5 +47,6 @@ Distributed under the Apache License 2.0. See [LICENSE](LICENSE) for code and [L
 This work is licensed under the [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 - SPDX-License-Identifier: Apache-2.0
-- SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
+- SPDX-FileCopyrightText: 2026 Contributors to the Eclipse Foundation
+- SPDX-FileCopyrightText: 2026 Catena-X Automotive Network e.V.
 - Source URL: https://github.com/eclipse-tractusx/tractusx-testlab

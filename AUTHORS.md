@@ -4,3 +4,4 @@ The following people (in alphabetical order) have [contributed to this repositor
 
 | Name | Project Role | Company Role | Company | GitHub |
 |--|--|--|--|--|
+| Mathias Moser | Eclipse Tractus-X Project Lead | Chief Software Architect | Catena-X Automotive Network e.V. | @matbmoser |
