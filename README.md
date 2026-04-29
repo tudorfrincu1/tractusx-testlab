@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/975ae7cc-ca28-4e9e-995a-56bbcf155197">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/84e16e4d-5605-421e-98bb-7975c54e51fe">
+    <img alt="Eclipse Tractus-X SDK TestLab" src="https://github.com/user-attachments/assets/84e16e4d-5605-421e-98bb-7975c54e51fe" width="200">
+  </picture>
+</p>
+
 # Eclipse Tractus-X Test Lab
 
 **TestLab** is the testing framework built into the [Tractus-X SDK](https://github.com/eclipse-tractusx/tractusx-sdk). It enables you to author, compile, distribute, and execute automated test cases against dataspace connectors and industry services — without writing any Python code.
