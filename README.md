@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/975ae7cc-ca28-4e9e-995a-56bbcf155197">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/84e16e4d-5605-421e-98bb-7975c54e51fe">
-    <img alt="Eclipse Tractus-X SDK TestLab" src="https://github.com/user-attachments/assets/84e16e4d-5605-421e-98bb-7975c54e51fe" width="200">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/test-lab-app-logo-black-claim.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/media/test-lab-app-logo-white-claim.png">
+    <img alt="Eclipse Tractus-X SDK TestLab" src="docs/media/test-lab-app-logo-white-claim.png" width="200">
   </picture>
 </p>
 
