@@ -1,0 +1,97 @@
+# Asset Exchange
+# End-to-end data exchange: create asset, publish offer, negotiate, and fetch.
+
+kind: test
+name: asset-exchange
+version: "1.0"
+dataspace_version: saturn
+description: Full data exchange flow — asset creation, catalog offer, negotiation, and data transfer.
+
+services:
+  - name: provider
+    type: CONNECTOR_PROVIDER
+    base_url: "{{provider_url}}"
+    auth:
+      x-api-key: "{{provider_api_key}}"
+  - name: consumer
+    type: CONNECTOR_CONSUMER
+    base_url: "{{consumer_url}}"
+    auth:
+      x-api-key: "{{consumer_api_key}}"
+
+steps:
+  - type: create_asset
+    name: Create Part Data Asset
+    params:
+      service: provider
+      id: "{{auto}}"
+      name: PartTypeInformation
+      description: Part type data for testing
+      base_url: https://data.example.com/parts
+    store_in_memory:
+      asset_id: "$.id"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: set_access_rules
+    name: Set Unrestricted Access Policy
+    params:
+      service: provider
+      asset_id: "{{asset_id}}"
+      policy_type: unrestricted
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: publish_offer
+    name: Publish Catalog Offer
+    params:
+      service: provider
+      asset_id: "{{asset_id}}"
+    store_in_memory:
+      offer_id: "$.id"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: query_catalog
+    name: Query Provider Catalog
+    params:
+      service: consumer
+      provider_url: "{{provider_url}}"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+      - type: CONTAINS
+        path: "dcat:dataset[*].@id"
+        value: "{{asset_id}}"
+        severity: SOFT
+
+  - type: negotiate_access
+    name: Negotiate Contract
+    params:
+      service: consumer
+      provider_url: "{{provider_url}}"
+      offer_id: "{{offer_id}}"
+    store_in_memory:
+      agreement_id: "$.contractAgreementId"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: fetch_data
+    name: Fetch Asset Data
+    params:
+      service: consumer
+      agreement_id: "{{agreement_id}}"
+      asset_id: "{{asset_id}}"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD

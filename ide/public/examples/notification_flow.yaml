@@ -1,0 +1,63 @@
+# Notification Flow
+# Send a quality notification and verify it was received by a mock endpoint.
+
+kind: test
+name: notification-flow
+version: "1.0"
+dataspace_version: saturn
+description: Send a quality alert notification and verify receipt via a mock receiver.
+
+services:
+  - name: sender
+    type: CONNECTOR_PROVIDER
+    base_url: "{{sender_url}}"
+    auth:
+      x-api-key: "{{sender_api_key}}"
+
+steps:
+  - type: mock_service
+    name: Start Mock Receiver
+    params:
+      type: notification
+    store_in_memory:
+      receiver_url: "$.mock_url"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: register_notification_endpoint
+    name: Register Notification Endpoint
+    params:
+      service: sender
+      callback_url: "{{receiver_url}}/notifications/receive"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: send_notification
+    name: Send Quality Alert
+    params:
+      service: sender
+      type: qualityalert
+      recipient_bpn: BPNL00000003CRHK
+      message: Quality issue detected in batch B-2025-001
+      severity: CRITICAL
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: wait_for_call
+    name: Wait for Notification Delivery
+    params:
+      mock: mock_receiver
+      path: /notifications/receive
+      timeout: "30"
+    store_in_memory:
+      notification_payload: "$.received_request"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD

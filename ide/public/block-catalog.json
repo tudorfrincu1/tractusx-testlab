@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Simulate",
+    "blocks": [
+      {
+        "type": "mock_service",
+        "label": "Simulate a Service",
+        "description": "Start a mock service (BPN Discovery, DTR, etc.) for testing",
+        "params": [
+          { "name": "type", "type": "string", "required": true, "description": "Service type to simulate" }
+        ],
+        "outputs": [
+          { "name": "mock_url", "path": "$.mock_url" }
+        ]
+      },
+      {
+        "type": "mock_endpoint",
+        "label": "Configure Endpoint",
+        "description": "Define a mock endpoint response",
+        "params": [
+          { "name": "method", "type": "string", "required": true, "description": "HTTP method" },
+          { "name": "path", "type": "string", "required": true, "description": "URL path" },
+          { "name": "status", "type": "string", "required": false, "description": "Response status code" },
+          { "name": "body", "type": "json", "required": false, "description": "Response body" }
+        ]
+      },
+      {
+        "type": "wait_for_call",
+        "label": "Wait for Call",
+        "description": "Wait for an incoming request on a mock endpoint",
+        "params": [
+          { "name": "mock", "type": "string", "required": true, "description": "Mock service reference" },
+          { "name": "path", "type": "string", "required": true, "description": "Path to listen on" },
+          { "name": "timeout", "type": "string", "required": false, "description": "Timeout in seconds" }
+        ],
+        "outputs": [
+          { "name": "received_request", "path": "$.received_request" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Prepare",
+    "blocks": [
+      {
+        "type": "upload_data",
+        "label": "Upload Test Data",
+        "description": "Upload JSON test data to the backend",
+        "params": [
+          { "name": "data", "type": "json", "required": true, "description": "JSON data payload" }
+        ],
+        "outputs": [
+          { "name": "data_url", "path": "$.data_url" }
+        ]
+      },
+      {
+        "type": "create_asset",
+        "label": "Create an Asset",
+        "description": "Register a new asset in the connector",
+        "params": [
+          { "name": "data_source", "type": "string", "required": true, "description": "Data source URL or reference" }
+        ],
+        "outputs": [
+          { "name": "asset_id", "path": "$.asset_id" }
+        ]
+      },
+      {
+        "type": "set_access_rules",
+        "label": "Set Access Rules",
+        "description": "Define access policy rules for an asset",
+        "params": [
+          { "name": "rule_type", "type": "string", "required": true, "description": "Rule type: Anyone, BPN Only, Custom" }
+        ],
+        "outputs": [
+          { "name": "policy_id", "path": "$.policy_id" }
+        ]
+      },
+      {
+        "type": "publish_offer",
+        "label": "Publish Offer",
+        "description": "Publish a contract offer for the asset",
+        "params": [],
+        "outputs": [
+          { "name": "contract_id", "path": "$.contract_id" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Discover",
+    "blocks": [
+      {
+        "type": "query_catalog",
+        "label": "Query Catalog",
+        "description": "Search the federated catalog for offers",
+        "params": [
+          { "name": "filter_type", "type": "string", "required": false, "description": "Filter type: None, By Asset ID, By Type" },
+          { "name": "filter_value", "type": "string", "required": false, "description": "Filter value" }
+        ],
+        "outputs": [
+          { "name": "catalog", "path": "$.catalog" },
+          { "name": "offer", "path": "$.offer" }
+        ]
+      },
+      {
+        "type": "find_connector",
+        "label": "Find Connector",
+        "description": "Discover connector endpoints via BPN lookup",
+        "params": [
+          { "name": "bpn", "type": "string", "required": true, "description": "Business Partner Number" }
+        ],
+        "outputs": [
+          { "name": "connector_endpoints", "path": "$.connector_endpoints" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Exchange",
+    "blocks": [
+      {
+        "type": "negotiate_access",
+        "label": "Negotiate Access",
+        "description": "Start a contract negotiation and get an EDR token",
+        "params": [],
+        "outputs": [
+          { "name": "endpoint", "path": "$.endpoint" },
+          { "name": "token", "path": "$.token" }
+        ]
+      },
+      {
+        "type": "fetch_data",
+        "label": "Fetch Data (GET)",
+        "description": "Fetch data via the data plane",
+        "params": [
+          { "name": "path", "type": "string", "required": false, "description": "Request path" }
+        ],
+        "outputs": [
+          { "name": "response", "path": "$.response" }
+        ]
+      },
+      {
+        "type": "send_data",
+        "label": "Send Data (POST)",
+        "description": "Send data via the data plane",
+        "params": [
+          { "name": "path", "type": "string", "required": false, "description": "Request path" },
+          { "name": "body", "type": "json", "required": true, "description": "Request body" }
+        ],
+        "outputs": [
+          { "name": "response", "path": "$.response" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Digital Twins",
+    "blocks": [
+      {
+        "type": "register_twin",
+        "label": "Register Twin",
+        "description": "Register an Asset Administration Shell in the DTR",
+        "params": [
+          { "name": "shell_descriptor", "type": "json", "required": true, "description": "Shell descriptor JSON" }
+        ],
+        "outputs": [
+          { "name": "aas_id", "path": "$.aas_id" },
+          { "name": "shell", "path": "$.shell" }
+        ]
+      },
+      {
+        "type": "lookup_twin",
+        "label": "Look Up Twin",
+        "description": "Look up an AAS shell by ID",
+        "params": [
+          { "name": "aas_id", "type": "string", "required": true, "description": "AAS ID to look up" }
+        ],
+        "outputs": [
+          { "name": "shell", "path": "$.shell" }
+        ]
+      },
+      {
+        "type": "add_submodel",
+        "label": "Add Submodel",
+        "description": "Add a submodel descriptor to a shell",
+        "params": [
+          { "name": "submodel_descriptor", "type": "json", "required": true, "description": "Submodel descriptor JSON" }
+        ],
+        "outputs": [
+          { "name": "submodel_id", "path": "$.submodel_id" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Notifications",
+    "blocks": [
+      {
+        "type": "send_notification",
+        "label": "Send Notification",
+        "description": "Send a notification to a connector endpoint",
+        "params": [
+          { "name": "notification", "type": "json", "required": true, "description": "Notification payload" }
+        ],
+        "outputs": [
+          { "name": "response", "path": "$.response" }
+        ]
+      },
+      {
+        "type": "register_notification_endpoint",
+        "label": "Register Notification Endpoint",
+        "description": "Register an endpoint to receive notifications",
+        "params": [
+          { "name": "endpoint_url", "type": "string", "required": true, "description": "Notification endpoint URL" }
+        ],
+        "outputs": [
+          { "name": "asset", "path": "$.asset" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Utility",
+    "blocks": [
+      {
+        "type": "http_request",
+        "label": "HTTP Request",
+        "description": "Make an arbitrary HTTP request",
+        "params": [
+          { "name": "method", "type": "string", "required": true, "description": "HTTP method" },
+          { "name": "url", "type": "string", "required": true, "description": "Target URL" },
+          { "name": "headers", "type": "json", "required": false, "description": "Request headers" },
+          { "name": "body", "type": "json", "required": false, "description": "Request body" }
+        ],
+        "outputs": [
+          { "name": "response", "path": "$.response" },
+          { "name": "status_code", "path": "$.status_code" }
+        ]
+      }
+    ]
+  }
+]

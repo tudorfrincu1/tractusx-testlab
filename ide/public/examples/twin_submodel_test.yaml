@@ -1,0 +1,63 @@
+# Digital Twin Submodel Test
+# Register a twin, attach a submodel, and verify the submodel is retrievable.
+
+kind: test
+name: twin-submodel-test
+version: "1.0"
+dataspace_version: saturn
+description: Register a digital twin, attach a submodel descriptor, and verify lookup.
+
+steps:
+  - type: mock_service
+    name: Start Mock DTR
+    params:
+      type: dtr
+    store_in_memory:
+      dtr_url: "$.mock_url"
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+
+  - type: register_twin
+    name: Register Shell Descriptor
+    params:
+      dtr_url: "{{dtr_url}}"
+      id_short: BatteryPass-001
+      specific_asset_ids:
+        manufacturerPartId: BAT-2025-001
+        batchId: BATCH-42
+    store_in_memory:
+      twin_id: "$.id"
+    expect:
+      - type: STATUS_CODE
+        value: 201
+        severity: HARD
+
+  - type: add_submodel
+    name: Attach PartTypeInformation Submodel
+    params:
+      dtr_url: "{{dtr_url}}"
+      twin_id: "{{twin_id}}"
+      id_short: PartTypeInformation
+      semantic_id: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+      endpoint_url: https://submodel.example.com/parts/BAT-2025-001
+    expect:
+      - type: STATUS_CODE
+        value: 201
+        severity: HARD
+
+  - type: lookup_twin
+    name: Verify Twin Lookup
+    params:
+      dtr_url: "{{dtr_url}}"
+      asset_id_name: manufacturerPartId
+      asset_id_value: BAT-2025-001
+    expect:
+      - type: STATUS_CODE
+        value: 200
+        severity: HARD
+      - type: CONTAINS
+        path: "$.result"
+        value: "{{twin_id}}"
+        severity: HARD
