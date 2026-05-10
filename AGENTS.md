@@ -21,12 +21,21 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 
 ## Agent Roles
 
+### `testlab-architect` — Software Architect & Project Manager
+
+**Scope**: Planning, impact analysis, work package design, architectural decisions.
+
+- Analyzes requirements and breaks them into scoped work packages
+- Identifies which agent should handle each package and why
+- Evaluates trade-offs, risks, and dependencies before code is written
+- Read-only — **NEVER writes code** — plans and advises only
+- Colleague of `testlab-ai-master`: Architect plans → AI Master orchestrates → specialists execute
+
 ### `testlab-ai-master` — Chief AI Agent (Orchestrator)
 
-**Scope**: Planning, delegation, quality review, coordination across all codebases.
+**Scope**: Delegation, quality review, coordination across all codebases.
 
-- Takes requirements from the human (Chief Architect)
-- Breaks work into atomic, delegable work packages
+- Receives work packages from the Architect or directly from the human
 - Delegates to specialized agents, reviews output, enforces quality gates
 - May edit `.github/agents/` and `.github/instructions/` directly
 - **NEVER edits source code directly** — always delegates

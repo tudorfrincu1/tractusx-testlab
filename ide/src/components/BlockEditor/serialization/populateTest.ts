@@ -27,36 +27,35 @@ import type { Step, StepDefinition, ScriptDefinition } from "../../../models/sch
 import { isTemplateStep } from "../../../models/schema";
 import { useServiceStore } from "../../../store/useServiceStore";
 import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
+import { toCatalogStepType } from "./stepTypeAliases";
 import {
   makeBlock,
   setDropdownValue,
   attachChain,
   connectValue,
   createValueBlockFromString,
+  toBlockValueString,
 } from "./helpers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
+  const createUnsupportedStepBlock = (
+    stepName: string | undefined,
+    originalType: string,
+    params: Record<string, unknown> | undefined
+  ): Block => {
+    const block = makeBlock(ws, "unsupported_step");
+    block.setFieldValue(stepName || originalType || "unsupported_step", "STEP_NAME");
+    block.setFieldValue(originalType, "ORIGINAL_TYPE");
+    block.setFieldValue(JSON.stringify(params ?? {}), "PARAMS_JSON");
+    return block;
+  };
+
   const buildStepBlocks = (steps: Step[]): Block[] => {
     const blocks: Block[] = [];
 
     for (const step of steps) {
       if (isTemplateStep(step)) {
-        const sb = makeBlock(ws, "step_template");
-        sb.setFieldValue(step.name || step.template, "NAME");
-        sb.setFieldValue(step.template, "PARAM_TEMPLATE");
-
-        if (step.params && Object.keys(step.params).length > 0) {
-          const kvBlocks: Block[] = [];
-          for (const [key, value] of Object.entries(step.params)) {
-            const kvb = makeBlock(ws, "key_value_pair");
-            kvb.setFieldValue(key, "KEY");
-            connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
-            kvBlocks.push(kvb);
-          }
-          attachChain(sb, "PARAMS", kvBlocks);
-        }
-
-        blocks.push(sb);
+        blocks.push(createUnsupportedStepBlock(step.name, step.template, step.params));
         continue;
       }
 
@@ -89,8 +88,12 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
         continue;
       }
 
-      const entry = findCatalogEntry(step.type, catalog);
-      if (!entry) continue;
+      const catalogStepType = toCatalogStepType(step.type);
+      const entry = findCatalogEntry(catalogStepType, catalog);
+      if (!entry) {
+        blocks.push(createUnsupportedStepBlock(step.name, step.type, step.params));
+        continue;
+      }
 
       let effectiveParams = step.params ?? {};
       if (step.type === "send_notification" && effectiveParams.notification) {
@@ -111,7 +114,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
         effectiveParams = flat;
       }
 
-      const blockType = `step_${step.type}`;
+      const blockType = `step_${catalogStepType}`;
       const sb = makeBlock(ws, blockType);
       sb.setFieldValue(step.name || step.type, "NAME");
 
@@ -137,7 +140,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
                 const kvb = makeBlock(ws, "key_value_pair");
                 kvb.setFieldValue(key, "KEY");
-                connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
+                connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
                 kvBlocks.push(kvb);
               }
               attachChain(sb, fieldKey, kvBlocks);
@@ -150,7 +153,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
             }
             break;
           default:
-            connectValue(sb, fieldKey, createValueBlockFromString(ws, String(paramVal)));
+            connectValue(sb, fieldKey, createValueBlockFromString(ws, toBlockValueString(paramVal)));
             break;
         }
       }
@@ -170,32 +173,32 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
             case "equals":
               ab = makeBlock(ws, "assert_equals");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "not_equals":
               ab = makeBlock(ws, "assert_not_equals");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "contains":
               ab = makeBlock(ws, "assert_contains");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "not_contains":
               ab = makeBlock(ws, "assert_not_contains");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "matches":
               ab = makeBlock(ws, "assert_matches");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "PATTERN", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "PATTERN", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "schema":
               ab = makeBlock(ws, "assert_schema");
               setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SCHEMA", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "SCHEMA", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "greater_than":
             case "less_than":
@@ -204,14 +207,14 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               ab = makeBlock(ws, "assert_compare");
               setDropdownValue(ab, "OUTPUT", output);
               setDropdownValue(ab, "OPERATOR", op);
-              connectValue(ab, "VALUE", createValueBlockFromString(ws, String(val ?? "")));
+              connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(val)));
               break;
             case "between": {
               ab = makeBlock(ws, "assert_between");
               setDropdownValue(ab, "OUTPUT", output);
               const arr = Array.isArray(val) ? val : [];
-              connectValue(ab, "MIN", createValueBlockFromString(ws, String(arr[0] ?? "")));
-              connectValue(ab, "MAX", createValueBlockFromString(ws, String(arr[1] ?? "")));
+              connectValue(ab, "MIN", createValueBlockFromString(ws, toBlockValueString(arr[0])));
+              connectValue(ab, "MAX", createValueBlockFromString(ws, toBlockValueString(arr[1])));
               break;
             }
             case "not_null":

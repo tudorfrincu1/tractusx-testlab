@@ -27,16 +27,15 @@ import type * as BlocklyType from "blockly";
 import type {
   StepDefinition,
   Step,
-  TemplateStepDefinition,
   ScriptDefinition,
   TestLabDocument,
-  TestCaseDefinition,
-  TestRef,
 } from "../../../models/schema";
-import { isTestRef } from "../../../models/schema";
 import { useServiceStore } from "../../../store/useServiceStore";
 import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
-import { readValueBlockAsString, readAssertionChain } from "./helpers";
+import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown } from "./helpers";
+import { toRuntimeStepType } from "./stepTypeAliases";
+import { parseUnsupportedParams } from "./unsupportedStepPayload";
+import { workspaceToTestCase } from "./workspaceToTestCase";
 
 export function workspaceToModel(
   _Blockly: typeof BlocklyType,
@@ -73,61 +72,10 @@ export function workspaceToModel(
   } as Partial<ScriptDefinition>;
 }
 
-function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
-  const name = root.getFieldValue("NAME") || "my-test-case";
-  const version = root.getFieldValue("VERSION") || "1.0";
-  const description = root.getFieldValue("DESCRIPTION") || "";
-
-  const preconditions: Array<{ id: string; description: string }> = [];
-  let preBlock = root.getInputTargetBlock("PRECONDITIONS");
-  while (preBlock) {
-    if (preBlock.type === "precondition") {
-      const preId = preBlock.getFieldValue("PRE_ID") || "";
-      const preDesc = preBlock.getFieldValue("PRE_DESCRIPTION") || "";
-      if (preId) preconditions.push({ id: preId, description: preDesc });
-    }
-    preBlock = preBlock.getNextBlock();
-  }
-
-  const tests: (ScriptDefinition | string | TestRef)[] = [];
-  let testBlock = root.getInputTargetBlock("TESTS");
-  while (testBlock) {
-    if (testBlock.type === "test_ref") {
-      const testName = testBlock.getFieldValue("TEST_NAME") || "";
-      const desc = testBlock.getFieldValue("DESCRIPTION") || "";
-      if (testName) {
-        const ref: TestRef = { test: testName };
-        if (desc) ref.description = desc;
-        const withOverrides: Record<string, unknown> = {};
-        let kvBlock = testBlock.getInputTargetBlock("WITH");
-        while (kvBlock) {
-          if (kvBlock.type === "key_value_pair") {
-            const key = kvBlock.getFieldValue("KEY") || "";
-            const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
-            if (key) withOverrides[key] = value;
-          }
-          kvBlock = kvBlock.getNextBlock();
-        }
-        if (Object.keys(withOverrides).length > 0) ref.with = withOverrides;
-        tests.push(ref);
-      }
-    }
-    testBlock = testBlock.getNextBlock();
-  }
-
-  return {
-    kind: "test-case",
-    name,
-    version,
-    description,
-    preconditions: preconditions.length > 0 ? preconditions : undefined,
-    tests,
-  } as Partial<TestCaseDefinition>;
-}
-
 export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[] {
   const steps: Step[] = [];
   let current = block;
+
   while (current) {
     if (current.type === "export_variable") {
       const varName = current.getFieldValue("VAR_NAME");
@@ -166,12 +114,19 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
           store_in_memory: { [varName]: "$" },
         });
       }
-    } else if (current.type === "step_template") {
-      const templateName = current.getFieldValue("PARAM_TEMPLATE") || "";
-      const name = current.getFieldValue("NAME") || undefined;
-      const templateStep: TemplateStepDefinition = { template: templateName };
-      if (name && name !== templateName) templateStep.name = name;
-
+    } else if (current.type === "unsupported_step") {
+      const originalType = current.getFieldValue("ORIGINAL_TYPE") || "unsupported_step";
+      const name = current.getFieldValue("STEP_NAME") || originalType;
+      const paramsJson = current.getFieldValue("PARAMS_JSON") || "{}";
+      const params = parseUnsupportedParams(paramsJson);
+      steps.push({
+        type: originalType,
+        name,
+        params,
+      } as StepDefinition);
+    } else if (current.type === "step_operation" || current.type === "step_template") {
+      const originalType = current.getFieldValue("ORIGINAL_TYPE") || current.getFieldValue("OPERATION") || current.getFieldValue("PARAM_TEMPLATE") || "unsupported_step";
+      const name = current.getFieldValue("STEP_NAME") || current.getFieldValue("NAME") || originalType;
       const params: Record<string, unknown> = {};
       let kvBlock = current.getInputTargetBlock("PARAMS");
       while (kvBlock) {
@@ -182,9 +137,11 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         }
         kvBlock = kvBlock.getNextBlock();
       }
-      if (Object.keys(params).length > 0) templateStep.params = params;
-
-      steps.push(templateStep);
+      steps.push({
+        type: originalType,
+        name,
+        params,
+      } as StepDefinition);
     } else {
       const step = blockToStep(current, catalog);
       if (step) steps.push(step);
@@ -198,7 +155,8 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
   if (!block.type.startsWith("step_")) return null;
 
   const stepType = block.type.replace("step_", "");
-  const name = block.getFieldValue("NAME") || stepType;
+  const runtimeStepType = toRuntimeStepType(stepType);
+  const name = block.getFieldValue("NAME") || runtimeStepType;
   const catalogEntry = findCatalogEntry(stepType, catalog);
 
   const params: Record<string, unknown> = {};
@@ -222,13 +180,13 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           break;
         }
         case "json": {
-          const jsonObj: Record<string, string> = {};
+          const jsonObj: Record<string, unknown> = {};
           let kvBlock = block.getInputTargetBlock(fieldKey);
           while (kvBlock) {
             if (kvBlock.type === "key_value_pair") {
               const key = kvBlock.getFieldValue("KEY") || "";
-              const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
-              if (key) jsonObj[key] = value;
+              const value = readValueBlockAsUnknown(kvBlock.getInputTargetBlock("VALUE"));
+              if (key && value !== undefined) jsonObj[key] = value;
             }
             kvBlock = kvBlock.getNextBlock();
           }
@@ -291,7 +249,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
   }
 
   return {
-    type: stepType,
+    type: runtimeStepType,
     name,
     params,
     expect: expect.length > 0 ? expect : undefined,

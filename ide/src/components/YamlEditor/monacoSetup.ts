@@ -22,6 +22,7 @@
 // It was reviewed and tested by a human committer.
 
 import { theme } from "../../theme/tractusxTheme";
+import { toRuntimeStepType } from "../BlockEditor/serialization/stepTypeAliases";
 
 type Monaco = typeof import("monaco-editor");
 
@@ -79,7 +80,8 @@ export function registerYamlCompletions(monaco: Monaco): import("monaco-editor")
         "negotiate_contract", "transfer_data", "get_edr", "dataplane_call",
         "http_request", "do_dsp", "do_dsp_with_bpnl", "upload_backend_data",
         "sdk_call", "init_service", "stop_service", "await_callback",
-      ];
+      ].map((stepType) => toRuntimeStepType(stepType));
+      const runtimeStepTypes = [...new Set(stepTypes)];
 
       const assertionSeverities = ["HARD", "SOFT"];
       const assertionTypes = ["EXACT", "CONTAINS", "SCHEMA", "REGEX", "STATUS_CODE", "NOT_CONTAINS"];
@@ -93,7 +95,7 @@ export function registerYamlCompletions(monaco: Monaco): import("monaco-editor")
           insertText: `${label}: `,
           range,
         })),
-        ...stepTypes.map((label) => ({
+        ...runtimeStepTypes.map((label) => ({
           label,
           kind: monaco.languages.CompletionItemKind.Value,
           insertText: label,

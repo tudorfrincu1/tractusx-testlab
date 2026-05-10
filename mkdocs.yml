@@ -170,6 +170,7 @@ nav:
     - Overview: api-reference/index.md
   - Developer:
     - Overview: developer/index.md
+    - Product Scope: developer/product-scope.md
     - Architecture: developer/architecture.md
     - AI-Assisted Development: developer/ai-development.md
     - State Management: developer/state-management.md

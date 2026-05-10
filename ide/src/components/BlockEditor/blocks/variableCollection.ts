@@ -27,16 +27,6 @@ import type { Step } from "../../../models/schema";
 import { isTemplateStep } from "../../../models/schema";
 import { useProjectStore } from "../../../store/useProjectStore";
 
-/**
- * Static map of template names → the variable names they produce.
- * Used by collectWorkspaceVariables to expose template outputs in the variable dropdown.
- */
-export const TEMPLATE_OUTPUTS: Record<string, string[]> = {
-  "catalog-negotiation": ["contract_agreement_id", "data_address", "edr_token"],
-  "transfer-dataplane-access": ["data_address", "edr_token"],
-  "dtr-shell-lookup": ["shell_descriptors"],
-};
-
 export function collectWorkspaceVariables(workspace: Workspace): string[] {
   const vars = new Set<string>();
 
@@ -44,10 +34,6 @@ export function collectWorkspaceVariables(workspace: Workspace): string[] {
     if (!steps) return;
     for (const step of steps) {
       if (isTemplateStep(step)) {
-        const produced = TEMPLATE_OUTPUTS[step.template];
-        if (produced) {
-          for (const v of produced) vars.add(v);
-        }
         continue;
       }
 
@@ -97,8 +83,12 @@ export function collectWorkspaceVariables(workspace: Workspace): string[] {
 
       if (script.teardown) {
         for (const step of script.teardown) {
-          if ("type" in step && step.type === "export_variable" && step.params?.name) {
-            vars.add(String(step.params.name));
+          if (isTemplateStep(step)) {
+            continue;
+          }
+
+          if (step.type === "export_variable" && typeof step.params?.name === "string") {
+            vars.add(step.params.name);
           }
         }
       }
@@ -115,19 +105,10 @@ export function collectWorkspaceVariables(workspace: Workspace): string[] {
     if (ref && ref !== "__NONE__") vars.add(ref);
   }
 
-  for (const b of workspace.getBlocksByType("step_template", false)) {
-    const templateName = b.getFieldValue("PARAM_TEMPLATE");
-    if (templateName && TEMPLATE_OUTPUTS[templateName]) {
-      for (const v of TEMPLATE_OUTPUTS[templateName]) {
-        vars.add(v);
-      }
-    }
-  }
-
   for (const b of workspace.getBlocksByType("import_variable", false)) {
     const varName = b.getFieldValue("OUTPUT_VAR");
     if (varName) vars.add(varName);
   }
 
-  return Array.from(vars).sort();
+  return Array.from(vars).sort((a, b) => a.localeCompare(b));
 }

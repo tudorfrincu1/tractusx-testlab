@@ -56,12 +56,24 @@ export function buildDataFlow(
 ): FlowData {
   const nodes: FlowNode[] = [];
   const producerMap = new Map<string, string>();
+  const sourceEdges = new Map<string, Set<string>>();
 
   for (const name of testOrder) {
     const script = tests.get(name);
     if (!script) continue;
 
-    const vars = script.variables ? Object.keys(script.variables) : [];
+    const varsFromDefinitions = script.variables ? Object.keys(script.variables) : [];
+    const varsFromInputs = script.inputs?.map((input) => input.name) ?? [];
+    const vars = [...new Set([...varsFromDefinitions, ...varsFromInputs])];
+
+    for (const input of script.inputs ?? []) {
+      if (!input.source || input.source === "test-case") continue;
+      const producer = input.source.split(".")[0];
+      if (!producer || producer === name) continue;
+      const key = `${producer}→${name}`;
+      if (!sourceEdges.has(key)) sourceEdges.set(key, new Set());
+      sourceEdges.get(key)?.add(input.name);
+    }
 
     // Collect exported variables from teardown export_variable steps
     const exportedVars: string[] = [];
@@ -82,7 +94,8 @@ export function buildDataFlow(
       }
     }
 
-    const allOutputs = [...new Set([...exportedVars, ...memoryKeys])];
+    const outputsFromDefinitions = script.output_definitions?.map((output) => output.name) ?? [];
+    const allOutputs = [...new Set([...outputsFromDefinitions, ...exportedVars, ...memoryKeys])];
     for (const out of allOutputs) {
       producerMap.set(out, name);
     }
@@ -104,6 +117,13 @@ export function buildDataFlow(
         if (!edgeMap.has(key)) edgeMap.set(key, new Set());
         edgeMap.get(key)!.add(varName);
       }
+    }
+  }
+
+  for (const [key, vars] of sourceEdges) {
+    if (!edgeMap.has(key)) edgeMap.set(key, new Set());
+    for (const variableName of vars) {
+      edgeMap.get(key)?.add(variableName);
     }
   }
 

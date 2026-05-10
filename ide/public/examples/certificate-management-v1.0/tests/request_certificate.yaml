@@ -1,0 +1,146 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+kind: test
+name: request-certificate
+version: "1.0"
+description: >
+  Request certificate via CCMAPI endpoint.
+  1. Query catalog for CCMAPI offers
+  2. Verify CCMAPI asset exists
+  3. Negotiate contract for certificate access
+  4. POST request to provider's CCMAPI endpoint
+
+inputs: []
+
+outputs:
+  - name: request_id
+    type: str
+    description: Unique certificate request ID from provider
+  - name: request_status
+    type: enum
+    values: [IN_PROGRESS, COMPLETED, REJECTED]
+    description: Current status of the certificate request
+  - name: document_id
+    type: str
+    description: Document ID for the requested certificate
+
+steps:
+  # Step 1: Discover CCMAPI offers in provider catalog
+  - type: query_catalog
+    name: Discover CCMAPI Offers
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      filter_by: "dct:type"
+      operator: "like"
+      filter_value: "https://w3id.org/catenax/taxonomy#CCMAPI%"
+    store_in_memory:
+      catalog: "catalog"
+      datasets: "datasets"
+
+  # Step 2: Extract CCMAPI dataset and offer details
+  - type: extract_dataset
+    name: Extract CCMAPI Dataset
+    params:
+      variable: "catalog"
+      dct_type: "https://w3id.org/catenax/taxonomy#CCMAPI"
+    store_in_memory:
+      ccmapi_dataset: "dataset"
+      ccmapi_asset_id: "asset_id"
+      ccmapi_offer_id: "policies"
+
+  # Step 3: Negotiate contract for CCMAPI asset
+  - type: negotiate
+    name: Negotiate CCMAPI Contract
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      offer_id: "@ccmapi_offer_id"
+      asset_id: "@ccmapi_asset_id"
+    store_in_memory:
+      contract_agreement_id: "agreement_id"
+
+  # Step 4: Get dataplane access credentials
+  - type: initiate_transfer
+    name: Initiate CCMAPI Transfer
+    params:
+      service: provider_edc
+      agreement_id: "@contract_agreement_id"
+      asset_id: "@ccmapi_asset_id"
+      transfer_type: "HttpData-PULL"
+    store_in_memory:
+      transfer_id: "transfer_id"
+      transfer_state: "state"
+      data_address: "data_address"
+
+  # Step 5: POST certificate request to CCMAPI
+  - type: http_call
+    name: request_certificate_via_ccmapi
+    params:
+      method: POST
+      url: "@provider_address/companycertificate/request"
+      headers:
+        Content-Type: "application/json"
+      body:
+        consumerBpn: "@consumer_bpn"
+        providerBpn: "@provider_bpn"
+        certificateType: "@certificate_type"
+        locationBpns: "@location_bpns"
+        requestedByDate: "2026-12-31"
+    store_in_memory:
+      request_id: "request_id"
+      request_status: "request_status"
+      document_id: "document_id"
+      response_code: "status_code"
+
+# Assertions / Expectations
+expect:
+  - step: Discover CCMAPI Offers
+    output: datasets
+    not_null: true
+    description: "CCMAPI offer must be found in provider catalog"
+
+  - step: Extract CCMAPI Dataset
+    output: dataset
+    not_null: true
+    description: "CCMAPI dataset must be extracted"
+
+  - step: Negotiate CCMAPI Contract
+    output: agreement_id
+    not_null: true
+    description: "Contract negotiation must succeed"
+
+  - step: request_certificate_via_ccmapi
+    output: response_code
+    equals: 200
+    description: "CCMAPI request must return 200 OK"
+
+  - step: request_certificate_via_ccmapi
+    output: request_id
+    not_null: true
+    description: "Provider must return request_id"
+
+  - step: request_certificate_via_ccmapi
+    output: request_status
+    not_null: true
+    description: "Request status must be valid"
+

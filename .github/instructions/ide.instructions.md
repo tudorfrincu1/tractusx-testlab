@@ -6,7 +6,6 @@ applyTo: "ide/**"
 
 ## Stack
 - Vite 6 + React 19 + TypeScript + Blockly 12 + Zustand + Monaco Editor
-- No MUI or heavy UI libraries — plain CSS + Blockly built-in styling
 
 ## Block Definitions
 - Block definitions live in `public/blocks/` — one JSON file per block, organized in category folders

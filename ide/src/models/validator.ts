@@ -133,7 +133,7 @@ function validateStep(
     errors.push({
       path: `${path}.type`,
       message: `Unknown step type: "${step.type}"`,
-      severity: "warning",
+      severity: "error",
     });
   }
 

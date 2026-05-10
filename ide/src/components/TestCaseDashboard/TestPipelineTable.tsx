@@ -25,6 +25,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useProjectStore, type ActiveFile, type TestSummary } from "../../store/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { SectionCard } from "./MetadataSection";
+import { IconButton, OrderBadge } from "./TestPipelineWidgets";
 
 import EditIcon from "@mui/icons-material/Edit";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -182,7 +183,7 @@ function PipelineRow({ summary, index, total, isDragging, isDragOver,
         alignItems: "center",
         flexShrink: 0,
       }}>
-        <OrderBadge index={index} />
+        <OrderBadge order={summary.order} />
         {!isLast && <div style={{ flex: 1, width: 2, background: theme.colors.primary, opacity: 0.3 }} />}
       </div>
 
@@ -222,6 +223,9 @@ function PipelineRow({ summary, index, total, isDragging, isDragOver,
               {summary.description}
             </div>
           )}
+          <div style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 1 }}>
+            Prerequisites: {summary.prerequisiteTests.length > 0 ? summary.prerequisiteTests.join(", ") : "none"}
+          </div>
         </div>
 
         {/* Step count */}
@@ -233,6 +237,14 @@ function PipelineRow({ summary, index, total, isDragging, isDragOver,
           {summary.stepCount} step{summary.stepCount !== 1 ? "s" : ""}
         </span>
 
+        <span style={{
+          fontSize: 10,
+          color: theme.colors.textMuted,
+          whiteSpace: "nowrap",
+        }}>
+          {summary.inputCount} in / {summary.outputCount} out
+        </span>
+
         {/* Actions */}
         <div style={{ display: "flex", gap: 2 }}>
           <IconButton icon={<EditIcon sx={{ fontSize: 13 }} />} title="Edit" onClick={onNavigate} />
@@ -241,60 +253,5 @@ function PipelineRow({ summary, index, total, isDragging, isDragOver,
         </div>
       </div>
     </div>
-  );
-}
-
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-
-function OrderBadge({ index }: { index: number }) {
-  return (
-    <div style={{
-      width: 20,
-      height: 20,
-      borderRadius: "50%",
-      background: "rgba(255, 215, 0, 0.15)",
-      color: theme.colors.primary,
-      fontSize: 10,
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      marginTop: 12,
-    }}>
-      {index + 1}
-    </div>
-  );
-}
-
-function IconButton({ icon, title, onClick, color }: {
-  icon: React.ReactNode;
-  title: string;
-  onClick: () => void;
-  color?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 24,
-        height: 24,
-        borderRadius: 4,
-        background: "transparent",
-        border: "none",
-        color: color ?? theme.colors.textMuted,
-        cursor: "pointer",
-        opacity: 0.5,
-        transition: "opacity 0.15s",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.5"; }}
-    >
-      {icon}
-    </button>
   );
 }

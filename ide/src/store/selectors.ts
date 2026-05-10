@@ -43,6 +43,10 @@ export interface TestSummary {
   description?: string;
   stepCount: number;
   serviceNames: string[];
+  order: number;
+  prerequisiteTests: string[];
+  inputCount: number;
+  outputCount: number;
   overrides?: Record<string, unknown>;
 }
 
@@ -90,13 +94,24 @@ export function getTestSummaries(
     const script = tests.get(name);
     const ref = testCase.tests.find(
       (t) => typeof t === "object" && "test" in t && (t as { test: string }).test === name
-    ) as { with?: Record<string, unknown> } | undefined;
+    ) as { with?: Record<string, unknown>; prerequisite_tests?: string[]; order?: number } | undefined;
+
+    const prerequisiteTests = ref?.prerequisite_tests
+      ?? script?.prerequisites?.map((entry) => entry.test)
+      ?? [];
+
+    const outputCount = script?.output_definitions?.length
+      ?? 0;
 
     return {
       name,
       description: script?.description,
       stepCount: (script?.setup?.length ?? 0) + (script?.steps?.length ?? 0) + (script?.teardown?.length ?? 0),
       serviceNames: script?.services?.map((s) => s.name) ?? [],
+      order: ref?.order ?? testOrder.indexOf(name) + 1,
+      prerequisiteTests,
+      inputCount: script?.inputs?.length ?? 0,
+      outputCount,
       overrides: ref?.with,
     };
   });

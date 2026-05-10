@@ -21,7 +21,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { TestCaseDefinition, ScriptDefinition } from "../models/schema";
+import type { TestCaseDefinition, ScriptDefinition, TestRef } from "../models/schema";
 import { isTestCase, isTest, isTestRef } from "../models/schema";
 import { yamlToModel } from "../sync/yamlToModel";
 import type { SchemaFile } from "./useProjectStore";
@@ -71,7 +71,7 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
 
   // Fetch all referenced test files in parallel
   const tests = new Map<string, ScriptDefinition>();
-  const testOrder: string[] = [];
+  const loadedOrder: string[] = [];
   const pathToName = new Map<string, string>();
 
   const fetches = testPaths.map(async ({ path }) => {
@@ -90,7 +90,7 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
   for (const entry of results) {
     if (entry) {
       tests.set(entry.name, entry.model);
-      testOrder.push(entry.name);
+      loadedOrder.push(entry.name);
       pathToName.set(entry.path, entry.name);
     }
   }
@@ -104,6 +104,7 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
     return entry;
   });
   tc.tests = cleanTests;
+  const testOrder = deriveTestOrder(tc, tests, loadedOrder);
 
   // Scan test files for schema references and fetch schemas
   const schemas = new Map<string, SchemaFile>();
@@ -152,4 +153,35 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
     schemas,
     testOrder,
   };
+}
+
+function deriveTestOrder(
+  testCase: TestCaseDefinition,
+  tests: Map<string, ScriptDefinition>,
+  fallbackOrder: string[],
+): string[] {
+  const available = new Set(tests.keys());
+  const refs = testCase.tests
+    .filter((entry): entry is TestRef => isTestRef(entry))
+    .map((entry, index) => ({
+      name: entry.test,
+      order: typeof entry.order === "number" ? entry.order : Number.POSITIVE_INFINITY,
+      index,
+    }))
+    .filter((entry) => available.has(entry.name));
+
+  if (refs.length === 0) {
+    return [...fallbackOrder];
+  }
+
+  refs.sort((a, b) => {
+    if (a.order !== b.order) return a.order - b.order;
+    return a.index - b.index;
+  });
+
+  const ordered = refs.map((entry) => entry.name);
+  for (const name of fallbackOrder) {
+    if (!ordered.includes(name)) ordered.push(name);
+  }
+  return ordered;
 }

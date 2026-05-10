@@ -9,6 +9,16 @@ applyTo: "**/*"
 - `ide/` — Block-based visual editor (TypeScript, React 19, Blockly 12, Vite 6)
 - `src/tractusx_testlab/` — Python library (PyPI: `tractusx-testlab`)
 
+## Product Scope Contract
+- Canonical scope definition: `docs/developer/product-scope.md`
+- Always align feature work to this lifecycle: IDE authoring -> YAML generation -> compile validation -> runtime execution -> user feedback.
+- Treat certification testing as the primary use case. TestLab validates SUT behavior in both directions:
+  - inbound to TestLab mocks/callbacks
+  - outbound from TestLab clients to SUT APIs
+- Reuse-first model: capabilities and blocks are shared across test cases and standard versions, extended additively.
+- Execution semantics are prerequisite-aware and order-sensitive. Setup, execution, and teardown are first-class phases.
+- Prioritize non-technical usability: domain labels, safe defaults, minimal required inputs, and explicit error context.
+
 ## Design Principles
 1. **One way to do things.** Never offer two approaches to the same result.
 2. **Steps are functions.** Every block has typed inputs and typed outputs. Outputs auto-appear as draggable variables.

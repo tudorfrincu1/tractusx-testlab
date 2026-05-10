@@ -89,6 +89,7 @@ npm run preview      # serve the production bundle locally
 
 | Page | What it covers |
 |------|----------------|
+| [Product Scope](product-scope.md) | Mission, MVP scope boundaries, lifecycle, execution ordering, versioning, and validation model |
 | [Architecture](architecture.md) | High-level architecture, data flow, sync loop |
 | [State Management](state-management.md) | Zustand stores, persistence, file switching |
 | [Block System](block-system.md) | Blockly integration, block catalog, registration, serialization |

@@ -1,0 +1,191 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
+## It was reviewed and tested by a human committer.
+
+kind: test
+name: send-feedback-notification
+version: "1.0"
+description: >
+  Send a CCMAPI feedback notification to the provider via EDC dataplane (SEND direction)
+  and await the provider's RECEIVE acknowledgment on a TestLab mock endpoint.
+  Covers the bidirectional notification channel per CX-0135.
+
+inputs:
+  - name: provider_address
+    type: str
+    source: test-case
+    description: Provider EDC DSP endpoint
+  - name: provider_bpn
+    type: str
+    source: test-case
+    description: Provider BPNL
+  - name: consumer_bpn
+    type: str
+    source: test-case
+    description: Consumer BPNL (TestLab)
+  - name: request_id
+    type: str
+    source: request_certificate.request_certificate_via_ccmapi.request_id
+    description: Certificate request ID from test 1
+
+prerequisites:
+  - test: request_certificate
+    strict_order: true
+    exports_required:
+      - request_id
+  - test: validate_payload
+    strict_order: true
+    exports_required:
+      - validation_status
+  - test: await_feedback_callback
+    strict_order: true
+
+outputs:
+  - name: notification_id
+    type: str
+    description: ID of the sent notification
+  - name: notification_ack_status
+    type: str
+    description: Acknowledgment status from provider RECEIVE response
+
+steps:
+  # Step 1: Find CCMAPI notification endpoint asset in provider catalog
+  - type: query_catalog
+    name: Find Notification Endpoint
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      filter_by: "dct:type"
+      operator: "like"
+      filter_value: "https://w3id.org/catenax/taxonomy#CCMAPI%"
+    store_in_memory:
+      notification_catalog: "catalog"
+      notification_datasets: "datasets"
+
+  # Step 2: Extract notification asset details
+  - type: extract_dataset
+    name: Extract Notification Dataset
+    params:
+      variable: "notification_catalog"
+      dct_type: "https://w3id.org/catenax/taxonomy#CCMAPI"
+    store_in_memory:
+      notification_asset_id: "asset_id"
+      notification_offer_id: "policies"
+
+  # Step 3: Negotiate contract for notification channel
+  - type: negotiate
+    name: Negotiate Notification Contract
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      offer_id: "@notification_offer_id"
+      asset_id: "@notification_asset_id"
+    store_in_memory:
+      notification_agreement_id: "agreement_id"
+
+  # Step 4: Initiate transfer to obtain EDR token for dataplane access
+  - type: initiate_transfer
+    name: Initiate Notification Transfer
+    params:
+      service: provider_edc
+      agreement_id: "@notification_agreement_id"
+      asset_id: "@notification_asset_id"
+      transfer_type: "HttpData-PULL"
+    store_in_memory:
+      notification_transfer_id: "transfer_id"
+      notification_dataplane_url: "data_address"
+      notification_edr_token: "state"
+
+  # Step 5: Expose mock endpoint for provider's RECEIVE acknowledgment
+  - type: mock_endpoint
+    name: Define Notification Receive Endpoint
+    params:
+      id: "notification_receive_ack"
+      method: POST
+      path: "/companycertificate/notification/receive"
+      response_status: 200
+      response_body:
+        received: true
+
+  # Step 6: Send CCMAPI feedback notification to provider (SEND direction)
+  - type: send_notification
+    name: Send Feedback Notification
+    params:
+      dataplane_url: "@notification_dataplane_url"
+      edr_token: "@notification_edr_token"
+      notification_type: "custom"
+      sender_bpn: "@consumer_bpn"
+      recipient_bpn: "@provider_bpn"
+      type: "SEND"
+      status: "SENT"
+      content:
+        requestId: "@request_id"
+        feedbackType: "CERTIFICATE_FEEDBACK"
+        message: "Validation completed for certificate request"
+    store_in_memory:
+      send_status_code: "status_code"
+      notification_id: "response_body"
+
+  # Step 7: Wait for provider's RECEIVE acknowledgment on mock endpoint
+  - type: wait_for_call
+    name: Wait For Receive Acknowledgment
+    params:
+      endpoint_id: "notification_receive_ack"
+      timeout_s: 60
+    store_in_memory:
+      ack_payload: "body"
+      ack_method: "method"
+
+  # Step 8: Extract acknowledgment status from provider response
+  - type: json_path_extract
+    name: Extract Ack Status
+    params:
+      variable: "ack_payload"
+      path: "status"
+    store_in_memory:
+      notification_ack_status: "value"
+
+expect:
+  - step: Find Notification Endpoint
+    output: notification_datasets
+    not_null: true
+    description: "Provider must expose CCMAPI notification endpoint in catalog"
+
+  - step: Negotiate Notification Contract
+    output: notification_agreement_id
+    not_null: true
+    description: "Contract negotiation for notification channel must succeed"
+
+  - step: Send Feedback Notification
+    output: send_status_code
+    equals: 200
+    description: "Notification send must return 200 OK"
+
+  - step: Wait For Receive Acknowledgment
+    output: ack_method
+    equals: "POST"
+    description: "Provider acknowledgment must use POST"
+
+  - step: Extract Ack Status
+    output: value
+    not_null: true
+    description: "Provider acknowledgment must include a status field"

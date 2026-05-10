@@ -149,24 +149,31 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
     },
   };
 
-  Blockly.Blocks["step_template"] = {
+  Blockly.Blocks["unsupported_step"] = {
     init(this: Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_STEP))
-        .appendField("⟪ Template ⟫");
+        .appendField("Unsupported Step (Import Only)");
       this.appendDummyInput()
-        .appendField("name:")
-        .appendField(new Blockly.FieldTextInput(""), "NAME");
+        .appendField("step name:")
+        .appendField(new Blockly.FieldTextInput("imported_step"), "STEP_NAME");
       this.appendDummyInput()
-        .appendField("template:")
-        .appendField(new (FieldWrappedText as typeof Blockly.FieldTextInput)(""), "PARAM_TEMPLATE");
-      this.appendStatementInput("PARAMS")
-        .setCheck("key_value")
-        .appendField("params:");
+        .appendField("original type/template:")
+        .appendField(new (FieldWrappedText as typeof Blockly.FieldTextInput)(""), "ORIGINAL_TYPE");
+      this.appendDummyInput()
+        .appendField("warning:")
+        .appendField("unsupported mapping - kept for roundtrip");
+      this.appendDummyInput()
+        .appendField("params payload:")
+        .appendField(new (FieldWrappedText as typeof Blockly.FieldTextInput)("{}"), "PARAMS_JSON");
       this.setPreviousStatement(true, "step");
       this.setNextStatement(true, "step");
       this.setColour("#6D28D9");
-      this.setTooltip("A reusable template step macro");
+      this.setTooltip("Import-only placeholder for unsupported or unknown step mappings.");
     },
   };
+
+  // Backward compatibility for legacy workspaces that still reference generic blocks.
+  Blockly.Blocks["step_operation"] = Blockly.Blocks["unsupported_step"];
+  Blockly.Blocks["step_template"] = Blockly.Blocks["unsupported_step"];
 }

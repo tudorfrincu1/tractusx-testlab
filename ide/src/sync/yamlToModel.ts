@@ -58,6 +58,17 @@ function detectKind(raw: Record<string, unknown>): ScriptKind {
 }
 
 function parseScript(raw: Record<string, unknown>): ScriptDefinition {
+  const parsedOutputs = Array.isArray(raw.outputs)
+    ? raw.outputs
+        .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+        .map((item) => ({
+          name: String(item.name ?? ""),
+          type: item.type != null ? String(item.type) : undefined,
+          description: item.description != null ? String(item.description) : undefined,
+          values: Array.isArray(item.values) ? item.values : undefined,
+        }))
+    : undefined;
+
   return {
     kind: ScriptKind.TEST,
     name: String(raw.name ?? ""),
@@ -65,6 +76,9 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
     dataspace_version: raw.dataspace_version != null ? String(raw.dataspace_version) : undefined,
     description: raw.description != null ? String(raw.description) : undefined,
     preconditions: raw.preconditions as ScriptDefinition["preconditions"],
+    inputs: raw.inputs as ScriptDefinition["inputs"],
+    prerequisites: raw.prerequisites as ScriptDefinition["prerequisites"],
+    output_definitions: parsedOutputs,
     variables: raw.variables as ScriptDefinition["variables"],
     services: raw.services as ScriptDefinition["services"],
     listen: raw.listen as ScriptDefinition["listen"],
@@ -80,8 +94,27 @@ function parseTestCase(raw: Record<string, unknown>): TestCaseDefinition {
         if (typeof t === "string") return t;
         if (typeof t === "object" && t !== null) {
           const obj = t as Record<string, unknown>;
+          if ("file" in obj && typeof obj.file === "string" && !("kind" in obj)) {
+            const ref: TestRef = { test: obj.file };
+            if (obj.order != null && Number.isFinite(Number(obj.order))) {
+              ref.order = Number(obj.order);
+            }
+            if (Array.isArray(obj.prerequisite_tests)) {
+              ref.prerequisite_tests = obj.prerequisite_tests.map(String);
+            }
+            if (obj.description && typeof obj.description === "string") {
+              ref.description = obj.description;
+            }
+            return ref;
+          }
           if ("test" in obj && typeof obj.test === "string" && !("kind" in obj)) {
             const ref: TestRef = { test: obj.test as string };
+            if (obj.order != null && Number.isFinite(Number(obj.order))) {
+              ref.order = Number(obj.order);
+            }
+            if (Array.isArray(obj.prerequisite_tests)) {
+              ref.prerequisite_tests = obj.prerequisite_tests.map(String);
+            }
             if (obj.with && typeof obj.with === "object") {
               ref.with = obj.with as Record<string, unknown>;
             }

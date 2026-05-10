@@ -110,13 +110,6 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       ...categoryContents,
       {
         kind: "category",
-        name: "Template",
-        contents: [
-          { kind: "block", type: "step_template" },
-        ],
-      },
-      {
-        kind: "category",
         name: "Authentication",
         contents: [
           { kind: "block", type: "auth_oauth2" },
