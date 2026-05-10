@@ -121,6 +121,73 @@ The testlab backend uses the SDK directly. You are an expert in its module struc
 3. **Implement incrementally**: make small, focused changes. Each change should compile and pass tests independently
 4. **Verify**: run `pytest` and type-checking after changes. Fix issues before moving on
 5. **Refactor only when asked**: do not refactor adjacent code unless explicitly requested
+6. **Self-review**: run the mandatory checklist below BEFORE delivering any code
+
+## Mandatory Self-Review Checklist
+
+**You MUST run this checklist after every implementation, before delivering to the user.**
+If ANY check fails, fix it before delivering. No exceptions.
+
+### Step 1: File size check
+Run this command and fix any files that appear:
+```bash
+find src -name '*.py' | xargs wc -l | awk '$1 > 300 && !/total/' | sort -rn
+```
+If any file exceeds 300 lines, you MUST split it using the patterns below.
+
+### Step 2: Exception handling check
+Run this command — it should return ZERO results:
+```bash
+grep -rn "except Exception" src/ --include="*.py"
+grep -rn "except:" src/ --include="*.py"
+```
+If any bare `except Exception:` or `except:` exists, replace with the narrowest typed exception.
+- JSON parsing → `except (ValueError, JSONDecodeError):`
+- HTTP responses → `except (requests.RequestException, httpx.HTTPError):`
+- File I/O → `except (OSError, IOError):`
+- SDK calls → catch the specific SDK exception type
+- Always include context: `except ValueError as exc:` — never discard the exception silently
+
+### Step 3: Type annotation check
+Search your output for `: Any`. Replace with specific types, `Unknown`, or generics.
+`Any` is only acceptable when interfacing with untyped third-party APIs.
+
+### Step 4: Print statement check
+```bash
+grep -rn "print(" src/ --include="*.py" | grep -v "_fingerprint\|def print"
+```
+If any `print()` calls exist, replace with `logging.getLogger(__name__)`.
+
+### Step 5: Verify tests pass
+```bash
+python -m pytest tests/ -x -q
+```
+
+## How to Split Oversized Files
+
+When a file exceeds 300 lines, apply these patterns:
+
+### Step modules (`steps/`)
+- **One step class per file** if the file has multiple steps: `steps/connector/dsp_version.py`, `steps/connector/dsp_catalog.py`, etc.
+- **Extract shared helpers**: common response-parsing logic → `steps/connector/_helpers.py`
+- **Extract constants**: DSP property keys, default values → `steps/connector/_constants.py`
+
+### CLI (`cli.py`)
+- **One command group per file**: `cli/run.py`, `cli/compile.py`, `cli/validate.py`
+- **Main CLI app** wires them together: `cli/__init__.py` with `app.add_typer()`
+
+### Player / Execution
+- **Extract strategies**: polling, retry, timeout → separate files
+- **Extract formatters**: result formatting, logging → separate files
+
+### Models
+- **One concern per file**: don't mix enums, base models, and domain models
+- Keep `__init__.py` as a barrel re-export only — no logic
+
+### General rules
+- Helper functions used by one module → `_helpers.py` in that package (private)
+- Helper functions used across modules → shared utility module
+- Constants → `_constants.py` in the relevant package
 
 ## Output Standards
 
@@ -128,3 +195,7 @@ The testlab backend uses the SDK directly. You are an expert in its module struc
 - AI-generated code subtitle per project conventions
 - All new public APIs include type annotations
 - Module docstrings on new files explaining purpose in one sentence
+- No file exceeds 300 lines — verified by running the file size check command
+- No bare `except Exception:` — always catch the narrowest type
+- No `print()` — use structured logging
+- No `: Any` unless unavoidable — document why in a comment

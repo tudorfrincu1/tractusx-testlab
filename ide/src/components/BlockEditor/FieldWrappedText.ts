@@ -23,6 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
+import { createWrappedTextDialog } from "./wrappedTextDialog";
 
 const MAX_LINE_WIDTH = 320;
 const MAX_DISPLAY_LINES = 3;
@@ -58,94 +59,8 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
     if (this.dialog) return;
 
     const oldValue = this.getValue() ?? "";
+    const { backdrop, textarea, saveBtn, cancelBtn } = createWrappedTextDialog(oldValue);
 
-    // Backdrop
-    const backdrop = document.createElement("div");
-    Object.assign(backdrop.style, {
-      position: "fixed",
-      inset: "0",
-      background: "rgba(0,0,0,0.55)",
-      zIndex: "10000",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    });
-
-    // Dialog container
-    const dialog = document.createElement("div");
-    Object.assign(dialog.style, {
-      background: "#1a1a2e",
-      border: "1px solid #333",
-      borderRadius: "10px",
-      padding: "20px",
-      width: "600px",
-      maxWidth: "90vw",
-      boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      fontFamily:
-        "'JetBrains Mono','SF Mono','Fira Code','Cascadia Code',monospace",
-    });
-
-    // Title
-    const title = document.createElement("div");
-    title.textContent = "Edit Text";
-    Object.assign(title.style, {
-      color: "#FFD700",
-      fontSize: "13px",
-      fontWeight: "600",
-      letterSpacing: "0.5px",
-    });
-
-    // Textarea
-    const textarea = document.createElement("textarea");
-    textarea.value = oldValue;
-    textarea.spellcheck = false;
-    Object.assign(textarea.style, {
-      background: "#111",
-      border: "1px solid #444",
-      borderRadius: "6px",
-      color: "#F3F4F6",
-      fontFamily: "inherit",
-      fontSize: "14px",
-      lineHeight: "1.7",
-      padding: "12px 14px",
-      resize: "vertical",
-      minHeight: "280px",
-      maxHeight: "60vh",
-      outline: "none",
-    });
-
-    // Focus ring
-    textarea.addEventListener("focus", () => {
-      textarea.style.borderColor = "#FFD700";
-      textarea.style.boxShadow =
-        "0 0 0 2px rgba(255,215,0,0.15), 0 4px 12px rgba(0,0,0,0.4)";
-    });
-    textarea.addEventListener("blur", () => {
-      textarea.style.borderColor = "#444";
-      textarea.style.boxShadow = "none";
-    });
-
-    // Button row
-    const buttonRow = document.createElement("div");
-    Object.assign(buttonRow.style, {
-      display: "flex",
-      justifyContent: "flex-end",
-      gap: "8px",
-    });
-
-    const cancelBtn = this.createButton("Cancel", false);
-    const saveBtn = this.createButton("Save", true);
-
-    buttonRow.appendChild(cancelBtn);
-    buttonRow.appendChild(saveBtn);
-
-    dialog.appendChild(title);
-    dialog.appendChild(textarea);
-    dialog.appendChild(buttonRow);
-    backdrop.appendChild(dialog);
     document.body.appendChild(backdrop);
     this.dialog = backdrop as HTMLDivElement;
 
@@ -193,33 +108,6 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
       // Stop propagation so Blockly doesn't handle keys
       e.stopPropagation();
     });
-  }
-
-  private createButton(label: string, isPrimary: boolean): HTMLButtonElement {
-    const btn = document.createElement("button");
-    btn.textContent = label;
-    Object.assign(btn.style, {
-      padding: "6px 16px",
-      borderRadius: "6px",
-      border: isPrimary ? "1px solid #FFD700" : "1px solid #555",
-      background: isPrimary ? "rgba(255,215,0,0.12)" : "transparent",
-      color: isPrimary ? "#FFD700" : "#9CA3AF",
-      fontSize: "12px",
-      fontFamily: "inherit",
-      cursor: "pointer",
-      fontWeight: isPrimary ? "600" : "400",
-    });
-    btn.addEventListener("mouseenter", () => {
-      btn.style.background = isPrimary
-        ? "rgba(255,215,0,0.22)"
-        : "rgba(255,255,255,0.06)";
-    });
-    btn.addEventListener("mouseleave", () => {
-      btn.style.background = isPrimary
-        ? "rgba(255,215,0,0.12)"
-        : "transparent";
-    });
-    return btn;
   }
 
   // ─── Multi-line SVG rendering ───────────────────────────────────

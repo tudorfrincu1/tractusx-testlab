@@ -71,7 +71,7 @@ class UploadBackendDataStep(BaseStep):
 
         try:
             resp_body = resp.json()
-        except Exception:
+        except (ValueError, TypeError):
             resp_body = resp.text
 
         return StepOutput(

@@ -106,5 +106,5 @@ class ExecutionMonitor:
                 result = callback(event, payload)
                 if asyncio.iscoroutine(result):
                     asyncio.ensure_future(result)
-            except Exception:
-                self._logger.warning(f"Callback failed for event '{event}'")
+            except (RuntimeError, TypeError, ValueError) as exc:
+                self._logger.warning("Callback failed for event '%s': %s", event, exc)

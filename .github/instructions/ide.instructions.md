@@ -26,3 +26,7 @@ workspace change → `workspaceToModel()` → `modelToYaml()` → Zustand store 
 - No `console.log` in committed code — use structured error handling
 - TypeScript strict mode enabled
 - Functional components only (no class components)
+- **No file may exceed 300 lines** — split using component/hook/constant extraction
+- **No inline `style={{}}`** — use CSS files or CSS modules
+- **No `: any` or `as any`** — use `unknown` + type narrowing
+- **No bare `catch {}` blocks** — always handle or log the error with context

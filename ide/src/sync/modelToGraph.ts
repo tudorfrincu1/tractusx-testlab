@@ -27,10 +27,11 @@
  */
 
 import type { Node, Edge } from "@xyflow/react";
-import type { TestLabDocument, ScriptDefinition, StepDefinition, Step } from "../models/schema";
-import { isTestCase, isTestRef, isTemplateStep } from "../models/schema";
+import type { TestLabDocument, ScriptDefinition, Step } from "../models/schema";
+import { isTestCase, isTemplateStep } from "../models/schema";
 import { getStepColor } from "../theme/tractusxTheme";
 import type { GraphMode } from "../store/useTestLabStore";
+import { getStepService, collectVariableRefs, getServiceColor, buildTestCaseSummaryGraph } from "./graphHelpers";
 
 export interface GraphData {
   nodes: Node[];
@@ -242,68 +243,4 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
   return { nodes, edges };
 }
 
-function getStepService(step: StepDefinition): string | undefined {
-  const svc = step.params?.service;
-  return typeof svc === "string" ? svc : undefined;
-}
 
-function collectVariableRefs(params: Record<string, unknown>): Set<string> {
-  const refs = new Set<string>();
-  const varPattern = /@(\w+)|\$\{([^}]+)\}|\{\{([^}]+)\}\}/g;
-
-  function walk(value: unknown): void {
-    if (typeof value === "string") {
-      let match: RegExpExecArray | null;
-      while ((match = varPattern.exec(value)) !== null) {
-        refs.add(match[1] || match[2] || match[3]);
-      }
-    } else if (Array.isArray(value)) {
-      for (const item of value) walk(item);
-    } else if (value && typeof value === "object") {
-      for (const v of Object.values(value)) walk(v);
-    }
-  }
-
-  walk(params);
-  return refs;
-}
-
-function getServiceColor(serviceType: string): string {
-  const colors: Record<string, string> = {
-    CONNECTOR_PROVIDER: "#5C9A6B",
-    CONNECTOR_CONSUMER: "#4A90D9",
-    DSP_CONSUMER: "#D4A843",
-    DSP_PROVIDER: "#C96B7A",
-    DTR: "#5EA8A8",
-  };
-  return colors[serviceType] || "#888";
-}
-
-function buildTestDependencyGraph(model: import("../models/schema").TestCaseDefinition): GraphData {
-  const nodes: Node[] = [];
-  const edges: Edge[] = [];
-  const spacing = 120;
-  let y = 0;
-
-  nodes.push({ id: "tc-root", position: { x: 200, y }, data: { label: model.name, testCase: true }, type: "testcase" });
-  y += spacing;
-
-  for (let i = 0; i < model.tests.length; i++) {
-    const test = model.tests[i];
-    const nodeId = `test-${i}`;
-    if (typeof test === "string") {
-      nodes.push({ id: nodeId, position: { x: 200, y }, data: { label: test.replace("!include ", ""), include: true }, type: "include" });
-    } else if (isTestRef(test)) {
-      nodes.push({ id: nodeId, position: { x: 200, y }, data: { label: test.test, ref: true }, type: "test" });
-    } else {
-      nodes.push({ id: nodeId, position: { x: 200, y }, data: { label: test.name, inline: true }, type: "test" });
-    }
-    edges.push({ id: `e-tc-${nodeId}`, source: "tc-root", target: nodeId, style: { stroke: "#FFD700" } });
-    y += spacing;
-  }
-  return { nodes, edges };
-}
-
-function buildTestCaseSummaryGraph(model: import("../models/schema").TestCaseDefinition): GraphData {
-  return buildTestDependencyGraph(model);
-}

@@ -34,12 +34,9 @@ import FileUploadIcon from "@mui/icons-material/FileUpload";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import HttpIcon from "@mui/icons-material/Http";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
-import StorageIcon from "@mui/icons-material/Storage";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import { ToolbarButton } from "./TopBarButtons";
+import { TopBarExampleMenu } from "./TopBarExampleMenu";
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName);
@@ -238,75 +235,7 @@ export function TopBar() {
             onClick={() => setShowExampleMenu(!showExampleMenu)}
           />
           {showExampleMenu && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                marginTop: 4,
-                background: theme.colors.bgLighter,
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: 6,
-                overflow: "hidden",
-                zIndex: 100,
-                minWidth: 240,
-                maxHeight: 360,
-                overflowY: "auto",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-              }}
-            >
-              <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Base Tests
-              </div>
-              <DropdownItem
-                icon={<HttpIcon sx={{ fontSize: 16 }} />}
-                label="Connector Ping"
-                description="Verify connector responds to catalog query"
-                onClick={() => handleLoadExample("connector-ping-v1.0/index.yaml")}
-              />
-              <DropdownItem
-                icon={<StorageIcon sx={{ fontSize: 16 }} />}
-                label="DTR Ping"
-                description="Negotiate dataplane access to DTR"
-                onClick={() => handleLoadExample("dtr-ping-v1.0/index.yaml")}
-              />
-              <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", borderTop: `1px solid ${theme.colors.border}` }}>
-                Industry Core
-              </div>
-              <DropdownItem
-                icon={<AccountTreeIcon sx={{ fontSize: 16 }} />}
-                label="Industry Core Validation"
-                description="Shell descriptors + submodel validation"
-                onClick={() => handleLoadExample("industry-core-validation-v1.0/index.yaml")}
-              />
-              <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", borderTop: `1px solid ${theme.colors.border}` }}>
-                Use Cases
-              </div>
-              <DropdownItem
-                icon={<NotificationsActiveIcon sx={{ fontSize: 16 }} />}
-                label="Traceability Notification"
-                description="Quality investigation + alert flows"
-                onClick={() => handleLoadExample("traceability-notification-v1.0/index.yaml")}
-              />
-              <DropdownItem
-                icon={<PlaylistAddIcon sx={{ fontSize: 16 }} />}
-                label="Certificate Management"
-                description="CCMAPI offer, validation, feedback"
-                onClick={() => handleLoadExample("certificate-management-v1.0/index.yaml")}
-              />
-              <DropdownItem
-                icon={<SwapHorizIcon sx={{ fontSize: 16 }} />}
-                label="Special Characteristics"
-                description="Notification + data transfer validation"
-                onClick={() => handleLoadExample("special-characteristics-v1.0/index.yaml")}
-              />
-              <DropdownItem
-                icon={<ScienceIcon sx={{ fontSize: 16 }} />}
-                label="Product Carbon Footprint"
-                description="PCF data discovery + schema validation"
-                onClick={() => handleLoadExample("product-carbon-footprint-v1.0/index.yaml")}
-              />
-            </div>
+            <TopBarExampleMenu onLoadExample={handleLoadExample} />
           )}
         </div>
         <input
@@ -323,86 +252,4 @@ export function TopBar() {
   );
 }
 
-function ToolbarButton({
-  label,
-  icon,
-  onClick,
-}: {
-  label: string;
-  icon?: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "4px 12px",
-        fontSize: 12,
-        fontWeight: 500,
-        color: theme.colors.text,
-        background: theme.colors.bgLighter,
-        border: `1px solid ${theme.colors.border}`,
-        borderRadius: 4,
-        cursor: "pointer",
-        transition: "background 0.15s, border-color 0.15s",
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = theme.colors.bgLightest;
-        e.currentTarget.style.borderColor = theme.colors.primary;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = theme.colors.bgLighter;
-        e.currentTarget.style.borderColor = theme.colors.border;
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
-function DropdownItem({
-  label,
-  description,
-  icon,
-  onClick,
-}: {
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        width: "100%",
-        padding: "8px 14px",
-        background: "transparent",
-        border: "none",
-        color: theme.colors.text,
-        cursor: "pointer",
-        textAlign: "left",
-        transition: "background 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = theme.colors.bgLightest;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "transparent";
-      }}
-    >
-      <span style={{ color: theme.colors.primary, flexShrink: 0 }}>{icon}</span>
-      <div>
-        <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
-        <div style={{ fontSize: 10, color: theme.colors.textMuted }}>{description}</div>
-      </div>
-    </button>
-  );
-}

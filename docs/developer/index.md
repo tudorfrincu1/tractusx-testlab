@@ -95,6 +95,7 @@ npm run preview      # serve the production bundle locally
 | [Components](components.md) | Every React component, its purpose, props, and dependencies |
 | [Data Models](data-models.md) | TypeScript types, validation rules, YAML schema |
 | [Sync Layer](sync-layer.md) | YAML ↔ Model ↔ Graph conversion |
+| [Block Lifecycle](block-lifecycle.md) | How a block maps from IDE → YAML → Python executor → SDK call |
 | [Step-by-Step Tutorials](tutorials.md) | How-to guides: new blocks, steps, categories, assertions, templates, examples |
 
 ## Tech stack

@@ -1,6 +1,6 @@
 # Tutorials
 
-Step-by-step guides for common TestLab tasks.
+Step-by-step guides for common TestLab tasks — IDE blocks, Python step executors, services, and more.
 
 ## Getting Started
 
@@ -87,3 +87,30 @@ steps:
 ```
 
 TestLab starts a local HTTP server for each mock, registers default endpoints, and injects the URL as `@{mock_name}_url`.
+
+## All Tutorials
+
+### IDE (Blocks & Components)
+
+- [Create a New Block](create-block.md) — Add a visual block by writing a single JSON file
+- [Create a New Block Category](create-block-category.md) — Group blocks into a new toolbox section
+- [Add a New Assertion Type](add-assertion-type.md) — Extend the assertion system (IDE + Python)
+- [Add a New Component](add-component.md) — Build a new React component for the IDE
+- [Add a New Example Project](add-example-project.md) — Bundle an example for the Welcome Screen
+- [Add a New Template](add-template.md) — Create reusable step sequences
+
+### Python (Runtime & Steps)
+
+- [Create a New Step Executor](create-step-executor.md) — Write the Python code that runs a block
+- [Add a New Service Type](add-service-type.md) — Register a new external service integration
+- [Add a New Validation Rule](add-validation-rule.md) — Add real-time validation in IDE and compiler
+
+### Architecture & Workflow
+
+- [Modify the Sync Flow](modify-sync-flow.md) — Understand and extend the blocks ↔ YAML sync loop
+- [Development Workflow](development-workflow.md) — IDE, Python, and docs dev commands
+- [Debugging Common Issues](debugging.md) — Troubleshoot blocks, YAML sync, variables, and runtime
+
+### Reference
+
+- [Quick Reference: File Locations](quick-reference.md) — Which files to modify for each task

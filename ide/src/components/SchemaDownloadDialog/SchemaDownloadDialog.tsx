@@ -24,6 +24,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { theme } from "../../theme/tractusxTheme";
 import { useProjectStore } from "../../store/useProjectStore";
+import {
+  overlayStyle, dialogStyle, headerStyle, closeButtonStyle,
+  searchInputStyle, listContainerStyle, listItemStyle,
+  statusStyle, backButtonStyle, footerStyle, compareVersions,
+} from "./SchemaDownloadDialog.styles";
 
 const REPO_BASE = "https://api.github.com/repos/eclipse-tractusx/sldt-semantic-models/contents";
 const RAW_BASE = "https://raw.githubusercontent.com/eclipse-tractusx/sldt-semantic-models/main";
@@ -256,112 +261,4 @@ export function SchemaDownloadDialog({ onClose }: SchemaDownloadDialogProps) {
   );
 }
 
-/* ── Helpers ──────────────────────────────────────────────────────────────── */
 
-function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const na = pa[i] ?? 0;
-    const nb = pb[i] ?? 0;
-    if (na !== nb) return na - nb;
-  }
-  return 0;
-}
-
-/* ── Styles ───────────────────────────────────────────────────────────────── */
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 1000,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "rgba(0,0,0,0.6)",
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: theme.colors.bgLighter,
-  border: `1px solid ${theme.colors.border}`,
-  borderRadius: 8,
-  width: 480,
-  maxHeight: "70vh",
-  display: "flex",
-  flexDirection: "column",
-  overflow: "hidden",
-};
-
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "12px 16px",
-  borderBottom: `1px solid ${theme.colors.border}`,
-  color: theme.colors.text,
-};
-
-const closeButtonStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: theme.colors.textMuted,
-  cursor: "pointer",
-  fontSize: 16,
-  padding: "2px 6px",
-};
-
-const searchInputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 12px",
-  borderRadius: 4,
-  border: `1px solid ${theme.colors.border}`,
-  background: theme.colors.bg,
-  color: theme.colors.text,
-  fontSize: 13,
-  outline: "none",
-};
-
-const listContainerStyle: React.CSSProperties = {
-  flex: 1,
-  overflowY: "auto",
-  padding: "4px 8px",
-  minHeight: 200,
-  maxHeight: 400,
-};
-
-const listItemStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  width: "100%",
-  padding: "8px 12px",
-  border: "none",
-  borderRadius: 4,
-  background: "transparent",
-  color: theme.colors.text,
-  fontSize: 13,
-  cursor: "pointer",
-  textAlign: "left",
-};
-
-const statusStyle: React.CSSProperties = {
-  padding: "16px",
-  textAlign: "center",
-  fontSize: 13,
-  color: theme.colors.textMuted,
-};
-
-const backButtonStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: theme.colors.primary,
-  cursor: "pointer",
-  fontSize: 12,
-  padding: 0,
-};
-
-const footerStyle: React.CSSProperties = {
-  padding: "8px 16px",
-  borderTop: `1px solid ${theme.colors.border}`,
-  textAlign: "right",
-};

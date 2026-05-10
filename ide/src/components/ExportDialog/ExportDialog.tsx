@@ -27,13 +27,13 @@ import { modelToYaml } from "../../sync/modelToYaml";
 import { theme } from "../../theme/tractusxTheme";
 
 import FolderZipIcon from "@mui/icons-material/FolderZip";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import CloseIcon from "@mui/icons-material/Close";
 import FolderIcon from "@mui/icons-material/Folder";
-import DescriptionIcon from "@mui/icons-material/Description";
-import DataObjectIcon from "@mui/icons-material/DataObject";
-import ScienceIcon from "@mui/icons-material/Science";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import {
+  type FileNode, nodeIcon, formatSize,
+  FileTreeRow, ExportButton, iconBtnStyle,
+} from "./ExportDialogParts";
 
 interface ExportDialogProps {
   onClose: () => void;
@@ -253,116 +253,4 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
   );
 }
 
-/* ── Types & helpers ────────────────────────────────────────────────────── */
 
-interface FileNode {
-  path: string;
-  type: "test-case" | "test" | "schema";
-  name: string;
-  size: number;
-}
-
-function nodeIcon(type: FileNode["type"]) {
-  switch (type) {
-    case "test-case": return <DescriptionIcon sx={{ fontSize: 14, color: theme.colors.primary }} />;
-    case "test": return <ScienceIcon sx={{ fontSize: 14, color: "#66bb6a" }} />;
-    case "schema": return <DataObjectIcon sx={{ fontSize: 14, color: "#42a5f5" }} />;
-  }
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
-}
-
-/* ── Sub-components ─────────────────────────────────────────────────────── */
-
-function FileTreeRow({ icon, label, depth, isBold, isSelected, size, onClick, onExport }: {
-  icon: React.ReactNode;
-  label: string;
-  depth: number;
-  isBold?: boolean;
-  isSelected?: boolean;
-  size?: string;
-  onClick?: () => void;
-  onExport?: () => void;
-}) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: `3px 10px 3px ${12 + depth * 14}px`,
-        cursor: onClick ? "pointer" : "default",
-        background: isSelected ? theme.colors.bgLighter : "transparent",
-        fontSize: 12,
-        fontWeight: isBold ? 600 : 400,
-        color: isSelected ? theme.colors.textBright : theme.colors.text,
-        transition: "background 0.1s",
-      }}
-      onMouseEnter={(e) => { if (onClick) e.currentTarget.style.background = theme.colors.bgLighter; }}
-      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
-    >
-      {icon}
-      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-      {size && <span style={{ fontSize: 9, color: theme.colors.textMuted }}>{size}</span>}
-      {onExport && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onExport(); }}
-          title="Export this file"
-          style={{ ...iconBtnStyle, opacity: 0.4, padding: 2 }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.4"; }}
-        >
-          <InsertDriveFileIcon sx={{ fontSize: 11 }} />
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ExportButton({ icon, label, onClick, isPrimary }: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  isPrimary?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "6px 16px",
-        fontSize: 12,
-        fontWeight: 600,
-        color: isPrimary ? "#000" : theme.colors.text,
-        background: isPrimary ? theme.colors.primary : theme.colors.bgLight,
-        border: `1px solid ${isPrimary ? theme.colors.primary : theme.colors.border}`,
-        borderRadius: 6,
-        cursor: "pointer",
-        transition: "opacity 0.15s",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-const iconBtnStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "transparent",
-  border: "none",
-  color: theme.colors.textMuted,
-  cursor: "pointer",
-  borderRadius: 4,
-  padding: 4,
-};

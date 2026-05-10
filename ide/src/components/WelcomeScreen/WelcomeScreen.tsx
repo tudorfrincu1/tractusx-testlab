@@ -36,6 +36,7 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScienceIcon from "@mui/icons-material/Science";
+import { ActionCard, ExampleCard } from "./WelcomeCards";
 
 /* ── Example definitions ────────────────────────────────────────────────── */
 
@@ -202,102 +203,4 @@ export function WelcomeScreen() {
   );
 }
 
-/* ── Sub-components ─────────────────────────────────────────────────────── */
 
-function ActionCard({ icon, title, description, onClick, isPrimary }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  onClick: () => void;
-  isPrimary?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        padding: "24px 32px",
-        background: isPrimary ? "rgba(255, 215, 0, 0.08)" : theme.colors.bgLight,
-        border: `1px solid ${isPrimary ? theme.colors.primaryDark : theme.colors.border}`,
-        borderRadius: 10,
-        cursor: "pointer",
-        transition: "border-color 0.15s, background 0.15s",
-        minWidth: 180,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = theme.colors.primary;
-        e.currentTarget.style.background = isPrimary
-          ? "rgba(255, 215, 0, 0.14)"
-          : theme.colors.bgLighter;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = isPrimary
-          ? theme.colors.primaryDark
-          : theme.colors.border;
-        e.currentTarget.style.background = isPrimary
-          ? "rgba(255, 215, 0, 0.08)"
-          : theme.colors.bgLight;
-      }}
-    >
-      {icon}
-      <span style={{ fontSize: 14, fontWeight: 600, color: theme.colors.textBright }}>{title}</span>
-      <span style={{ fontSize: 11, color: theme.colors.textMuted }}>{description}</span>
-    </button>
-  );
-}
-
-function ExampleCard({ icon, label, description, category, onClick }: {
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  category: "test" | "test-case";
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "10px 14px",
-        background: theme.colors.bgLight,
-        border: `1px solid ${theme.colors.border}`,
-        borderRadius: 8,
-        cursor: "pointer",
-        textAlign: "left",
-        transition: "border-color 0.15s, background 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = theme.colors.borderLight;
-        e.currentTarget.style.background = theme.colors.bgLighter;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = theme.colors.border;
-        e.currentTarget.style.background = theme.colors.bgLight;
-      }}
-    >
-      <div style={{ color: theme.colors.textMuted, flexShrink: 0 }}>{icon}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: theme.colors.text }}>{label}</span>
-          <span style={{
-            fontSize: 9,
-            fontWeight: 500,
-            padding: "1px 5px",
-            borderRadius: 3,
-            background: category === "test-case" ? "rgba(255, 215, 0, 0.12)" : theme.colors.bgLightest,
-            color: category === "test-case" ? theme.colors.primary : theme.colors.textMuted,
-            textTransform: "uppercase",
-          }}>
-            {category === "test-case" ? "suite" : "test"}
-          </span>
-        </div>
-        <div style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 2 }}>{description}</div>
-      </div>
-    </button>
-  );
-}

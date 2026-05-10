@@ -110,7 +110,7 @@ class QueryCatalogByAssetIdStep(BaseStep):
                     target, policy = valid_assets_policies[0]
                     context.set_variable(CATALOG_TARGET, target)
                     context.set_variable(CATALOG_POLICY, policy)
-            except Exception:
+            except (KeyError, TypeError, ValueError, IndexError):
                 pass  # Catalog extraction is best-effort; negotiate_contract will fail explicitly
 
         return StepOutput(

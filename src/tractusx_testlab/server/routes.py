@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -38,6 +39,8 @@ from tractusx_sdk.extensions.testlab.models import JobStatus
 from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+
+_logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/testlab", tags=["testlab"])
 
@@ -146,8 +149,8 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
     """Run the player in the background, catching exceptions."""
     try:
         await player.run(target, runtime_vars=runtime_vars)
-    except Exception:
-        pass  # Errors are captured in the Job result
+    except (RuntimeError, ValueError, OSError) as exc:
+        _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
 
 
 @router.get("/jobs")

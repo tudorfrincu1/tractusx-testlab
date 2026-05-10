@@ -32,7 +32,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.models import Job, ServiceDefinition, ServiceType
+from tractusx_sdk.extensions.testlab.models import Job, ServiceDefinition, ServiceNotFoundError, ServiceType
 from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
 from tractusx_sdk.extensions.testlab.syntax import defaults
 
@@ -136,9 +136,8 @@ class StepContext:
         for svc_name in self._services.service_names:
             try:
                 return self._services.get(svc_name, stype)
-            except Exception:
+            except (ServiceNotFoundError, ValueError):
                 continue
-        from tractusx_sdk.extensions.testlab.models import ServiceNotFoundError
         raise ServiceNotFoundError(f"No service of type {stype.value} is registered")
 
     def _first_definition_of_type(self, stype: ServiceType) -> "ServiceDefinition | None":

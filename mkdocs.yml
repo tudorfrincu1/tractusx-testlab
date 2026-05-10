@@ -76,6 +76,9 @@ extra:
 extra_css:
   - assets/stylesheets/orange-black-theme.css
 
+extra_javascript:
+  - assets/javascripts/mermaid-zoom.js
+
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -112,11 +115,32 @@ nav:
     - Welcome: index.md
     - Overview: home/overview.md
   - IDE:
-    - Getting Started: ide/index.md
+    - User Manual: ide/index.md
+    - Welcome Screen: ide/welcome-screen.md
+    - Project Explorer: ide/project-explorer.md
+    - Block Editor: ide/block-editor.md
+    - YAML Preview: ide/yaml-preview.md
+    - Graph View: ide/graph-view.md
+    - Services: ide/services.md
+    - Export & Import: ide/export-import.md
+    - Test Case Dashboard: ide/test-case-dashboard.md
   - Specification:
     - YAML Format: specification/index.md
   - Tutorials:
-    - First Test: tutorials/index.md
+    - Getting Started: tutorials/index.md
+    - Create a Block: tutorials/create-block.md
+    - Create a Block Category: tutorials/create-block-category.md
+    - Create a Step Executor: tutorials/create-step-executor.md
+    - Add a Service Type: tutorials/add-service-type.md
+    - Add an Assertion Type: tutorials/add-assertion-type.md
+    - Add an Example Project: tutorials/add-example-project.md
+    - Add a Template: tutorials/add-template.md
+    - Modify the Sync Flow: tutorials/modify-sync-flow.md
+    - Add a Validation Rule: tutorials/add-validation-rule.md
+    - Add a Component: tutorials/add-component.md
+    - Development Workflow: tutorials/development-workflow.md
+    - Debugging: tutorials/debugging.md
+    - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
   - Developer:
@@ -127,7 +151,7 @@ nav:
     - Components: developer/components.md
     - Data Models: developer/data-models.md
     - Sync Layer: developer/sync-layer.md
-    - Step-by-Step Tutorials: developer/tutorials.md
+    - Block Lifecycle: developer/block-lifecycle.md
   - Contributing:
     - Guidelines: contributing/index.md
 

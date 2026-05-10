@@ -26,3 +26,10 @@ applyTo: "src/**/*.py"
 ## Tests
 - Tests in `tests/` at repo root
 - pytest + pytest-asyncio
+
+## Hard Rules
+- **No file may exceed 300 lines** — split into focused modules
+- **No bare `except Exception:` or `except:`** — catch the narrowest exception type
+- **No `print()` for output** — use `logging.getLogger(__name__)`
+- **No `: Any` unless unavoidable** — use specific types or generics
+- **All public functions must have type annotations**

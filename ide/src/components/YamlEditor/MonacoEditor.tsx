@@ -28,6 +28,7 @@ import type { editor } from "monaco-editor";
 import { useTestLabStore } from "../../store/useTestLabStore";
 import { theme } from "../../theme/tractusxTheme";
 import { findStepLineRange } from "../../sync/yamlLineMap";
+import { defineTractusDarkTheme, registerYamlCompletions } from "./monacoSetup";
 
 export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
   const yaml = useTestLabStore((s) => s.yaml);
@@ -58,147 +59,11 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
       isEditorFocused.current = false;
     });
 
-    // Define custom Tractus-X dark theme
-    monaco.editor.defineTheme("tractus-x-dark", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [
-        { token: "comment", foreground: "6A9955" },
-        { token: "keyword", foreground: "FFD700" },
-        { token: "string", foreground: "CE9178" },
-        { token: "number", foreground: "B5CEA8" },
-        { token: "type", foreground: "4EC9B0" },
-      ],
-      colors: {
-        "editor.background": theme.colors.bgLighter,
-        "editor.foreground": theme.colors.text,
-        "editor.lineHighlightBackground": "#2a2a2a",
-        "editorLineNumber.foreground": "#555555",
-        "editorCursor.foreground": theme.colors.primary,
-        "editor.selectionBackground": "#264f78",
-        "editorIndentGuide.background": "#404040",
-        "editorBracketMatch.background": "#0064001a",
-        "editorBracketMatch.border": theme.colors.primary,
-      },
-    });
-    monaco.editor.setTheme("tractus-x-dark");
+    defineTractusDarkTheme(monaco);
 
     // Dispose previous completion provider to avoid duplicates on re-mount
     completionDisposable.current?.dispose();
-
-    // Register YAML completions for TestLab keywords
-    completionDisposable.current = monaco.languages.registerCompletionItemProvider("yaml", {
-      provideCompletionItems: (model: import("monaco-editor").editor.ITextModel, position: import("monaco-editor").Position) => {
-        const word = model.getWordUntilPosition(position);
-        const range = {
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
-        };
-
-        const suggestions: import("monaco-editor").languages.CompletionItem[] = [
-          // Top-level fields
-          ...["kind", "name", "version", "dataspace_version", "description", "variables", "services", "steps", "setup", "cleanup", "preconditions", "tests"].map(
-            (label) => ({
-              label,
-              kind: monaco.languages.CompletionItemKind.Field,
-              insertText: `${label}: `,
-              range,
-            })
-          ),
-          // Step types
-          ...["create_asset", "delete_asset", "create_policy", "delete_policy", "create_contract_definition", "delete_contract_definition", "query_catalog_by_asset_id", "query_catalog", "dsp_catalog_request", "negotiate_contract", "transfer_data", "get_edr", "dataplane_call", "http_request", "do_dsp", "do_dsp_with_bpnl", "upload_backend_data", "sdk_call", "init_service", "stop_service", "await_callback"].map(
-            (label) => ({
-              label,
-              kind: monaco.languages.CompletionItemKind.Value,
-              insertText: label,
-              detail: "Step type",
-              range,
-            })
-          ),
-          // Enum values
-          ...["HARD", "SOFT"].map((label) => ({
-            label,
-            kind: monaco.languages.CompletionItemKind.Enum,
-            insertText: label,
-            detail: "Assertion severity",
-            range,
-          })),
-          ...["EXACT", "CONTAINS", "SCHEMA", "REGEX", "STATUS_CODE", "NOT_CONTAINS"].map((label) => ({
-            label,
-            kind: monaco.languages.CompletionItemKind.Enum,
-            insertText: label,
-            detail: "Assertion type",
-            range,
-          })),
-          ...["ABORT", "CONTINUE", "SKIP_REST"].map((label) => ({
-            label,
-            kind: monaco.languages.CompletionItemKind.Enum,
-            insertText: label,
-            detail: "Failure policy",
-            range,
-          })),
-          ...["CONNECTOR_CONSUMER", "CONNECTOR_PROVIDER", "DSP_CONSUMER", "DSP_PROVIDER", "DTR"].map((label) => ({
-            label,
-            kind: monaco.languages.CompletionItemKind.Enum,
-            insertText: label,
-            detail: "Service type",
-            range,
-          })),
-          // Snippets
-          {
-            label: "step",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText: [
-              "- type: ${1:http_request}",
-              '  name: "${2:Step name}"',
-              "  params:",
-              '    ${3:key}: "${4:value}"',
-              "  expect:",
-              "    - type: STATUS_CODE",
-              "      value: 200",
-              "      severity: HARD",
-            ].join("\n"),
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            detail: "Insert a test step",
-            range,
-          },
-          {
-            label: "variable",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText: [
-              "${1:var_name}:",
-              "  type: str",
-              '  default: "${2:value}"',
-              "  runtime: ${3:false}",
-              '  description: "${4:Description}"',
-            ].join("\n"),
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            detail: "Insert a variable definition",
-            range,
-          },
-          {
-            label: "service",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText: [
-              '- name: "${1:provider}"',
-              "  type: ${2:CONNECTOR_PROVIDER}",
-              '  base_url: "${3:\\${provider_base_url}}"',
-              "  auth:",
-              '    api_key: "${4:\\${provider_api_key}}"',
-              "  params:",
-              "    version: saturn",
-            ].join("\n"),
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            detail: "Insert a service definition",
-            range,
-          },
-        ];
-
-        return { suggestions };
-      },
-    });
+    completionDisposable.current = registerYamlCompletions(monaco);
   };
 
   // Update editor markers from validation errors

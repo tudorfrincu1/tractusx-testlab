@@ -22,129 +22,19 @@
 // It was reviewed and tested by a human committer.
 
 import { create } from "zustand";
-import type {
-  TestCaseDefinition,
-  ScriptDefinition,
-  TestLabDocument,
-  VariableDefinition,
-} from "../models/schema";
-import {
-  createEmptyTestCase,
-  createEmptyTest,
-  isTestCase,
-  isTest,
-  isTestRef,
-  ScriptKind,
-} from "../models/schema";
+import type { TestCaseDefinition } from "../models/schema";
+import { createEmptyTestCase, createEmptyTest } from "../models/schema";
 import { modelToYaml } from "../sync/modelToYaml";
-import { yamlToModel } from "../sync/yamlToModel";
 import { exportProjectZip, downloadFile } from "./projectIO";
-import { useTestLabStore } from "./useTestLabStore";
+import { uniqueName, buildTestCaseTestsArray } from "./helpers";
+import { getAggregatedVariables as computeAggregatedVariables, getTestSummaries as computeTestSummaries } from "./selectors";
+import type { AggregatedVariable, TestSummary } from "./selectors";
+import { saveProjectToLocalStorage, loadProjectFromLocalStorage, loadDocumentIntoStore } from "./persistence";
+import type { ActiveFile, SchemaFile, ProjectState } from "./types";
 
-/* ── Types ──────────────────────────────────────────────────────────────── */
+export type { AggregatedVariable, TestSummary, ActiveFile, SchemaFile, ProjectState };
 
-export interface ActiveFile {
-  type: "test-case" | "test" | "schema";
-  name: string;
-}
-
-export interface SchemaFile {
-  name: string;
-  content: string;
-}
-
-/** A variable merged from all tests + test-case level */
-export interface AggregatedVariable {
-  name: string;
-  definition: VariableDefinition;
-  usedBy: string[];
-  isTestCaseLevel: boolean;
-}
-
-/** Summary of a test for the pipeline table */
-export interface TestSummary {
-  name: string;
-  description?: string;
-  stepCount: number;
-  serviceNames: string[];
-  overrides?: Record<string, unknown>;
-}
-
-interface SerializedProject {
-  projectName: string;
-  testCaseYaml: string;
-  tests: Record<string, string>;
-  schemas: Record<string, string>;
-  testOrder: string[];
-  activeFile: ActiveFile | null;
-  workspaceStates?: Record<string, object>;
-}
-
-/* ── Store interface ────────────────────────────────────────────────────── */
-
-interface ProjectState {
-  hasProject: boolean;
-  projectName: string;
-  projectGeneration: number;
-  testCase: TestCaseDefinition;
-  tests: Map<string, ScriptDefinition>;
-  schemas: Map<string, SchemaFile>;
-  testOrder: string[];
-  activeFile: ActiveFile | null;
-  dirty: Map<string, boolean>;
-  workspaceStates: Record<string, object>;
-
-  createProject: (name?: string) => void;
-  addTest: (name?: string) => string;
-  removeTest: (name: string) => void;
-  renameTest: (oldName: string, newName: string) => void;
-  duplicateTest: (name: string) => string;
-  reorderTest: (name: string, newIndex: number) => void;
-  updateTest: (name: string, model: ScriptDefinition) => void;
-  updateTestCase: (model: TestCaseDefinition) => void;
-  setActiveFile: (file: ActiveFile | null) => void;
-  addSchema: (name: string, content: string) => void;
-  removeSchema: (name: string) => void;
-  renameSchema: (oldName: string, newName: string) => void;
-  markDirty: (name: string) => void;
-  markClean: (name: string) => void;
-  isDirty: (name: string) => boolean;
-  isAnyDirty: () => boolean;
-  getTestNames: () => string[];
-  getSchemaNames: () => string[];
-  getActiveModel: () => TestLabDocument | null;
-  getAggregatedVariables: () => AggregatedVariable[];
-  getTestSummaries: () => TestSummary[];
-  updateTestCaseField: <K extends keyof TestCaseDefinition>(field: K, value: TestCaseDefinition[K]) => void;
-  exportZip: () => Promise<void>;
-  exportFile: (name: string, type: "test" | "schema" | "test-case") => void;
-  saveToLocalStorage: () => void;
-  loadFromLocalStorage: () => boolean;
-  loadFromDocument: (doc: TestLabDocument, name?: string) => void;
-  setWorkspaceState: (fileName: string, state: object) => void;
-  getWorkspaceState: (fileName: string) => object | null;
-}
-
-const STORAGE_KEY = "testlab-project";
-const OLD_STORAGE_KEY = "testlab-ide-state";
 const INDEX_FILE = "index";
-
-/* ── Helpers ────────────────────────────────────────────────────────────── */
-
-function uniqueName(base: string, existing: Set<string>): string {
-  if (!existing.has(base)) return base;
-  let i = 1;
-  while (existing.has(`${base}-${i}`)) i++;
-  return `${base}-${i}`;
-}
-
-function buildTestCaseTestsArray(
-  testOrder: string[],
-): { test: string }[] {
-  return testOrder.map((name) => ({ test: name }));
-}
-
-/* ── Store ──────────────────────────────────────────────────────────────── */
 
 export const useProjectStore = create<ProjectState>((set, get) => {
 
@@ -290,18 +180,15 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     get().markDirty(name);
     get().saveToLocalStorage();
   },
-
   updateTestCase: (model) => {
     set({ testCase: model, projectName: model.name });
     get().markDirty(INDEX_FILE);
     get().saveToLocalStorage();
   },
-
   setActiveFile: (file) => {
     set({ activeFile: file });
     get().saveToLocalStorage();
   },
-
   addSchema: (name, content) => {
     const { schemas } = get();
     const existing = new Set(schemas.keys());
@@ -311,7 +198,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     set({ schemas: next });
     get().saveToLocalStorage();
   },
-
   removeSchema: (name) => {
     const { schemas, activeFile } = get();
     const next = new Map(schemas);
@@ -323,7 +209,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     set({ schemas: next, activeFile: nextActive });
     get().saveToLocalStorage();
   },
-
   renameSchema: (oldName, newName) => {
     const { schemas } = get();
     const trimmed = newName.trim();
@@ -343,19 +228,14 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     next.set(name, true);
     set({ dirty: next });
   },
-
   markClean: (name) => {
     const next = new Map(get().dirty);
     next.delete(name);
     set({ dirty: next });
   },
-
   isDirty: (name) => get().dirty.has(name),
-
   isAnyDirty: () => get().dirty.size > 0,
-
   getTestNames: () => [...get().testOrder],
-
   getSchemaNames: () => [...get().schemas.keys()],
 
   getActiveModel: () => {
@@ -368,50 +248,12 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   getAggregatedVariables: () => {
     const { testCase, tests, testOrder } = get();
-    const merged = new Map<string, AggregatedVariable>();
-
-    // Collect from test-case level first (these are the "source of truth")
-    if (testCase.variables) {
-      for (const [name, def] of Object.entries(testCase.variables)) {
-        merged.set(name, { name, definition: def, usedBy: [], isTestCaseLevel: true });
-      }
-    }
-
-    // Scan each test for variables
-    for (const testName of testOrder) {
-      const script = tests.get(testName);
-      if (!script?.variables) continue;
-      for (const [varName, def] of Object.entries(script.variables)) {
-        const existing = merged.get(varName);
-        if (existing) {
-          existing.usedBy.push(testName);
-        } else {
-          merged.set(varName, { name: varName, definition: def, usedBy: [testName], isTestCaseLevel: false });
-        }
-      }
-    }
-
-    return [...merged.values()];
+    return computeAggregatedVariables(testCase, tests, testOrder);
   },
-
   getTestSummaries: () => {
-    const { tests, testOrder, testCase } = get();
-    return testOrder.map((name) => {
-      const script = tests.get(name);
-      const ref = testCase.tests.find(
-        (t) => typeof t === "object" && "test" in t && (t as { test: string }).test === name
-      ) as { with?: Record<string, unknown> } | undefined;
-
-      return {
-        name,
-        description: script?.description,
-        stepCount: (script?.setup?.length ?? 0) + (script?.steps?.length ?? 0) + (script?.teardown?.length ?? 0),
-        serviceNames: script?.services?.map((s) => s.name) ?? [],
-        overrides: ref?.with,
-      };
-    });
+    const { testCase, tests, testOrder } = get();
+    return computeTestSummaries(testCase, tests, testOrder);
   },
-
   updateTestCaseField: (field, value) => {
     const testCase = { ...get().testCase, [field]: value };
     set({ testCase });
@@ -419,12 +261,10 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     get().markDirty(INDEX_FILE);
     get().saveToLocalStorage();
   },
-
   exportZip: async () => {
     const { projectName, testCase, tests, schemas, testOrder } = get();
     await exportProjectZip(projectName, testCase, tests, schemas, testOrder);
   },
-
   exportFile: (name, type) => {
     const { testCase, tests, schemas } = get();
     if (type === "test-case") {
@@ -439,192 +279,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   },
 
   saveToLocalStorage: () => {
-    try {
-      const { projectName, testCase, tests, schemas, testOrder, activeFile, workspaceStates } = get();
-      const serialized: SerializedProject = {
-        projectName,
-        testCaseYaml: modelToYaml(testCase),
-        tests: Object.fromEntries(
-          [...tests.entries()].map(([k, v]) => [k, modelToYaml(v)])
-        ),
-        schemas: Object.fromEntries(
-          [...schemas.entries()].map(([k, v]) => [k, v.content])
-        ),
-        testOrder,
-        activeFile,
-        workspaceStates,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
-      set({ dirty: new Map() });
-    } catch {
-      // localStorage may be full or unavailable
-    }
+    saveProjectToLocalStorage(get, set);
   },
-
   loadFromLocalStorage: () => {
-    try {
-      // Try new project format first
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return loadSerializedProject(raw, set, get);
-
-      // Migrate from old single-document format
-      const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
-      if (oldRaw) {
-        const migrated = migrateOldStorage(oldRaw);
-        if (migrated) {
-          localStorage.removeItem(OLD_STORAGE_KEY);
-          return migrated;
-        }
-      }
-    } catch {
-      // corrupted localStorage
-    }
-    return false;
-
-    function migrateOldStorage(raw: string): boolean {
-      try {
-        const { yaml, projectName } = JSON.parse(raw);
-        if (!yaml) return false;
-        const result = yamlToModel(yaml);
-        if (!result.ok) return false;
-        get().loadFromDocument(result.model, projectName);
-        return true;
-      } catch {
-        return false;
-      }
-    }
+    return loadProjectFromLocalStorage(set, get);
   },
-
   loadFromDocument: (doc, name) => {
-    if (isTestCase(doc)) {
-      const tc = doc;
-      const projectName = name ?? tc.name ?? "Untitled";
-      const testsMap = new Map<string, ScriptDefinition>();
-      const order: string[] = [];
-
-      for (const entry of tc.tests) {
-        if (typeof entry === "object" && entry !== null && "kind" in entry && entry.kind === ScriptKind.TEST) {
-          const script = entry as ScriptDefinition;
-          testsMap.set(script.name, script);
-          order.push(script.name);
-        } else if (isTestRef(entry)) {
-          const testName = entry.test;
-          order.push(testName);
-          if (!testsMap.has(testName)) {
-            const empty = createEmptyTest();
-            empty.name = testName;
-            testsMap.set(testName, empty);
-          }
-        } else if (typeof entry === "string") {
-          const path = entry.replace(/^!include\s+/, "");
-          const baseName = path.replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
-          order.push(baseName);
-          if (!testsMap.has(baseName)) {
-            const empty = createEmptyTest();
-            empty.name = baseName;
-            testsMap.set(baseName, empty);
-          }
-        }
-      }
-
-      // Build a clean test case with TestRef entries
-      const cleanTc: TestCaseDefinition = {
-        ...tc,
-        name: projectName,
-        tests: buildTestCaseTestsArray(order),
-      };
-
-      set({
-        hasProject: true,
-        projectName,
-        projectGeneration: get().projectGeneration + 1,
-        testCase: cleanTc,
-        tests: testsMap,
-        testOrder: order,
-        schemas: new Map(),
-        activeFile: { type: "test-case", name: INDEX_FILE },
-        dirty: new Map(),
-        workspaceStates: {},
-      });
-    } else if (isTest(doc)) {
-      // Wrap a standalone test in a new test case
-      const script = doc as ScriptDefinition;
-      const projectName = name ?? script.name ?? "Untitled";
-      const tc = createEmptyTestCase();
-      tc.name = projectName;
-      tc.tests = [{ test: script.name }];
-
-      set({
-        hasProject: true,
-        projectName,
-        projectGeneration: get().projectGeneration + 1,
-        testCase: tc,
-        tests: new Map([[script.name, script]]),
-        testOrder: [script.name],
-        schemas: new Map(),
-        activeFile: { type: "test", name: script.name },
-        dirty: new Map(),
-        workspaceStates: {},
-      });
-    }
-    // Sync editor store so blocks render the correct model immediately
-    const activeModel = get().getActiveModel();
-    if (activeModel) {
-      useTestLabStore.getState().loadModel(activeModel);
-    }
-    get().saveToLocalStorage();
+    loadDocumentIntoStore(doc, name, set, get);
   },
 
   setWorkspaceState: (fileName, state) => {
     const { workspaceStates } = get();
     set({ workspaceStates: { ...workspaceStates, [fileName]: state } });
   },
-
   getWorkspaceState: (fileName) => {
     return get().workspaceStates[fileName] ?? null;
   },
   };
 });
-
-/* ── Internal helper — kept outside the store to avoid circular get() ───── */
-
-function loadSerializedProject(
-  raw: string,
-  set: (state: Partial<ProjectState>) => void,
-  get: () => ProjectState,
-): boolean {
-  try {
-    const data: SerializedProject = JSON.parse(raw);
-    const tcResult = yamlToModel(data.testCaseYaml);
-    if (!tcResult.ok || !isTestCase(tcResult.model)) return false;
-
-    const testsMap = new Map<string, ScriptDefinition>();
-    for (const [name, yaml] of Object.entries(data.tests)) {
-      const result = yamlToModel(yaml);
-      if (result.ok && isTest(result.model)) {
-        testsMap.set(name, result.model);
-      }
-    }
-
-    const schemasMap = new Map<string, SchemaFile>();
-    for (const [name, content] of Object.entries(data.schemas ?? {})) {
-      schemasMap.set(name, { name, content });
-    }
-
-    set({
-      hasProject: true,
-      projectName: data.projectName,
-      testCase: tcResult.model,
-      tests: testsMap,
-      schemas: schemasMap,
-      testOrder: data.testOrder ?? [],
-      activeFile: data.activeFile ?? { type: "test-case", name: INDEX_FILE },
-      dirty: new Map(),
-      workspaceStates: data.workspaceStates ?? {},
-    });
-    get().saveToLocalStorage();
-    return true;
-  } catch {
-    return false;
-  }
-}
