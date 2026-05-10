@@ -20,10 +20,22 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Crypto sub-module — key generation, encryption, and signing."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.security.crypto.encryption import encrypt_package, decrypt_package
+from tractusx_sdk.extensions.testlab.security.crypto.keygen import (
+    KeyPair,
+    generate_ed25519_keypair,
+    generate_rsa_keypair,
+)
+from tractusx_sdk.extensions.testlab.security.crypto.signing import sign_bytes, verify_signature
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = [
+    "KeyPair",
+    "generate_rsa_keypair",
+    "generate_ed25519_keypair",
+    "encrypt_package",
+    "decrypt_package",
+    "sign_bytes",
+    "verify_signature",
+]

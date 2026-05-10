@@ -20,10 +20,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Execution sub-module — core test execution engine, context, and monitoring."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["StepContext", "ExecutionMonitor", "TestlabPlayer"]

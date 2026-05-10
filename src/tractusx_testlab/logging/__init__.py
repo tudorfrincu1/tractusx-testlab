@@ -20,10 +20,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Logging module."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["StructuredLogger"]

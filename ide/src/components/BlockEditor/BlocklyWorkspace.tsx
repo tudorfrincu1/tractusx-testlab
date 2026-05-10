@@ -472,7 +472,7 @@ export function BlocklyWorkspace({ onTrashChange }: BlocklyWorkspaceProps) {
           rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
           rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
 
-          for (const input of ["VARIABLES", "PRECONDITIONS", "TESTS"]) {
+          for (const input of ["PRECONDITIONS", "TESTS"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);

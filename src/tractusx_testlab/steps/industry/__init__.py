@@ -20,10 +20,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Industry-layer steps: DTR / AAS and notification interactions."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
-
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+from tractusx_sdk.extensions.testlab.steps.industry import dtr  # noqa: F401
+from tractusx_sdk.extensions.testlab.steps.industry import notification  # noqa: F401
+from tractusx_sdk.extensions.testlab.steps.industry import submodels  # noqa: F401

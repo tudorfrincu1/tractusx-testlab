@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,11 +19,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""YAML syntax constants — keys, defaults, and patterns."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.syntax import context_vars, defaults, keys, patterns
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["context_vars", "defaults", "keys", "patterns"]

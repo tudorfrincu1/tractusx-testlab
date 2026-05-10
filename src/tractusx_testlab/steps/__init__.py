@@ -20,10 +20,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+from tractusx_sdk.extensions.testlab.steps.base import BaseStep
+from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+# Import step subpackages to trigger @step registrations
+import tractusx_sdk.extensions.testlab.steps.connector  # noqa: F401
+import tractusx_sdk.extensions.testlab.steps.industry  # noqa: F401
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["BaseStep", "AssertionEngine"]

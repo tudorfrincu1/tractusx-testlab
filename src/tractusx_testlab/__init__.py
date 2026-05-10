@@ -1,7 +1,7 @@
-###############################################################
-# Eclipse Tractus-X - Tractus-X TestLab
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,16 +11,57 @@
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
 # under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-###############################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Tractus-X TestLab — Visual test authoring for Eclipse Tractus-X dataspaces."""
+"""extensions.testlab — automated interoperability testing for Tractus-X dataspaces."""
 
-__version__ = "0.1.0"
+from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.compiler.packager import Packager
+from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
+from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
+from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
+from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+from tractusx_sdk.extensions.testlab.player.jobs import JobManager
+from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
+from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry, step
+from tractusx_sdk.extensions.testlab.scripting.script import TestCase, TestScript
+from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
+from tractusx_sdk.extensions.testlab.server.app import create_app
+from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+
+__all__ = [
+    # Player
+    "TestlabPlayer",
+    "StepContext",
+    "JobManager",
+    # Compiler
+    "Compiler",
+    "Packager",
+    "ScriptValidator",
+    # Scripting
+    "YamlParser",
+    "StepRegistry",
+    "step",
+    "TestCase",
+    "TestScript",
+    # Steps
+    "BaseStep",
+    "StepOutput",
+    # Config
+    "ConfigLoader",
+    "TestlabConfig",
+    # Security
+    "PlayerIdentity",
+    # Server
+    "create_app",
+]

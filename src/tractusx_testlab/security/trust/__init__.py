@@ -20,10 +20,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Trust sub-module — player identity, trust store, and vault client."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
+from tractusx_sdk.extensions.testlab.security.trust.trust_store import TrustStore
+from tractusx_sdk.extensions.testlab.security.trust.vault import VaultClient
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["PlayerIdentity", "TrustStore", "VaultClient"]

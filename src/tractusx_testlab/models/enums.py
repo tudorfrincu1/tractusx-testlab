@@ -1,0 +1,123 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
+
+"""Enumerations used across the Testlab module."""
+
+from __future__ import annotations
+
+import enum
+
+
+class StepStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+class ScriptStatus(str, enum.Enum):
+    IDLE = "IDLE"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class JobStatus(str, enum.Enum):
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    TIMED_OUT = "TIMED_OUT"
+
+
+class AssertionType(str, enum.Enum):
+    EXACT = "EXACT"
+    SCHEMA = "SCHEMA"
+    CONTAINS = "CONTAINS"
+    REGEX = "REGEX"
+    NOT_CONTAINS = "NOT_CONTAINS"
+    STATUS_CODE = "STATUS_CODE"
+
+
+class AssertionSeverity(str, enum.Enum):
+    HARD = "HARD"
+    SOFT = "SOFT"
+
+
+class FailurePolicy(str, enum.Enum):
+    ABORT = "ABORT"
+    CONTINUE = "CONTINUE"
+    SKIP_REST = "SKIP_REST"
+
+
+class ValueSource(str, enum.Enum):
+    INLINE = "INLINE"
+    FILE = "FILE"
+    VARIABLE = "VARIABLE"
+
+
+class SdkCallMode(str, enum.Enum):
+    ALLOWLIST = "ALLOWLIST"
+    OPEN = "OPEN"
+
+
+class ServiceType(str, enum.Enum):
+    CONNECTOR_CONSUMER = "CONNECTOR_CONSUMER"
+    CONNECTOR_PROVIDER = "CONNECTOR_PROVIDER"
+    DSP_CONSUMER = "DSP_CONSUMER"
+    DSP_PROVIDER = "DSP_PROVIDER"
+    DTR = "DTR"
+
+
+class PackageFormat(str, enum.Enum):
+    PLAIN = "PLAIN"
+    ENCRYPTED = "ENCRYPTED"
+
+
+class ServiceState(str, enum.Enum):
+    DECLARED = "DECLARED"
+    INITIALIZING = "INITIALIZING"
+    READY = "READY"
+    ACTIVE = "ACTIVE"
+    STOPPING = "STOPPING"
+    STOPPED = "STOPPED"
+    FAILED = "FAILED"
+
+
+class StepPhase(str, enum.Enum):
+    """Identifies which execution phase a step belongs to."""
+    SETUP = "SETUP"
+    MAIN = "MAIN"
+    CLEANUP = "CLEANUP"
+
+
+class ScriptKind(str, enum.Enum):
+    """Explicit type discriminator for YAML files, following the Kubernetes ``kind:`` convention."""
+    TEST = "test"
+    TEST_CASE = "test-case"

@@ -20,10 +20,27 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Testlab configuration model — resolves settings from YAML, env vars, CLI flags."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from __future__ import annotations
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+from pathlib import Path
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+from tractusx_sdk.extensions.testlab.models import VaultConfig
+
+_DEFAULT_BASE = Path.home() / ".testlab"
+
+
+class TestlabConfig(BaseModel):
+    keys_dir: Path = Field(default=_DEFAULT_BASE / "keys")
+    trust_store_dir: Path = Field(default=_DEFAULT_BASE / "trusted_compilers")
+    storage_dir: Path = Field(default=_DEFAULT_BASE / "packages")
+    logs_dir: Path = Field(default=_DEFAULT_BASE / "logs")
+    server_port: int = 8100
+    max_upload_bytes: int = 52_428_800  # 50 MB
+    default_timeout_s: float = 600.0
+    vault: Optional[VaultConfig] = None
+    library_path: Optional[Path] = None

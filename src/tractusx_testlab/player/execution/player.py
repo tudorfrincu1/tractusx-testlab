@@ -1,0 +1,506 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
+
+"""TestlabPlayer — async executor that runs test cases script-by-script, step-by-step."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Optional
+
+from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
+from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
+from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
+from tractusx_sdk.extensions.testlab.models import (
+    AssertionResult,
+    AssertionSummary,
+    JobStatus,
+    ScriptResult,
+    ScriptStatus,
+    StepPhase,
+    StepResult,
+    StepStatus,
+    TestCaseResult,
+)
+from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_sdk.extensions.testlab.player.jobs import JobManager
+from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
+from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
+from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
+from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
+from tractusx_sdk.extensions.testlab.scripting.script import TestCase, TestScript
+from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
+from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
+from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+
+# Ensure built-in steps are registered
+import tractusx_sdk.extensions.testlab.steps  # noqa: F401
+
+
+class TestlabPlayer:
+    """High-level API for executing test cases.
+
+    Usage::
+
+        player = TestlabPlayer()
+        result = await player.run("my_test_case.yaml")
+    """
+
+    __slots__ = ("_config", "_logger", "_monitor", "_jobs", "_loader")
+
+    def __init__(self, config: Optional[TestlabConfig] = None) -> None:
+        self._config = config or ConfigLoader.load()
+        self._logger = StructuredLogger("testlab.player", logs_dir=self._config.logs_dir)
+        self._monitor = ExecutionMonitor(self._logger)
+        self._jobs = JobManager()
+        self._loader = Loader()
+
+    @property
+    def jobs(self) -> JobManager:
+        return self._jobs
+
+    @property
+    def monitor(self) -> ExecutionMonitor:
+        return self._monitor
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    async def run(self, path: str | Path, runtime_vars: Optional[dict] = None) -> TestCaseResult:
+        """Load and execute a test case, returning the full result."""
+        test_case = self._loader.load(Path(path))
+        return await self.run_test_case(test_case, runtime_vars=runtime_vars)
+
+    async def run_test_case(
+        self,
+        test_case: TestCase,
+        runtime_vars: Optional[dict] = None,
+    ) -> TestCaseResult:
+        """Execute a loaded TestCase object."""
+        job = self._jobs.create(test_case.name)
+        if runtime_vars:
+            job.runtime_vars = runtime_vars
+
+        self._jobs.start(job.job_id)
+
+        job_logger = self._logger.for_job(job.job_id)
+        monitor = self._create_job_monitor(job_logger)
+        monitor.on_job_started(job.job_id, test_case.name)
+
+        svc_mgr = ServiceManager()
+        context = StepContext(services=svc_mgr, job=job, config=self._config)
+
+        self._seed_context_variables(context, test_case, runtime_vars)
+
+        test_case_started_at = datetime.now(timezone.utc)
+        ordered_scripts = topological_sort(test_case.scripts)
+        script_results = await self._execute_scripts_in_order(
+            ordered_scripts, context, job, monitor,
+        )
+        test_case_finished_at = datetime.now(timezone.utc)
+
+        svc_mgr.teardown()
+
+        result = self._build_test_case_result(
+            test_case.name, script_results, test_case_started_at, test_case_finished_at,
+        )
+        self._finalize_job(job, result, monitor, job_logger)
+        return result
+
+    # ------------------------------------------------------------------
+    # Test case helpers
+    # ------------------------------------------------------------------
+
+    def _create_job_monitor(self, job_logger: StructuredLogger) -> ExecutionMonitor:
+        """Create a monitor for a job, propagating player-level callbacks."""
+        monitor = ExecutionMonitor(job_logger)
+        for callback in self._monitor._callbacks:
+            monitor.add_callback(callback)
+        return monitor
+
+    @staticmethod
+    def _seed_context_variables(
+        context: StepContext,
+        test_case: TestCase,
+        runtime_vars: Optional[dict],
+    ) -> None:
+        """Seed context with shared variables (medium priority) and runtime vars (highest)."""
+        if test_case.definition.shared_variables:
+            for var_name, var_def in test_case.definition.shared_variables.items():
+                if var_def.default is not None:
+                    context.set_variable(var_name, var_def.default)
+
+        if runtime_vars:
+            for key, value in runtime_vars.items():
+                context.set_variable(key, value)
+
+    async def _execute_scripts_in_order(
+        self,
+        ordered_scripts: list[TestScript],
+        context: StepContext,
+        job: Any,
+        monitor: ExecutionMonitor,
+    ) -> list[ScriptResult]:
+        """Execute scripts respecting dependency order, skipping on unmet deps."""
+        script_results: list[ScriptResult] = []
+        completed_tests: set[str] = set()
+
+        for idx, script in enumerate(ordered_scripts):
+            unmet_deps = [dep for dep in script.depends_on if dep not in completed_tests]
+
+            if unmet_deps:
+                skipped_result = self._make_skipped_result(script, unmet_deps)
+                script_results.append(skipped_result)
+                monitor.on_script_started(job.job_id, script.name, idx)
+                monitor.on_script_completed(job.job_id, skipped_result)
+                continue
+
+            monitor.on_script_started(job.job_id, script.name, idx)
+            job.current_script = script.name
+
+            script_result = await self._run_script(script, context, job.job_id, monitor)
+            script_results.append(script_result)
+            monitor.on_script_completed(job.job_id, script_result)
+
+            if script_result.status == ScriptStatus.COMPLETED:
+                completed_tests.add(script.name)
+                self._propagate_script_outputs(script, context)
+
+        return script_results
+
+    @staticmethod
+    def _make_skipped_result(script: TestScript, unmet_deps: list[str]) -> ScriptResult:
+        """Build a FAILED result for a script whose dependencies were not met."""
+        now = datetime.now(timezone.utc)
+        return ScriptResult(
+            script_name=script.name,
+            dataspace_version=script.definition.dataspace_version,
+            status=ScriptStatus.FAILED,
+            steps=[],
+            started_at=now,
+            finished_at=now,
+            total_duration_s=0.0,
+            assertion_summary=AssertionSummary(total=0, passed=0, failed_hard=0, failed_soft=0),
+            error=f"Skipped — unmet dependencies: {', '.join(unmet_deps)}",
+        )
+
+    @staticmethod
+    def _propagate_script_outputs(script: TestScript, context: StepContext) -> None:
+        """Promote script output variables to the shared namespace for downstream tests."""
+        for export_name, var_ref in script.definition.outputs.items():
+            value = context.get_variable(var_ref)
+            if value is not None:
+                context.set_variable(export_name, value)
+                context.set_variable(f"!{script.name}:{export_name}", value)
+
+    @staticmethod
+    def _build_test_case_result(
+        test_case_name: str,
+        script_results: list[ScriptResult],
+        started_at: datetime,
+        finished_at: datetime,
+    ) -> TestCaseResult:
+        """Aggregate script results into a single TestCaseResult."""
+        all_passed = all(script.status == ScriptStatus.COMPLETED for script in script_results)
+        return TestCaseResult(
+            test_case_id=test_case_name,
+            status=ScriptStatus.COMPLETED if all_passed else ScriptStatus.FAILED,
+            scripts=script_results,
+            started_at=started_at,
+            finished_at=finished_at,
+        )
+
+    def _finalize_job(
+        self,
+        job: Any,
+        result: TestCaseResult,
+        monitor: ExecutionMonitor,
+        job_logger: StructuredLogger,
+    ) -> None:
+        """Update job status and close the logger after execution completes."""
+        job.result = result
+        if result.passed:
+            self._jobs.complete(job.job_id)
+            monitor.on_job_completed(job.job_id, JobStatus.COMPLETED)
+        else:
+            self._jobs.fail(job.job_id, "One or more scripts failed")
+            monitor.on_job_completed(job.job_id, JobStatus.FAILED)
+        job_logger.close()
+
+    # ------------------------------------------------------------------
+    # Script execution
+    # ------------------------------------------------------------------
+
+    async def _run_script(
+        self, script: TestScript, context: StepContext, job_id: str, monitor: ExecutionMonitor,
+    ) -> ScriptResult:
+        """Execute all steps in a script sequentially."""
+        self._seed_script_defaults(script, context)
+        self._register_script_services(script, context)
+
+        script_start = datetime.now(timezone.utc)
+
+        # Phase 1: Setup — must succeed for main steps to run
+        setup_results, setup_status = await self._execute_setup_steps(
+            script, context, job_id, monitor,
+        )
+
+        # Phase 2: Main steps — only if setup passed
+        step_results: list[StepResult] = []
+        if setup_status == ScriptStatus.FAILED:
+            script_status = ScriptStatus.FAILED
+        else:
+            step_results, script_status = await self._execute_steps(
+                script, context, job_id, monitor,
+            )
+
+        # Phase 3: Cleanup — always runs
+        cleanup_results = await self._execute_cleanup_steps(
+            script, context, job_id, monitor,
+        )
+
+        script_end = datetime.now(timezone.utc)
+        all_step_results = setup_results + step_results + cleanup_results
+
+        return ScriptResult(
+            script_name=script.name,
+            dataspace_version=script.definition.dataspace_version,
+            status=script_status,
+            steps=all_step_results,
+            started_at=script_start,
+            finished_at=script_end,
+            total_duration_s=(script_end - script_start).total_seconds(),
+            assertion_summary=AssertionEngine.build_summary(all_step_results),
+        )
+
+    @staticmethod
+    def _seed_script_defaults(script: TestScript, context: StepContext) -> None:
+        """Seed script-level variable defaults (lowest priority)."""
+        for var_name, var_def in script.definition.variables.items():
+            if var_def.default is not None and not context.has_variable(var_name):
+                context.set_variable(var_name, var_def.default)
+
+    @staticmethod
+    def _register_script_services(script: TestScript, context: StepContext) -> None:
+        """Register services declared in the script, resolving ${var} references."""
+        for svc_def in script.definition.services:
+            resolved = resolve_service_def(svc_def, context)
+            context.services.register(resolved)
+
+    async def _execute_setup_steps(
+        self,
+        script: TestScript,
+        context: StepContext,
+        job_id: str,
+        monitor: ExecutionMonitor,
+    ) -> tuple[list[StepResult], ScriptStatus]:
+        """Run setup steps; stops on first failure (skipping main steps, but cleanup still runs)."""
+        setup_results: list[StepResult] = []
+        setup_status = ScriptStatus.COMPLETED
+
+        for step_idx, step_def in enumerate(script.definition.setup):
+            step_name = f"{script.name}[setup:{step_idx}]:{step_def.type}"
+            monitor.on_step_started(job_id, step_idx, f"setup:{step_def.type}")
+            self._jobs.set_current_step(job_id, step_name)
+
+            # --- if-condition gate -------------------------------------------
+            if not ConditionEvaluator.should_run(
+                step_def.if_condition, setup_results, context,
+            ):
+                skipped = StepResult(
+                    step_name=step_name,
+                    step_type=step_def.type,
+                    phase=StepPhase.SETUP,
+                    status=StepStatus.SKIPPED,
+                )
+                setup_results.append(skipped)
+                monitor.on_step_completed(job_id, skipped)
+                continue
+
+            step_cls = StepRegistry.get(step_def.type, script.definition.version)
+            if step_cls is None:
+                missing_step = StepResult(
+                    step_name=step_name,
+                    step_type=step_def.type,
+                    phase=StepPhase.SETUP,
+                    status=StepStatus.FAILED,
+                    error=f"No implementation found for setup step type '{step_def.type}'",
+                )
+                setup_results.append(missing_step)
+                return setup_results, ScriptStatus.FAILED
+
+            step_result = await self._run_step(step_cls, step_def, step_name, context)
+            step_result.phase = StepPhase.SETUP
+            setup_results.append(step_result)
+            monitor.on_step_completed(job_id, step_result)
+
+            self._store_step_outputs(step_def, step_result, context)
+
+            if step_result.status == StepStatus.FAILED:
+                return setup_results, ScriptStatus.FAILED
+
+        return setup_results, setup_status
+
+    async def _execute_steps(
+        self,
+        script: TestScript,
+        context: StepContext,
+        job_id: str,
+        monitor: ExecutionMonitor,
+    ) -> tuple[list[StepResult], ScriptStatus]:
+        """Run the main step sequence, stopping on first failure."""
+        step_results: list[StepResult] = []
+        script_status = ScriptStatus.COMPLETED
+
+        for step_idx, step_def in enumerate(script.definition.steps):
+            step_name = f"{script.name}[{step_idx}]:{step_def.type}"
+            monitor.on_step_started(job_id, step_idx, step_def.type)
+            self._jobs.set_current_step(job_id, step_name)
+
+            # --- if-condition gate -------------------------------------------
+            if not ConditionEvaluator.should_run(
+                step_def.if_condition, step_results, context,
+            ):
+                skipped = StepResult(
+                    step_name=step_name,
+                    step_type=step_def.type,
+                    status=StepStatus.SKIPPED,
+                )
+                step_results.append(skipped)
+                monitor.on_step_completed(job_id, skipped)
+                continue
+
+            step_cls = StepRegistry.get(step_def.type, script.definition.version)
+            if step_cls is None:
+                missing_step = StepResult(
+                    step_name=step_name,
+                    step_type=step_def.type,
+                    status=StepStatus.FAILED,
+                    error=f"No implementation found for step type '{step_def.type}'",
+                )
+                step_results.append(missing_step)
+                return step_results, ScriptStatus.FAILED
+
+            step_result = await self._run_step(step_cls, step_def, step_name, context)
+            step_results.append(step_result)
+            monitor.on_step_completed(job_id, step_result)
+
+            self._store_step_outputs(step_def, step_result, context)
+
+            if step_result.status == StepStatus.FAILED:
+                return step_results, ScriptStatus.FAILED
+
+        return step_results, script_status
+
+    @staticmethod
+    def _store_step_outputs(
+        step_def: Any, step_result: StepResult, context: StepContext,
+    ) -> None:
+        """Persist step outputs into context variables when store_in_memory is configured."""
+        if not step_def.store_in_memory or step_result.output is None:
+            return
+        for var_name, output_path in step_def.store_in_memory.items():
+            if output_path == ".":
+                value = step_result.output
+            else:
+                value = AssertionEngine.extract_path(step_result.output, output_path)
+            context.set_variable(var_name, value)
+
+    async def _execute_cleanup_steps(
+        self,
+        script: TestScript,
+        context: StepContext,
+        job_id: str,
+        monitor: ExecutionMonitor,
+    ) -> list[StepResult]:
+        """Run cleanup steps unconditionally (even after failure)."""
+        cleanup_results: list[StepResult] = []
+        for step_idx, step_def in enumerate(script.definition.cleanup):
+            cleanup_name = f"{script.name}[cleanup:{step_idx}]:{step_def.type}"
+            monitor.on_step_started(job_id, step_idx, f"cleanup:{step_def.type}")
+
+            step_cls = StepRegistry.get(step_def.type, script.definition.version)
+            if step_cls:
+                result = await self._run_step(step_cls, step_def, cleanup_name, context)
+            else:
+                result = StepResult(
+                    step_name=cleanup_name,
+                    step_type=step_def.type,
+                    phase=StepPhase.CLEANUP,
+                    status=StepStatus.FAILED,
+                    error=f"No implementation found for cleanup step '{step_def.type}'",
+                )
+            result.phase = StepPhase.CLEANUP
+            cleanup_results.append(result)
+            monitor.on_step_completed(job_id, result)
+
+        return cleanup_results
+
+    async def _run_step(self, step_cls: type, step_def: Any, step_name: str, context: StepContext) -> StepResult:
+        """Execute a single step and evaluate its assertions."""
+        step_instance = step_cls()
+        params = resolve_params(step_def.params, context)
+        started_at = datetime.now(timezone.utc)
+
+        try:
+            output = await step_instance.execute(params, context, step_def)
+
+            # Evaluate assertions
+            assertion_results: list[AssertionResult] = []
+            if step_def.expect:
+                assertion_results = AssertionEngine.evaluate(
+                    step_def.expect, output, context.variables
+                )
+
+            finished_at = datetime.now(timezone.utc)
+            failed = AssertionEngine.has_hard_failure(assertion_results)
+
+            return StepResult(
+                step_name=step_name,
+                step_type=step_def.type,
+                status=StepStatus.FAILED if failed else StepStatus.PASSED,
+                started_at=started_at,
+                finished_at=finished_at,
+                duration_s=(finished_at - started_at).total_seconds(),
+                output=output.value,
+                request=output.request,
+                response=output.response,
+                assertions=assertion_results,
+            )
+        except Exception as exc:
+            finished_at = datetime.now(timezone.utc)
+            return StepResult(
+                step_name=step_name,
+                step_type=step_def.type,
+                status=StepStatus.FAILED,
+                started_at=started_at,
+                finished_at=finished_at,
+                duration_s=(finished_at - started_at).total_seconds(),
+                error=str(exc),
+            )
+
+

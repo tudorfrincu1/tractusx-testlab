@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,11 +19,23 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Default values applied when optional YAML fields are omitted."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+# -- Document defaults --------------------------------------------------------
+VERSION = "1.0"
+DATASPACE_VERSION = "saturn"
+NAME = ""
+BASE_URL = ""
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+# -- Assertion defaults -------------------------------------------------------
+ASSERTION_TYPE = "EXACT"
+ASSERTION_SEVERITY = "HARD"
+VALUE_SOURCE = "INLINE"
+
+# -- Service defaults ---------------------------------------------------------
+SERVICE_TYPE = "CONNECTOR_CONSUMER"
+DMA_PATH = "/management"
+AAS_API_PATH = "/api/v3.0"

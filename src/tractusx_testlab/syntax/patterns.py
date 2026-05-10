@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,11 +19,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Compiled regex patterns for variable and output reference resolution."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from __future__ import annotations
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+import re
+
+VAR_REF = re.compile(r"\$\{(!?[\w]+(?::[\w]+)?)}")
+"""Matches ``${var}`` and ``${!test:output}`` references."""
+
+OUTPUT_REF = re.compile(r"\$\{!([^:}]+):([^}]+)}")
+"""Matches ``${!test_name:output_name}`` — captures test name and output name."""

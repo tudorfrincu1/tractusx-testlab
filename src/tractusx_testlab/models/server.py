@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,11 +19,33 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Server models — uploaded packages and vault configuration."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from __future__ import annotations
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
+from tractusx_sdk.extensions.testlab.models.enums import PackageFormat
+
+
+class UploadedPackage(BaseModel):
+    package_id: str
+    name: str
+    version: str
+    format: PackageFormat = PackageFormat.PLAIN
+    size_bytes: int = 0
+    uploaded_at: Optional[datetime] = None
+    checksum: str = ""
+    file_path: Optional[str] = None
+
+
+class VaultConfig(BaseModel):
+    vault_url: str
+    vault_token: str = ""
+    vault_secret_path: str = "secret/data/testlab"

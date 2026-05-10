@@ -20,10 +20,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Compiler module — validate, compile, and package test scripts."""
+"""Loading sub-module — test case loading, dependency ordering, and parameter resolution."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
+from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
+from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
 
-__all__ = ["ScriptValidator", "Packager", "Compiler"]
+__all__ = ["Loader", "topological_sort", "resolve_params", "resolve_service_def"]

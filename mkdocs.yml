@@ -119,6 +119,15 @@ nav:
     - First Test: tutorials/index.md
   - API Reference:
     - Overview: api-reference/index.md
+  - Developer:
+    - Overview: developer/index.md
+    - Architecture: developer/architecture.md
+    - State Management: developer/state-management.md
+    - Block System: developer/block-system.md
+    - Components: developer/components.md
+    - Data Models: developer/data-models.md
+    - Sync Layer: developer/sync-layer.md
+    - Step-by-Step Tutorials: developer/tutorials.md
   - Contributing:
     - Guidelines: contributing/index.md
 
