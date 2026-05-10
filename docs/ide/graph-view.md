@@ -25,8 +25,6 @@
 
 The Graph View shows a visual diagram of your test's step sequence and data dependencies. It sits in the right panel, toggled via the **Graph** tab.
 
-![Graph View](../assets/images/ide/graph-view.png)
-
 ## Viewing Modes
 
 The Graph View has two modes, toggled with buttons in the panel header:
@@ -35,7 +33,14 @@ The Graph View has two modes, toggled with buttons in the panel header:
 
 Shows the **step execution order** as a directed graph. Each node is a step, and edges show the sequence from top to bottom.
 
-![Execution Flow](../assets/images/ide/graph-execution-flow.png)
+```mermaid
+graph TD
+    A[Create Asset] --> B[Create Policy]
+    B --> C[Create Contract]
+    C --> D[Negotiate Contract]
+    D --> E[Transfer Data]
+    E --> F[Validate Response]
+```
 
 Use this mode to understand:
 
@@ -47,7 +52,13 @@ Use this mode to understand:
 
 Shows how **data flows between steps** through variables. Edges connect step outputs to the inputs of downstream steps that consume them.
 
-![Data Flow](../assets/images/ide/graph-data-flow.png)
+```mermaid
+graph LR
+    A[Create Asset] -- asset_id --> C[Create Contract]
+    B[Create Policy] -- policy_id --> C
+    C -- contract_id --> D[Negotiate Contract]
+    D -- agreement_id --> E[Transfer Data]
+```
 
 Use this mode to understand:
 

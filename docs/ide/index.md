@@ -43,8 +43,6 @@ On the Welcome Screen, choose one of:
 - **Open File** — import an existing `.yaml`, `.yml`, or `.zip` project
 - **Example** — load a pre-built example to explore
 
-![Welcome Screen](../assets/images/ide/welcome-screen.png)
-
 ### 3. Build your test
 
 1. Click a test in the **Project Explorer** to open it in the Block Editor
@@ -61,8 +59,6 @@ Click **Export** in the top bar to download your project as a `.zip` archive or 
 ## IDE Layout
 
 The IDE uses a multi-panel layout that adapts to what you're editing.
-
-![IDE Layout Overview](../assets/images/ide/layout-overview.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

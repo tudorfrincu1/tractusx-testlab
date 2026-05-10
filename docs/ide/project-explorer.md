@@ -25,8 +25,6 @@
 
 The Project Explorer is the left sidebar that shows the structure of your project. It displays your test case, tests, and schemas in a tree view.
 
-![Project Explorer](../assets/images/ide/project-explorer.png)
-
 ## Project Structure
 
 Every project has three sections:
@@ -47,8 +45,6 @@ Every project has three sections:
 
 The **active file** is highlighted with a gold border. Files with unsaved changes show a dot indicator (•).
 
-![Active File Indicator](../assets/images/ide/project-explorer-active.png)
-
 ## Managing Tests
 
 **Right-click** on the Tests folder or any test file to see the context menu:
@@ -59,8 +55,6 @@ The **active file** is highlighted with a gold border. Files with unsaved change
 | **Rename** | Renames the selected test |
 | **Duplicate** | Creates a copy of the selected test |
 | **Delete** | Removes the test (with confirmation) |
-
-![Context Menu](../assets/images/ide/project-explorer-context-menu.png)
 
 ## Reordering Tests
 
@@ -85,8 +79,6 @@ The new order is reflected in the test case's `tests:` array in YAML.
 ## Downloading Semantic Models
 
 The Schema Download Dialog lets you browse and download JSON schemas from the Eclipse Tractus-X `sldt-semantic-models` GitHub repository.
-
-![Schema Download Dialog](../assets/images/ide/schema-download-dialog.png)
 
 1. Open the dialog from the Schemas context menu → **Download Model**
 2. **Search** for a model by name (e.g., `bill_of_material`)

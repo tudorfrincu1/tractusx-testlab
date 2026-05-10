@@ -29,8 +29,6 @@ The IDE supports exporting your project for execution and importing existing pro
 
 Click the **Export** button in the top bar to open the Export Dialog.
 
-![Export Dialog](../assets/images/ide/export-dialog.png)
-
 ### Export Dialog
 
 The dialog shows two panels:

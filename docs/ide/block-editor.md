@@ -25,13 +25,12 @@
 
 The Block Editor is the main workspace where you build tests visually. It uses [Blockly](https://developers.google.com/blockly) — the same technology behind Scratch — to let you drag, connect, and configure blocks without writing code.
 
-![Block Editor](../assets/images/ide/block-editor.png)
+!!! info "Block Editor layout"
+    The workspace has a **Toolbox** on the left with block categories, a central **canvas** where you drag and connect blocks, and a **trashcan** icon in the bottom-right for deleting blocks.
 
 ## Toolbar
 
 The Block Editor toolbar sits above the workspace:
-
-![Block Editor Toolbar](../assets/images/ide/block-editor-toolbar.png)
 
 | Button | Description |
 |--------|-------------|
@@ -44,8 +43,6 @@ The Block Editor toolbar sits above the workspace:
 ## Toolbox
 
 The **Toolbox** is the panel on the left side of the workspace. It contains all available blocks organized by category.
-
-![Toolbox Categories](../assets/images/ide/toolbox.png)
 
 Click a category to expand its flyout and see the available blocks. Categories are color-coded for quick identification:
 
@@ -71,8 +68,6 @@ Click a category to expand its flyout and see the available blocks. Categories a
 2. **Drag** a block from the flyout onto the workspace
 3. The block appears with default values and input slots
 
-![Dragging a Block](../assets/images/ide/drag-block.png)
-
 ## Connecting Blocks
 
 Blocks snap together like puzzle pieces:
@@ -80,8 +75,6 @@ Blocks snap together like puzzle pieces:
 - **Step blocks** connect vertically — the bottom of one step connects to the top of the next
 - **Value blocks** connect horizontally — plug them into input slots on step blocks
 - **Assertion blocks** chain inside a step's `expect:` section
-
-![Connected Blocks](../assets/images/ide/connected-blocks.png)
 
 ### Auto-linking
 
@@ -99,8 +92,6 @@ Each block has fields you can edit directly on the block:
 | **Service reference** | Dropdown populated from configured services |
 | **Variable reference** | Dropdown populated from outputs of previous steps |
 | **JSON (key-value)** | Attach `key_value_pair` blocks to build objects |
-
-![Block Fields](../assets/images/ide/block-fields.png)
 
 ## Using Variables
 

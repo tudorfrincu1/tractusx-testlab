@@ -29,8 +29,6 @@ Services represent the external systems your test interacts with — EDC connect
 
 Click the **Add/Remove Services** button in the Block Editor toolbar to open the Service Dialog.
 
-![Service Dialog](../assets/images/ide/service-dialog.png)
-
 ## Adding a Service
 
 1. In the Service Dialog, click one of the service type buttons on the left panel:
@@ -46,8 +44,6 @@ Click the **Add/Remove Services** button in the Block Editor toolbar to open the
 2. A new service is created with a default name (e.g., `connector_consumer_1`)
 3. The service editor form opens on the right panel
 
-![Adding a Service](../assets/images/ide/service-add.png)
-
 ## Configuring a Service
 
 Fill in the form fields for your service:
@@ -59,8 +55,6 @@ Fill in the form fields for your service:
 | **Auth Type** | Authentication method — `NONE`, `API_KEY`, `BEARER`, etc. |
 | **API Key / Token** | Credentials (masked as password fields) |
 | **Config** | Additional key-value configuration parameters |
-
-![Service Configuration](../assets/images/ide/service-config.png)
 
 !!! tip "Service names matter"
     The service name you set here appears in block dropdowns throughout the editor. Choose descriptive names like `provider_alice` or `consumer_bob` to keep your test readable.

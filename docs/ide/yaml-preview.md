@@ -25,8 +25,6 @@
 
 The YAML Preview panel shows the generated test definition in real time. It sits on the right side of the editor and uses the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the same editor that powers VS Code).
 
-![YAML Preview](../assets/images/ide/yaml-preview.png)
-
 ## Viewing YAML
 
 As you drag and connect blocks in the Block Editor, the YAML preview updates automatically. The generated YAML is the exact test definition that the TestLab runtime will execute.
@@ -47,8 +45,6 @@ The editor uses a custom dark theme with color-coded tokens:
 
 When you **click a block** in the Block Editor, the corresponding YAML lines are highlighted in gold and the editor auto-scrolls to show them.
 
-![Step Highlighting](../assets/images/ide/yaml-step-highlight.png)
-
 This works both ways — the block and YAML stay in sync.
 
 ## Editing YAML Directly
@@ -58,8 +54,6 @@ By default the YAML editor is in **read-only mode** — indicated by a lock icon
 1. Click the **lock icon** to toggle read-only mode off
 2. Edit the YAML text
 3. Changes sync back to the Block Editor after a 1-second debounce
-
-![Read-Only Toggle](../assets/images/ide/yaml-readonly-toggle.png)
 
 When read-only mode is off:
 
@@ -95,8 +89,6 @@ The editor shows validation errors inline:
 | Yellow/orange squiggly underline | Warning — the test may behave unexpectedly |
 
 Hover over a marker to see the error message in a tooltip.
-
-![Error Markers](../assets/images/ide/yaml-error-markers.png)
 
 Errors are also summarized in the [Status Bar](#status-bar) at the bottom of the IDE.
 

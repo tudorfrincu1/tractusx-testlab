@@ -25,8 +25,6 @@
 
 The Welcome Screen is the first thing you see when opening the IDE. It lets you create a new project, open an existing one, or load a built-in example.
 
-![Welcome Screen](../assets/images/ide/welcome-screen.png)
-
 ## Creating a New Project
 
 1. Click the **New Project** card
@@ -51,8 +49,6 @@ The new project starts with an empty `index.yaml` test case file. You can rename
 ## Loading an Example
 
 The bottom section shows built-in example projects organized by category:
-
-![Example Templates](../assets/images/ide/welcome-examples.png)
 
 | Category | Examples |
 |----------|----------|

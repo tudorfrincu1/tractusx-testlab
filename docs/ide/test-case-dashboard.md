@@ -25,8 +25,6 @@
 
 The Test Case Dashboard appears when you select the `index.yaml` (test case) file in the Project Explorer. It provides an overview of your entire test pipeline.
 
-![Test Case Dashboard](../assets/images/ide/test-case-dashboard.png)
-
 ## Dashboard Header
 
 The header displays the test case name with version and dataspace version badges.
@@ -50,8 +48,6 @@ Edit the test case's top-level properties:
 | **Dataspace Version** | Target dataspace version (e.g., `saturn`, `jupiter`) |
 | **Description** | Free-text description of what the test case validates |
 
-![Metadata Section](../assets/images/ide/dashboard-metadata.png)
-
 #### Variables Overview
 
 Lists all variables defined at the test-case level. Each variable shows:
@@ -63,8 +59,6 @@ Lists all variables defined at the test-case level. Each variable shows:
 
 These variables are available to all tests in the pipeline via `@variable_name` syntax.
 
-![Variables Overview](../assets/images/ide/dashboard-variables.png)
-
 #### Test Pipeline Table
 
 A table showing all tests in their execution order:
@@ -75,8 +69,6 @@ A table showing all tests in their execution order:
 | **Steps** | Number of steps in the test |
 | **Services Used** | Which services the test references |
 | **Overrides** | Any variable overrides specific to this test |
-
-![Test Pipeline](../assets/images/ide/dashboard-pipeline.png)
 
 **Interactions:**
 

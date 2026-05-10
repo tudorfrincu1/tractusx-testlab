@@ -125,7 +125,32 @@ nav:
     - Export & Import: ide/export-import.md
     - Test Case Dashboard: ide/test-case-dashboard.md
   - Specification:
-    - YAML Format: specification/index.md
+    - Overview: specification/index.md
+    - Installation: specification/installation.md
+    - Specification:
+      - Concepts & Terminology: specification/specification/concepts.md
+      - Functional Requirements: specification/specification/functional-requirements.md
+      - Data Models: specification/specification/data-models.md
+      - Constraints & Verification: specification/specification/constraints.md
+      - Package Security: specification/specification/security.md
+    - Walkthrough:
+      - Overview: specification/walkthrough/index.md
+      - Writing Test Scripts: specification/walkthrough/writing-test-scripts.md
+      - Compiling Packages: specification/walkthrough/compiling-packages.md
+      - Executing Tests: specification/walkthrough/executing-tests.md
+    - Reference:
+      - YAML Script Format: specification/reference/yaml-format.md
+      - Module Structure: specification/reference/module-structure.md
+      - Package Format: specification/reference/package-format.md
+      - Syntax:
+        - Overview: specification/reference/syntax/index.md
+        - Tests: specification/reference/syntax/tests.md
+        - Test Cases: specification/reference/syntax/test-cases.md
+        - Services: specification/reference/syntax/services.md
+        - Assertions: specification/reference/syntax/assertions.md
+        - Conditions: specification/reference/syntax/conditions.md
+        - Dependencies & Outputs: specification/reference/syntax/dependencies-and-outputs.md
+        - Advanced Step Types: specification/reference/syntax/advanced-steps.md
   - Tutorials:
     - Getting Started: tutorials/index.md
     - Create a Block: tutorials/create-block.md
@@ -146,6 +171,7 @@ nav:
   - Developer:
     - Overview: developer/index.md
     - Architecture: developer/architecture.md
+    - AI-Assisted Development: developer/ai-development.md
     - State Management: developer/state-management.md
     - Block System: developer/block-system.md
     - Components: developer/components.md
