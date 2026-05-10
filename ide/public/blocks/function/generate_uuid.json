@@ -1,0 +1,9 @@
+{
+  "type": "generate_uuid",
+  "label": "Generate UUID",
+  "description": "Generate a random UUID v4 and store it in a variable.",
+  "params": [],
+  "outputs": [
+    { "name": "uuid", "description": "The generated UUID string" }
+  ]
+}

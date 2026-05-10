@@ -1,0 +1,9 @@
+{
+  "type": "delay",
+  "label": "Delay",
+  "description": "Pause test execution for a fixed duration.",
+  "params": [
+    { "name": "seconds", "type": "number", "required": true, "description": "Seconds to wait", "default": 1 }
+  ],
+  "outputs": []
+}

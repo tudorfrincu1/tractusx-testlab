@@ -24,7 +24,7 @@
 import { useRef } from "react";
 import { useProjectStore } from "../../store/useProjectStore";
 import { yamlToModel } from "../../sync/yamlToModel";
-import { importProjectZip } from "../../store/projectIO";
+import { importProjectZip, importExampleFolder } from "../../store/projectIO";
 import { theme } from "../../theme/tractusxTheme";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -35,6 +35,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import ScienceIcon from "@mui/icons-material/Science";
 
 /* ── Example definitions ────────────────────────────────────────────────── */
 
@@ -47,12 +48,13 @@ interface ExampleEntry {
 }
 
 const EXAMPLES: ExampleEntry[] = [
-  { file: "minimal_test.yaml", label: "Minimal Test", description: "Single HTTP request + status check", icon: <HttpIcon sx={{ fontSize: 20 }} />, category: "test" },
-  { file: "asset_exchange.yaml", label: "Asset Exchange", description: "Full DSP flow: create, negotiate, fetch", icon: <SwapHorizIcon sx={{ fontSize: 20 }} />, category: "test" },
-  { file: "mock_dtr_test.yaml", label: "Mock DTR Test", description: "Twin registration with mock registry", icon: <StorageIcon sx={{ fontSize: 20 }} />, category: "test" },
-  { file: "twin_submodel_test.yaml", label: "Twin + Submodel", description: "Register twin and attach submodel", icon: <AccountTreeIcon sx={{ fontSize: 20 }} />, category: "test" },
-  { file: "notification_flow.yaml", label: "Notification Flow", description: "Send alert + verify with mock receiver", icon: <NotificationsActiveIcon sx={{ fontSize: 20 }} />, category: "test" },
-  { file: "discovery_exchange_suite.yaml", label: "Discovery + Exchange Suite", description: "Multi-test: discover then exchange", icon: <PlaylistAddIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "connector-ping-v1.0/index.yaml", label: "Connector Ping", description: "Verify connector responds to catalog query", icon: <HttpIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "dtr-ping-v1.0/index.yaml", label: "DTR Ping", description: "Negotiate dataplane access to DTR", icon: <StorageIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "industry-core-validation-v1.0/index.yaml", label: "Industry Core Validation", description: "Shell descriptors + submodel schema validation", icon: <AccountTreeIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "traceability-notification-v1.0/index.yaml", label: "Traceability Notification", description: "Quality investigation + alert notification flows", icon: <NotificationsActiveIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "certificate-management-v1.0/index.yaml", label: "Certificate Management", description: "CCMAPI offer, validation, and feedback", icon: <PlaylistAddIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "special-characteristics-v1.0/index.yaml", label: "Special Characteristics", description: "Notification + data transfer validation", icon: <SwapHorizIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "product-carbon-footprint-v1.0/index.yaml", label: "Product Carbon Footprint", description: "PCF data discovery + schema validation", icon: <ScienceIcon sx={{ fontSize: 20 }} />, category: "test-case" },
 ];
 
 /* ── Component ──────────────────────────────────────────────────────────── */
@@ -97,15 +99,23 @@ export function WelcomeScreen() {
 
   const handleLoadExample = async (file: string) => {
     try {
-      const resp = await fetch(`${import.meta.env.BASE_URL}examples/${file}`);
-      if (!resp.ok) return;
-      const text = await resp.text();
-      const result = yamlToModel(text);
-      if (result.ok) {
-        loadFromDocument(result.model, result.model.name);
+      const project = await importExampleFolder(file);
+      if (project) {
+        useProjectStore.setState({
+          hasProject: true,
+          projectName: project.projectName,
+          projectGeneration: useProjectStore.getState().projectGeneration + 1,
+          testCase: project.testCase,
+          tests: project.tests,
+          schemas: project.schemas,
+          testOrder: project.testOrder,
+          activeFile: { type: "test-case", name: "index" },
+          dirty: new Map(),
+          workspaceStates: {},
+        });
       }
     } catch {
-      // Example file not available
+      // Example not available
     }
   };
 

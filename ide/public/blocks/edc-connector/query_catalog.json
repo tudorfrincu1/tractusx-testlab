@@ -1,0 +1,14 @@
+{
+  "type": "query_catalog",
+  "label": "Query Catalog",
+  "description": "Send a catalog request to the connector and retrieve available offers.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service to query" },
+    { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
+    { "name": "filter", "type": "json", "required": false, "description": "Optional filter criteria for the catalog request" }
+  ],
+  "outputs": [
+    { "name": "catalog", "description": "The full catalog response" },
+    { "name": "datasets", "description": "Array of datasets (offers) in the catalog" }
+  ]
+}

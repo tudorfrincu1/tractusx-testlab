@@ -22,6 +22,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { ScriptDefinition } from "../../models/schema";
+import { isTemplateStep } from "../../models/schema";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -61,12 +62,19 @@ export function buildDataFlow(
     if (!script) continue;
 
     const vars = script.variables ? Object.keys(script.variables) : [];
-    const outputs = script.outputs ? Object.keys(script.outputs) : [];
+
+    // Collect exported variables from teardown export_variable steps
+    const exportedVars: string[] = [];
+    for (const step of script.teardown ?? []) {
+      if (!isTemplateStep(step) && step.type === "export_variable" && step.params?.name) {
+        exportedVars.push(String(step.params.name));
+      }
+    }
 
     const memoryKeys = new Set<string>();
-    for (const phase of [script.setup, script.steps, script.cleanup]) {
+    for (const phase of [script.setup, script.steps, script.teardown]) {
       for (const step of phase ?? []) {
-        if (step.store_in_memory) {
+        if (!isTemplateStep(step) && step.store_in_memory) {
           for (const key of Object.keys(step.store_in_memory)) {
             memoryKeys.add(key);
           }
@@ -74,13 +82,13 @@ export function buildDataFlow(
       }
     }
 
-    const allOutputs = [...new Set([...outputs, ...memoryKeys])];
+    const allOutputs = [...new Set([...exportedVars, ...memoryKeys])];
     for (const out of allOutputs) {
       producerMap.set(out, name);
     }
 
     const services = script.services?.map((s) => s.name) ?? [];
-    const stepCount = (script.setup?.length ?? 0) + (script.steps?.length ?? 0) + (script.cleanup?.length ?? 0);
+    const stepCount = (script.setup?.length ?? 0) + (script.steps?.length ?? 0) + (script.teardown?.length ?? 0);
 
     nodes.push({ id: name, name, variables: vars, outputs: allOutputs, services, stepCount });
   }

@@ -1,0 +1,16 @@
+{
+  "type": "register_shell",
+  "label": "Register Shell",
+  "description": "Register a new AAS shell descriptor in the Digital Twin Registry.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "DTR service to register with" },
+    { "name": "id_short", "type": "string", "required": true, "description": "Short identifier for the shell" },
+    { "name": "global_asset_id", "type": "string", "required": false, "description": "Global asset ID (URN)" },
+    { "name": "specific_asset_ids", "type": "json", "required": false, "description": "Specific asset identifiers (key-value pairs)" },
+    { "name": "submodel_descriptors", "type": "json", "required": false, "description": "Initial submodel descriptors to attach" }
+  ],
+  "outputs": [
+    { "name": "shell_id", "description": "ID of the registered shell" },
+    { "name": "shell_descriptor", "description": "Full shell descriptor as returned by the registry" }
+  ]
+}

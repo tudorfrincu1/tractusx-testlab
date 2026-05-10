@@ -30,6 +30,7 @@ import { BlocklyWorkspace } from "./components/BlockEditor/BlocklyWorkspace";
 import { BlockEditorErrorBoundary } from "./components/BlockEditor/BlockEditorErrorBoundary";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
 import { YamlEditor } from "./components/YamlEditor/MonacoEditor";
+import { SchemaEditor } from "./components/YamlEditor/SchemaEditor";
 import { DependencyGraph } from "./components/GraphView/DependencyGraph";
 import { TestCaseDashboard } from "./components/TestCaseDashboard/TestCaseDashboard";
 import { WelcomeScreen } from "./components/WelcomeScreen/WelcomeScreen";
@@ -46,7 +47,9 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import LockIcon from "@mui/icons-material/Lock";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SaveIcon from "@mui/icons-material/Save";
+import TuneIcon from "@mui/icons-material/Tune";
 import * as Blockly from "blockly";
+import { ServiceDialog } from "./components/ServiceDialog/ServiceDialog";
 
 export default function App() {
   const loadFromLocalStorage = useProjectStore((s) => s.loadFromLocalStorage);
@@ -62,6 +65,7 @@ export default function App() {
   const [autoSave, setAutoSave] = useState(true);
   const [trashHasItems, setTrashHasItems] = useState(false);
   const [explorerOpen, setExplorerOpen] = useState(true);
+  const [showServiceDialog, setShowServiceDialog] = useState(false);
   const [explorerWidth, setExplorerWidth] = useState(240);
   const explorerDragRef = useRef<{ startX: number; startW: number } | null>(null);
 
@@ -212,6 +216,24 @@ export default function App() {
             <Panel defaultSize={rightPanel === "none" ? 100 : 50} minSize={20}>
               <div style={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <PanelHeader title="Block Editor" icon={<ExtensionIcon sx={{ fontSize: 16 }} />}
+                  afterTitle={
+                    <button
+                      title="Add/Remove Services"
+                      onClick={() => setShowServiceDialog(true)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 4,
+                        background: theme.colors.bgLighter, border: `1px solid ${theme.colors.border}`,
+                        borderRadius: 4, padding: "2px 8px", cursor: "pointer",
+                        color: theme.colors.text, fontSize: 10, fontWeight: 500,
+                        textTransform: "none",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.colors.primary; e.currentTarget.style.color = theme.colors.textBright; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.colors.border; e.currentTarget.style.color = theme.colors.text; }}
+                    >
+                      <TuneIcon sx={{ fontSize: 13 }} />
+                      Add/Remove Services
+                    </button>
+                  }
                   extra={
                     <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                       <IconBtn
@@ -287,6 +309,7 @@ export default function App() {
                     <BlocklyWorkspace key={activeFile?.name ?? "index"} onTrashChange={setTrashHasItems} />
                   </BlockEditorErrorBoundary>
                 </div>
+                {showServiceDialog && <ServiceDialog onClose={() => setShowServiceDialog(false)} />}
               </div>
             </Panel>
           )}
@@ -306,7 +329,8 @@ export default function App() {
                     />
                   )}
                   <div style={{ flex: 1, minHeight: 0 }}>
-                    {(rightPanel === "yaml" || isSchema) && <YamlEditor readOnly={yamlReadOnly} />}
+                    {isSchema && <SchemaEditor />}
+                    {!isSchema && rightPanel === "yaml" && <YamlEditor readOnly={yamlReadOnly} />}
                     {rightPanel === "graph" && !isSchema && <DependencyGraph />}
                   </div>
                 </div>
@@ -323,7 +347,7 @@ export default function App() {
   );
 }
 
-function PanelHeader({ title, icon, extra }: { title: string; icon: ReactNode; extra?: ReactNode }) {
+function PanelHeader({ title, icon, afterTitle, extra }: { title: string; icon: ReactNode; afterTitle?: ReactNode; extra?: ReactNode }) {
   return (
     <div style={{
       height: 32, display: "flex", alignItems: "center", padding: "0 12px", gap: 6,
@@ -333,6 +357,7 @@ function PanelHeader({ title, icon, extra }: { title: string; icon: ReactNode; e
     }}>
       <span style={{ marginRight: 6 }}>{icon}</span>
       {title}
+      {afterTitle}
       <div style={{ flex: 1 }} />
       {extra}
     </div>

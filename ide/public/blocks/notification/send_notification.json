@@ -1,0 +1,22 @@
+{
+  "type": "send_notification",
+  "label": "Send Notification",
+  "description": "Send a Catena-X notification (e.g., quality alert, demand signal) via EDC Dataplane.",
+  "params": [
+    { "name": "dataplane_url", "type": "string", "required": true, "description": "Dataplane public API endpoint URL" },
+    { "name": "edr_token", "type": "string", "required": true, "description": "EDR authorization token (from transfer)" },
+    { "name": "notification_type", "type": "dropdown", "required": true, "description": "Type of notification", "options": ["quality-investigation", "quality-alert", "demand-signal", "supply-signal", "custom"] },
+    { "name": "notification_id", "type": "string", "required": false, "description": "Notification ID (auto-generated UUID if empty)" },
+    { "name": "sender_bpn", "type": "string", "required": true, "description": "BPN of the sender" },
+    { "name": "recipient_bpn", "type": "string", "required": true, "description": "BPN of the recipient" },
+    { "name": "classification", "type": "string", "required": false, "description": "Notification classification (e.g., QM-Investigation)" },
+    { "name": "severity", "type": "dropdown", "required": false, "description": "Notification severity level", "options": ["MINOR", "MAJOR", "CRITICAL", "LIFE-THREATENING"] },
+    { "name": "status", "type": "dropdown", "required": false, "description": "Notification status", "options": ["CREATED", "SENT", "RECEIVED", "ACKNOWLEDGED", "ACCEPTED", "DECLINED", "CLOSED"] },
+    { "name": "type", "type": "dropdown", "required": false, "description": "Notification direction type", "options": ["RECEIVE", "SEND"] },
+    { "name": "content", "type": "json", "required": false, "description": "Notification content payload (key-value pairs)" }
+  ],
+  "outputs": [
+    { "name": "status_code", "description": "HTTP status code of the response" },
+    { "name": "response_body", "description": "Response body" }
+  ]
+}

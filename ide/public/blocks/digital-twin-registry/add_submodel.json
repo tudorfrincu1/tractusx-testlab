@@ -1,0 +1,15 @@
+{
+  "type": "add_submodel",
+  "label": "Add Submodel Descriptor",
+  "description": "Attach a submodel descriptor to an existing shell.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "DTR service" },
+    { "name": "shell_id", "type": "string", "required": true, "description": "ID of the shell to attach to" },
+    { "name": "id_short", "type": "string", "required": true, "description": "Submodel short identifier" },
+    { "name": "semantic_id", "type": "string", "required": true, "description": "Semantic ID (URN of the aspect model)" },
+    { "name": "endpoint_url", "type": "string", "required": true, "description": "URL where the submodel data can be fetched" }
+  ],
+  "outputs": [
+    { "name": "submodel_id", "description": "ID of the attached submodel descriptor" }
+  ]
+}

@@ -62,18 +62,15 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
     kind: ScriptKind.TEST,
     name: String(raw.name ?? ""),
     version: raw.version != null ? String(raw.version) : "1.0",
-    dataspace_version: raw.dataspace_version != null ? String(raw.dataspace_version) : "saturn",
+    dataspace_version: raw.dataspace_version != null ? String(raw.dataspace_version) : undefined,
     description: raw.description != null ? String(raw.description) : undefined,
-    import_from: raw.import_from != null ? String(raw.import_from) : undefined,
     preconditions: raw.preconditions as ScriptDefinition["preconditions"],
     variables: raw.variables as ScriptDefinition["variables"],
     services: raw.services as ScriptDefinition["services"],
     listen: raw.listen as ScriptDefinition["listen"],
-    depends_on: raw.depends_on as ScriptDefinition["depends_on"],
-    outputs: raw.outputs as ScriptDefinition["outputs"],
     setup: (raw.setup as ScriptDefinition["setup"]) ?? [],
     steps: (raw.steps as ScriptDefinition["steps"]) ?? [],
-    cleanup: (raw.cleanup as ScriptDefinition["cleanup"]) ?? [],
+    teardown: (raw.teardown as ScriptDefinition["teardown"]) ?? [],
   };
 }
 
@@ -111,7 +108,6 @@ function parseTestCase(raw: Record<string, unknown>): TestCaseDefinition {
     preconditions: raw.preconditions as TestCaseDefinition["preconditions"],
     variables: raw.variables as TestCaseDefinition["variables"],
     tests,
-    imports: raw.imports as TestCaseDefinition["imports"],
   };
 }
 

@@ -38,6 +38,8 @@ import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import FolderZipIcon from "@mui/icons-material/FolderZip";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import { SchemaDownloadDialog } from "../SchemaDownloadDialog/SchemaDownloadDialog";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -148,6 +150,7 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [yamlPreview, setYamlPreview] = useState<string | null>(null);
+  const [showSchemaDownload, setShowSchemaDownload] = useState(false);
   const rename = useRenameInput();
 
   const addTest = useProjectStore((s) => s.addTest);
@@ -166,11 +169,12 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (showSchemaDownload) return;
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  }, [onClose, showSchemaDownload]);
 
   // Adjust menu position to stay in viewport
   const style: React.CSSProperties = {
@@ -224,6 +228,7 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
     );
   } else if (target.type === "schemas-folder") {
     items.push(
+      { label: "Download from Tractus-X", icon: <CloudDownloadIcon sx={{ fontSize: 15 }} />, action: () => { setShowSchemaDownload(true); } },
       { label: "Upload Schema", icon: <UploadFileIcon sx={{ fontSize: 15 }} />, action: () => { fileInputRef.current?.click(); } },
     );
   } else if (target.type === "schema") {
@@ -349,6 +354,9 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
       </div>
       {yamlPreview !== null && (
         <YamlPreviewModal yaml={yamlPreview} onClose={() => setYamlPreview(null)} />
+      )}
+      {showSchemaDownload && (
+        <SchemaDownloadDialog onClose={() => { setShowSchemaDownload(false); onClose(); }} />
       )}
     </>
   );

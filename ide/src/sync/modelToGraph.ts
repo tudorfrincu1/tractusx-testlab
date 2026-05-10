@@ -27,8 +27,8 @@
  */
 
 import type { Node, Edge } from "@xyflow/react";
-import type { TestLabDocument, ScriptDefinition, StepDefinition } from "../models/schema";
-import { isTestCase, isTestRef } from "../models/schema";
+import type { TestLabDocument, ScriptDefinition, StepDefinition, Step } from "../models/schema";
+import { isTestCase, isTestRef, isTemplateStep } from "../models/schema";
 import { getStepColor } from "../theme/tractusxTheme";
 import type { GraphMode } from "../store/useTestLabStore";
 
@@ -54,12 +54,12 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
   const edges: Edge[] = [];
   let y = 0;
   const spacing = 100;
-  const hasCleanup = (script.cleanup?.length ?? 0) > 0;
+  const hasTeardown = (script.teardown?.length ?? 0) > 0;
 
-  const allPhases: { label: string; steps: StepDefinition[] }[] = [
+  const allPhases: { label: string; steps: Step[] }[] = [
     { label: "Setup", steps: script.setup ?? [] },
     { label: "Steps", steps: script.steps ?? [] },
-    { label: "Cleanup", steps: script.cleanup ?? [] },
+    { label: "Teardown", steps: script.teardown ?? [] },
   ];
 
   // Start node
@@ -87,7 +87,7 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
   }
 
   const memoryProducers = new Map<string, string>();
-  const stepEntries: { nodeId: string; step: StepDefinition }[] = [];
+  const stepEntries: { nodeId: string; step: Step }[] = [];
 
   for (const phase of allPhases) {
     if (phase.steps.length === 0) continue;
@@ -116,20 +116,36 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
       const step = phase.steps[i];
       const nodeId = `${phase.label.toLowerCase()}-${i}`;
 
-      nodes.push({
-        id: nodeId,
-        position: { x: 200, y },
-        data: {
-          label: step.name || step.type,
-          stepType: step.type,
-          color: getStepColor(step.type),
-          hasAssertions: (step.expect?.length ?? 0) > 0,
-          storesMemory: !!step.store_in_memory,
-          conditional: !!step.if,
-          serviceName: mode === "dataflow" ? getStepService(step) : undefined,
-        },
-        type: "step",
-      });
+      if (isTemplateStep(step)) {
+        nodes.push({
+          id: nodeId,
+          position: { x: 200, y },
+          data: {
+            label: step.name || `⟪ ${step.template} ⟫`,
+            stepType: `template:${step.template}`,
+            color: getStepColor("template"),
+            hasAssertions: false,
+            storesMemory: false,
+            conditional: false,
+          },
+          type: "step",
+        });
+      } else {
+        nodes.push({
+          id: nodeId,
+          position: { x: 200, y },
+          data: {
+            label: step.name || step.type,
+            stepType: step.type,
+            color: getStepColor(step.type),
+            hasAssertions: (step.expect?.length ?? 0) > 0,
+            storesMemory: !!step.store_in_memory,
+            conditional: !!step.if,
+            serviceName: mode === "dataflow" ? getStepService(step) : undefined,
+          },
+          type: "step",
+        });
+      }
 
       edges.push({
         id: `e-${prevNodeId}-${nodeId}`,
@@ -140,37 +156,39 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
       });
 
       if (mode === "dataflow") {
-        const svcName = getStepService(step);
-        if (svcName && serviceNodeIds.has(svcName)) {
-          edges.push({
-            id: `e-svc-${nodeId}-${svcName}`,
-            source: nodeId,
-            target: serviceNodeIds.get(svcName)!,
-            style: { stroke: "#5EA8A8", strokeDasharray: "4,4" },
-            label: "uses",
-            animated: false,
-          });
-        }
-
-        if (step.store_in_memory) {
-          for (const [key] of Object.entries(step.store_in_memory)) {
-            const memNodeId = `mem-${key}`;
-            if (!nodes.find((n) => n.id === memNodeId)) {
-              nodes.push({
-                id: memNodeId,
-                position: { x: 450, y },
-                data: { label: key, variable: true },
-                type: "variable",
-              });
-            }
+        if (!isTemplateStep(step)) {
+          const svcName = getStepService(step);
+          if (svcName && serviceNodeIds.has(svcName)) {
             edges.push({
-              id: `e-store-${nodeId}-${memNodeId}`,
+              id: `e-svc-${nodeId}-${svcName}`,
               source: nodeId,
-              target: memNodeId,
-              style: { stroke: "#FFD700", strokeDasharray: "5,5" },
-              label: "stores",
+              target: serviceNodeIds.get(svcName)!,
+              style: { stroke: "#5EA8A8", strokeDasharray: "4,4" },
+              label: "uses",
+              animated: false,
             });
-            memoryProducers.set(key, nodeId);
+          }
+
+          if (step.store_in_memory) {
+            for (const [key] of Object.entries(step.store_in_memory)) {
+              const memNodeId = `mem-${key}`;
+              if (!nodes.find((n) => n.id === memNodeId)) {
+                nodes.push({
+                  id: memNodeId,
+                  position: { x: 450, y },
+                  data: { label: key, variable: true },
+                  type: "variable",
+                });
+              }
+              edges.push({
+                id: `e-store-${nodeId}-${memNodeId}`,
+                source: nodeId,
+                target: memNodeId,
+                style: { stroke: "#FFD700", strokeDasharray: "5,5" },
+                label: "stores",
+              });
+              memoryProducers.set(key, nodeId);
+            }
           }
         }
 
@@ -184,7 +202,8 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
 
   if (mode === "dataflow" && memoryProducers.size > 0) {
     for (const { nodeId, step } of stepEntries) {
-      const refs = collectVariableRefs(step.params);
+      const params = isTemplateStep(step) ? (step.params ?? {}) : step.params;
+      const refs = collectVariableRefs(params);
       for (const varName of refs) {
         const memNodeId = `mem-${varName}`;
         if (memoryProducers.has(varName)) {
@@ -203,11 +222,11 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
 
   // End node
   const endId = "flow-end";
-  const endLabel = hasCleanup ? "End" : "Auto Cleanup & End";
+  const endLabel = hasTeardown ? "End" : "Auto Cleanup & End";
   nodes.push({
     id: endId,
     position: { x: 200, y },
-    data: { label: endLabel, autoCleanup: !hasCleanup },
+    data: { label: endLabel, autoCleanup: !hasTeardown },
     type: "end",
   });
   if (prevNodeId) {
@@ -215,8 +234,8 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
       id: `e-${prevNodeId}-${endId}`,
       source: prevNodeId,
       target: endId,
-      animated: !hasCleanup,
-      style: { stroke: hasCleanup ? "#3d3d3d" : "#C96B7A", strokeDasharray: hasCleanup ? undefined : "4,4" },
+      animated: !hasTeardown,
+      style: { stroke: hasTeardown ? "#3d3d3d" : "#C96B7A", strokeDasharray: hasTeardown ? undefined : "4,4" },
     });
   }
 
@@ -230,13 +249,13 @@ function getStepService(step: StepDefinition): string | undefined {
 
 function collectVariableRefs(params: Record<string, unknown>): Set<string> {
   const refs = new Set<string>();
-  const varPattern = /\$\{([^}]+)\}|\{\{([^}]+)\}\}/g;
+  const varPattern = /@(\w+)|\$\{([^}]+)\}|\{\{([^}]+)\}\}/g;
 
   function walk(value: unknown): void {
     if (typeof value === "string") {
       let match: RegExpExecArray | null;
       while ((match = varPattern.exec(value)) !== null) {
-        refs.add(match[1] || match[2]);
+        refs.add(match[1] || match[2] || match[3]);
       }
     } else if (Array.isArray(value)) {
       for (const item of value) walk(item);

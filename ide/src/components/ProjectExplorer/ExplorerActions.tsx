@@ -21,17 +21,20 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { theme } from "../../theme/tractusxTheme";
 import { useProjectStore } from "../../store/useProjectStore";
 import { yamlToModel } from "../../sync/yamlToModel";
 import type { ScriptDefinition } from "../../models/schema";
+import { SchemaDownloadDialog } from "../SchemaDownloadDialog/SchemaDownloadDialog";
 
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 export function ExplorerActions() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSchemaDownload, setShowSchemaDownload] = useState(false);
   const addTest = useProjectStore((s) => s.addTest);
   const addSchema = useProjectStore((s) => s.addSchema);
   const updateTest = useProjectStore((s) => s.updateTest);
@@ -63,21 +66,29 @@ export function ExplorerActions() {
         borderTop: `1px solid ${theme.colors.border}`,
         padding: "8px 10px",
         display: "flex",
+        flexDirection: "column",
         gap: 6,
         flexShrink: 0,
         background: theme.colors.bgLight,
       }}
     >
       <ActionButton
-        icon={<NoteAddIcon sx={{ fontSize: 13 }} />}
-        label="New Test"
-        onClick={() => addTest()}
+        icon={<CloudDownloadIcon sx={{ fontSize: 13 }} />}
+        label="Download Schema"
+        onClick={() => setShowSchemaDownload(true)}
       />
-      <ActionButton
-        icon={<UploadFileIcon sx={{ fontSize: 13 }} />}
-        label="Upload"
-        onClick={() => fileInputRef.current?.click()}
-      />
+      <div style={{ display: "flex", gap: 6 }}>
+        <ActionButton
+          icon={<NoteAddIcon sx={{ fontSize: 13 }} />}
+          label="New Test"
+          onClick={() => addTest()}
+        />
+        <ActionButton
+          icon={<UploadFileIcon sx={{ fontSize: 13 }} />}
+          label="Upload"
+          onClick={() => fileInputRef.current?.click()}
+        />
+      </div>
       <input
         ref={fileInputRef}
         type="file"
@@ -86,6 +97,9 @@ export function ExplorerActions() {
         style={{ display: "none" }}
         onChange={handleUpload}
       />
+      {showSchemaDownload && (
+        <SchemaDownloadDialog onClose={() => setShowSchemaDownload(false)} />
+      )}
     </div>
   );
 }

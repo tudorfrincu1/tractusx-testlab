@@ -1,0 +1,18 @@
+{
+  "type": "http_call_dataplane",
+  "label": "HTTP Call via Dataplane",
+  "description": "Send an HTTP request through an EDC Dataplane using an EDR token for authorization.",
+  "params": [
+    { "name": "dataplane_url", "type": "string", "required": true, "description": "Dataplane public API endpoint URL" },
+    { "name": "edr_token", "type": "string", "required": true, "description": "EDR authorization token (from transfer)" },
+    { "name": "method", "type": "dropdown", "required": false, "description": "HTTP method", "options": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+    { "name": "path", "type": "string", "required": false, "description": "Sub-path appended to dataplane URL" },
+    { "name": "body", "type": "json", "required": false, "description": "Request body (for POST/PUT/PATCH)" },
+    { "name": "headers", "type": "json", "required": false, "description": "Additional request headers" }
+  ],
+  "outputs": [
+    { "name": "status_code", "description": "HTTP status code of the response" },
+    { "name": "response_body", "description": "Response body" },
+    { "name": "response_headers", "description": "Response headers" }
+  ]
+}

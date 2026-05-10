@@ -22,162 +22,253 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { StepDefinition, Assertion, ScriptDefinition, TestLabDocument, TestCaseDefinition, TestRef, ServiceDefinition } from "../../models/schema";
-import { AssertionType, AssertionSeverity, ScriptKind, ServiceType, isTestCase, isTest, isTestRef } from "../../models/schema";
+import type { StepDefinition, Step, TemplateStepDefinition, Assertion, ScriptDefinition, TestLabDocument, TestCaseDefinition, TestRef, VariableDefinition } from "../../models/schema";
+import { ScriptKind, isTestCase, isTest, isTestRef, isTemplateStep } from "../../models/schema";
+import { useServiceStore } from "../../store/useServiceStore";
+import { useProjectStore } from "../../store/useProjectStore";
 import { blockColors, getCategoryColor } from "./blockColors";
 import { FieldWrappedText } from "./FieldWrappedText";
 import type { Block, Workspace, WorkspaceSvg } from "blockly";
 import type * as BlocklyType from "blockly";
+
+// ── Catalog Types (v2 format) ─────────────────────────────────────────────────
 
 interface BlockCatalogParam {
   name: string;
   type: string;
   required: boolean;
   description: string;
-  autogenerate?: boolean;
+  default?: unknown;
+  options?: string[];
 }
 
 interface BlockCatalogOutput {
   name: string;
-  path: string;
+  description: string;
 }
 
 interface BlockCatalogEntry {
   type: string;
   label: string;
   description: string;
-  service_type?: string;
+  template?: boolean;
+  container?: boolean;
   params: BlockCatalogParam[];
   outputs?: BlockCatalogOutput[];
+  depends_on?: string[];
 }
 
 interface BlockCatalogCategory {
   name: string;
+  description?: string;
+  service_type?: string;
   blocks: BlockCatalogEntry[];
 }
 
-type BlockCatalog = BlockCatalogCategory[];
+export type BlockCatalog = BlockCatalogCategory[];
+
+interface BlockIndexCategory {
+  name: string;
+  description?: string;
+  service_type?: string;
+  blocks: string[];
+}
+
+interface BlockIndex {
+  version: string;
+  categories: BlockIndexCategory[];
+}
 
 let catalogCache: BlockCatalog | null = null;
 
 export async function loadBlockCatalog(): Promise<BlockCatalog> {
   if (catalogCache) return catalogCache;
-  const resp = await fetch(`${import.meta.env.BASE_URL}block-catalog.json`);
-  const data = await resp.json();
-  // Handle both { categories: [...] } and raw array formats
-  catalogCache = Array.isArray(data) ? data : data.categories;
-  return catalogCache!;
+  const base = import.meta.env.BASE_URL;
+
+  try {
+    const indexResp = await fetch(`${base}blocks/index.json`);
+    if (indexResp.ok) {
+      const index: BlockIndex = await indexResp.json();
+      const categories: BlockCatalog = await Promise.all(
+        index.categories.map(async (cat) => {
+          const blocks: BlockCatalogEntry[] = await Promise.all(
+            cat.blocks.map(async (path) => {
+              const resp = await fetch(`${base}blocks/${path}`);
+              return resp.json() as Promise<BlockCatalogEntry>;
+            })
+          );
+          return {
+            name: cat.name,
+            description: cat.description,
+            service_type: cat.service_type,
+            blocks,
+          };
+        })
+      );
+      catalogCache = categories;
+      return catalogCache;
+    }
+  } catch (err) {
+    throw new Error(`Failed to load block catalog from ${base}blocks/index.json: ${err}`);
+  }
+
+  catalogCache = [];
+  return catalogCache;
 }
 
-// Inline SVG icon data URIs for Blockly FieldImage (16x16)
+// ── SVG Icon Helpers ──────────────────────────────────────────────────────────
+
 const ICON_SIZE = 16;
 function svgDataUri(pathD: string, color = "#fff"): string {
   return `data:image/svg+xml,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path fill="${color}" d="${pathD}"/></svg>`
   )}`;
 }
-// MUI Science (test tube) — for test root
-const ICON_TEST = svgDataUri("M19.8 18.4L14 10.67V6.5l1.35-1.69c.26-.33.03-.81-.39-.81H9.04c-.42 0-.65.48-.39.81L10 6.5v4.17L4.2 18.4c-.49.66-.02 1.6.8 1.6h14c.82 0 1.29-.94.8-1.6");
-// MUI PlaylistAddCheck — for test-case root
-const ICON_TEST_CASE = svgDataUri("M3 10h11v2H3zm0-4h11v2H3zm0 8h7v2H3zm17.59-2.07l-4.25 4.24-2.12-2.12-1.41 1.41L16.34 19 22 13.34z");
-// MUI AttachFile — for !include
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const ICON_INCLUDE = svgDataUri("M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6z");
-// MUI Tune — for variable
-const ICON_VARIABLE = svgDataUri("M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z");
-// MUI ReportProblem — for precondition
-const ICON_PRECONDITION = svgDataUri("M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z");
-// MUI BoltRounded — for step action
-const ICON_STEP = svgDataUri("M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z");
 
-// MUI DataObject — for JSON/object param
+const ICON_TEST = svgDataUri("M19.8 18.4L14 10.67V6.5l1.35-1.69c.26-.33.03-.81-.39-.81H9.04c-.42 0-.65.48-.39.81L10 6.5v4.17L4.2 18.4c-.49.66-.02 1.6.8 1.6h14c.82 0 1.29-.94.8-1.6");
+const ICON_TEST_CASE = svgDataUri("M3 10h11v2H3zm0-4h11v2H3zm0 8h7v2H3zm17.59-2.07l-4.25 4.24-2.12-2.12-1.41 1.41L16.34 19 22 13.34z");
+const ICON_VARIABLE = svgDataUri("M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z");
+const ICON_PRECONDITION = svgDataUri("M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z");
+const ICON_STEP = svgDataUri("M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z");
 const ICON_JSON = svgDataUri("M4 7v2c0 .55-.45 1-1 1H2v4h1c.55 0 1 .45 1 1v2c0 1.65 1.35 3 3 3h3v-2H7c-.55 0-1-.45-1-1v-2c0-1.3-.84-2.42-2-2.83v-.34C5.16 11.42 6 10.3 6 9V7c0-.55.45-1 1-1h3V4H7C5.35 4 4 5.35 4 7zm17 3c-.55 0-1-.45-1-1V7c0-1.65-1.35-3-3-3h-3v2h3c.55 0 1 .45 1 1v2c0 1.3.84 2.42 2 2.83v.34c-1.16.41-2 1.52-2 2.83v2c0 .55-.45 1-1 1h-3v2h3c1.65 0 3-1.35 3-3v-2c0-.55.45-1 1-1h1v-4h-1z");
-// MUI AutoFixHigh — for autogenerate (used by step block autogenerate feature)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const ICON_AUTO = svgDataUri("M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.9959.9959 0 0 0-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35z");
-// MUI Output/SaveAlt — for store_output
 const ICON_STORE = svgDataUri("M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z");
-// MUI Power — for service container
-const ICON_SERVICE = svgDataUri("M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1-1-2-1.99-1.99z");
-// MUI Security — for ODRL permission
-const ICON_PERMISSION = svgDataUri("M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z");
-// MUI FilterList — for ODRL constraint
-const ICON_CONSTRAINT = svgDataUri("M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z");
+const ICON_MOCK = svgDataUri("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z");
+const ICON_WAIT = svgDataUri("M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z");
+const ICON_LOCK = svgDataUri("M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z");
+const ICON_KEY = svgDataUri("M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z");
+const ICON_SCHEMA = svgDataUri("M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 15h8v2H8v-2zm0-4h8v2H8v-2z");
 
 function blockIcon(Blockly: typeof BlocklyType, src: string): InstanceType<typeof BlocklyType.FieldImage> {
   return new Blockly.FieldImage(src, ICON_SIZE, ICON_SIZE);
 }
 
-/** Checks if a param name is an ID-like field that can be autogenerated */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function isAutoGeneratable(param: BlockCatalogParam): boolean {
-  if (param.autogenerate) return true;
-  const n = param.name.toLowerCase();
-  return (n.endsWith("_id") || n === "id" || n === "name") && param.type === "string";
-}
-
 /** Derive a human-readable test name from a file path */
 export function deriveTestLabel(filePath: string): string {
-  // "tests/cx0135_asset_catalog.yaml" → "cx0135_asset_catalog"
   const base = filePath.replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
-  // "cx0135_asset_catalog" → "CX-0135 Asset Catalog"
   return base
     .replace(/_/g, " ")
     .replace(/\bcx\s*(\d+)/gi, "CX-$1")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// ── Service-type index — maps step block type to its allowed service type ────
-const stepServiceTypeIndex = new Map<string, string>();
+// ── Block Registration ────────────────────────────────────────────────────────
 
-export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
-  // Build the service-type index from catalog
-  stepServiceTypeIndex.clear();
-  for (const cat of catalog) {
-    for (const entry of cat.blocks) {
-      if (entry.service_type) {
-        stepServiceTypeIndex.set(`step_${entry.type}`, entry.service_type);
-      }
+/** Collect all mock endpoint IDs defined in the workspace (for Wait block dropdown) */
+function collectMockEndpointIds(workspace: Workspace): Array<[string, string]> {
+  const ids: Array<[string, string]> = [];
+  for (const block of workspace.getAllBlocks(false)) {
+    if (block.type.startsWith("step_mock_")) {
+      const id = block.getFieldValue("PARAM_ID");
+      if (id) ids.push([id, id]);
     }
   }
+  if (ids.length === 0) return [["(no mock endpoints)", "__NONE__"]];
+  return ids;
+}
 
-  // ── Key-Value pair block for JSON/object params ──────────────────────────
-  Blockly.Blocks["key_value_pair"] = {
-    init(this: Block) {
-      this.appendValueInput("VALUE")
-        .appendField(new Blockly.FieldTextInput("key"), "KEY")
-        .appendField("=")
-        .setCheck("param_value");
-      this.setPreviousStatement(true, "key_value");
-      this.setNextStatement(true, "key_value");
-      this.setColour(blockColors.keyValue);
-      this.setTooltip("A key-value pair — connect a string or variable block as the value");
-    },
-  };
+/** Collect service names from the service store, optionally filtered by service_type */
+function collectServiceRefs(_workspace: Workspace, serviceType?: string): Array<[string, string]> {
+  const { services } = useServiceStore.getState();
+  const filtered = serviceType
+    ? services.filter((s) => s.type === serviceType)
+    : services;
+  const refs: Array<[string, string]> = filtered.map((s) => [s.name, s.name]);
+  return refs.length > 0 ? refs : [["(no services configured)", "__NONE__"]];
+}
 
-  // ── JSON Object block — groups key-value pairs into a named object ──────
-  Blockly.Blocks["json_object"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField(new Blockly.FieldLabelSerializable("object"), "PARAM_NAME");
-      this.appendStatementInput("ENTRIES").setCheck("key_value");
-      this.setPreviousStatement(true, "json_param");
-      this.setNextStatement(true, "json_param");
-      this.setColour(blockColors.json);
-      this.setTooltip("JSON object — add key-value pairs inside");
-    },
+/** Collect schema file names from the project store as dropdown options (value = relative path). */
+function collectSchemaPaths(): Array<[string, string]> {
+  const names = useProjectStore.getState().getSchemaNames();
+  if (names.length === 0) return [["(no schemas in project)", "__NONE__"]];
+  return names.map((name): [string, string] => [name, `../schemas/${name}.json`]);
+}
+
+function collectTestFilePaths(): Array<[string, string]> {
+  const { getTestNames, activeFile } = useProjectStore.getState();
+  const names = getTestNames().filter(
+    (n) => !(activeFile?.type === "test" && activeFile.name === n),
+  );
+  if (names.length === 0) return [["(no other tests)", "__NONE__"]];
+  return names.map((name): [string, string] => [name, `tests/${name}.yaml`]);
+}
+
+function collectExportedVariables(filePath: string): Array<[string, string]> {
+  if (!filePath || filePath === "__NONE__") return [["(select a test first)", "__NONE__"]];
+  // Extract test name from file path: "tests/foo.yaml" → "foo"
+  const testName = filePath.replace(/^tests\//, "").replace(/\.yaml$/, "");
+  const { tests } = useProjectStore.getState();
+  const script = tests.get(testName);
+  if (!script) return [["(no exports found)", "__NONE__"]];
+  const exports: string[] = [];
+  for (const step of script.teardown ?? []) {
+    if ("type" in step && step.type === "export_variable" && step.params?.name) {
+      exports.push(String(step.params.name));
+    }
+  }
+  if (exports.length === 0) return [["(no exports in test)", "__NONE__"]];
+  return exports.map((v): [string, string] => [v, v]);
+}
+
+/**
+ * Wraps a dynamic options provider for FieldDropdown so the current value
+ * is always preserved in the options list, even if the data source hasn't
+ * loaded yet.  This prevents the dropdown from reverting to "__NONE__".
+ */
+function dynamicDropdown(
+  provider: (ws: Workspace) => Array<[string, string]>,
+  fallbackLabel = "—",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): (this: any) => Array<[string, string]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function (this: any): Array<[string, string]> {
+    const block = this.getSourceBlock?.();
+    const ws = block?.workspace;
+    if (!ws || ws.isClearing || ws.disposed) {
+      const cur = this.getValue?.() ?? "";
+      if (cur && cur !== "__NONE__") return [[cur, cur]];
+      return [[fallbackLabel, "__NONE__"]];
+    }
+    const options = provider(ws);
+    const currentVal = this.getValue?.() ?? "";
+    if (
+      currentVal &&
+      currentVal !== "__NONE__" &&
+      !options.some(([, val]: [string, string]) => val === currentVal)
+    ) {
+      // Derive a display label from the value (strip path prefix for schema paths)
+      const label = currentVal.includes("/")
+        ? currentVal.replace(/^.*\//, "").replace(/\.json$/, "")
+        : currentVal;
+      options.unshift([label, currentVal]);
+    }
+    return options;
   };
+}
+
+export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
 
   // ── Value blocks — connectable parameter values ─────────────────────────
+
   Blockly.Blocks["value_string"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField("str")
-        .appendField(new Blockly.FieldTextInput(""), "VALUE");
+        .appendField("\"")
+        .appendField(new Blockly.FieldTextInput(""), "VALUE")
+        .appendField("\"");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
       this.setTooltip("A literal string value");
+    },
+  };
+
+  Blockly.Blocks["value_number"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("#")
+        .appendField(new Blockly.FieldNumber(0), "VALUE");
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueString);
+      this.setTooltip("A numeric value");
     },
   };
 
@@ -185,143 +276,342 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
     init(this: Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("get")
+        .appendField("@")
         .appendField(
           new Blockly.FieldDropdown(
-            // Dynamic menu — regenerated each time the dropdown opens
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            function (this: any): Array<[string, string]> {
-              const block = this.getSourceBlock?.();
-              const ws = block?.workspace;
-              // Guard: workspace unavailable or being cleared/disposed
-              if (!ws || ws.isClearing || ws.disposed) return [["—", "__NONE__"]];
-              let vars: string[];
-              try {
-                vars = collectWorkspaceVariables(ws);
-              } catch {
-                return [["—", "__NONE__"]];
-              }
-              const currentVal = this.getValue?.() ?? "";
-              const options: Array<[string, string]> = vars.map(
-                (v: string): [string, string] => [v, v]
-              );
-              if (
-                currentVal &&
-                currentVal !== "__NONE__" &&
-                !options.some(([, val]) => val === currentVal)
-              ) {
-                options.unshift([currentVal, currentVal]);
-              }
-              if (options.length === 0) {
-                options.push(["(no variables)", "__NONE__"]);
-              }
-              return options;
-            } as () => Array<[string, string]>
+            dynamicDropdown(
+              (ws) => {
+                const vars = collectWorkspaceVariables(ws);
+                return vars.length > 0
+                  ? vars.map((v): [string, string] => [v, v])
+                  : [["(no variables)", "__NONE__"]];
+              },
+              "(no variables)"
+            ) as () => Array<[string, string]>
           ),
           "VAR_NAME"
         );
       this.setOutput(true, "param_value");
       this.setColour(blockColors.variableGet);
-      this.setTooltip("Get a variable value — select from declared variables");
+      this.setTooltip("Reference a variable — uses @variable_name syntax");
     },
   };
 
-  Blockly.Blocks["value_auto"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_AUTO))
-        .appendField("auto-generate");
-      this.setOutput(true, "param_value");
-      this.setColour(blockColors.valueAuto);
-      this.setTooltip("Auto-generated value (UUID, unique name, etc.)");
-    },
-  };
+  // ── Key-Value pair block for JSON params ────────────────────────────────
 
-  // ── Store output block — declares a variable and captures a step result ──
-  Blockly.Blocks["store_output"] = {
+  Blockly.Blocks["key_value_pair"] = {
     init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_STORE))
-        .appendField("set")
-        .appendField(new Blockly.FieldTextInput("result"), "VAR_NAME");
-      this.appendDummyInput()
-        .appendField("from path")
-        .appendField(new Blockly.FieldTextInput("$"), "JSON_PATH");
-      this.setPreviousStatement(true, "store_output");
-      this.setNextStatement(true, "store_output");
-      this.setColour(blockColors.storeOutput);
-      this.setTooltip("Declare a variable and capture a value from the response. Use the \"get\" block to reference it later.");
-    },
-  };
-
-  // ── Service container block — C-shaped, holds steps for a service ────────
-  Blockly.Blocks["service_block"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_SERVICE))
-        .appendField("Service:")
-        .appendField(new Blockly.FieldTextInput("my-service"), "SERVICE_NAME");
-      this.appendDummyInput()
-        .appendField("type:")
-        .appendField(
-          new Blockly.FieldDropdown(
-            Object.values(ServiceType).map((t) => [t, t])
-          ),
-          "SERVICE_TYPE"
-        );
-      this.appendValueInput("BASE_URL")
-        .appendField("base_url:")
+      this.appendValueInput("VALUE")
+        .appendField(new Blockly.FieldTextInput("key"), "KEY")
+        .appendField(":")
         .setCheck("param_value");
-      this.appendStatementInput("AUTH")
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField("auth:")
-        .setCheck("key_value");
-      this.appendStatementInput("STEPS")
-        .appendField(blockIcon(Blockly, ICON_STEP))
-        .appendField("steps:")
-        .setCheck("inner_step");
-      this.setPreviousStatement(true, "step");
-      this.setNextStatement(true, "step");
-      this.setColour(blockColors.service);
-      this.setTooltip("Service container — drag steps that use this service inside");
-    },
-    onchange(this: Block) {
-      if (!this.workspace) return;
-      if ("isDragging" in this.workspace && (this.workspace as WorkspaceSvg).isDragging()) return;
-      const svcType = this.getFieldValue("SERVICE_TYPE") || "";
-      // Walk inner steps and validate service_type compatibility
-      let inner = this.getInputTargetBlock("STEPS");
-      while (inner) {
-        if (inner.type.startsWith("step_")) {
-          const allowed = stepServiceTypeIndex.get(inner.type);
-          // null/undefined → generic step, allowed anywhere
-          if (allowed && allowed !== svcType) {
-            inner.setWarningText(
-              `This step requires a ${allowed} service, but this container is ${svcType}.`
-            );
-          } else {
-            inner.setWarningText(null);
-          }
-        }
-        inner = inner.getNextBlock();
-      }
+      this.setPreviousStatement(true, "key_value");
+      this.setNextStatement(true, "key_value");
+      this.setColour(blockColors.keyValue);
+      this.setTooltip("A key-value pair for JSON objects");
     },
   };
 
-  // Register phase blocks: setup, steps, cleanup
-  for (const phase of ["setup", "steps", "cleanup"]) {
-    Blockly.Blocks[`phase_${phase}`] = {
-      init(this: Block) {
-        this.appendDummyInput().appendField(phase.toUpperCase());
-        this.appendStatementInput("STEPS").setCheck("step");
-        this.setColour(phase === "setup" ? blockColors.phaseSetup : phase === "cleanup" ? blockColors.phaseCleanup : blockColors.phaseSteps);
-        this.setTooltip(`${phase} phase — add steps here`);
-        this.setDeletable(false);
-      },
-    };
+  // ── Typed assertion blocks ───────────────────────────────────────────────
+
+  /** Collect output names from the parent step block's catalog entry */
+  function collectParentOutputs(block: Block): Array<[string, string]> {
+    let parent = block.getSurroundParent();
+    while (parent && !parent.type.startsWith("step_")) {
+      parent = parent.getSurroundParent();
+    }
+    if (!parent) return [["(no outputs)", "__NONE__"]];
+    const stepType = parent.type.replace(/^step_/, "");
+    const entry = findCatalogEntry(stepType, catalog);
+    if (!entry?.outputs || entry.outputs.length === 0) return [["(no outputs)", "__NONE__"]];
+    return entry.outputs.map((o) => [o.name, o.name] as [string, string]);
   }
 
-  // Root test block
+  Blockly.Blocks["assert_equals"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("equals");
+      this.appendValueInput("EXPECTED")
+        .appendField("expected:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output equals expected value");
+    },
+  };
+
+  Blockly.Blocks["assert_not_equals"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("not equals");
+      this.appendValueInput("EXPECTED")
+        .appendField("expected:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output does not equal expected value");
+    },
+  };
+
+  Blockly.Blocks["assert_contains"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("contains");
+      this.appendValueInput("SUBSTRING")
+        .appendField("substring:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output contains substring");
+    },
+  };
+
+  Blockly.Blocks["assert_not_contains"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("not contains");
+      this.appendValueInput("SUBSTRING")
+        .appendField("substring:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output does not contain substring");
+    },
+  };
+
+  Blockly.Blocks["assert_matches"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("matches");
+      this.appendValueInput("PATTERN")
+        .appendField("pattern:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output matches regex pattern");
+    },
+  };
+
+  Blockly.Blocks["assert_schema"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("matches schema");
+      this.appendValueInput("SCHEMA")
+        .appendField("schema:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output conforms to a JSON Schema");
+    },
+  };
+
+  Blockly.Blocks["assert_compare"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["greater than", "greater_than"],
+            ["less than", "less_than"],
+            ["greater or equal", "greater_or_equal"],
+            ["less or equal", "less_or_equal"],
+          ]),
+          "OPERATOR"
+        );
+      this.appendValueInput("VALUE")
+        .appendField("value:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert numeric comparison on output");
+    },
+  };
+
+  Blockly.Blocks["assert_between"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("between");
+      this.appendValueInput("MIN")
+        .appendField("min:")
+        .setCheck("param_value");
+      this.appendValueInput("MAX")
+        .appendField("max:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output is between min and max (inclusive)");
+    },
+  };
+
+  Blockly.Blocks["assert_not_null"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("is not null");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output is not null");
+    },
+  };
+
+  Blockly.Blocks["assert_not_empty"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(
+          new Blockly.FieldDropdown(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            function (this: any): Array<[string, string]> {
+              const b = this.getSourceBlock?.();
+              if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
+              return collectParentOutputs(b);
+            } as () => Array<[string, string]>
+          ),
+          "OUTPUT"
+        )
+        .appendField("is not empty");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output is not empty");
+    },
+  };
+
+  // ── Boolean value block ─────────────────────────────────────────────────
+
+  Blockly.Blocks["value_boolean"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["true", "true"],
+            ["false", "false"],
+          ]),
+          "VALUE"
+        );
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueString);
+      this.setTooltip("A boolean value (true/false)");
+    },
+  };
+
+  // ── Root blocks (structural) ────────────────────────────────────────────
+
   Blockly.Blocks["test_root"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -336,14 +626,17 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
         .appendField(new FieldWrappedText(""), "DESCRIPTION");
       this.appendStatementInput("SETUP").appendField("Setup").setCheck("step");
       this.appendStatementInput("STEPS").appendField("Steps").setCheck("step");
-      this.appendStatementInput("CLEANUP").appendField("Cleanup").setCheck("step");
+      this.appendStatementInput("TEARDOWN").appendField("Teardown").setCheck("step");
+      this.appendStatementInput("VARIABLES")
+        .appendField(blockIcon(Blockly, ICON_VARIABLE))
+        .appendField("Variables")
+        .setCheck("variable_def");
       this.setColour(blockColors.root);
       this.setTooltip("Root test definition");
       this.setDeletable(false);
     },
   };
 
-  // Root test-case block
   Blockly.Blocks["test_case_root"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -366,14 +659,13 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
         .appendField("Tests")
         .setCheck("test_entry");
       this.setColour(blockColors.rootTestCase);
-      this.setTooltip(
-        "Test case — groups multiple tests with shared configuration"
-      );
+      this.setTooltip("Test case — groups multiple tests with shared configuration");
       this.setDeletable(false);
     },
   };
 
-  // Test reference block — named test with optional variable overrides
+  // ── Test reference block ────────────────────────────────────────────────
+
   Blockly.Blocks["test_ref"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -384,16 +676,18 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
         .appendField("Description:")
         .appendField(new FieldWrappedText(""), "DESCRIPTION");
       this.appendStatementInput("WITH")
-        .appendField(blockIcon(Blockly, ICON_VARIABLE) + " with:")
+        .appendField(blockIcon(Blockly, ICON_VARIABLE))
+        .appendField("with:")
         .setCheck("key_value");
       this.setPreviousStatement(true, "test_entry");
       this.setNextStatement(true, "test_entry");
       this.setColour(blockColors.testRef);
-      this.setTooltip("Reference a reusable test — override variables with key-value pairs");
+      this.setTooltip("Reference a reusable test with optional variable overrides");
     },
   };
 
-  // Shared variable definition block
+  // ── Variable definition block ───────────────────────────────────────────
+
   Blockly.Blocks["variable_def"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -433,7 +727,8 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
     },
   };
 
-  // Precondition block
+  // ── Precondition block ──────────────────────────────────────────────────
+
   Blockly.Blocks["precondition"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -450,252 +745,529 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
     },
   };
 
-  // Assertion block
-  Blockly.Blocks["assertion"] = {
+  // ── Authentication blocks ──────────────────────────────────────────────
+
+  Blockly.Blocks["auth_oauth2"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField("Assert")
-        .appendField(
-          new Blockly.FieldDropdown([
-            ["STATUS_CODE", "STATUS_CODE"],
-            ["EXACT", "EXACT"],
-            ["CONTAINS", "CONTAINS"],
-            ["NOT_CONTAINS", "NOT_CONTAINS"],
-            ["REGEX", "REGEX"],
-            ["SCHEMA", "SCHEMA"],
-          ]),
-          "TYPE"
-        );
-      this.appendValueInput("FIELD")
-        .appendField("field:")
-        .setCheck("param_value");
-      this.appendValueInput("VALUE")
-        .appendField("value:")
-        .setCheck("param_value");
+        .appendField(blockIcon(Blockly, ICON_LOCK))
+        .appendField("OAuth2")
+        .appendField(new Blockly.FieldTextInput("my-oauth2"), "NAME");
       this.appendDummyInput()
-        .appendField("severity:")
-        .appendField(
-          new Blockly.FieldDropdown([
-            ["HARD", "HARD"],
-            ["SOFT", "SOFT"],
-          ]),
-          "SEVERITY"
-        );
-      this.setPreviousStatement(true, "assertion");
-      this.setNextStatement(true, "assertion");
-      this.setColour(blockColors.assertion);
-      this.setTooltip("Assertion for a step");
+        .appendField("auth_url:")
+        .appendField(new Blockly.FieldTextInput(""), "AUTH_URL");
+      this.appendDummyInput()
+        .appendField("realm:")
+        .appendField(new Blockly.FieldTextInput(""), "REALM");
+      this.appendDummyInput()
+        .appendField("client_id:")
+        .appendField(new Blockly.FieldTextInput(""), "CLIENT_ID");
+      this.appendDummyInput()
+        .appendField("client_secret:")
+        .appendField(new Blockly.FieldTextInput(""), "CLIENT_SECRET");
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour(blockColors.authentication);
+      this.setTooltip("Configure OAuth2 authentication credentials");
     },
   };
 
-  // ── ODRL Policy blocks ──────────────────────────────────────────────────
-
-  // Permission block — defines an ODRL permission (action + constraints)
-  Blockly.Blocks["odrl_permission"] = {
+  Blockly.Blocks["auth_api_key"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_PERMISSION))
-        .appendField("Permission")
+        .appendField(blockIcon(Blockly, ICON_KEY))
+        .appendField("API Key")
+        .appendField(new Blockly.FieldTextInput("my-api-key"), "NAME");
+      this.appendDummyInput()
+        .appendField("api_key:")
+        .appendField(new Blockly.FieldTextInput(""), "API_KEY");
+      this.appendDummyInput()
+        .appendField("header_name:")
+        .appendField(new Blockly.FieldTextInput("X-Api-Key"), "HEADER_NAME");
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour(blockColors.authentication);
+      this.setTooltip("Configure API Key authentication");
+    },
+  };
+
+  // ── Depends-on entry block ───────────────────────────────────────────────
+
+  Blockly.Blocks["depends_on_entry"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("file:")
+        .appendField(new Blockly.FieldTextInput("tests/my_test.yaml"), "FILE");
+      this.appendDummyInput()
+        .appendField("outputs:")
+        .appendField(new FieldWrappedText(""), "OUTPUTS");
+      this.setPreviousStatement(true, "depends_on_entry");
+      this.setNextStatement(true, "depends_on_entry");
+      this.setColour(blockColors.root);
+      this.setTooltip("Declare a dependency on another test file and its outputs (comma-separated)");
+    },
+  };
+
+  // ── Output entry block ──────────────────────────────────────────────────
+
+  Blockly.Blocks["output_entry"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField(blockIcon(Blockly, ICON_STORE))
+        .appendField(new Blockly.FieldTextInput("variable_name"), "OUTPUT_NAME")
+        .appendField(":")
+        .appendField(new Blockly.FieldTextInput("$"), "OUTPUT_EXPR");
+      this.setPreviousStatement(true, "output_entry");
+      this.setNextStatement(true, "output_entry");
+      this.setColour(blockColors.root);
+      this.setTooltip("Declare a test-level output variable exposed to dependent tests");
+    },
+  };
+
+  // ── Schema import block ─────────────────────────────────────────────────
+
+  Blockly.Blocks["schema_import"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField(blockIcon(Blockly, ICON_SCHEMA))
+        .appendField("Import Schema");
+      this.appendDummyInput()
+        .appendField("schema:")
         .appendField(
-          new Blockly.FieldDropdown([
-            ["access", "access"],
-            ["use", "use"],
-            ["transfer", "transfer"],
-          ]),
-          "ACTION"
+          new Blockly.FieldDropdown(
+            dynamicDropdown(() => collectSchemaPaths()) as () => Array<[string, string]>
+          ),
+          "SCHEMA_PATH"
         );
-      this.appendStatementInput("CONSTRAINTS")
-        .appendField(blockIcon(Blockly, ICON_CONSTRAINT))
-        .appendField("constraint:")
-        .setCheck("constraint");
-      this.setPreviousStatement(true, "permission");
-      this.setNextStatement(true, "permission");
-      this.setColour(blockColors.odrlPermission);
-      this.setTooltip("ODRL permission — define an action with constraints");
+      this.appendDummyInput()
+        .appendField(blockIcon(Blockly, ICON_STORE))
+        .appendField("variable:")
+        .appendField(new Blockly.FieldTextInput("schema_var"), "OUTPUT_SCHEMA");
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour("#0891B2");
+      this.setTooltip("Import a schema file from the project and store it as a variable");
     },
   };
 
-  // Constraint block — a single ODRL constraint (leftOperand operator rightOperand)
-  Blockly.Blocks["odrl_constraint"] = {
+  // ── Export variable block ───────────────────────────────────────────────
+
+  Blockly.Blocks["export_variable"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_CONSTRAINT))
-        .appendField("Constraint");
+        .appendField(blockIcon(Blockly, ICON_STORE))
+        .appendField("Export Variable");
       this.appendDummyInput()
-        .appendField("leftOperand:")
-        .appendField(new Blockly.FieldTextInput("BusinessPartnerNumber"), "LEFT_OPERAND");
-      this.appendDummyInput()
-        .appendField("operator:")
+        .appendField("name:")
         .appendField(
-          new Blockly.FieldDropdown([
-            ["eq", "eq"],
-            ["neq", "neq"],
-            ["isAnyOf", "isAnyOf"],
-            ["isNoneOf", "isNoneOf"],
-            ["isAllOf", "isAllOf"],
-            ["in", "in"],
-            ["lt", "lt"],
-            ["gt", "gt"],
-            ["lteq", "lteq"],
-            ["gteq", "gteq"],
-          ]),
-          "OPERATOR"
+          new Blockly.FieldDropdown(
+            dynamicDropdown(
+              (ws) => {
+                const vars = collectWorkspaceVariables(ws);
+                return vars.length > 0
+                  ? vars.map((v): [string, string] => [v, v])
+                  : [["(no variables)", "__NONE__"]];
+              },
+              "(no variables)"
+            ) as () => Array<[string, string]>
+          ),
+          "VAR_NAME"
         );
-      this.appendValueInput("RIGHT_OPERAND")
-        .appendField("rightOperand:")
-        .setCheck("param_value");
-      this.setPreviousStatement(true, "constraint");
-      this.setNextStatement(true, "constraint");
-      this.setColour(blockColors.odrlConstraint);
-      this.setTooltip("ODRL constraint — a single condition");
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour("#059669");
+      this.setTooltip("Export a variable as a test output — available to dependent tests");
     },
   };
 
-  // Constraint group block — AND/OR logical grouping of constraints
-  Blockly.Blocks["odrl_constraint_group"] = {
+  // ── Import variable block ──────────────────────────────────────────────
+
+  Blockly.Blocks["import_variable"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_CONSTRAINT))
-        .appendField("Constraint Group")
-        .appendField(
-          new Blockly.FieldDropdown([
-            ["and", "and"],
-            ["or", "or"],
-          ]),
-          "LOGIC"
-        );
-      this.appendStatementInput("CONSTRAINTS")
-        .appendField("constraints:")
-        .setCheck("constraint");
-      this.setPreviousStatement(true, "constraint");
-      this.setNextStatement(true, "constraint");
-      this.setColour(blockColors.odrlGroup);
-      this.setTooltip("Group constraints with AND/OR logic");
+        .appendField(blockIcon(Blockly, ICON_VARIABLE))
+        .appendField("Import Variable");
+      this.appendDummyInput()
+        .appendField("from:")
+        .appendField(new Blockly.FieldDropdown(
+          dynamicDropdown(() => collectTestFilePaths()),
+        ), "FILE");
+      this.appendDummyInput()
+        .appendField("export:")
+        .appendField(new Blockly.FieldDropdown(
+          dynamicDropdown(
+            (_ws) => {
+              const filePath = this.getFieldValue("FILE") || "";
+              return collectExportedVariables(filePath);
+            },
+            "(select a test first)"
+          ) as () => Array<[string, string]>
+        ), "EXPORT_VAR");
+      this.appendDummyInput()
+        .appendField(blockIcon(Blockly, ICON_STORE))
+        .appendField("variable:")
+        .appendField(new Blockly.FieldTextInput("imported_var"), "OUTPUT_VAR");
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour("#7C3AED");
+      this.setTooltip("Import an exported variable from another test and store it locally.");
     },
   };
 
-  // Context URL entry
-  Blockly.Blocks["context_entry"] = {
+  // ── Template step block ──────────────────────────────────────────────────
+
+  Blockly.Blocks["step_template"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField("@context:")
-        .appendField(new FieldWrappedText("https://..."), "URL");
-      this.setPreviousStatement(true, "context_entry");
-      this.setNextStatement(true, "context_entry");
-      this.setColour(blockColors.context);
-      this.setTooltip("JSON-LD context URL");
-    },
-  };
+        .appendField(blockIcon(Blockly, ICON_STEP))
+        .appendField("⟪ Template ⟫");
 
-  // Context @vocab mapping
-  Blockly.Blocks["context_vocab"] = {
-    init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField("@vocab:")
-        .appendField(
-          new FieldWrappedText("https://w3id.org/edc/v0.0.1/ns/"),
-          "URL"
-        );
-      this.setPreviousStatement(true, "context_entry");
-      this.setNextStatement(true, "context_entry");
-      this.setColour(blockColors.context);
-      this.setTooltip("JSON-LD @vocab namespace mapping");
+        .appendField("name:")
+        .appendField(new Blockly.FieldTextInput(""), "NAME");
+
+      this.appendDummyInput()
+        .appendField("template:")
+        .appendField(new (FieldWrappedText as typeof Blockly.FieldTextInput)(""), "PARAM_TEMPLATE");
+
+      this.appendStatementInput("PARAMS")
+        .setCheck("key_value")
+        .appendField("params:");
+
+      this.setPreviousStatement(true, "step");
+      this.setNextStatement(true, "step");
+      this.setColour("#6D28D9");
+      this.setTooltip("A reusable template step macro");
     },
   };
 
-  // Generate step blocks from catalog
+  // ── Catalog-driven step blocks (Mock, Wait, and future categories) ──────
+
   for (const category of catalog) {
     const categoryColor = getCategoryColor(category.name);
+    const categoryIcon = category.name === "Mock" ? ICON_MOCK
+      : category.name === "Wait" ? ICON_WAIT
+      : ICON_STEP;
 
     for (const block of category.blocks) {
+      const blockType = `step_${block.type}`;
 
-      Blockly.Blocks[`step_${block.type}`] = {
+      Blockly.Blocks[blockType] = {
         init(this: Block) {
           this.appendDummyInput()
-            .appendField(blockIcon(Blockly, ICON_STEP))
+            .appendField(blockIcon(Blockly, categoryIcon))
             .appendField(block.label);
+
           this.appendDummyInput()
             .appendField("name:")
             .appendField(new Blockly.FieldTextInput(block.label), "NAME");
 
           for (const param of block.params) {
-            if (param.type === "json") {
-              // JSON/object param — use statement input for key-value sub-blocks
-              this.appendStatementInput(`JSON_${param.name.toUpperCase()}`)
-                .appendField(blockIcon(Blockly, ICON_JSON))
-                .appendField(`${param.name}:`)
-                .setCheck("key_value");
-            } else if (param.type === "permission") {
-              // ODRL permission chain
-              this.appendStatementInput(`PERM_${param.name.toUpperCase()}`)
-                .appendField(blockIcon(Blockly, ICON_PERMISSION))
-                .appendField(`${param.name}:`)
-                .setCheck("permission");
-            } else if (param.type === "context") {
-              // JSON-LD context entries
-              this.appendStatementInput(`CTX_${param.name.toUpperCase()}`)
-                .appendField(blockIcon(Blockly, ICON_JSON))
-                .appendField(`${param.name}:`)
-                .setCheck("context_entry");
-            } else {
-              // All other params — value input accepting value blocks
-              this.appendValueInput(param.name.toUpperCase())
-                .appendField(`${param.name}:`)
-                .setCheck("param_value");
+            const fieldKey = `PARAM_${param.name.toUpperCase()}`;
+            const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
+
+            switch (param.type) {
+              case "dropdown":
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldDropdown(
+                      (param.options || []).map((o: string): [string, string] => [o, o])
+                    ),
+                    fieldKey
+                  );
+                break;
+
+              case "number":
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldNumber(
+                      typeof param.default === "number" ? param.default : 0
+                    ),
+                    fieldKey
+                  );
+                break;
+
+              case "json":
+                this.appendStatementInput(fieldKey)
+                  .appendField(blockIcon(Blockly, ICON_JSON))
+                  .appendField(paramLabel)
+                  .setCheck("key_value");
+                break;
+
+              case "endpoint_ref":
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldDropdown(
+                      dynamicDropdown((ws) => collectMockEndpointIds(ws)) as () => Array<[string, string]>
+                    ),
+                    fieldKey
+                  );
+                break;
+
+              case "service_ref": {
+                const catServiceType = category.service_type;
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldDropdown(
+                      dynamicDropdown((ws) => collectServiceRefs(ws, catServiceType)) as () => Array<[string, string]>
+                    ),
+                    fieldKey
+                  );
+                break;
+              }
+
+              case "schema_path":
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldDropdown(
+                      dynamicDropdown(() => collectSchemaPaths()) as () => Array<[string, string]>
+                    ),
+                    fieldKey
+                  );
+                break;
+
+              case "variable":
+                this.appendDummyInput()
+                  .appendField(paramLabel)
+                  .appendField(
+                    new Blockly.FieldDropdown(
+                      dynamicDropdown(
+                        (ws) => {
+                          const vars = collectWorkspaceVariables(ws);
+                          return vars.length > 0
+                            ? vars.map((v): [string, string] => [v, v])
+                            : [["(no variables)", "__NONE__"]];
+                        },
+                        "(no variables)"
+                      ) as () => Array<[string, string]>
+                    ),
+                    fieldKey
+                  );
+                break;
+
+              case "steps":
+                this.appendStatementInput(fieldKey)
+                  .appendField(paramLabel)
+                  .setCheck("step");
+                break;
+
+              default:
+                this.appendValueInput(fieldKey)
+                  .appendField(paramLabel)
+                  .setCheck("param_value");
+                break;
             }
           }
 
+          // Blocks with outputs get assertion inputs
           if (block.outputs && block.outputs.length > 0) {
-            this.appendStatementInput("STORE")
-              .appendField(blockIcon(Blockly, ICON_STORE))
-              .appendField("store outputs")
-              .setCheck("store_output");
+            this.appendStatementInput("EXPECT")
+              .appendField("expect:")
+              .setCheck("assertion");
           }
 
-          this.appendDummyInput()
-            .appendField("failure_policy:")
-            .appendField(
-              new Blockly.FieldDropdown([
-                ["ABORT", "ABORT"],
-                ["CONTINUE", "CONTINUE"],
-                ["SKIP_REST", "SKIP_REST"],
-              ]),
-              "FAILURE_POLICY"
-            );
-
-          this.appendStatementInput("EXPECT").appendField("expect").setCheck("assertion");
-
-          this.setPreviousStatement(true, ["step", "inner_step"]);
-          this.setNextStatement(true, ["step", "inner_step"]);
+          this.setPreviousStatement(true, "step");
+          this.setNextStatement(true, "step");
           this.setColour(categoryColor);
           this.setTooltip(block.description);
+        },
+        onchange(this: Block) {
+          if (!block.depends_on || block.depends_on.length === 0) return;
+          if (!this.workspace) return;
+          if ("isDragging" in this.workspace && (this.workspace as WorkspaceSvg).isDragging()) return;
+
+          const requiredTypes = new Set(block.depends_on.map((t: string) => `step_${t}`));
+          let found = false;
+
+          for (const wsBlock of this.workspace.getAllBlocks(false)) {
+            if (wsBlock === this) continue;
+            if (requiredTypes.has(wsBlock.type)) {
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            this.setWarningText(
+              `Requires a mock endpoint block (${block.depends_on.join(" or ")}) to be present in the workspace.`
+            );
+          } else {
+            this.setWarningText(null);
+          }
         },
       };
     }
   }
 }
 
-/** Scan workspace for defined variable names (from store_output and variable_def blocks) */
+// ── Block Output Helpers ──────────────────────────────────────────────────────
+
+// ── Variable Collection ───────────────────────────────────────────────────────
+
+/**
+ * Static map of template names → the variable names they produce.
+ * Used by collectWorkspaceVariables to expose template outputs in the variable dropdown.
+ */
+const TEMPLATE_OUTPUTS: Record<string, string[]> = {
+  "catalog-negotiation": ["contract_agreement_id", "data_address", "edr_token"],
+  "transfer-dataplane-access": ["data_address", "edr_token"],
+  "dtr-shell-lookup": ["shell_descriptors"],
+};
+
 export function collectWorkspaceVariables(workspace: Workspace): string[] {
   const vars = new Set<string>();
 
-  for (const b of workspace.getBlocksByType("store_output", false)) {
-    const name = b.getFieldValue("VAR_NAME");
-    if (name) vars.add(`memory.${name}`);
+  const collectFromSteps = (steps?: Step[]) => {
+    if (!steps) return;
+    for (const step of steps) {
+      if (isTemplateStep(step)) {
+        const produced = TEMPLATE_OUTPUTS[step.template];
+        if (produced) {
+          for (const v of produced) vars.add(v);
+        }
+        continue;
+      }
+
+      if (step.type === "import_variable") {
+        const importedVar = step.params?.variable;
+        if (typeof importedVar === "string" && importedVar) {
+          vars.add(importedVar);
+        }
+      }
+
+      if (step.store_in_memory) {
+        for (const varName of Object.keys(step.store_in_memory)) {
+          if (varName) vars.add(varName);
+        }
+      }
+
+      // Include nested steps params to keep dropdowns complete for composed blocks.
+      for (const val of Object.values(step.params ?? {})) {
+        if (!Array.isArray(val)) continue;
+        const nested = val.filter((item): item is Step => (
+          typeof item === "object" &&
+          item !== null &&
+          ("template" in item || "type" in item)
+        ));
+        if (nested.length > 0) collectFromSteps(nested);
+      }
+    }
+  };
+
+  // Include test-case level variables from the project store
+  const { testCase, tests } = useProjectStore.getState();
+  if (testCase?.variables) {
+    for (const varName of Object.keys(testCase.variables)) {
+      vars.add(varName);
+    }
   }
 
+  // Include variables from scripts in the project store (especially imported examples)
+  if (tests) {
+    for (const script of tests.values()) {
+      if (script.variables) {
+        for (const varName of Object.keys(script.variables)) {
+          vars.add(varName);
+        }
+      }
+
+      collectFromSteps(script.setup);
+      collectFromSteps(script.steps);
+      collectFromSteps(script.teardown);
+
+      // Scan teardown steps for export_variable step params
+      if (script.teardown) {
+        for (const step of script.teardown) {
+          if ("type" in step && step.type === "export_variable" && step.params?.name) {
+            vars.add(String(step.params.name));
+          }
+        }
+      }
+    }
+  }
+
+  // Variables are now declared via variable_def blocks
   for (const b of workspace.getBlocksByType("variable_def", false)) {
     const name = b.getFieldValue("VAR_NAME");
     if (name) vars.add(name);
   }
 
+  // Include variables already referenced in the current workspace.
+  // This prevents temporary "(no variables)" states right after loading.
+  for (const b of workspace.getBlocksByType("variable_get", false)) {
+    const ref = b.getFieldValue("VAR_NAME");
+    if (ref && ref !== "__NONE__") vars.add(ref);
+  }
+
+  // Inject outputs from step_template blocks based on their template name
+  for (const b of workspace.getBlocksByType("step_template", false)) {
+    const templateName = b.getFieldValue("PARAM_TEMPLATE");
+    if (templateName && TEMPLATE_OUTPUTS[templateName]) {
+      for (const v of TEMPLATE_OUTPUTS[templateName]) {
+        vars.add(v);
+      }
+    }
+  }
+
+  // Inject variables from import_variable blocks (OUTPUT_VAR field)
+  for (const b of workspace.getBlocksByType("import_variable", false)) {
+    const varName = b.getFieldValue("OUTPUT_VAR");
+    if (varName) vars.add(varName);
+  }
+
   return Array.from(vars).sort();
+}
+
+// ── Toolbox Builder ───────────────────────────────────────────────────────────
+
+/**
+ * Maps catalog `service_type` values to the ServiceType(s) in the store that
+ * satisfy them. A category is shown when ANY of the mapped types is configured.
+ * When the catalog is updated to use exact ServiceType values, this map can be
+ * trimmed to identity mappings only.
+ */
+const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
+  edc_connector: ["edc_connector_saturn", "edc_connector_jupiter"],
+  edc_connector_saturn: ["edc_connector_saturn"],
+  edc_connector_jupiter: ["edc_connector_jupiter"],
+  dtr: ["aas"],
+  aas: ["aas"],
+  discovery_finder: ["discovery_finder"],
+  edc_discovery: ["edc_discovery"],
+  bpn_discovery: ["bpn_discovery"],
+};
+
+/** Returns true if at least one service matching `catalogServiceType` is configured. */
+function isServiceCategoryEnabled(catalogServiceType: string): boolean {
+  const store = useServiceStore.getState();
+  const mappedTypes = SERVICE_TYPE_RESOLUTION[catalogServiceType];
+  if (!mappedTypes) return store.services.some((s) => s.type === catalogServiceType);
+  return mappedTypes.some((t) => store.hasServiceType(t as import("../../models/schema").ServiceType));
+}
+
+/** Build catalog-driven category entries, filtering by configured services. */
+function buildServiceCategories(catalog: BlockCatalog): object[] {
+  return catalog
+    .filter((cat) => !cat.service_type || isServiceCategoryEnabled(cat.service_type))
+    .map((cat) => ({
+      kind: "category",
+      name: cat.name,
+      contents: cat.blocks.map((b) => ({
+        kind: "block",
+        type: `step_${b.type}`,
+      })),
+    }));
 }
 
 export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables?: string[]): object {
   if (kind === "test-case") {
+    // Test-case toolbox: structural blocks + service-dependent step categories
+    const serviceCategories = buildServiceCategories(catalog);
     return {
       kind: "categoryToolbox",
       contents: [
@@ -714,17 +1286,22 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           name: "Preconditions",
           contents: [{ kind: "block", type: "precondition" }],
         },
+        {
+          kind: "category",
+          name: "Authentication",
+          contents: [
+            { kind: "block", type: "auth_oauth2" },
+            { kind: "block", type: "auth_api_key" },
+          ],
+        },
+        ...serviceCategories,
       ],
     };
   }
 
   const vars = variables || [];
 
-  // Build Variables category — Scratch-like: store_output + pre-filled reporters
-  const variableContents: object[] = [
-    { kind: "block", type: "store_output" },
-  ];
-
+  const variableContents: object[] = [];
   if (vars.length > 0) {
     variableContents.push({ kind: "label", text: "Defined Variables" });
     for (const v of vars) {
@@ -736,55 +1313,66 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
     }
     variableContents.push({ kind: "sep", gap: "8" });
   }
-
-  // Always include a blank variable_get for selecting variables
   variableContents.push({ kind: "block", type: "variable_get" });
 
-  const categoryContents = catalog.map((cat) => ({
-    kind: "category",
-    name: cat.name,
-    contents: cat.blocks.map((b) => ({
-      kind: "block",
-      type: `step_${b.type}`,
-    })),
-  }));
+  const categoryContents = buildServiceCategories(catalog);
 
   return {
     kind: "categoryToolbox",
     contents: [
+      ...categoryContents,
       {
         kind: "category",
-        name: "Services",
-        contents: [{ kind: "block", type: "service_block" }],
+        name: "Template",
+        contents: [
+          { kind: "block", type: "step_template" },
+        ],
+      },
+      {
+        kind: "category",
+        name: "Authentication",
+        contents: [
+          { kind: "block", type: "auth_oauth2" },
+          { kind: "block", type: "auth_api_key" },
+        ],
       },
       {
         kind: "category",
         name: "Variables",
-        contents: variableContents,
+        contents: [
+          { kind: "block", type: "variable_def" },
+          { kind: "sep", gap: "16" },
+          ...variableContents,
+          { kind: "sep", gap: "16" },
+          { kind: "block", type: "schema_import" },
+          { kind: "sep", gap: "16" },
+          { kind: "block", type: "import_variable" },
+          { kind: "block", type: "export_variable" },
+        ],
       },
       {
         kind: "category",
         name: "Values",
         contents: [
           { kind: "block", type: "value_string" },
-          { kind: "block", type: "value_auto" },
+          { kind: "block", type: "value_number" },
+          { kind: "block", type: "value_boolean" },
         ],
       },
       {
         kind: "category",
         name: "Assertions",
-        contents: [{ kind: "block", type: "assertion" }],
-      },
-      ...categoryContents,
-      {
-        kind: "category",
-        name: "ODRL / Policies",
         contents: [
-          { kind: "block", type: "odrl_permission" },
-          { kind: "block", type: "odrl_constraint" },
-          { kind: "block", type: "odrl_constraint_group" },
-          { kind: "block", type: "context_entry" },
-          { kind: "block", type: "context_vocab" },
+          { kind: "block", type: "assert_equals" },
+          { kind: "block", type: "assert_not_equals" },
+          { kind: "block", type: "assert_contains" },
+          { kind: "block", type: "assert_not_contains" },
+          { kind: "block", type: "assert_matches" },
+          { kind: "block", type: "assert_schema" },
+          { kind: "block", type: "assert_compare" },
+          { kind: "block", type: "assert_between" },
+          { kind: "block", type: "assert_not_null" },
+          { kind: "block", type: "assert_not_empty" },
         ],
       },
       {
@@ -796,18 +1384,18 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
   };
 }
 
+// ── Workspace → Model (serialization) ─────────────────────────────────────────
+
 export function workspaceToModel(
   _Blockly: typeof BlocklyType,
   workspace: Workspace,
   catalog: BlockCatalog
 ): Partial<TestLabDocument> {
-  // Try test-case root first
   const testCaseRoot = workspace.getBlocksByType("test_case_root", false)[0];
   if (testCaseRoot) {
     return workspaceToTestCase(testCaseRoot);
   }
 
-  // Then try regular test root
   const rootBlock = workspace.getBlocksByType("test_root", false)[0];
   if (!rootBlock) return {};
 
@@ -815,11 +1403,34 @@ export function workspaceToModel(
   const version = rootBlock.getFieldValue("VERSION") || "1.0";
   const description = rootBlock.getFieldValue("DESCRIPTION") || "";
 
-  // Collect services and steps from all phases (service_blocks in step chains)
-  const services: ServiceDefinition[] = [];
-  const setup = readStepChainWithServices(rootBlock.getInputTargetBlock("SETUP"), catalog, services);
-  const steps = readStepChainWithServices(rootBlock.getInputTargetBlock("STEPS"), catalog, services);
-  const cleanup = readStepChainWithServices(rootBlock.getInputTargetBlock("CLEANUP"), catalog, services);
+  const setupHead = rootBlock.getInputTargetBlock("SETUP");
+  const setup = readStepChain(setupHead, catalog);
+  const steps = readStepChain(rootBlock.getInputTargetBlock("STEPS"), catalog);
+  const teardown = readStepChain(rootBlock.getInputTargetBlock("TEARDOWN"), catalog);
+
+  // Collect variable_def blocks from the VARIABLES input
+  const variables: Record<string, VariableDefinition> = {};
+  let varBlock = rootBlock.getInputTargetBlock("VARIABLES");
+  while (varBlock) {
+    if (varBlock.type === "variable_def") {
+      const varName = varBlock.getFieldValue("VAR_NAME") || "";
+      const varType = varBlock.getFieldValue("VAR_TYPE") || "str";
+      const varDefault = varBlock.getFieldValue("VAR_DEFAULT") || "";
+      const varRuntime = varBlock.getFieldValue("VAR_RUNTIME") === "true";
+      const varDesc = varBlock.getFieldValue("VAR_DESCRIPTION") || "";
+      if (varName) {
+        const varDef: VariableDefinition = { type: varType };
+        if (varDefault) varDef.default = varDefault;
+        if (varRuntime) varDef.runtime = true;
+        if (varDesc) varDef.description = varDesc;
+        variables[varName] = varDef;
+      }
+    }
+    varBlock = varBlock.getNextBlock();
+  }
+
+  // Services come from the service store, not from workspace blocks
+  const { services } = useServiceStore.getState();
 
   return {
     kind: "test",
@@ -829,7 +1440,8 @@ export function workspaceToModel(
     services: services.length > 0 ? services : undefined,
     setup: setup.length > 0 ? setup : undefined,
     steps,
-    cleanup: cleanup.length > 0 ? cleanup : undefined,
+    teardown: teardown.length > 0 ? teardown : undefined,
+    variables: Object.keys(variables).length > 0 ? variables : undefined,
   } as Partial<ScriptDefinition>;
 }
 
@@ -838,7 +1450,6 @@ function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
   const version = root.getFieldValue("VERSION") || "1.0";
   const description = root.getFieldValue("DESCRIPTION") || "";
 
-  // Read shared variables
   const variables: Record<string, unknown> = {};
   let varBlock = root.getInputTargetBlock("VARIABLES");
   while (varBlock) {
@@ -848,7 +1459,6 @@ function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
       const varDefault = varBlock.getFieldValue("VAR_DEFAULT") || "";
       const varRuntime = varBlock.getFieldValue("VAR_RUNTIME") === "true";
       const varDesc = varBlock.getFieldValue("VAR_DESCRIPTION") || "";
-
       if (varName) {
         const varDef: Record<string, unknown> = { type: varType };
         if (varDefault) varDef.default = varDefault;
@@ -860,31 +1470,26 @@ function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
     varBlock = varBlock.getNextBlock();
   }
 
-  // Read preconditions
   const preconditions: Array<{ id: string; description: string }> = [];
   let preBlock = root.getInputTargetBlock("PRECONDITIONS");
   while (preBlock) {
     if (preBlock.type === "precondition") {
       const preId = preBlock.getFieldValue("PRE_ID") || "";
       const preDesc = preBlock.getFieldValue("PRE_DESCRIPTION") || "";
-      if (preId) {
-        preconditions.push({ id: preId, description: preDesc });
-      }
+      if (preId) preconditions.push({ id: preId, description: preDesc });
     }
     preBlock = preBlock.getNextBlock();
   }
 
-  // Read test references
   const tests: (ScriptDefinition | string | TestRef)[] = [];
   let testBlock = root.getInputTargetBlock("TESTS");
   while (testBlock) {
     if (testBlock.type === "test_ref") {
       const testName = testBlock.getFieldValue("TEST_NAME") || "";
-      const description = testBlock.getFieldValue("DESCRIPTION") || "";
+      const desc = testBlock.getFieldValue("DESCRIPTION") || "";
       if (testName) {
         const ref: TestRef = { test: testName };
-        if (description) ref.description = description;
-        // Read WITH key-value pairs
+        if (desc) ref.description = desc;
         const withOverrides: Record<string, unknown> = {};
         let kvBlock = testBlock.getInputTargetBlock("WITH");
         while (kvBlock) {
@@ -898,10 +1503,6 @@ function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
         if (Object.keys(withOverrides).length > 0) ref.with = withOverrides;
         tests.push(ref);
       }
-    } else if (testBlock.type === "include_test") {
-      // Legacy backward compat
-      const filePath = testBlock.getFieldValue("FILE_PATH") || "";
-      if (filePath) tests.push(`!include ${filePath}`);
     }
     testBlock = testBlock.getNextBlock();
   }
@@ -917,73 +1518,71 @@ function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
   } as Partial<TestCaseDefinition>;
 }
 
-/** Read a service_block and extract its ServiceDefinition */
-function readServiceBlock(block: Block): ServiceDefinition | null {
-  const name = block.getFieldValue("SERVICE_NAME") || "";
-  const type = block.getFieldValue("SERVICE_TYPE") || ServiceType.CONNECTOR_CONSUMER;
+// ── Step Chain Reading ─────────────────────────────────────────────────────────
 
-  let baseUrl = "";
-  const urlBlock = block.getInputTargetBlock("BASE_URL");
-  if (urlBlock) {
-    if (urlBlock.type === "variable_get") {
-      const varName = urlBlock.getFieldValue("VAR_NAME") || "";
-      baseUrl = varName ? `\${${varName}}` : "";
-    } else if (urlBlock.type === "value_string") {
-      baseUrl = urlBlock.getFieldValue("VALUE") || "";
-    } else if (urlBlock.type === "value_auto") {
-      baseUrl = "{{auto}}";
-    }
-  }
-
-  let auth: Record<string, unknown> | undefined;
-  let kvBlock = block.getInputTargetBlock("AUTH");
-  while (kvBlock) {
-    if (kvBlock.type === "key_value_pair") {
-      const key = kvBlock.getFieldValue("KEY") || "";
-      const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
-      if (key) {
-        if (!auth) auth = {};
-        auth[key] = value;
-      }
-    }
-    kvBlock = kvBlock.getNextBlock();
-  }
-
-  if (!name) return null;
-  const svc: ServiceDefinition = {
-    name,
-    type: type as ServiceDefinition["type"],
-    base_url: baseUrl,
-  };
-  if (auth) svc.auth = auth;
-  return svc;
-}
-
-/** Read a step chain, handling service_blocks as containers.
- *  service_blocks extract service definitions and wrap inner steps with params.service. */
-function readStepChainWithServices(
-  block: Block | null,
-  catalog: BlockCatalog,
-  services: ServiceDefinition[]
-): StepDefinition[] {
-  const steps: StepDefinition[] = [];
+function readStepChain(block: Block | null, catalog: BlockCatalog): Step[] {
+  const steps: Step[] = [];
   let current = block;
   while (current) {
-    if (current.type === "service_block") {
-      // Extract service definition
-      const svc = readServiceBlock(current);
-      if (svc) {
-        // Avoid duplicate service definitions
-        if (!services.some((s) => s.name === svc.name)) {
-          services.push(svc);
-        }
-        // Read inner steps and add params.service
-        const innerSteps = readStepChain(current.getInputTargetBlock("STEPS"), catalog);
-        for (const s of innerSteps) {
-          s.params = { service: svc.name, ...s.params };
-          steps.push(s);
-        }
+    // export_variable blocks serialize as export_variable steps (in teardown)
+    if (current.type === "export_variable") {
+      const varName = current.getFieldValue("VAR_NAME");
+      if (varName && varName !== "__NONE__") {
+        steps.push({
+          type: "export_variable",
+          name: `Export ${varName}`,
+          params: { name: varName, value: `@${varName}` },
+        } as StepDefinition);
       }
+      current = current.getNextBlock();
+      continue;
+    }
+    // import_variable blocks serialize as import_variable steps
+    if (current.type === "import_variable") {
+      const file = current.getFieldValue("FILE") || "";
+      const exportVar = current.getFieldValue("EXPORT_VAR") || "";
+      const outputVar = current.getFieldValue("OUTPUT_VAR") || exportVar;
+      if (file && file !== "__NONE__" && exportVar && exportVar !== "__NONE__") {
+        steps.push({
+          type: "import_variable",
+          name: `Import ${exportVar}`,
+          params: { file, export: exportVar, variable: outputVar },
+        } as StepDefinition);
+      }
+      current = current.getNextBlock();
+      continue;
+    }
+    if (current.type === "schema_import") {
+      const schemaPath = current.getFieldValue("SCHEMA_PATH") || "";
+      const varName = current.getFieldValue("OUTPUT_SCHEMA") || "schema_var";
+      if (schemaPath && schemaPath !== "__NONE__") {
+        steps.push({
+          type: "load_schema",
+          name: `Load ${varName}`,
+          params: { name: varName, source: "file", path: schemaPath },
+          store_in_memory: { [varName]: "$" },
+        });
+      }
+    } else if (current.type === "step_template") {
+      const templateName = current.getFieldValue("PARAM_TEMPLATE") || "";
+      const name = current.getFieldValue("NAME") || undefined;
+      const templateStep: TemplateStepDefinition = { template: templateName };
+      if (name && name !== templateName) templateStep.name = name;
+
+      // Read params from key_value_pair chain
+      const params: Record<string, unknown> = {};
+      let kvBlock = current.getInputTargetBlock("PARAMS");
+      while (kvBlock) {
+        if (kvBlock.type === "key_value_pair") {
+          const key = kvBlock.getFieldValue("KEY") || "";
+          const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
+          if (key) params[key] = value;
+        }
+        kvBlock = kvBlock.getNextBlock();
+      }
+      if (Object.keys(params).length > 0) templateStep.params = params;
+
+      steps.push(templateStep);
     } else {
       const step = blockToStep(current, catalog);
       if (step) steps.push(step);
@@ -991,96 +1590,6 @@ function readStepChainWithServices(
     current = current.getNextBlock();
   }
   return steps;
-}
-
-function readStepChain(block: Block | null, catalog: BlockCatalog): StepDefinition[] {
-  const steps: StepDefinition[] = [];
-  let current = block;
-  while (current) {
-    const step = blockToStep(current, catalog);
-    if (step) steps.push(step);
-    current = current.getNextBlock();
-  }
-  return steps;
-}
-
-// ── ODRL serialization helpers ──────────────────────────────────────────────
-
-/** Read a value block and return its string representation */
-function readValueBlockAsString(block: Block | null): string | undefined {
-  if (!block) return undefined;
-  if (block.type === "value_auto") return "{{auto}}";
-  if (block.type === "variable_get") {
-    const v = block.getFieldValue("VAR_NAME") || "";
-    return v && v !== "__NONE__" ? `\${${v}}` : undefined;
-  }
-  if (block.type === "value_string") {
-    return block.getFieldValue("VALUE") || undefined;
-  }
-  return undefined;
-}
-
-/** Read a chain of odrl_permission blocks → ODRL permissions array */
-function readPermissionChain(block: Block | null): object[] {
-  const perms: object[] = [];
-  let current = block;
-  while (current) {
-    if (current.type === "odrl_permission") {
-      const action = current.getFieldValue("ACTION") || "use";
-      const constraint = readConstraintInput(current.getInputTargetBlock("CONSTRAINTS"));
-      const perm: Record<string, unknown> = { action };
-      if (constraint) perm.constraint = constraint;
-      perms.push(perm);
-    }
-    current = current.getNextBlock();
-  }
-  return perms;
-}
-
-/** Read constraint blocks from a statement input → single constraint object or AND group */
-function readConstraintInput(block: Block | null): object | undefined {
-  const constraints = readConstraintList(block);
-  if (constraints.length === 0) return undefined;
-  if (constraints.length === 1) return constraints[0];
-  // Multiple top-level constraints → implicit AND
-  return { and: constraints };
-}
-
-/** Read a chain of constraint/constraint_group blocks → array of constraint objects */
-function readConstraintList(block: Block | null): object[] {
-  const list: object[] = [];
-  let current = block;
-  while (current) {
-    if (current.type === "odrl_constraint") {
-      const leftOperand = current.getFieldValue("LEFT_OPERAND") || "";
-      const operator = current.getFieldValue("OPERATOR") || "eq";
-      const rightOperand = readValueBlockAsString(current.getInputTargetBlock("RIGHT_OPERAND")) || "";
-      list.push({ leftOperand, operator, rightOperand });
-    } else if (current.type === "odrl_constraint_group") {
-      const logic = current.getFieldValue("LOGIC") || "and";
-      const inner = readConstraintList(current.getInputTargetBlock("CONSTRAINTS"));
-      if (inner.length > 0) list.push({ [logic]: inner });
-    }
-    current = current.getNextBlock();
-  }
-  return list;
-}
-
-/** Read a chain of context_entry/context_vocab blocks → JSON-LD context array */
-function readContextChain(block: Block | null): (string | Record<string, string>)[] {
-  const ctx: (string | Record<string, string>)[] = [];
-  let current = block;
-  while (current) {
-    if (current.type === "context_entry") {
-      const url = current.getFieldValue("URL") || "";
-      if (url) ctx.push(url);
-    } else if (current.type === "context_vocab") {
-      const url = current.getFieldValue("URL") || "";
-      if (url) ctx.push({ "@vocab": url });
-    }
-    current = current.getNextBlock();
-  }
-  return ctx;
 }
 
 function findCatalogEntry(stepType: string, catalog: BlockCatalog): BlockCatalogEntry | null {
@@ -1093,123 +1602,207 @@ function findCatalogEntry(stepType: string, catalog: BlockCatalog): BlockCatalog
 }
 
 function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null {
-  const blockType = block.type;
-  if (!blockType.startsWith("step_")) return null;
+  if (!block.type.startsWith("step_")) return null;
 
-  const stepType = blockType.replace("step_", "");
+  const stepType = block.type.replace("step_", "");
   const name = block.getFieldValue("NAME") || stepType;
-  const failurePolicy = block.getFieldValue("FAILURE_POLICY") || undefined;
-
-  // Read params from catalog
   const catalogEntry = findCatalogEntry(stepType, catalog);
+
   const params: Record<string, unknown> = {};
   if (catalogEntry) {
     for (const p of catalogEntry.params) {
-      if (p.type === "json") {
-        // Read key-value pairs from statement input
-        const jsonObj: Record<string, string> = {};
-        let kvBlock = block.getInputTargetBlock(`JSON_${p.name.toUpperCase()}`);
-        while (kvBlock) {
-          if (kvBlock.type === "key_value_pair") {
-            const key = kvBlock.getFieldValue("KEY") || "";
-            const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
-            if (key) jsonObj[key] = value;
-          }
-          kvBlock = kvBlock.getNextBlock();
+      const fieldKey = `PARAM_${p.name.toUpperCase()}`;
+
+      switch (p.type) {
+        case "dropdown":
+        case "endpoint_ref":
+        case "service_ref":
+        case "schema_path":
+        case "variable": {
+          const val = block.getFieldValue(fieldKey);
+          if (val && val !== "__NONE__") params[p.name] = val;
+          break;
         }
-        if (Object.keys(jsonObj).length > 0) params[p.name] = jsonObj;
-      } else if (p.type === "permission") {
-        const perms = readPermissionChain(block.getInputTargetBlock(`PERM_${p.name.toUpperCase()}`));
-        if (perms.length > 0) params[p.name] = perms;
-      } else if (p.type === "context") {
-        const ctx = readContextChain(block.getInputTargetBlock(`CTX_${p.name.toUpperCase()}`));
-        if (ctx.length > 0) params[p.name] = ctx;
-      } else {
-        // Read connected value block
-        const connectedBlock = block.getInputTargetBlock(p.name.toUpperCase());
-        if (connectedBlock) {
-          if (connectedBlock.type === "value_auto") {
-            params[p.name] = "{{auto}}";
-          } else if (connectedBlock.type === "variable_get") {
-            const varName = connectedBlock.getFieldValue("VAR_NAME") || "";
-            if (varName && varName !== "__NONE__") params[p.name] = `\${${varName}}`;
-          } else if (connectedBlock.type === "value_string") {
-            const val = connectedBlock.getFieldValue("VALUE");
+        case "number": {
+          const val = block.getFieldValue(fieldKey);
+          if (val !== undefined && val !== null) params[p.name] = Number(val);
+          break;
+        }
+        case "json": {
+          const jsonObj: Record<string, string> = {};
+          let kvBlock = block.getInputTargetBlock(fieldKey);
+          while (kvBlock) {
+            if (kvBlock.type === "key_value_pair") {
+              const key = kvBlock.getFieldValue("KEY") || "";
+              const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
+              if (key) jsonObj[key] = value;
+            }
+            kvBlock = kvBlock.getNextBlock();
+          }
+          if (Object.keys(jsonObj).length > 0) params[p.name] = jsonObj;
+          break;
+        }
+        case "steps": {
+          const nested = readStepChain(block.getInputTargetBlock(fieldKey), catalog);
+          if (nested.length > 0) params[p.name] = nested;
+          break;
+        }
+        default: {
+          const connectedBlock = block.getInputTargetBlock(fieldKey);
+          if (connectedBlock) {
+            const val = readValueBlockAsString(connectedBlock);
             if (val) params[p.name] = val;
           }
+          break;
         }
       }
     }
   }
 
-  // Read store_output blocks from STORE input
+  // Auto-generate store_in_memory from catalog outputs (identity mapping)
   let storeInMemory: Record<string, string> | undefined;
-  let storeBlock = block.getInputTargetBlock("STORE");
-  while (storeBlock) {
-    if (storeBlock.type === "store_output") {
-      const varName = storeBlock.getFieldValue("VAR_NAME") || "";
-      const jsonPath = storeBlock.getFieldValue("JSON_PATH") || "$";
-      if (varName) {
-        if (!storeInMemory) storeInMemory = {};
-        storeInMemory[varName] = jsonPath;
-      }
+  if (catalogEntry?.outputs && catalogEntry.outputs.length > 0) {
+    storeInMemory = {};
+    for (const output of catalogEntry.outputs) {
+      storeInMemory[output.name] = "$";
     }
-    storeBlock = storeBlock.getNextBlock();
   }
 
-  // Read assertions
   const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
-  const step: StepDefinition = {
+  // Special handling: send_notification — restructure flat params into notification.header + content
+  if (stepType === "send_notification") {
+    const notification: Record<string, unknown> = {};
+    const header: Record<string, unknown> = {};
+    const headerFields = ["classification", "severity", "status", "type"];
+
+    if (params.notification_id) header.notificationId = params.notification_id;
+    if (params.sender_bpn) header.senderBPN = params.sender_bpn;
+    if (params.recipient_bpn) header.recipientBPN = params.recipient_bpn;
+    for (const hf of headerFields) {
+      if (params[hf]) {
+        header[hf] = params[hf];
+        delete params[hf];
+      }
+    }
+    delete params.notification_id;
+    delete params.sender_bpn;
+    delete params.recipient_bpn;
+
+    if (Object.keys(header).length > 0) notification.header = header;
+    if (params.content) {
+      notification.content = params.content;
+      delete params.content;
+    }
+    if (Object.keys(notification).length > 0) {
+      params.notification = notification;
+    }
+  }
+
+  return {
     type: stepType,
     name,
     params,
     expect: expect.length > 0 ? expect : undefined,
     store_in_memory: storeInMemory,
-    on_failure: failurePolicy === "ABORT" ? undefined : failurePolicy,
   };
+}
 
-  return step;
+function readValueBlockAsString(block: Block | null): string | undefined {
+  if (!block) return undefined;
+  if (block.type === "variable_get") {
+    const v = block.getFieldValue("VAR_NAME") || "";
+    return v && v !== "__NONE__" ? `@${v}` : undefined;
+  }
+  if (block.type === "value_string") {
+    return block.getFieldValue("VALUE") || undefined;
+  }
+  if (block.type === "value_number") {
+    const n = block.getFieldValue("VALUE");
+    return n !== undefined ? String(n) : undefined;
+  }
+  if (block.type === "value_boolean") {
+    return block.getFieldValue("VALUE") || undefined;
+  }
+  return undefined;
 }
 
 function readAssertionChain(block: Block | null): Assertion[] {
   const assertions: Assertion[] = [];
   let current = block;
   while (current) {
-    if (current.type === "assertion") {
-      const a: Assertion = {
-        type: (current.getFieldValue("TYPE") || "STATUS_CODE") as AssertionType,
-        value: readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "",
-        severity: (current.getFieldValue("SEVERITY") || "HARD") as AssertionSeverity,
-        path: readValueBlockAsString(current.getInputTargetBlock("FIELD")) || undefined,
-      };
-      if (!a.path) delete a.path;
-      assertions.push(a);
+    const output = current.getFieldValue("OUTPUT") || "";
+    if (!output || output === "__NONE__") {
+      current = current.getNextBlock();
+      continue;
+    }
+
+    switch (current.type) {
+      case "assert_equals": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+        assertions.push({ output, equals: val });
+        break;
+      }
+      case "assert_not_equals": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+        assertions.push({ output, not_equals: val });
+        break;
+      }
+      case "assert_contains": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
+        assertions.push({ output, contains: val });
+        break;
+      }
+      case "assert_not_contains": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
+        assertions.push({ output, not_contains: val });
+        break;
+      }
+      case "assert_matches": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("PATTERN")) || "";
+        assertions.push({ output, matches: val });
+        break;
+      }
+      case "assert_schema": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("SCHEMA")) || "";
+        assertions.push({ output, schema: val });
+        break;
+      }
+      case "assert_compare": {
+        const operator = current.getFieldValue("OPERATOR") || "greater_than";
+        const val = readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "";
+        assertions.push({ output, [operator]: val });
+        break;
+      }
+      case "assert_between": {
+        const min = readValueBlockAsString(current.getInputTargetBlock("MIN")) || "";
+        const max = readValueBlockAsString(current.getInputTargetBlock("MAX")) || "";
+        assertions.push({ output, between: [min, max] });
+        break;
+      }
+      case "assert_not_null":
+        assertions.push({ output, not_null: true });
+        break;
+      case "assert_not_empty":
+        assertions.push({ output, not_empty: true });
+        break;
     }
     current = current.getNextBlock();
   }
   return assertions;
 }
 
-// ── Populate workspace from model ─────────────────────────────────────────────
+// ── Model → Workspace (deserialization) ───────────────────────────────────────
 
-/** Helper: create a block, init SVG, set fields, return it */
 function makeBlock(ws: Workspace, type: string): Block {
   const b = ws.newBlock(type);
-  // initSvg exists on rendered blocks but not in the Block type
   (b as unknown as { initSvg: () => void }).initSvg();
   return b;
 }
 
-/**
- * Set a FieldDropdown value, bypassing doClassValidation_ which rejects
- * values not yet in the dynamic option list (e.g. variable names whose
- * defining blocks haven't been created yet during population).
- */
 function setDropdownValue(block: Block, fieldName: string, value: string) {
   const field = block.getField(fieldName);
   if (!field) return;
-  // Temporarily replace the validator to allow any value during population
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const f = field as any;
   const original = f.doClassValidation_;
@@ -1219,9 +1812,16 @@ function setDropdownValue(block: Block, fieldName: string, value: string) {
   } finally {
     f.doClassValidation_ = original;
   }
+  // Force Blockly to refresh the cached display text from the options list
+  if (typeof f.getOptions === "function") {
+    f.getOptions(true);
+    // Update displayed text to match the new value
+    const opts = f.getOptions(false) as Array<[string, string]>;
+    const match = opts.find(([, v]: [string, string]) => v === value);
+    if (match) f.selectedOption_ = match;
+  }
 }
 
-/** Connect a chain of blocks to a statement input on parent */
 function attachChain(parent: Block, inputName: string, blocks: Block[]) {
   if (blocks.length === 0) return;
   const input = parent.getInput(inputName);
@@ -1232,7 +1832,6 @@ function attachChain(parent: Block, inputName: string, blocks: Block[]) {
   }
 }
 
-/** Connect a value block to a value input on parent */
 function connectValue(parent: Block, inputName: string, child: Block) {
   const input = parent.getInput(inputName);
   if (input?.connection && child.outputConnection) {
@@ -1240,341 +1839,34 @@ function connectValue(parent: Block, inputName: string, child: Block) {
   }
 }
 
-// ── ODRL populate helpers ─────────────────────────────────────────────────────
-
-/** Build permission blocks from parsed ODRL permissions array */
-function buildPermissionBlocks(ws: Workspace, perms: unknown[]): Block[] {
-  const blocks: Block[] = [];
-  for (const perm of perms) {
-    if (typeof perm !== "object" || perm === null) continue;
-    const p = perm as Record<string, unknown>;
-    const pb = makeBlock(ws, "odrl_permission");
-    pb.setFieldValue(String(p.action || "use"), "ACTION");
-    if (p.constraint) {
-      const constraintBlocks = buildConstraintBlocks(ws, p.constraint);
-      attachChain(pb, "CONSTRAINTS", constraintBlocks);
-    }
-    blocks.push(pb);
-  }
-  return blocks;
-}
-
-/** Build constraint blocks from an ODRL constraint object (single or group) */
-function buildConstraintBlocks(ws: Workspace, constraint: unknown): Block[] {
-  if (typeof constraint !== "object" || constraint === null) return [];
-  const c = constraint as Record<string, unknown>;
-
-  // Check for and/or group
-  if (c.and || c.or) {
-    const logic = c.and ? "and" : "or";
-    const items = (c.and || c.or) as unknown[];
-    const gb = makeBlock(ws, "odrl_constraint_group");
-    gb.setFieldValue(logic, "LOGIC");
-    const innerBlocks: Block[] = [];
-    for (const item of items) {
-      innerBlocks.push(...buildConstraintBlocks(ws, item));
-    }
-    attachChain(gb, "CONSTRAINTS", innerBlocks);
-    return [gb];
-  }
-
-  // Single constraint
-  if (c.leftOperand) {
-    return [buildSingleConstraint(ws, c)];
-  }
-
-  return [];
-}
-
-/** Build a single odrl_constraint block */
-function buildSingleConstraint(ws: Workspace, c: Record<string, unknown>): Block {
-  const cb = makeBlock(ws, "odrl_constraint");
-  cb.setFieldValue(String(c.leftOperand || ""), "LEFT_OPERAND");
-  cb.setFieldValue(String(c.operator || "eq"), "OPERATOR");
-  if (c.rightOperand !== undefined) {
-    const strVal = String(c.rightOperand);
-    const vb = createValueBlockFromString(ws, strVal);
-    connectValue(cb, "RIGHT_OPERAND", vb);
-  }
-  return cb;
-}
-
-/** Build context entry blocks from parsed JSON-LD context array */
-function buildContextBlocks(ws: Workspace, ctx: unknown[]): Block[] {
-  const blocks: Block[] = [];
-  for (const entry of ctx) {
-    if (typeof entry === "string") {
-      const cb = makeBlock(ws, "context_entry");
-      cb.setFieldValue(entry, "URL");
-      blocks.push(cb);
-    } else if (typeof entry === "object" && entry !== null) {
-      const obj = entry as Record<string, string>;
-      if (obj["@vocab"]) {
-        const vb = makeBlock(ws, "context_vocab");
-        vb.setFieldValue(obj["@vocab"], "URL");
-        blocks.push(vb);
-      }
-    }
-  }
-  return blocks;
-}
-
-/** Create a value block from a string, handling ${} and {{}} variable syntax */
 function createValueBlockFromString(ws: Workspace, strVal: string): Block {
-  if (strVal === "{{auto}}") {
-    return makeBlock(ws, "value_auto");
+  if (strVal.startsWith("@")) {
+    const vb = makeBlock(ws, "variable_get");
+    setDropdownValue(vb, "VAR_NAME", strVal.slice(1));
+    return vb;
   }
+  // Legacy ${var} or {{var}} syntax
   const varMatch = strVal.match(/^(?:\{\{(.+)\}\}|\$\{(.+)\})$/);
   if (varMatch) {
     const vb = makeBlock(ws, "variable_get");
     setDropdownValue(vb, "VAR_NAME", varMatch[1] || varMatch[2]);
     return vb;
   }
+  // Strip JSONPath root prefix "$." — display paths without it
+  if (strVal.startsWith("$.")) {
+    strVal = strVal.slice(2);
+  }
+  const num = Number(strVal);
+  if (!isNaN(num) && strVal.trim() !== "") {
+    const nb = makeBlock(ws, "value_number");
+    nb.setFieldValue(num, "VALUE");
+    return nb;
+  }
   const vb = makeBlock(ws, "value_string");
   vb.setFieldValue(strVal, "VALUE");
   return vb;
 }
 
-function populateTestCase(ws: Workspace, root: Block, tc: TestCaseDefinition) {
-  // Variables
-  if (tc.variables) {
-    const varBlocks: Block[] = [];
-    for (const [varName, varDef] of Object.entries(tc.variables)) {
-      const vb = makeBlock(ws, "variable_def");
-      vb.setFieldValue(varName, "VAR_NAME");
-      vb.setFieldValue(varDef.type || "str", "VAR_TYPE");
-      vb.setFieldValue(String(varDef.default ?? ""), "VAR_DEFAULT");
-      vb.setFieldValue(varDef.runtime ? "true" : "false", "VAR_RUNTIME");
-      vb.setFieldValue(varDef.description || "", "VAR_DESCRIPTION");
-      varBlocks.push(vb);
-    }
-    attachChain(root, "VARIABLES", varBlocks);
-  }
-
-  // Preconditions
-  if (tc.preconditions) {
-    const preBlocks: Block[] = [];
-    for (const pre of tc.preconditions) {
-      const pb = makeBlock(ws, "precondition");
-      pb.setFieldValue(pre.id || "", "PRE_ID");
-      pb.setFieldValue(pre.description || "", "PRE_DESCRIPTION");
-      preBlocks.push(pb);
-    }
-    attachChain(root, "PRECONDITIONS", preBlocks);
-  }
-
-  // Tests (named references and legacy !include)
-  if (tc.tests) {
-    const testBlocks: Block[] = [];
-    for (const t of tc.tests) {
-      if (isTestRef(t)) {
-        const tb = makeBlock(ws, "test_ref");
-        tb.setFieldValue(t.test, "TEST_NAME");
-        tb.setFieldValue(t.description || "", "DESCRIPTION");
-        // Populate WITH key-value pairs
-        if (t.with && Object.keys(t.with).length > 0) {
-          const kvBlocks: Block[] = [];
-          for (const [key, value] of Object.entries(t.with)) {
-            const kvb = makeBlock(ws, "key_value_pair");
-            kvb.setFieldValue(key, "KEY");
-            connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
-            kvBlocks.push(kvb);
-          }
-          attachChain(tb, "WITH", kvBlocks);
-        }
-        testBlocks.push(tb);
-      } else if (typeof t === "string") {
-        // Legacy !include — convert to test_ref block
-        const tb = makeBlock(ws, "test_ref");
-        const path = t.replace(/^!include\s+/, "");
-        tb.setFieldValue(deriveTestLabel(path), "TEST_NAME");
-        tb.setFieldValue("", "DESCRIPTION");
-        testBlocks.push(tb);
-      } else if (typeof t === "object" && t !== null && "name" in t) {
-        // Inline ScriptDefinition — render as test_ref block
-        const script = t as ScriptDefinition;
-        const tb = makeBlock(ws, "test_ref");
-        tb.setFieldValue(script.name, "TEST_NAME");
-        tb.setFieldValue(script.description || "", "DESCRIPTION");
-        testBlocks.push(tb);
-      }
-    }
-    attachChain(root, "TESTS", testBlocks);
-  }
-}
-
-function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
-  // Index services by name for lookup
-  const serviceMap = new Map<string, ServiceDefinition>();
-  if (script.services) {
-    for (const svc of script.services) {
-      serviceMap.set(svc.name, svc);
-    }
-  }
-
-  /** Create a value block from a string, handling both ${...} and {{...}} variable syntax */
-  const createValueBlock = (strVal: string): Block => {
-    if (strVal === "{{auto}}") {
-      return makeBlock(ws, "value_auto");
-    }
-    // Match {{var}} or ${var} variable syntax
-    const varMatch = strVal.match(/^(?:\{\{(.+)\}\}|\$\{(.+)\})$/);
-    if (varMatch) {
-      const vb = makeBlock(ws, "variable_get");
-      setDropdownValue(vb, "VAR_NAME", varMatch[1] || varMatch[2]);
-      return vb;
-    }
-    const vb = makeBlock(ws, "value_string");
-    vb.setFieldValue(strVal, "VALUE");
-    return vb;
-  };
-
-  /** Create a service_block from a ServiceDefinition */
-  const createServiceBlock = (svc: ServiceDefinition): Block => {
-    const sb = makeBlock(ws, "service_block");
-    sb.setFieldValue(svc.name, "SERVICE_NAME");
-    sb.setFieldValue(svc.type || ServiceType.CONNECTOR_CONSUMER, "SERVICE_TYPE");
-
-    if (svc.base_url) {
-      connectValue(sb, "BASE_URL", createValueBlock(svc.base_url));
-    }
-
-    if (svc.auth && Object.keys(svc.auth).length > 0) {
-      const kvBlocks: Block[] = [];
-      for (const [key, value] of Object.entries(svc.auth)) {
-        const kvb = makeBlock(ws, "key_value_pair");
-        kvb.setFieldValue(key, "KEY");
-        connectValue(kvb, "VALUE", createValueBlock(String(value)));
-        kvBlocks.push(kvb);
-      }
-      attachChain(sb, "AUTH", kvBlocks);
-    }
-
-    return sb;
-  };
-
-  /** Build step blocks from StepDefinitions, grouping consecutive same-service steps into containers */
-  const buildStepBlocks = (steps: StepDefinition[]): Block[] => {
-    const topBlocks: Block[] = [];
-    // Track service containers created in this phase so we can add steps to them
-    const activeServiceBlocks = new Map<string, Block>();
-
-    for (const step of steps) {
-      // Only create blocks for known step types
-      if (!findCatalogEntry(step.type, catalog)) continue;
-
-      const blockType = `step_${step.type}`;
-      const sb = makeBlock(ws, blockType);
-      sb.setFieldValue(step.name || step.type, "NAME");
-
-      // Set params (skip 'service' — it's handled via the container)
-      const entry = findCatalogEntry(step.type, catalog)!;
-      for (const p of entry.params) {
-        const paramVal = step.params?.[p.name];
-        if (paramVal === undefined || paramVal === null) continue;
-
-        if (p.type === "json" && typeof paramVal === "object") {
-          const kvBlocks: Block[] = [];
-          for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
-            const kvb = makeBlock(ws, "key_value_pair");
-            kvb.setFieldValue(key, "KEY");
-            connectValue(kvb, "VALUE", createValueBlock(String(value)));
-            kvBlocks.push(kvb);
-          }
-          attachChain(sb, `JSON_${p.name.toUpperCase()}`, kvBlocks);
-        } else if (p.type === "permission" && Array.isArray(paramVal)) {
-          const permBlocks = buildPermissionBlocks(ws, paramVal as unknown[]);
-          attachChain(sb, `PERM_${p.name.toUpperCase()}`, permBlocks);
-        } else if (p.type === "context" && Array.isArray(paramVal)) {
-          const ctxBlocks = buildContextBlocks(ws, paramVal as unknown[]);
-          attachChain(sb, `CTX_${p.name.toUpperCase()}`, ctxBlocks);
-        } else {
-          connectValue(sb, p.name.toUpperCase(), createValueBlock(String(paramVal)));
-        }
-      }
-
-      // Store in memory
-      if (step.store_in_memory) {
-        const storeBlocks: Block[] = [];
-        for (const [k, v] of Object.entries(step.store_in_memory)) {
-          const sob = makeBlock(ws, "store_output");
-          sob.setFieldValue(k, "VAR_NAME");
-          sob.setFieldValue(v || "$", "JSON_PATH");
-          storeBlocks.push(sob);
-        }
-        attachChain(sb, "STORE", storeBlocks);
-      }
-
-      // Failure policy
-      if (step.on_failure) {
-        sb.setFieldValue(step.on_failure, "FAILURE_POLICY");
-      }
-
-      // Assertions
-      if (step.expect && step.expect.length > 0) {
-        const assertBlocks: Block[] = [];
-        for (const a of step.expect) {
-          const ab = makeBlock(ws, "assertion");
-          ab.setFieldValue(a.type || "STATUS_CODE", "TYPE");
-          if (a.path) {
-            connectValue(ab, "FIELD", createValueBlock(a.path));
-          }
-          connectValue(ab, "VALUE", createValueBlock(String(a.value ?? "200")));
-          ab.setFieldValue(a.severity || "HARD", "SEVERITY");
-          assertBlocks.push(ab);
-        }
-        attachChain(sb, "EXPECT", assertBlocks);
-      }
-
-      // Determine service binding
-      const serviceName = step.params?.service as string | undefined;
-      if (serviceName && serviceMap.has(serviceName)) {
-        // Step belongs to a service — put it inside a service container
-        let containerBlock = activeServiceBlocks.get(serviceName);
-        if (!containerBlock) {
-          // Create the service container block
-          containerBlock = createServiceBlock(serviceMap.get(serviceName)!);
-          activeServiceBlocks.set(serviceName, containerBlock);
-          topBlocks.push(containerBlock);
-        }
-        // Append step to the service container's STEPS chain
-        const stepsInput = containerBlock.getInput("STEPS");
-        if (stepsInput?.connection) {
-          // Find the last block in the STEPS chain
-          let lastInner = stepsInput.connection.targetBlock();
-          if (!lastInner) {
-            stepsInput.connection.connect(sb.previousConnection!);
-          } else {
-            while (lastInner.getNextBlock()) {
-              lastInner = lastInner.getNextBlock()!;
-            }
-            lastInner.nextConnection!.connect(sb.previousConnection!);
-          }
-        }
-      } else {
-        // No service — add directly to the phase
-        topBlocks.push(sb);
-      }
-    }
-
-    return topBlocks;
-  };
-
-  if (script.setup && script.setup.length > 0) {
-    attachChain(root, "SETUP", buildStepBlocks(script.setup));
-  }
-  if (script.steps && script.steps.length > 0) {
-    attachChain(root, "STEPS", buildStepBlocks(script.steps));
-  }
-  if (script.cleanup && script.cleanup.length > 0) {
-    attachChain(root, "CLEANUP", buildStepBlocks(script.cleanup));
-  }
-}
-
-/**
- * Populate a Blockly workspace from a model, creating child blocks
- * and connecting them to the root block's statement inputs.
- */
 export function populateWorkspaceFromModel(
   ws: Workspace,
   root: Block,
@@ -1587,16 +1879,325 @@ export function populateWorkspaceFromModel(
     populateTest(ws, root, model, catalog);
   }
 
-  // Render all blocks after population
   for (const block of ws.getAllBlocks(false)) {
     (block as unknown as { render: () => void }).render();
   }
+
+  // Refresh dynamic dropdown caches after population so newly available
+  // variables are visible immediately without requiring a full UI refresh.
+  for (const block of ws.getAllBlocks(false)) {
+    for (const input of block.inputList) {
+      for (const field of input.fieldRow) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const f = field as any;
+        if (typeof f.getOptions !== "function") continue;
+        const value = typeof f.getValue === "function" ? f.getValue() : undefined;
+        f.getOptions(true);
+        if (value && value !== "__NONE__") {
+          const opts = f.getOptions(false) as Array<[string, string]>;
+          const match = opts.find(([, v]: [string, string]) => v === value);
+          if (match) f.selectedOption_ = match;
+        }
+      }
+    }
+  }
 }
 
-/**
- * Dispose blocks not connected to `root`. Call only during initial workspace
- * load — NOT during incremental syncs (detached blocks should stay on canvas).
- */
+function populateTestCase(ws: Workspace, root: Block, tc: TestCaseDefinition) {
+  if (tc.variables) {
+    const varBlocks: Block[] = [];
+    for (const [varName, varDef] of Object.entries(tc.variables)) {
+      const vb = makeBlock(ws, "variable_def");
+      vb.setFieldValue(varName, "VAR_NAME");
+      vb.setFieldValue(String(varDef.type || "str"), "VAR_TYPE");
+      vb.setFieldValue(String(varDef.default ?? ""), "VAR_DEFAULT");
+      vb.setFieldValue(varDef.runtime ? "true" : "false", "VAR_RUNTIME");
+      vb.setFieldValue(String(varDef.description || ""), "VAR_DESCRIPTION");
+      varBlocks.push(vb);
+    }
+    attachChain(root, "VARIABLES", varBlocks);
+  }
+
+  if (tc.preconditions) {
+    const preBlocks: Block[] = [];
+    for (const pre of tc.preconditions) {
+      const pb = makeBlock(ws, "precondition");
+      pb.setFieldValue(pre.id || "", "PRE_ID");
+      pb.setFieldValue(pre.description || "", "PRE_DESCRIPTION");
+      preBlocks.push(pb);
+    }
+    attachChain(root, "PRECONDITIONS", preBlocks);
+  }
+
+  if (tc.tests) {
+    const testBlocks: Block[] = [];
+    for (const t of tc.tests) {
+      if (isTestRef(t)) {
+        const tb = makeBlock(ws, "test_ref");
+        tb.setFieldValue(t.test, "TEST_NAME");
+        tb.setFieldValue(t.description || "", "DESCRIPTION");
+        if (t.with && Object.keys(t.with).length > 0) {
+          const kvBlocks: Block[] = [];
+          for (const [key, value] of Object.entries(t.with)) {
+            const kvb = makeBlock(ws, "key_value_pair");
+            kvb.setFieldValue(key, "KEY");
+            connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
+            kvBlocks.push(kvb);
+          }
+          attachChain(tb, "WITH", kvBlocks);
+        }
+        testBlocks.push(tb);
+      } else if (typeof t === "string") {
+        const tb = makeBlock(ws, "test_ref");
+        const path = t.replace(/^!include\s+/, "");
+        tb.setFieldValue(deriveTestLabel(path), "TEST_NAME");
+        tb.setFieldValue("", "DESCRIPTION");
+        testBlocks.push(tb);
+      }
+    }
+    attachChain(root, "TESTS", testBlocks);
+  }
+}
+
+function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
+  const buildStepBlocks = (steps: Step[]): Block[] => {
+    const blocks: Block[] = [];
+
+    for (const step of steps) {
+      if (isTemplateStep(step)) {
+        const sb = makeBlock(ws, "step_template");
+        sb.setFieldValue(step.name || step.template, "NAME");
+        sb.setFieldValue(step.template, "PARAM_TEMPLATE");
+
+        if (step.params && Object.keys(step.params).length > 0) {
+          const kvBlocks: Block[] = [];
+          for (const [key, value] of Object.entries(step.params)) {
+            const kvb = makeBlock(ws, "key_value_pair");
+            kvb.setFieldValue(key, "KEY");
+            connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
+            kvBlocks.push(kvb);
+          }
+          attachChain(sb, "PARAMS", kvBlocks);
+        }
+
+        blocks.push(sb);
+        continue;
+      }
+
+      // Deserialize import_variable step → import_variable block
+      if (step.type === "import_variable" && step.params?.file) {
+        const ib = makeBlock(ws, "import_variable");
+        setDropdownValue(ib, "FILE", String(step.params.file));
+        if (step.params.export) {
+          setDropdownValue(ib, "EXPORT_VAR", String(step.params.export));
+        } else if (Array.isArray(step.params.outputs) && step.params.outputs.length > 0) {
+          // Legacy: old format had outputs array — take first
+          setDropdownValue(ib, "EXPORT_VAR", String(step.params.outputs[0]));
+        }
+        const varName = step.params.variable || step.params.export || "imported_var";
+        ib.setFieldValue(String(varName), "OUTPUT_VAR");
+        blocks.push(ib);
+        continue;
+      }
+
+      // Deserialize export_variable step → export_variable block
+      if (step.type === "export_variable" && step.params?.name) {
+        const eb = makeBlock(ws, "export_variable");
+        setDropdownValue(eb, "VAR_NAME", String(step.params.name));
+        blocks.push(eb);
+        continue;
+      }
+
+      // Deserialize load_schema (source=file) → schema_import block
+      if (step.type === "load_schema" && step.params?.source === "file" && step.params?.path) {
+        const sb = makeBlock(ws, "schema_import");
+        setDropdownValue(sb, "SCHEMA_PATH", String(step.params.path));
+        sb.setFieldValue(String(step.params.name || "schema_var"), "OUTPUT_SCHEMA");
+        blocks.push(sb);
+        continue;
+      }
+
+      const entry = findCatalogEntry(step.type, catalog);
+      if (!entry) continue;
+
+      // Special handling: send_notification — flatten notification.header into top-level params
+      let effectiveParams = step.params ?? {};
+      if (step.type === "send_notification" && effectiveParams.notification) {
+        const notif = effectiveParams.notification as Record<string, unknown>;
+        const flat: Record<string, unknown> = { ...effectiveParams };
+        delete flat.notification;
+        if (notif.header && typeof notif.header === "object") {
+          const h = notif.header as Record<string, unknown>;
+          if (h.notificationId) flat.notification_id = h.notificationId;
+          if (h.senderBPN) flat.sender_bpn = h.senderBPN;
+          if (h.recipientBPN) flat.recipient_bpn = h.recipientBPN;
+          if (h.classification) flat.classification = h.classification;
+          if (h.severity) flat.severity = h.severity;
+          if (h.status) flat.status = h.status;
+          if (h.type) flat.type = h.type;
+        }
+        if (notif.content) flat.content = notif.content;
+        effectiveParams = flat;
+      }
+
+      const blockType = `step_${step.type}`;
+      const sb = makeBlock(ws, blockType);
+      sb.setFieldValue(step.name || step.type, "NAME");
+
+      for (const p of entry.params) {
+        const paramVal = effectiveParams[p.name];
+        if (paramVal === undefined || paramVal === null) continue;
+        const fieldKey = `PARAM_${p.name.toUpperCase()}`;
+
+        switch (p.type) {
+          case "dropdown":
+          case "endpoint_ref":
+          case "service_ref":
+          case "schema_path":
+          case "variable":
+            setDropdownValue(sb, fieldKey, String(paramVal));
+            break;
+          case "number":
+            sb.setFieldValue(Number(paramVal), fieldKey);
+            break;
+          case "json":
+            if (typeof paramVal === "object") {
+              const kvBlocks: Block[] = [];
+              for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
+                const kvb = makeBlock(ws, "key_value_pair");
+                kvb.setFieldValue(key, "KEY");
+                connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
+                kvBlocks.push(kvb);
+              }
+              attachChain(sb, fieldKey, kvBlocks);
+            }
+            break;
+          case "steps":
+            if (Array.isArray(paramVal)) {
+              const nestedBlocks = buildStepBlocks(paramVal as StepDefinition[]);
+              attachChain(sb, fieldKey, nestedBlocks);
+            }
+            break;
+          default:
+            connectValue(sb, fieldKey, createValueBlockFromString(ws, String(paramVal)));
+            break;
+        }
+      }
+
+      // store_in_memory is auto-generated from catalog outputs — nothing to restore
+
+      if (step.expect && step.expect.length > 0) {
+        const assertBlocks: Block[] = [];
+        for (const a of step.expect) {
+          const output = a.output || "";
+          const operators = Object.keys(a).filter((k) => k !== "output");
+          if (operators.length === 0) continue;
+
+          const op = operators[0];
+          const val = a[op];
+
+          let ab: Block;
+          switch (op) {
+            case "equals":
+              ab = makeBlock(ws, "assert_equals");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "not_equals":
+              ab = makeBlock(ws, "assert_not_equals");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "contains":
+              ab = makeBlock(ws, "assert_contains");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "not_contains":
+              ab = makeBlock(ws, "assert_not_contains");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "matches":
+              ab = makeBlock(ws, "assert_matches");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "PATTERN", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "schema":
+              ab = makeBlock(ws, "assert_schema");
+              setDropdownValue(ab, "OUTPUT", output);
+              connectValue(ab, "SCHEMA", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "greater_than":
+            case "less_than":
+            case "greater_or_equal":
+            case "less_or_equal":
+              ab = makeBlock(ws, "assert_compare");
+              setDropdownValue(ab, "OUTPUT", output);
+              setDropdownValue(ab, "OPERATOR", op);
+              connectValue(ab, "VALUE", createValueBlockFromString(ws, String(val ?? "")));
+              break;
+            case "between": {
+              ab = makeBlock(ws, "assert_between");
+              setDropdownValue(ab, "OUTPUT", output);
+              const arr = Array.isArray(val) ? val : [];
+              connectValue(ab, "MIN", createValueBlockFromString(ws, String(arr[0] ?? "")));
+              connectValue(ab, "MAX", createValueBlockFromString(ws, String(arr[1] ?? "")));
+              break;
+            }
+            case "not_null":
+              ab = makeBlock(ws, "assert_not_null");
+              setDropdownValue(ab, "OUTPUT", output);
+              break;
+            case "not_empty":
+              ab = makeBlock(ws, "assert_not_empty");
+              setDropdownValue(ab, "OUTPUT", output);
+              break;
+            default:
+              continue;
+          }
+          assertBlocks.push(ab);
+        }
+        attachChain(sb, "EXPECT", assertBlocks);
+      }
+
+      blocks.push(sb);
+    }
+
+    return blocks;
+  };
+
+  // Load services into the store (services are managed externally, not as blocks)
+  if (script.services && script.services.length > 0) {
+    useServiceStore.getState().setServices(script.services);
+  }
+
+  if (script.setup && script.setup.length > 0) {
+    attachChain(root, "SETUP", buildStepBlocks(script.setup));
+  }
+  if (script.steps && script.steps.length > 0) {
+    attachChain(root, "STEPS", buildStepBlocks(script.steps));
+  }
+  if (script.teardown && script.teardown.length > 0) {
+    attachChain(root, "TEARDOWN", buildStepBlocks(script.teardown));
+  }
+
+  // Deserialize variables: section → variable_def blocks
+  if (script.variables && Object.keys(script.variables).length > 0) {
+    const varBlocks: Block[] = [];
+    for (const [varName, varDef] of Object.entries(script.variables)) {
+      const vb = makeBlock(ws, "variable_def");
+      vb.setFieldValue(varName, "VAR_NAME");
+      vb.setFieldValue(varDef.type || "str", "VAR_TYPE");
+      if (varDef.default !== undefined) vb.setFieldValue(String(varDef.default), "VAR_DEFAULT");
+      if (varDef.runtime) vb.setFieldValue("true", "VAR_RUNTIME");
+      if (varDef.description) vb.setFieldValue(varDef.description, "VAR_DESCRIPTION");
+      varBlocks.push(vb);
+    }
+    attachChain(root, "VARIABLES", varBlocks);
+  }
+}
+
 export function cleanupOrphanBlocks(ws: Workspace, root: Block) {
   const connectedIds = new Set<string>();
   const collectConnected = (block: Block | null) => {

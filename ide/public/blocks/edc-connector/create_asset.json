@@ -1,0 +1,17 @@
+{
+  "type": "create_asset",
+  "label": "Create Asset",
+  "description": "Register a new asset in the connector's asset store.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service" },
+    { "name": "asset_id", "type": "string", "required": false, "description": "Asset ID (auto-generated if omitted)" },
+    { "name": "name", "type": "string", "required": true, "description": "Human-readable asset name" },
+    { "name": "description", "type": "string", "required": false, "description": "Asset description" },
+    { "name": "base_url", "type": "string", "required": true, "description": "Data source base URL" },
+    { "name": "content_type", "type": "string", "required": false, "description": "MIME content type of the data" },
+    { "name": "properties", "type": "json", "required": false, "description": "Additional asset properties" }
+  ],
+  "outputs": [
+    { "name": "asset_id", "description": "ID of the created asset" }
+  ]
+}

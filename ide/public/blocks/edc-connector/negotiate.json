@@ -1,0 +1,16 @@
+{
+  "type": "negotiate",
+  "label": "Negotiate Contract",
+  "description": "Initiate a contract negotiation for a specific offer.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service" },
+    { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
+    { "name": "offer_id", "type": "string", "required": true, "description": "ID of the offer/policy to negotiate" },
+    { "name": "asset_id", "type": "string", "required": true, "description": "ID of the asset to negotiate for" }
+  ],
+  "outputs": [
+    { "name": "negotiation_id", "description": "ID of the initiated negotiation" },
+    { "name": "agreement_id", "description": "Contract agreement ID (after finalization)" },
+    { "name": "state", "description": "Negotiation state" }
+  ]
+}

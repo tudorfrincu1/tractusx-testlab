@@ -45,7 +45,7 @@ export function StatusBar() {
   const stepCount = isTest(model)
     ? ((model as ScriptDefinition).setup?.length ?? 0) +
       ((model as ScriptDefinition).steps?.length ?? 0) +
-      ((model as ScriptDefinition).cleanup?.length ?? 0)
+      ((model as ScriptDefinition).teardown?.length ?? 0)
     : 0;
 
   const testCount = isTestCase(model)

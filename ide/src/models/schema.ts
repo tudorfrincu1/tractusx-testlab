@@ -32,21 +32,22 @@ export const ScriptKind = {
 } as const;
 export type ScriptKind = (typeof ScriptKind)[keyof typeof ScriptKind];
 
-export const AssertionType = {
-  EXACT: "EXACT",
-  SCHEMA: "SCHEMA",
-  CONTAINS: "CONTAINS",
-  REGEX: "REGEX",
-  NOT_CONTAINS: "NOT_CONTAINS",
-  STATUS_CODE: "STATUS_CODE",
+export const AssertionOperator = {
+  EQUALS: "equals",
+  NOT_EQUALS: "not_equals",
+  CONTAINS: "contains",
+  NOT_CONTAINS: "not_contains",
+  MATCHES: "matches",
+  SCHEMA: "schema",
+  NOT_NULL: "not_null",
+  NOT_EMPTY: "not_empty",
+  GREATER_THAN: "greater_than",
+  LESS_THAN: "less_than",
+  GREATER_OR_EQUAL: "greater_or_equal",
+  LESS_OR_EQUAL: "less_or_equal",
+  BETWEEN: "between",
 } as const;
-export type AssertionType = (typeof AssertionType)[keyof typeof AssertionType];
-
-export const AssertionSeverity = {
-  HARD: "HARD",
-  SOFT: "SOFT",
-} as const;
-export type AssertionSeverity = (typeof AssertionSeverity)[keyof typeof AssertionSeverity];
+export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
 
 export const FailurePolicy = {
   ABORT: "ABORT",
@@ -69,13 +70,20 @@ export const SdkCallMode = {
 export type SdkCallMode = (typeof SdkCallMode)[keyof typeof SdkCallMode];
 
 export const ServiceType = {
-  CONNECTOR_CONSUMER: "CONNECTOR_CONSUMER",
-  CONNECTOR_PROVIDER: "CONNECTOR_PROVIDER",
-  DSP_CONSUMER: "DSP_CONSUMER",
-  DSP_PROVIDER: "DSP_PROVIDER",
-  DTR: "DTR",
+  EDC_CONNECTOR_SATURN: "edc_connector_saturn",
+  EDC_CONNECTOR_JUPITER: "edc_connector_jupiter",
+  AAS: "aas",
+  DISCOVERY_FINDER: "discovery_finder",
+  EDC_DISCOVERY: "edc_discovery",
+  BPN_DISCOVERY: "bpn_discovery",
 } as const;
 export type ServiceType = (typeof ServiceType)[keyof typeof ServiceType];
+
+export const AuthType = {
+  OAUTH2: "oauth2",
+  API_KEY: "api_key",
+} as const;
+export type AuthType = (typeof AuthType)[keyof typeof AuthType];
 
 export interface DependencyRef {
   file: string;
@@ -90,12 +98,8 @@ export interface VariableDefinition {
 }
 
 export interface Assertion {
-  type: AssertionType;
-  severity?: AssertionSeverity;
-  source?: ValueSource;
-  value?: unknown;
-  path?: string;
-  description?: string;
+  output: string;
+  [operator: string]: unknown;
 }
 
 export interface StepDefinition {
@@ -109,6 +113,18 @@ export interface StepDefinition {
   if?: string;
 }
 
+export interface TemplateStepDefinition {
+  template: string;
+  params?: Record<string, unknown>;
+  name?: string;
+}
+
+export type Step = StepDefinition | TemplateStepDefinition;
+
+export function isTemplateStep(step: Step): step is TemplateStepDefinition {
+  return "template" in step;
+}
+
 export interface ListenerDefinition {
   name: string;
   path: string;
@@ -119,9 +135,14 @@ export interface ListenerDefinition {
 export interface ServiceDefinition {
   name: string;
   type: ServiceType;
-  base_url: string;
-  auth?: Record<string, unknown>;
-  params?: Record<string, unknown>;
+  config: Record<string, unknown>;
+  auth?: string;
+}
+
+export interface AuthDefinition {
+  name: string;
+  type: AuthType;
+  config: Record<string, unknown>;
 }
 
 export interface PreconditionDefinition {
@@ -135,7 +156,6 @@ export interface ScriptDefinition {
   version?: string;
   dataspace_version?: string;
   description?: string;
-  import_from?: string;
   allow_sdk_calls?: SdkCallMode;
   depends_on?: (string | DependencyRef)[];
   outputs?: Record<string, string>;
@@ -143,14 +163,9 @@ export interface ScriptDefinition {
   variables?: Record<string, VariableDefinition>;
   services?: ServiceDefinition[];
   listen?: ListenerDefinition[];
-  setup?: StepDefinition[];
-  steps: StepDefinition[];
-  cleanup?: StepDefinition[];
-}
-
-export interface ImportDefinition {
-  import_ref: string;
-  override?: Record<string, unknown>;
+  setup?: Step[];
+  steps: Step[];
+  cleanup?: Step[];
 }
 
 export interface TestRef {
@@ -176,7 +191,6 @@ export interface TestCaseDefinition {
   preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   tests: (ScriptDefinition | string | TestRef)[];
-  imports?: ImportDefinition[];
 }
 
 export type TestLabDocument = ScriptDefinition | TestCaseDefinition;
@@ -204,7 +218,6 @@ export function createEmptyTest(): ScriptDefinition {
     kind: ScriptKind.TEST,
     name: "new-test",
     version: "1.0",
-    dataspace_version: "saturn",
     steps: [],
   };
 }
@@ -214,7 +227,6 @@ export function createEmptyTestCase(): TestCaseDefinition {
     kind: ScriptKind.TEST_CASE,
     name: "new-test-case",
     version: "1.0",
-    dataspace_version: "saturn",
     tests: [],
   };
 }

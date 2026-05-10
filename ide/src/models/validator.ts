@@ -31,13 +31,11 @@ import {
   type TestCaseDefinition,
   type StepDefinition,
   ScriptKind,
-  AssertionType,
-  AssertionSeverity,
+  AssertionOperator,
   FailurePolicy,
-  ServiceType,
-  ValueSource,
   isTestCase,
   isTestRef,
+  isTemplateStep,
 } from "./schema";
 
 export interface ValidationError {
@@ -47,29 +45,13 @@ export interface ValidationError {
   line?: number;
 }
 
-const VALID_STEP_TYPES = new Set([
-  "create_asset",
-  "delete_asset",
-  "create_policy",
-  "delete_policy",
-  "create_contract_definition",
-  "delete_contract_definition",
-  "query_catalog_by_asset_id",
-  "query_catalog",
-  "dsp_catalog_request",
-  "negotiate_contract",
-  "transfer_data",
-  "get_edr",
-  "dataplane_call",
-  "http_request",
-  "do_dsp",
-  "do_dsp_with_bpnl",
-  "upload_backend_data",
-  "sdk_call",
-  "init_service",
-  "stop_service",
-  "await_callback",
-]);
+/** Step types are catalog-driven — no hardcoded set needed. */
+let knownStepTypes: Set<string> | null = null;
+
+/** Register known step types from the loaded block catalog. */
+export function setKnownStepTypes(types: string[]) {
+  knownStepTypes = new Set(types);
+}
 
 export function validate(doc: TestLabDocument): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -108,24 +90,30 @@ function validateScript(script: ScriptDefinition, errors: ValidationError[]) {
   ];
 
   for (const { step, path } of allSteps) {
-    validateStep(step, path, definedVars, memoryVars, errors);
+    if (isTemplateStep(step)) {
+      if (!step.template) {
+        errors.push({ path, message: "Template name is required", severity: "error" });
+      }
+    } else {
+      validateStep(step, path, definedVars, memoryVars, errors);
+    }
   }
 
   for (const svc of script.services ?? []) {
     if (!svc.name) {
       errors.push({ path: "services", message: "Service name is required", severity: "error" });
     }
-    if (!svc.type || !Object.values(ServiceType).includes(svc.type)) {
+    if (!svc.type) {
       errors.push({
         path: `services.${svc.name}`,
-        message: `Invalid service type: ${svc.type}`,
+        message: "Service type is required",
         severity: "error",
       });
     }
-    if (!svc.base_url) {
+    if (!svc.config || Object.keys(svc.config).length === 0) {
       errors.push({
         path: `services.${svc.name}`,
-        message: "Service base_url is required",
+        message: "Service config is required",
         severity: "error",
       });
     }
@@ -141,7 +129,7 @@ function validateStep(
 ) {
   if (!step.type) {
     errors.push({ path, message: "Step type is required", severity: "error" });
-  } else if (!VALID_STEP_TYPES.has(step.type)) {
+  } else if (knownStepTypes && !knownStepTypes.has(step.type)) {
     errors.push({
       path: `${path}.type`,
       message: `Unknown step type: "${step.type}"`,
@@ -162,38 +150,46 @@ function validateStep(
   }
 
   for (const assertion of step.expect ?? []) {
-    if (!Object.values(AssertionType).includes(assertion.type)) {
+    if (!assertion.output) {
       errors.push({
         path: `${path}.expect`,
-        message: `Invalid assertion type: ${assertion.type}`,
+        message: "Assertion must specify an output field",
         severity: "error",
       });
     }
-    if (assertion.severity && !Object.values(AssertionSeverity).includes(assertion.severity)) {
+    const operators = Object.keys(assertion).filter((k) => k !== "output");
+    if (operators.length === 0) {
       errors.push({
         path: `${path}.expect`,
-        message: `Invalid assertion severity: ${assertion.severity}`,
+        message: "Assertion must specify an operator",
         severity: "error",
       });
     }
-    if (assertion.source && !Object.values(ValueSource).includes(assertion.source)) {
-      errors.push({
-        path: `${path}.expect`,
-        message: `Invalid assertion source: ${assertion.source}`,
-        severity: "error",
-      });
+    for (const op of operators) {
+      if (!Object.values(AssertionOperator).includes(op as AssertionOperator)) {
+        errors.push({
+          path: `${path}.expect`,
+          message: `Invalid assertion operator: ${op}`,
+          severity: "error",
+        });
+      }
     }
   }
 
   const paramStr = JSON.stringify(step.params ?? {});
-  const varRefs = paramStr.match(/\$\{([^}]+)\}/g) ?? [];
-  for (const ref of varRefs) {
-    const varName = ref.slice(2, -1);
+  // Match @var_name, ${var_name}, and {{var_name}} syntaxes
+  const atVarRefs = paramStr.match(/@(\w+)/g) ?? [];
+  const legacyVarRefs = paramStr.match(/\$\{([^}]+)\}/g) ?? [];
+  const allRefs: string[] = [
+    ...atVarRefs.map((r) => r.slice(1)),
+    ...legacyVarRefs.map((r) => r.slice(2, -1)),
+  ];
+  for (const varName of allRefs) {
     if (varName.startsWith("!")) continue;
     if (!definedVars.has(varName) && !memoryVars.has(varName)) {
       errors.push({
         path: `${path}.params`,
-        message: `Undefined variable reference: \${${varName}}`,
+        message: `Undefined variable reference: @${varName}`,
         severity: "warning",
       });
     }

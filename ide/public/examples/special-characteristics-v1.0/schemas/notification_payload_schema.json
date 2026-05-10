@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpecialCharacteristicsNotificationPayload",
+  "description": "Schema for special characteristics notification payload validation.",
+  "type": "object",
+  "required": ["header", "content"],
+  "properties": {
+    "header": {
+      "type": "object",
+      "required": ["notificationId", "senderBPN", "recipientBPN", "classification", "status", "type"],
+      "properties": {
+        "notificationId": { "type": "string", "format": "uuid" },
+        "senderBPN": { "type": "string", "pattern": "^BPN[LS][0-9A-Z]{12}$" },
+        "recipientBPN": { "type": "string", "pattern": "^BPN[LS][0-9A-Z]{12}$" },
+        "classification": { "type": "string" },
+        "status": { "type": "string", "enum": ["CREATED", "SENT", "RECEIVED", "ACKNOWLEDGED"] },
+        "type": { "type": "string", "enum": ["RECEIVE", "UPDATE"] }
+      }
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "specialCharacteristics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "characteristicId": { "type": "string" },
+              "name": { "type": "string" },
+              "value": { "type": "string" },
+              "unit": { "type": "string" },
+              "tolerance": {
+                "type": "object",
+                "properties": {
+                  "upper": { "type": "number" },
+                  "lower": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

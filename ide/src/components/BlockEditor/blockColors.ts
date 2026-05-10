@@ -22,8 +22,8 @@
 // It was reviewed and tested by a human committer.
 
 /**
- * Professional dark color palette for Blockly blocks.
- * Uses desaturated, muted tones that work on a #1e1e1e workspace.
+ * Professional color palette for Blockly blocks.
+ * Each category gets a distinct hue for visual differentiation on dark backgrounds.
  */
 
 export const blockColors = {
@@ -32,46 +32,42 @@ export const blockColors = {
   rootTestCase: "#1E293B",
 
   /** Variable system */
-  variableDef: "#312E81",
-  variableGet: "#312E81",
-  valueString: "#334155",
-  valueAuto: "#78350F",
-  storeOutput: "#312E81",
+  variableDef: "#5B21B6",
+  variableGet: "#5B21B6",
+  valueString: "#475569",
+  storeOutput: "#5B21B6",
 
   /** Core block types */
-  service: "#0F766E",
-  assertion: "#9F1239",
-  precondition: "#92400E",
-  testRef: "#1E40AF",
+  assertion: "#BE123C",
+  precondition: "#B45309",
+  testRef: "#1D4ED8",
 
-  /** ODRL / Policy */
-  odrlPermission: "#1E40AF",
-  odrlConstraint: "#1E3A8A",
-  odrlGroup: "#1E3A8A",
+  /** Authentication blocks */
+  authentication: "#7C3AED",
 
   /** Data blocks */
   json: "#374151",
   keyValue: "#374151",
-  context: "#0E7490",
 
-  /** Step category colors (catalog-driven) */
+  /** Step category colors (catalog-driven) — each category gets a unique hue */
   categories: {
-    Simulate: "#475569",
-    Prepare: "#166534",
-    Discover: "#9A3412",
-    Exchange: "#6D28D9",
-    "Digital Twins": "#1E40AF",
-    Notifications: "#991B1B",
-    Utility: "#475569",
+    Mock: "#0F766E",
+    Wait: "#A16207",
+    Function: "#CA8A04",
+    Flow: "#9333EA",
+    "EDC Connector": "#2563EB",
+    "EDC Connector (Saturn)": "#2563EB",
+    "EDC Connector (Jupiter)": "#1D4ED8",
+    "Digital Twin Registry": "#059669",
+    "AAS Registry": "#059669",
+    "Discovery Finder": "#D97706",
+    "EDC Discovery": "#EA580C",
+    "BPN Discovery": "#DC2626",
+    HTTP: "#7C3AED",
   } as Record<string, string>,
-
-  /** Phase colors */
-  phaseSetup: "#166534",
-  phaseSteps: "#1E40AF",
-  phaseCleanup: "#9F1239",
 } as const;
 
-/** Get a category color for a catalog step block. Falls back to Utility. */
+/** Get a category color for a catalog step block. Falls back to a neutral dark tone. */
 export function getCategoryColor(categoryName: string): string {
-  return blockColors.categories[categoryName] ?? blockColors.categories.Utility;
+  return blockColors.categories[categoryName] ?? "#374151";
 }

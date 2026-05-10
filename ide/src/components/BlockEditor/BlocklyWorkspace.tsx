@@ -25,6 +25,7 @@ import { useRef, useEffect, useState } from "react";
 import * as Blockly from "blockly";
 import { useTestLabStore } from "../../store/useTestLabStore";
 import { useProjectStore } from "../../store/useProjectStore";
+import { useServiceStore } from "../../store/useServiceStore";
 import {
   registerBlocks,
   buildToolbox,
@@ -35,6 +36,7 @@ import {
   cleanupOrphanBlocks,
 } from "./blockDefinitions";
 import { resolveStepName } from "./blockSelection";
+import { setKnownStepTypes } from "../../models/validator";
 import type { ScriptDefinition, TestLabDocument, TestCaseDefinition } from "../../models/schema";
 import { isTest, isTestCase } from "../../models/schema";
 
@@ -90,6 +92,7 @@ export function BlocklyWorkspace({ onTrashChange }: BlocklyWorkspaceProps) {
       if (disposed) return;
       catalogRef.current = catalog;
 
+      setKnownStepTypes(catalog.flatMap((cat) => cat.blocks.map((b) => b.type)));
       registerBlocks(Blockly, catalog);
       const toolbox = buildToolbox(catalog, modelKind) as Blockly.utils.toolbox.ToolboxDefinition;
 
@@ -456,7 +459,7 @@ export function BlocklyWorkspace({ onTrashChange }: BlocklyWorkspaceProps) {
           rootBlock.setFieldValue(script.version || "1.0", "VERSION");
           rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
-          for (const input of ["SETUP", "STEPS", "CLEANUP"]) {
+          for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);
@@ -496,6 +499,33 @@ export function BlocklyWorkspace({ onTrashChange }: BlocklyWorkspaceProps) {
     observer.observe(container);
     return () => observer.disconnect();
   }, [ready]);
+
+  // Refresh toolbox when configured services change
+  useEffect(() => {
+    if (!ready) return;
+    const unsubscribe = useServiceStore.subscribe((state, prev) => {
+      if (state.services === prev.services) return;
+      const ws = workspaceRef.current;
+      const catalog = catalogRef.current;
+      if (!ws || !catalog) return;
+      // Defer to next frame to ensure store state is fully committed
+      requestAnimationFrame(() => {
+        if (!workspaceRef.current) return;
+        try {
+          const currentVars = collectWorkspaceVariables(ws);
+          const newToolbox = buildToolbox(
+            catalog,
+            modelKind,
+            currentVars
+          ) as Blockly.utils.toolbox.ToolboxDefinition;
+          ws.updateToolbox(newToolbox);
+        } catch {
+          // Toolbox refresh can fail during workspace dispose
+        }
+      });
+    });
+    return unsubscribe;
+  }, [ready, modelKind]);
 
   return (
     <div

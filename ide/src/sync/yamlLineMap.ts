@@ -28,7 +28,7 @@ export interface YamlLineRange {
 
 /**
  * Finds the 1-based line range for a step with the given name inside a YAML
- * string. Scans `setup:`, `steps:`, and `cleanup:` arrays for `- type:` items
+ * string. Scans `setup:`, `steps:`, and `teardown:` arrays for `- type:` items
  * whose `name:` field matches `stepName`.
  *
  * Returns `null` when no matching step is found.

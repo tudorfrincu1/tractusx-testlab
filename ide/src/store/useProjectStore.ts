@@ -405,7 +405,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       return {
         name,
         description: script?.description,
-        stepCount: (script?.setup?.length ?? 0) + (script?.steps?.length ?? 0) + (script?.cleanup?.length ?? 0),
+        stepCount: (script?.setup?.length ?? 0) + (script?.steps?.length ?? 0) + (script?.teardown?.length ?? 0),
         serviceNames: script?.services?.map((s) => s.name) ?? [],
         overrides: ref?.with,
       };

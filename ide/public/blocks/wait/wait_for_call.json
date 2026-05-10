@@ -1,0 +1,10 @@
+{
+  "type": "wait_for_call",
+  "label": "Wait for Call",
+  "description": "Block execution until the SUT sends a request to the specified mock endpoint. Times out if no call arrives.",
+  "params": [
+    { "name": "endpoint_id", "type": "endpoint_ref", "required": true, "description": "Reference to a mock endpoint defined above" },
+    { "name": "timeout_s", "type": "number", "required": false, "description": "Maximum seconds to wait before failing", "default": 30 }
+  ],
+  "depends_on": ["mock_endpoint", "mock_dtr", "mock_discovery"]
+}

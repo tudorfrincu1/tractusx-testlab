@@ -25,7 +25,7 @@
 import { useRef, useState } from "react";
 import { useProjectStore } from "../../store/useProjectStore";
 import { yamlToModel } from "../../sync/yamlToModel";
-import { importProjectZip } from "../../store/projectIO";
+import { importProjectZip, importExampleFolder } from "../../store/projectIO";
 import { ExportDialog } from "../ExportDialog/ExportDialog";
 import { theme } from "../../theme/tractusxTheme";
 import ScienceIcon from "@mui/icons-material/Science";
@@ -92,16 +92,23 @@ export function TopBar() {
 
   const handleLoadExample = async (file: string) => {
     try {
-      const resp = await fetch(`${import.meta.env.BASE_URL}examples/${file}`);
-      if (resp.ok) {
-        const text = await resp.text();
-        const result = yamlToModel(text);
-        if (result.ok) {
-          loadFromDocument(result.model, result.model.name);
-        }
+      const project = await importExampleFolder(file);
+      if (project) {
+        useProjectStore.setState({
+          hasProject: true,
+          projectName: project.projectName,
+          projectGeneration: useProjectStore.getState().projectGeneration + 1,
+          testCase: project.testCase,
+          tests: project.tests,
+          schemas: project.schemas,
+          testOrder: project.testOrder,
+          activeFile: { type: "test-case", name: "index" },
+          dirty: new Map(),
+          workspaceStates: {},
+        });
       }
     } catch {
-      // Example file not available or parse error
+      // Example not available or parse error
     }
     setShowExampleMenu(false);
   };
@@ -249,46 +256,55 @@ export function TopBar() {
               }}
             >
               <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Tests
+                Base Tests
               </div>
               <DropdownItem
                 icon={<HttpIcon sx={{ fontSize: 16 }} />}
-                label="Minimal Test"
-                description="Single HTTP request + status check"
-                onClick={() => handleLoadExample("minimal_test.yaml")}
-              />
-              <DropdownItem
-                icon={<SwapHorizIcon sx={{ fontSize: 16 }} />}
-                label="Asset Exchange"
-                description="Full DSP flow: create, negotiate, fetch"
-                onClick={() => handleLoadExample("asset_exchange.yaml")}
+                label="Connector Ping"
+                description="Verify connector responds to catalog query"
+                onClick={() => handleLoadExample("connector-ping-v1.0/index.yaml")}
               />
               <DropdownItem
                 icon={<StorageIcon sx={{ fontSize: 16 }} />}
-                label="Mock DTR Test"
-                description="Twin registration with mock registry"
-                onClick={() => handleLoadExample("mock_dtr_test.yaml")}
-              />
-              <DropdownItem
-                icon={<AccountTreeIcon sx={{ fontSize: 16 }} />}
-                label="Twin + Submodel"
-                description="Register twin and attach submodel"
-                onClick={() => handleLoadExample("twin_submodel_test.yaml")}
-              />
-              <DropdownItem
-                icon={<NotificationsActiveIcon sx={{ fontSize: 16 }} />}
-                label="Notification Flow"
-                description="Send alert + verify with mock receiver"
-                onClick={() => handleLoadExample("notification_flow.yaml")}
+                label="DTR Ping"
+                description="Negotiate dataplane access to DTR"
+                onClick={() => handleLoadExample("dtr-ping-v1.0/index.yaml")}
               />
               <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", borderTop: `1px solid ${theme.colors.border}` }}>
-                Test Cases
+                Industry Core
               </div>
               <DropdownItem
+                icon={<AccountTreeIcon sx={{ fontSize: 16 }} />}
+                label="Industry Core Validation"
+                description="Shell descriptors + submodel validation"
+                onClick={() => handleLoadExample("industry-core-validation-v1.0/index.yaml")}
+              />
+              <div style={{ padding: "6px 12px", fontSize: 10, color: theme.colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", borderTop: `1px solid ${theme.colors.border}` }}>
+                Use Cases
+              </div>
+              <DropdownItem
+                icon={<NotificationsActiveIcon sx={{ fontSize: 16 }} />}
+                label="Traceability Notification"
+                description="Quality investigation + alert flows"
+                onClick={() => handleLoadExample("traceability-notification-v1.0/index.yaml")}
+              />
+              <DropdownItem
                 icon={<PlaylistAddIcon sx={{ fontSize: 16 }} />}
-                label="Discovery + Exchange Suite"
-                description="Multi-test: discover then exchange"
-                onClick={() => handleLoadExample("discovery_exchange_suite.yaml")}
+                label="Certificate Management"
+                description="CCMAPI offer, validation, feedback"
+                onClick={() => handleLoadExample("certificate-management-v1.0/index.yaml")}
+              />
+              <DropdownItem
+                icon={<SwapHorizIcon sx={{ fontSize: 16 }} />}
+                label="Special Characteristics"
+                description="Notification + data transfer validation"
+                onClick={() => handleLoadExample("special-characteristics-v1.0/index.yaml")}
+              />
+              <DropdownItem
+                icon={<ScienceIcon sx={{ fontSize: 16 }} />}
+                label="Product Carbon Footprint"
+                description="PCF data discovery + schema validation"
+                onClick={() => handleLoadExample("product-carbon-footprint-v1.0/index.yaml")}
               />
             </div>
           )}
