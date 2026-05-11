@@ -335,24 +335,73 @@ html, body, #root {
   stroke: none !important;
 }
 
-/* Mutator bubble */
-.blocklyBubbleCanvas > rect {
-  fill: #1F2937 !important;
-  stroke: #374151 !important;
+/* Custom warning popup (replaces native Blockly bubble) */
+.custom-warning-popup {
+  background: #1a1a2e;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  padding: 0;
+  min-width: 200px;
+  max-width: 320px;
+  color: #e0e0e0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: warningPopupIn 0.15s ease-out;
+  overflow: hidden;
 }
 
-/* Tooltip */
+.custom-warning-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.custom-warning-popup__icon {
+  font-size: 14px;
+}
+
+.custom-warning-popup__title {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f59e0b;
+}
+
+.custom-warning-popup__body {
+  padding: 10px 12px;
+  color: #d1d5db;
+}
+
+@keyframes warningPopupIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Tooltip — modern hover popup */
 .blocklyTooltipDiv {
-  background-color: #1F2937 !important;
-  border: 1px solid #374151 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
-  color: #D1D5DB !important;
-  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace !important;
-  font-size: 11px !important;
-  line-height: 1.5 !important;
-  padding: 8px 12px !important;
+  background: #1a1a2e !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(99, 102, 241, 0.08) !important;
+  color: #d1d5db !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  padding: 10px 14px !important;
   max-width: 320px !important;
+  animation: tooltipFadeIn 0.12s ease-out !important;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Monaco scrollbar */
