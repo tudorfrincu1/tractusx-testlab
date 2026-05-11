@@ -33,10 +33,10 @@ import type { TestLabDocument } from "../../models/schema";
 import type { BlockCatalog } from "./blockDefinitions";
 
 interface ListenerRefs {
-  isUpdatingFromStore: React.RefObject<boolean>;
-  workspaceRef: React.RefObject<Blockly.WorkspaceSvg | null>;
-  pendingUpdateRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
-  pendingToolboxRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
+  isUpdatingFromStore: { current: boolean };
+  workspaceRef: { current: Blockly.WorkspaceSvg | null };
+  pendingUpdateRef: { current: ReturnType<typeof setTimeout> | null };
+  pendingToolboxRef: { current: ReturnType<typeof setTimeout> | null };
 }
 
 export function attachModelSyncListener(
