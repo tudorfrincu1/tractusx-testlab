@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-// This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
+// This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
 import type { Block } from "blockly";
@@ -52,6 +52,106 @@ export function registerStructuralBlocks(Blockly: typeof BlocklyType) {
       this.setNextStatement(true, "asset_criterion");
       this.setColour(blockColors.keyValue);
       this.setTooltip("An EDC asset selector criterion");
+    },
+  };
+
+  Blockly.Blocks["odrl_permission"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("action:")
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["use", "use"],
+            ["read", "read"],
+            ["write", "write"],
+          ]),
+          "ACTION"
+        );
+      this.appendStatementInput("CONSTRAINTS")
+        .appendField("constraints:")
+        .setCheck("odrl_constraint");
+      this.setPreviousStatement(true, "odrl_permission");
+      this.setNextStatement(true, "odrl_permission");
+      this.setColour(blockColors.keyValue);
+      this.setTooltip("An ODRL permission with action and constraints");
+    },
+  };
+
+  Blockly.Blocks["odrl_constraint"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("leftOperand:")
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["BusinessPartnerNumber", "BusinessPartnerNumber"],
+            ["Membership", "Membership"],
+            ["FrameworkAgreement", "FrameworkAgreement"],
+            ["UsagePurpose", "UsagePurpose"],
+            ["custom...", "__CUSTOM__"],
+          ]),
+          "LEFT_OPERAND"
+        )
+        .appendField("operator:")
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["eq", "eq"],
+            ["neq", "neq"],
+            ["in", "in"],
+            ["isPartOf", "isPartOf"],
+          ]),
+          "OPERATOR"
+        );
+      this.appendValueInput("RIGHT")
+        .appendField("rightOperand:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "odrl_constraint");
+      this.setNextStatement(true, "odrl_constraint");
+      this.setColour(blockColors.valueString);
+      this.setTooltip("An ODRL constraint (leftOperand operator rightOperand)");
+    },
+  };
+
+  Blockly.Blocks["odrl_prohibition"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("action:")
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["use", "use"],
+            ["read", "read"],
+            ["write", "write"],
+          ]),
+          "ACTION"
+        );
+      this.appendStatementInput("CONSTRAINTS")
+        .appendField("constraints:")
+        .setCheck("odrl_constraint");
+      this.setPreviousStatement(true, "odrl_prohibition");
+      this.setNextStatement(true, "odrl_prohibition");
+      this.setColour(blockColors.keyValue);
+      this.setTooltip("An ODRL prohibition with action and constraints");
+    },
+  };
+
+  Blockly.Blocks["odrl_obligation"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("action:")
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["use", "use"],
+            ["read", "read"],
+            ["write", "write"],
+          ]),
+          "ACTION"
+        );
+      this.appendStatementInput("CONSTRAINTS")
+        .appendField("constraints:")
+        .setCheck("odrl_constraint");
+      this.setPreviousStatement(true, "odrl_obligation");
+      this.setNextStatement(true, "odrl_obligation");
+      this.setColour(blockColors.keyValue);
+      this.setTooltip("An ODRL obligation with action and constraints");
     },
   };
 }

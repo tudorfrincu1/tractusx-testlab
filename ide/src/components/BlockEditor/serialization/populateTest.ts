@@ -37,6 +37,7 @@ import {
   toBlockValueString,
   createArrayItemBlocks,
 } from "./helpers";
+import { populateAssertions } from "./populateAssertions";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -166,78 +167,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
       }
 
       if (step.expect && step.expect.length > 0) {
-        const assertBlocks: Block[] = [];
-        for (const a of step.expect) {
-          const output = a.output || "";
-          const operators = Object.keys(a).filter((k) => k !== "output");
-          if (operators.length === 0) continue;
-
-          const op = operators[0];
-          const val = a[op];
-
-          let ab: Block;
-          switch (op) {
-            case "equals":
-              ab = makeBlock(ws, "assert_equals");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "not_equals":
-              ab = makeBlock(ws, "assert_not_equals");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "contains":
-              ab = makeBlock(ws, "assert_contains");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "not_contains":
-              ab = makeBlock(ws, "assert_not_contains");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "matches":
-              ab = makeBlock(ws, "assert_matches");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "PATTERN", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "schema":
-              ab = makeBlock(ws, "assert_schema");
-              setDropdownValue(ab, "OUTPUT", output);
-              connectValue(ab, "SCHEMA", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "greater_than":
-            case "less_than":
-            case "greater_or_equal":
-            case "less_or_equal":
-              ab = makeBlock(ws, "assert_compare");
-              setDropdownValue(ab, "OUTPUT", output);
-              setDropdownValue(ab, "OPERATOR", op);
-              connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(val)));
-              break;
-            case "between": {
-              ab = makeBlock(ws, "assert_between");
-              setDropdownValue(ab, "OUTPUT", output);
-              const arr = Array.isArray(val) ? val : [];
-              connectValue(ab, "MIN", createValueBlockFromString(ws, toBlockValueString(arr[0])));
-              connectValue(ab, "MAX", createValueBlockFromString(ws, toBlockValueString(arr[1])));
-              break;
-            }
-            case "not_null":
-              ab = makeBlock(ws, "assert_not_null");
-              setDropdownValue(ab, "OUTPUT", output);
-              break;
-            case "not_empty":
-              ab = makeBlock(ws, "assert_not_empty");
-              setDropdownValue(ab, "OUTPUT", output);
-              break;
-            default:
-              continue;
-          }
-          assertBlocks.push(ab);
-        }
-        attachChain(sb, "EXPECT", assertBlocks);
+        populateAssertions(ws, sb, step.expect);
       }
 
       blocks.push(sb);
