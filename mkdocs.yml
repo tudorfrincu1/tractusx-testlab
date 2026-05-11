@@ -165,6 +165,7 @@ nav:
     - Add a Component: tutorials/add-component.md
     - Development Workflow: tutorials/development-workflow.md
     - Debugging: tutorials/debugging.md
+    - CCM Conformity Testing: tutorials/ccm-conformity-testing.md
     - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
