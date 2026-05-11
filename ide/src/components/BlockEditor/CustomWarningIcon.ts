@@ -151,3 +151,54 @@ export class CustomWarningIcon extends Blockly.icons.WarningIcon {
     return div.innerHTML;
   }
 }
+
+/**
+ * Monkey-patches BlockSvg.prototype.setWarningText so that it creates
+ * CustomWarningIcon instead of the native WarningIcon.
+ *
+ * This is necessary because Blockly's setWarningText directly instantiates
+ * `new WarningIcon(block)` instead of going through the icon registry.
+ *
+ * Must be called once before any workspace is created.
+ */
+export function patchSetWarningText(): void {
+  const proto = Blockly.BlockSvg.prototype;
+  const original = proto.setWarningText;
+
+  proto.setWarningText = function (
+    this: Blockly.BlockSvg,
+    text: string | null,
+    id?: string,
+  ) {
+    // Temporarily swap the WarningIcon constructor on the module scope.
+    // The original setWarningText does:
+    //   this.addIcon(new WarningIcon(this).addMessage(text, id))
+    // We intercept by replacing addIcon to detect WarningIcon creation.
+
+    // If there's already a CustomWarningIcon, the original code path
+    // will find it via getIcon(WarningIcon.TYPE) — which works because
+    // CustomWarningIcon extends WarningIcon and getType() returns the same TYPE.
+
+    // For the "create new icon" path, we need to intercept addIcon.
+    const origAddIcon = this.addIcon.bind(this);
+
+    this.addIcon = (icon: Blockly.icons.IIcon) => {
+      if (icon instanceof Blockly.icons.WarningIcon && !(icon instanceof CustomWarningIcon)) {
+        // Replace with our custom icon, re-adding the message
+        const customIcon = new CustomWarningIcon(this);
+        const warningText = icon.getText();
+        if (warningText) {
+          customIcon.addMessage(warningText, id ?? "");
+        }
+        icon.dispose();
+        return origAddIcon(customIcon);
+      }
+      return origAddIcon(icon);
+    };
+
+    original.call(this, text, id);
+
+    // Restore original addIcon
+    this.addIcon = origAddIcon;
+  };
+}
