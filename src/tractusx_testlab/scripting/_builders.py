@@ -38,10 +38,10 @@ from tractusx_sdk.extensions.testlab.models import (
     FailurePolicy,
     ServiceDefinition,
     ServiceType,
-    StepDefinition,
     ValueSource,
     VariableDefinition,
 )
+from tractusx_testlab.models.definitions import StepDefinition
 
 
 def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
@@ -62,7 +62,7 @@ def parse_step(raw: dict) -> StepDefinition:
 
     return StepDefinition(
         type=raw.get(keys.TYPE, defaults.NAME),
-        name=raw.get(keys.NAME, raw.get(keys.TYPE, defaults.NAME)),
+        description=raw.get(keys.DESCRIPTION),
         params=raw.get(keys.PARAMS, {}),
         on_failure=FailurePolicy(raw[keys.ON_FAILURE]) if keys.ON_FAILURE in raw else FailurePolicy.ABORT,
         timeout_s=raw.get(keys.TIMEOUT_S),

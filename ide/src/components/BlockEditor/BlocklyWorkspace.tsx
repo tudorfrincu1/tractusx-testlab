@@ -24,29 +24,55 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBlocklyWorkspace } from "./useBlocklyWorkspace";
 import { setupWarningTooltip, type WarningShowRequest } from "./bubblePatch";
-import { WarningTooltip } from "./WarningTooltip";
+import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
+import { BlockTooltip } from "./WarningTooltip";
 import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { workspace } = useBlocklyWorkspace(containerRef);
   const [warning, setWarning] = useState<WarningShowRequest | null>(null);
+  const [info, setInfo] = useState<InfoShowRequest | null>(null);
 
-  const handleClose = useCallback(() => setWarning(null), []);
+  const handleWarningClose = useCallback(() => setWarning(null), []);
+  const handleInfoClose = useCallback(() => setInfo(null), []);
+
+  const handleShowWarning = useCallback((req: WarningShowRequest) => {
+    setInfo(null);
+    setWarning(req);
+  }, []);
+
+  const handleShowInfo = useCallback((req: InfoShowRequest) => {
+    setWarning(null);
+    setInfo(req);
+  }, []);
 
   useEffect(() => {
     if (!workspace) return;
-    return setupWarningTooltip(workspace, setWarning);
-  }, [workspace]);
+    return setupWarningTooltip(workspace, handleShowWarning);
+  }, [workspace, handleShowWarning]);
+
+  useEffect(() => {
+    return setupInfoCallback(handleShowInfo);
+  }, [handleShowInfo]);
 
   return (
     <>
       <div ref={containerRef} className="blockly-workspace-container" />
       {warning && (
-        <WarningTooltip
+        <BlockTooltip
           text={warning.text}
           position={warning.position}
-          onClose={handleClose}
+          variant="warning"
+          onClose={handleWarningClose}
+        />
+      )}
+      {info && (
+        <BlockTooltip
+          text={info.text}
+          position={info.position}
+          variant="info"
+          onClose={handleInfoClose}
         />
       )}
     </>

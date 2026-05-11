@@ -34,7 +34,7 @@ import {
   collectWorkspaceVariables,
   cleanupOrphanBlocks,
 } from "./blockDefinitions";
-import { resolveStepName } from "./blockSelection";
+import { resolveStepIdentifier } from "./blockSelection";
 import { setKnownStepTypes } from "../../models/validator";
 import { createWorkspaceOptions } from "./workspaceConfig";
 import { injectBubbleStyles } from "./bubblePatch";
@@ -202,7 +202,7 @@ export function useWorkspaceInit(
           return;
         }
         const block = ws.getBlockById(selected.newElementId);
-        selectStep(block ? resolveStepName(block) : null);
+        selectStep(block ? resolveStepIdentifier(block) : null);
       });
 
       setReady(true);

@@ -18,62 +18,30 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
 kind: test
 name: expose-testlab-asset
 version: "1.0"
 description: >
-  TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock 
-  data endpoint, and waits for the SUT (acting as consumer) to discover the asset,
-  negotiate a contract, and pull data. Verifies the SUT's consumer-side behavior
-  per CX-0135. Requires the SUT operator to trigger their connector's negotiation
-  against @testlab_dsp_url within the configured timeout window.
+  TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
+  data endpoint, and waits for the SUT to discover, negotiate, and pull data.
+  Verifies the SUT's consumer-side behavior per CX-0135.
 
-inputs:
-  - name: provider_bpn
-    type: str
-    source: test-case
-    description: SUT's BPN — used to constrain the access policy
-  - name: testlab_management_url
-    type: str
-    source: test-case
-    description: TestLab EDC management API URL
-  - name: testlab_dsp_url
-    type: str
-    source: test-case
-    description: TestLab EDC DSP URL the SUT must query
-  - name: testlab_mock_base_url
-    type: str
-    source: test-case
-    description: TestLab mock server base URL embedded as the asset data source
-  - name: sut_response_timeout
-    type: int
-    source: test-case
-    description: Max seconds to wait for SUT data pull
-
-prerequisites: []
-
-outputs:
-  - name: testlab_asset_id
-    type: str
-    description: ID of the CCMAPI asset created in TestLab's EDC
-  - name: testlab_contract_def_id
-    type: str
-    description: Contract definition ID available to the SUT
-  - name: sut_request_body
-    type: json
-    description: Request payload sent by the SUT when pulling data
+services:
+  - name: testlab_edc
+    type: edc_connector_saturn
+    config:
+      management_url: "@testlab_management_url"
 
 steps:
-  # Step 1: Register CCMAPI asset in TestLab's own EDC
   - type: create_asset
-    name: Create CCMAPI Asset
+    description: Register CCMAPI asset in TestLab EDC
     params:
       service: testlab_edc
       name: "TestLab CCMAPI Endpoint"
-      description: "CCMAPI data endpoint exposed by TestLab for SUT consumer testing"
+      description: "CCMAPI data endpoint for SUT consumer testing"
       base_url: "@testlab_mock_base_url/api/v1/companycertificate"
       content_type: "application/json"
       properties:
@@ -82,10 +50,12 @@ steps:
         cx-common:version: "2.4.0"
     store_in_memory:
       testlab_asset_id: "asset_id"
+    expect:
+      - output: asset_id
+        not_null: true
 
-  # Step 2: Create BPN-restricted access policy for the SUT
   - type: create_policy
-    name: Create BPN Access Policy
+    description: Create BPN-restricted access policy for SUT
     params:
       service: testlab_edc
       permissions:
@@ -96,10 +66,12 @@ steps:
               rightOperand: "@provider_bpn"
     store_in_memory:
       testlab_policy_id: "policy_id"
+    expect:
+      - output: policy_id
+        not_null: true
 
-  # Step 3: Create contract definition linking asset to policy
   - type: create_contract_def
-    name: Create Contract Definition
+    description: Create contract definition linking asset to policy
     params:
       service: testlab_edc
       access_policy_id: "@testlab_policy_id"
@@ -110,10 +82,12 @@ steps:
           operandRight: "@testlab_asset_id"
     store_in_memory:
       testlab_contract_def_id: "contract_def_id"
+    expect:
+      - output: contract_def_id
+        not_null: true
 
-  # Step 4: Expose mock data endpoint the SUT will pull from
   - type: mock_endpoint
-    name: Expose CCMAPI Data Endpoint
+    description: Expose mock CCMAPI data endpoint for SUT
     params:
       id: "ccmapi_data_source"
       method: GET
@@ -124,39 +98,23 @@ steps:
         type: "CCMAPI_DATA"
         status: "ACTIVE"
 
-  # Step 5: Wait for SUT to discover, negotiate, and pull data
   - type: wait_for_call
-    name: Wait For SUT Data Pull
+    description: Wait for SUT to discover, negotiate, and pull data
     params:
       endpoint_id: "ccmapi_data_source"
       timeout_s: "@sut_response_timeout"
     store_in_memory:
       sut_request_body: "body"
-      sut_request_method: "method"
-      sut_request_headers: "headers"
+    expect:
+      - output: method
+        equals: "GET"
+      - output: body
+        not_null: true
 
-expect:
-  - step: Create CCMAPI Asset
-    output: testlab_asset_id
-    not_null: true
-    description: "CCMAPI asset must be registered in TestLab EDC"
-
-  - step: Create BPN Access Policy
-    output: testlab_policy_id
-    not_null: true
-    description: "BPN-restricted access policy must be created"
-
-  - step: Create Contract Definition
-    output: testlab_contract_def_id
-    not_null: true
-    description: "Contract definition must be created linking asset to policy"
-
-  - step: Wait For SUT Data Pull
-    output: sut_request_method
-    equals: "GET"
-    description: "SUT must use GET to pull CCMAPI data"
-
-  - step: Wait For SUT Data Pull
-    output: sut_request_body
-    not_null: true
-    description: "SUT must send a valid request body when pulling data"
+variables:
+  testlab_asset_id:
+    type: str
+  testlab_policy_id:
+    type: str
+  testlab_contract_def_id:
+    type: str

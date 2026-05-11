@@ -36,6 +36,7 @@ import {
   collectSchemaPaths,
 } from "./dropdownProviders";
 import { collectWorkspaceVariables } from "./variableCollection";
+import { createInfoIconField } from "./infoIconField";
 
 export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   for (const category of catalog) {
@@ -51,11 +52,12 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
         init(this: Block) {
           this.appendDummyInput()
             .appendField(blockIcon(Blockly, categoryIcon))
-            .appendField(block.label);
+            .appendField(block.label)
+            .appendField(createInfoIconField(Blockly, block.description));
 
           this.appendDummyInput()
-            .appendField("name:")
-            .appendField(new Blockly.FieldTextInput(block.label), "NAME");
+            .appendField("description:")
+            .appendField(new Blockly.FieldTextInput(""), "DESCRIPTION");
 
           for (const param of block.params) {
             const fieldKey = `PARAM_${param.name.toUpperCase()}`;
@@ -175,7 +177,7 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
           this.setPreviousStatement(true, "step");
           this.setNextStatement(true, "step");
           this.setColour(categoryColor);
-          this.setTooltip(block.description);
+          // Tooltip suppressed — info icon handles description display
         },
         onchange(this: Block) {
           if (!this.workspace) return;

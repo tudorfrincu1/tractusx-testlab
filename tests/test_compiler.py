@@ -58,7 +58,6 @@ mocks:
 
 steps:
   - type: create_asset
-    name: Create Asset
     inputs:
       name: "@part_id"
     expect:
@@ -75,23 +74,12 @@ _UNKNOWN_STEP_YAML = """
 name: Bad Step Test
 steps:
   - type: totally_fake_step
-    name: Nope
-"""
-
-_DUPLICATE_STEP_YAML = """
-name: Dup Test
-steps:
-  - type: http_request
-    name: Same Name
-  - type: http_request
-    name: Same Name
 """
 
 _BAD_VAR_REF_YAML = """
 name: Bad Var Test
 steps:
   - type: http_request
-    name: Call
     inputs:
       url: "@nonexistent_var"
 """
@@ -119,10 +107,6 @@ class TestCompileYaml:
     def test_compile_unknown_step_raises(self) -> None:
         with pytest.raises(ValidationError, match="Unknown step type"):
             compile_yaml_string(_UNKNOWN_STEP_YAML)
-
-    def test_compile_duplicate_step_names_raises(self) -> None:
-        with pytest.raises(ValidationError, match="Duplicate step name"):
-            compile_yaml_string(_DUPLICATE_STEP_YAML)
 
     def test_compile_bad_variable_ref_raises(self) -> None:
         with pytest.raises(ValidationError, match="undefined variable"):

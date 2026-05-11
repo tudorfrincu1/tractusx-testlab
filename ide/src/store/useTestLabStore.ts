@@ -48,7 +48,7 @@ interface TestLabState {
   errors: ValidationError[];
   lastEditSource: "blocks" | "yaml" | "load" | "none";
   selectedNodeId: string | null;
-  selectedStepName: string | null;
+  selectedStepType: string | null;
   graphMode: GraphMode;
 
   /** Register a listener called on every model change. */
@@ -63,7 +63,7 @@ interface TestLabState {
   setShowValidation: (show: boolean) => void;
   setGraphMode: (mode: GraphMode) => void;
   selectNode: (nodeId: string | null) => void;
-  selectStep: (stepName: string | null) => void;
+  selectStep: (stepType: string | null) => void;
 }
 
 export const useTestLabStore = create<TestLabState>((set, get) => {
@@ -76,7 +76,7 @@ export const useTestLabStore = create<TestLabState>((set, get) => {
     errors: [],
     lastEditSource: "none",
     selectedNodeId: null,
-    selectedStepName: null,
+    selectedStepType: null,
     graphMode: "execution",
     onModelChange: null,
 
@@ -134,6 +134,6 @@ export const useTestLabStore = create<TestLabState>((set, get) => {
     setShowValidation: (show) => set({ showValidation: show }),
     setGraphMode: (mode) => set({ graphMode: mode }),
     selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
-    selectStep: (stepName) => set({ selectedStepName: stepName }),
+    selectStep: (stepType) => set({ selectedStepType: stepType }),
   };
 });

@@ -137,9 +137,7 @@ function validateStep(
     });
   }
 
-  if (!step.name) {
-    errors.push({ path: `${path}.name`, message: "Step name is required", severity: "warning" });
-  }
+
 
   if (step.on_failure && !Object.values(FailurePolicy).includes(step.on_failure)) {
     errors.push({

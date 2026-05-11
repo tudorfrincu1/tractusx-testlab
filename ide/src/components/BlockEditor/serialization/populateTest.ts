@@ -41,12 +41,12 @@ import { populateAssertions } from "./populateAssertions";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
-    stepName: string | undefined,
+    stepDescription: string | undefined,
     originalType: string,
     params: Record<string, unknown> | undefined
   ): Block => {
     const block = makeBlock(ws, "unsupported_step");
-    block.setFieldValue(stepName || originalType || "unsupported_step", "STEP_NAME");
+    block.setFieldValue(stepDescription || "", "STEP_DESCRIPTION");
     block.setFieldValue(originalType, "ORIGINAL_TYPE");
     block.setFieldValue(JSON.stringify(params ?? {}), "PARAMS_JSON");
     return block;
@@ -57,7 +57,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
 
     for (const step of steps) {
       if (isTemplateStep(step)) {
-        blocks.push(createUnsupportedStepBlock(step.name, step.template, step.params));
+        blocks.push(createUnsupportedStepBlock(step.description, step.template, step.params));
         continue;
       }
 
@@ -93,7 +93,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
       const catalogStepType = toCatalogStepType(step.type);
       const entry = findCatalogEntry(catalogStepType, catalog);
       if (!entry) {
-        blocks.push(createUnsupportedStepBlock(step.name, step.type, step.params));
+        blocks.push(createUnsupportedStepBlock(step.description, step.type, step.params));
         continue;
       }
 
@@ -118,7 +118,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
 
       const blockType = `step_${catalogStepType}`;
       const sb = makeBlock(ws, blockType);
-      sb.setFieldValue(step.name || step.type, "NAME");
+      sb.setFieldValue(step.description || "", "DESCRIPTION");
 
       for (const p of entry.params) {
         const paramVal = effectiveParams[p.name];

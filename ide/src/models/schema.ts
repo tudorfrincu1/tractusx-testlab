@@ -125,7 +125,7 @@ export interface TestPrerequisite {
 
 export interface StepDefinition {
   type: string;
-  name: string;
+  description?: string;
   params: Record<string, unknown>;
   on_failure?: FailurePolicy;
   timeout_s?: number;
@@ -137,7 +137,7 @@ export interface StepDefinition {
 export interface TemplateStepDefinition {
   template: string;
   params?: Record<string, unknown>;
-  name?: string;
+  description?: string;
 }
 
 export type Step = StepDefinition | TemplateStepDefinition;

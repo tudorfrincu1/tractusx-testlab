@@ -24,13 +24,19 @@
 import { useEffect, useRef } from "react";
 import "./WarningTooltip.css";
 
-export interface WarningTooltipProps {
+export type TooltipVariant = "warning" | "info";
+
+export interface BlockTooltipProps {
   text: string;
   position: { x: number; y: number };
+  variant?: TooltipVariant;
   onClose: () => void;
 }
 
-export function WarningTooltip({ text, position, onClose }: WarningTooltipProps) {
+/** Re-export for backward compatibility */
+export type WarningTooltipProps = BlockTooltipProps;
+
+export function BlockTooltip({ text, position, variant = "warning", onClose }: BlockTooltipProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,13 +59,16 @@ export function WarningTooltip({ text, position, onClose }: WarningTooltipProps)
   return (
     <div
       ref={ref}
-      className="warning-tooltip"
+      className={`block-tooltip block-tooltip--${variant}`}
       style={{ top: position.y, left: position.x }}
     >
-      <button className="warning-tooltip__close" onClick={onClose} aria-label="Close">
+      <button className="block-tooltip__close" onClick={onClose} aria-label="Close">
         ×
       </button>
-      <span className="warning-tooltip__text">{text}</span>
+      <span className="block-tooltip__text">{text}</span>
     </div>
   );
 }
+
+/** Backward-compatible alias */
+export const WarningTooltip = BlockTooltip;

@@ -18,7 +18,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: GPT-5.3-Codex). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
 kind: test
@@ -28,43 +28,14 @@ description: >
   Listen for provider callback after certificate processing and verify
   feedback payload semantics for CX-0135 path /companycertificate/status.
 
-inputs:
-  - name: request_id
-    type: str
-    source: request_certificate.request_certificate_via_ccmapi.request_id
-    description: Certificate request ID
-  - name: validation_status
-    type: enum
-    values: [VALID, INVALID]
-    source: validate_payload.validate_schema.validation_status
-    description: Validation result from payload checks
-
-prerequisites:
-  - test: request_certificate
-    strict_order: true
-    exports_required:
+depends_on:
+  - file: tests/request_certificate.yaml
+    outputs:
       - request_id
-  - test: validate_payload
-    strict_order: true
-    exports_required:
-      - validation_status
-
-outputs:
-  - name: callback_request_id
-    type: str
-    description: Request ID sent by provider in callback payload
-  - name: callback_feedback_status
-    type: enum
-    values: [ACCEPTED, REJECTED, RECEIVED]
-    description: Callback feedback status from provider
-  - name: callback_feedback_message
-    type: str
-    description: Optional free-text feedback message from provider callback
 
 steps:
-  # Step 1: Expose callback endpoint that the provider will call.
   - type: mock_endpoint
-    name: define_feedback_callback_endpoint
+    description: Expose callback endpoint for provider feedback
     params:
       id: "certificate_feedback_status_callback"
       method: POST
@@ -73,65 +44,58 @@ steps:
       response_body:
         accepted: true
 
-  # Step 2: Block until provider callback arrives on the endpoint.
   - type: wait_for_call
-    name: wait_for_feedback_callback
+    description: Block until provider callback arrives
     params:
       endpoint_id: "certificate_feedback_status_callback"
       timeout_s: 120
     store_in_memory:
-      callback_call: "."
       callback_method: "method"
       callback_path: "path"
       callback_payload: "body"
+    expect:
+      - output: method
+        equals: "POST"
+      - output: path
+        equals: "/companycertificate/status"
 
-  # Step 3: Extract payload fields used by exports and assertions.
   - type: json_path_extract
-    name: extract_callback_request_id
+    description: Extract callback request ID
     params:
       variable: "callback_payload"
       path: "requestId"
     store_in_memory:
       callback_request_id: "value"
+    expect:
+      - output: value
+        equals: "@request_id"
 
   - type: json_path_extract
-    name: extract_callback_feedback_status
+    description: Extract callback feedback status
     params:
       variable: "callback_payload"
       path: "feedbackStatus"
     store_in_memory:
       callback_feedback_status: "value"
+    expect:
+      - output: value
+        not_null: true
 
   - type: json_path_extract
-    name: extract_callback_feedback_message
+    description: Extract callback feedback message
     params:
       variable: "callback_payload"
       path: "feedbackMessage"
     store_in_memory:
       callback_feedback_message: "value"
+    expect:
+      - output: value
+        not_null: true
 
-expect:
-  - step: wait_for_feedback_callback
-    output: callback_method
-    equals: "POST"
-    description: "Provider callback must use POST"
-
-  - step: wait_for_feedback_callback
-    output: callback_path
-    equals: "/companycertificate/status"
-    description: "Provider callback must target CX-0135 status path"
-
-  - step: extract_callback_request_id
-    output: value
-    equals: "@request_id"
-    description: "Callback requestId must match the requested certificate"
-
-  - step: extract_callback_feedback_status
-    output: value
-    not_null: true
-    description: "Callback must include feedbackStatus"
-
-  - step: extract_callback_feedback_message
-    output: value
-    not_null: true
-    description: "Callback should include a feedbackMessage payload"
+variables:
+  callback_request_id:
+    type: str
+  callback_feedback_status:
+    type: str
+  callback_feedback_message:
+    type: str

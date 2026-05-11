@@ -27,20 +27,20 @@ export interface YamlLineRange {
 }
 
 /**
- * Finds the 1-based line range for a step with the given name inside a YAML
+ * Finds the 1-based line range for a step with the given type inside a YAML
  * string. Scans `setup:`, `steps:`, and `teardown:` arrays for `- type:` items
- * whose `name:` field matches `stepName`.
+ * whose `type:` field matches `stepType`.
  *
  * Returns `null` when no matching step is found.
  */
-export function findStepLineRange(yaml: string, stepName: string): YamlLineRange | null {
+export function findStepLineRange(yaml: string, stepType: string): YamlLineRange | null {
   const lines = yaml.split("\n");
 
   let insideStepArray = false;
   let stepArrayIndent = -1;
   let itemIndent = -1;
   let currentItemStart = -1;
-  let currentItemName: string | null = null;
+  let currentItemType: string | null = null;
 
   const stepArrayPattern = /^(\s*)(setup|steps|cleanup)\s*:/;
   const listItemPattern = /^(\s*)-\s/;
@@ -56,7 +56,7 @@ export function findStepLineRange(yaml: string, stepName: string): YamlLineRange
       stepArrayIndent = arrayMatch[1].length;
       itemIndent = -1;
       currentItemStart = -1;
-      currentItemName = null;
+      currentItemType = null;
       continue;
     }
 
@@ -81,15 +81,15 @@ export function findStepLineRange(yaml: string, stepName: string): YamlLineRange
         if (result) return result;
 
         currentItemStart = i;
-        currentItemName = null;
+        currentItemType = null;
         continue;
       }
     }
 
     if (currentItemStart !== -1) {
-      const nameMatch = line.match(/^\s*name:\s*(.+)/);
-      if (nameMatch) {
-        currentItemName = nameMatch[1].replace(/^["']|["']$/g, "").trim();
+      const typeMatch = line.match(/^\s*type:\s*(.+)/);
+      if (typeMatch) {
+        currentItemType = typeMatch[1].replace(/^["']|["']$/g, "").trim();
       }
     }
   }
@@ -97,7 +97,7 @@ export function findStepLineRange(yaml: string, stepName: string): YamlLineRange
   return flushMatch(lines) ?? null;
 
   function flushMatch(allLines: string[]): YamlLineRange | null {
-    if (currentItemStart === -1 || currentItemName !== stepName) return null;
+    if (currentItemStart === -1 || currentItemType !== stepType) return null;
 
     const endLine = findItemEndLine(allLines, currentItemStart, itemIndent);
     const range: YamlLineRange = {
@@ -106,7 +106,7 @@ export function findStepLineRange(yaml: string, stepName: string): YamlLineRange
     };
 
     currentItemStart = -1;
-    currentItemName = null;
+    currentItemType = null;
     return range;
   }
 }

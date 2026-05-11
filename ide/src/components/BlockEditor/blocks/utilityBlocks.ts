@@ -155,8 +155,8 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
         .appendField(blockIcon(Blockly, ICON_STEP))
         .appendField("Unsupported Step (Import Only)");
       this.appendDummyInput()
-        .appendField("step name:")
-        .appendField(new Blockly.FieldTextInput("imported_step"), "STEP_NAME");
+        .appendField("description:")
+        .appendField(new Blockly.FieldTextInput(""), "STEP_DESCRIPTION");
       this.appendDummyInput()
         .appendField("original type/template:")
         .appendField(new (FieldWrappedText as typeof Blockly.FieldTextInput)(""), "ORIGINAL_TYPE");

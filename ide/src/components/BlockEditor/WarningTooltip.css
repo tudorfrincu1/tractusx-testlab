@@ -21,13 +21,11 @@
 /* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
 /* It was reviewed and tested by a human committer. */
 
-.warning-tooltip {
+.block-tooltip {
   position: fixed;
   z-index: 10000;
   background: #111111;
   color: #ffffff;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-left: 3px solid #ef4444;
   border-radius: 8px;
   padding: 10px 14px;
   padding-right: 28px;
@@ -41,7 +39,17 @@
   white-space: pre-wrap;
 }
 
-.warning-tooltip__close {
+.block-tooltip--warning {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-left: 3px solid #ef4444;
+}
+
+.block-tooltip--info {
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-left: 3px solid #60a5fa;
+}
+
+.block-tooltip__close {
   position: absolute;
   top: 4px;
   right: 8px;
@@ -54,10 +62,10 @@
   padding: 2px 4px;
 }
 
-.warning-tooltip__close:hover {
+.block-tooltip__close:hover {
   color: #ffffff;
 }
 
-.warning-tooltip__text {
+.block-tooltip__text {
   display: block;
 }

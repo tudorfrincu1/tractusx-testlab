@@ -28,7 +28,7 @@ import {
   workspaceToModel,
   collectWorkspaceVariables,
 } from "./blockDefinitions";
-import { resolveStepName } from "./blockSelection";
+import { resolveStepIdentifier } from "./blockSelection";
 import type { TestLabDocument } from "../../models/schema";
 import type { BlockCatalog } from "./blockDefinitions";
 
@@ -132,6 +132,6 @@ export function attachSelectionListener(
       return;
     }
     const block = ws.getBlockById(selected.newElementId);
-    selectStep(block ? resolveStepName(block) : null);
+    selectStep(block ? resolveStepIdentifier(block) : null);
   });
 }

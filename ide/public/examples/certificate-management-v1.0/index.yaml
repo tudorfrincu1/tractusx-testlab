@@ -18,7 +18,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: GPT-5.3-Codex). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
 kind: test-case
@@ -36,192 +36,49 @@ standards:
   - id: CX-0135
     version: "2.4.0"
 
-# ===== SERVICES (Reusable components) =====
-services:
-  - name: provider_edc
-    type: edc_connector_saturn
-    description: Provider's EDC connector for certificate operations
-    config:
-      management_url: "@provider_address"
-      timeout_seconds: 60
-
-  - name: testlab_edc
-    type: edc_connector_saturn
-    description: TestLab's own EDC connector — used to provision assets the SUT discovers as consumer
-    config:
-      management_url: "@testlab_management_url"
-      timeout_seconds: 60
-
-# ===== VARIABLES (User inputs) =====
 variables:
   provider_address:
     type: str
     description: Provider EDC DSP endpoint
-    required: true
-    example: "https://provider-edc.example.com:8282/api/v1/dsp"
-    
+    runtime: true
   provider_bpn:
     type: str
     description: Provider BPNL (Business Partner Number)
-    required: true
-    pattern: "^BPNL[0-9A-Z]{8}[0-9A-Z]{4}$"
-    example: "BPNL00000003AZQP"
-    
+    runtime: true
   consumer_bpn:
     type: str
     description: Consumer BPNL (TestLab company)
-    required: true
-    pattern: "^BPNL[0-9A-Z]{8}[0-9A-Z]{4}$"
-    example: "BPNL00000001SQRN"
-    
+    runtime: true
   certificate_type:
-    type: enum
-    values: [iso9001, iatf16949, iso14001, iso45001, iso50001]
-    description: Certificate type to request
-    required: true
-    default: iso9001
-    
+    type: str
+    description: Certificate type to request (iso9001, iatf16949, iso14001, iso45001, iso50001)
+    default: "iso9001"
   location_bpns:
-    type: array[str]
-    description: BPN sites needing the certificate (BPNS format)
-    required: true
-    example: ["BPNS000000000001", "BPNS000000000002"]
-    constraints:
-      min_items: 1
-      item_pattern: "^BPNS"
-
+    type: str
+    description: Comma-separated BPN sites needing the certificate (BPNS format)
+    runtime: true
   testlab_management_url:
     type: str
     description: TestLab EDC management API base URL (used when TestLab acts as provider)
-    required: true
-    example: "https://testlab-edc.example.com:8181/management"
-
+    runtime: true
   testlab_dsp_url:
     type: str
     description: TestLab EDC DSP endpoint — what the SUT must point its catalog query at
-    required: true
-    example: "https://testlab-edc.example.com:8282/api/v1/dsp"
-
-  testlab_mock_base_url:
-    type: str
-    description: TestLab mock server base URL (auto-injected by runtime from test_root config)
-    required: false
-    example: "https://testlab-mock.example.com"
-
+    runtime: true
   sut_response_timeout:
     type: int
-    description: Seconds to wait for SUT to negotiate and pull data from TestLab (default 300)
-    required: false
+    description: Seconds to wait for SUT to negotiate and pull data from TestLab
     default: 300
 
-# ===== TESTS (Test scenario references) =====
 tests:
-  - order: 1
-    name: request_certificate
-    file: tests/request_certificate.yaml
-    description: >
-      Query provider catalog for CCMAPI offer and request certificate.
-      Outputs: request_id, request_status, document_id
-    
-  - order: 2
-    name: validate_payload
-    file: tests/validate_payload.yaml
-    description: >
-      Fetch and validate certificate payload against 
-      BusinessPartnerCertificate semantic model v3.1.0
-      Outputs: validation_status, validation_errors
-    prerequisite_tests:
-      - request_certificate
-    
-  - order: 3
-    name: await_feedback_callback
-    file: tests/await_feedback_callback.yaml
-    description: >
-      Listen for inbound provider feedback callback on /companycertificate/status
-      Outputs: callback_request_id, callback_feedback_status, callback_feedback_message
-    prerequisite_tests:
-      - request_certificate
-      - validate_payload
-
-  - order: 4
-    name: send_feedback
-    file: tests/send_feedback.yaml
-    description: >
-      Send CCMAPI feedback notification to provider (SEND direction) and
-      await the provider's RECEIVE acknowledgment via TestLab mock endpoint.
-      Outputs: notification_id, notification_ack_status
-    prerequisite_tests:
-      - request_certificate
-      - validate_payload
-      - await_feedback_callback
-
-  - order: 5
-    name: expose_testlab_asset
-    file: tests/expose_testlab_asset.yaml
-    description: >
-      Register a CCMAPI asset in TestLab's own EDC, expose a mock data endpoint,
-      and wait for the SUT (acting as consumer) to discover, negotiate, and pull data.
-      Verifies the SUT's consumer-side behavior per CX-0135.
-      Outputs: testlab_asset_id, testlab_contract_def_id, sut_request_body
-    prerequisite_tests: []
-
-# ===== EXPORTS (Results available after test runs) =====
-exports:
-  - name: certificate_request_status
-    type: enum
-    values: [IN_PROGRESS, COMPLETED, REJECTED]
-    source: request_certificate.request_certificate_via_ccmapi.request_status
-    description: Certificate request status
-    
-  - name: certificate_validation_result
-    type: enum
-    values: [VALID, INVALID]
-    source: validate_payload.validate_schema.validation_status
-    description: Overall certificate validation result
-    
-  - name: validation_error_count
-    type: int
-    source: length(validate_payload.validate_schema.validation_errors)
-    description: Count of validation errors found
-    
-  - name: callback_request_id
-    type: str
-    source: await_feedback_callback.extract_callback_request_id.value
-    description: Request ID included in provider callback payload
-    
-  - name: callback_feedback_status
-    type: enum
-    values: [ACCEPTED, REJECTED, RECEIVED]
-    source: await_feedback_callback.extract_callback_feedback_status.value
-    description: Feedback status received from provider callback
-
-  - name: callback_feedback_message
-    type: str
-    source: await_feedback_callback.extract_callback_feedback_message.value
-    description: Optional provider feedback message from callback payload
-
-  - name: notification_id
-    type: str
-    source: send_feedback.Send Feedback Notification.notification_id
-    description: ID of the CCMAPI feedback notification sent to provider
-
-  - name: notification_ack_status
-    type: str
-    source: send_feedback.Extract Ack Status.notification_ack_status
-    description: Acknowledgment status from provider RECEIVE response
-
-  - name: testlab_asset_id
-    type: str
-    source: expose_testlab_asset.Create CCMAPI Asset.testlab_asset_id
-    description: ID of the CCMAPI asset registered in TestLab's EDC
-
-  - name: testlab_contract_def_id
-    type: str
-    source: expose_testlab_asset.Create Contract Definition.testlab_contract_def_id
-    description: Contract definition ID used by the SUT to negotiate access
-
-  - name: sut_request_body
-    type: json
-    source: expose_testlab_asset.Wait For SUT Data Pull.sut_request_body
-    description: Request body sent by SUT when pulling data from TestLab
+  - test: tests/request_certificate.yaml
+    description: Query provider catalog for CCMAPI offer and request certificate
+  - test: tests/validate_payload.yaml
+    description: Fetch and validate certificate payload against BusinessPartnerCertificate semantic model v3.1.0
+  - test: tests/await_feedback_callback.yaml
+    description: Listen for inbound provider feedback callback on /companycertificate/status
+  - test: tests/send_feedback.yaml
+    description: Send CCMAPI feedback notification to provider and await acknowledgment
+  - test: tests/expose_testlab_asset.yaml
+    description: Register a CCMAPI asset in TestLab EDC, expose mock data, and verify SUT consumer behavior
 

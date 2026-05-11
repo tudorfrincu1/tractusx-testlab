@@ -122,7 +122,7 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
           id: nodeId,
           position: { x: 200, y },
           data: {
-            label: step.name || `⟪ ${step.template} ⟫`,
+            label: step.description || `⟪ ${step.template} ⟫`,
             stepType: `template:${step.template}`,
             color: getStepColor("template"),
             hasAssertions: false,
@@ -136,7 +136,7 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
           id: nodeId,
           position: { x: 200, y },
           data: {
-            label: step.name || step.type,
+            label: step.description || step.type,
             stepType: step.type,
             color: getStepColor(step.type),
             hasAssertions: (step.expect?.length ?? 0) > 0,

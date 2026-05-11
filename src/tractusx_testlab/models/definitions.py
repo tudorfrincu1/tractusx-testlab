@@ -66,7 +66,7 @@ class Assertion(BaseModel):
 
 class StepDefinition(BaseModel):
     type: str
-    name: str
+    description: Optional[str] = None
     params: dict = Field(default_factory=dict)
     on_failure: FailurePolicy = FailurePolicy.ABORT
     timeout_s: Optional[float] = None

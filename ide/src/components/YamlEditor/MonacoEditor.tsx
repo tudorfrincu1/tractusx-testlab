@@ -35,7 +35,7 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
   const errors = useTestLabStore((s) => s.errors);
   const lastEditSource = useTestLabStore((s) => s.lastEditSource);
   const setModelFromYaml = useTestLabStore((s) => s.setModelFromYaml);
-  const selectedStepName = useTestLabStore((s) => s.selectedStepName);
+  const selectedStepType = useTestLabStore((s) => s.selectedStepType);
   const selectStep = useTestLabStore((s) => s.selectStep);
 
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -130,13 +130,13 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
     }
 
     // Never highlight or scroll while the user is typing in YAML
-    if (!selectedStepName || isEditorFocused.current) {
+    if (!selectedStepType || isEditorFocused.current) {
       decorationsRef.current.clear();
       return;
     }
 
     const currentYaml = edtr.getValue();
-    const range = findStepLineRange(currentYaml, selectedStepName);
+    const range = findStepLineRange(currentYaml, selectedStepType);
     if (!range) {
       decorationsRef.current.clear();
       return;
@@ -157,7 +157,7 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
     ]);
 
     edtr.revealLineInCenterIfOutsideViewport(range.startLine);
-  }, [selectedStepName]);
+  }, [selectedStepType]);
 
   const handleChange = useCallback(
     (value: string | undefined) => {

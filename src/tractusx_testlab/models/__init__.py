@@ -36,10 +36,10 @@ from tractusx_sdk.extensions.testlab.models.definitions import (
     ListenerDefinition,
     ScriptDefinition,
     ServiceDefinition,
-    StepDefinition,
     TestCaseDefinition,
     VariableDefinition,
 )
+from tractusx_testlab.models.definitions import StepDefinition  # local override — no name field
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
     AssertionType,

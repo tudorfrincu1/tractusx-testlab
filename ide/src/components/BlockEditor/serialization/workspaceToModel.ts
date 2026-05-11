@@ -82,7 +82,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       if (varName && varName !== "__NONE__") {
         steps.push({
           type: "export_variable",
-          name: `Export ${varName}`,
+          description: `Export ${varName}`,
           params: { name: varName, value: `@${varName}` },
         } as StepDefinition);
       }
@@ -96,7 +96,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       if (file && file !== "__NONE__" && exportVar && exportVar !== "__NONE__") {
         steps.push({
           type: "import_variable",
-          name: `Import ${exportVar}`,
+          description: `Import ${exportVar}`,
           params: { file, export: exportVar, variable: outputVar },
         } as StepDefinition);
       }
@@ -109,24 +109,24 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       if (schemaPath && schemaPath !== "__NONE__") {
         steps.push({
           type: "load_schema",
-          name: `Load ${varName}`,
+          description: `Load ${varName}`,
           params: { name: varName, source: "file", path: schemaPath },
           store_in_memory: { [varName]: "$" },
         });
       }
     } else if (current.type === "unsupported_step") {
       const originalType = current.getFieldValue("ORIGINAL_TYPE") || "unsupported_step";
-      const name = current.getFieldValue("STEP_NAME") || originalType;
+      const stepDescription = current.getFieldValue("STEP_DESCRIPTION") || "";
       const paramsJson = current.getFieldValue("PARAMS_JSON") || "{}";
       const params = parseUnsupportedParams(paramsJson);
       steps.push({
         type: originalType,
-        name,
+        description: stepDescription || undefined,
         params,
       } as StepDefinition);
     } else if (current.type === "step_operation" || current.type === "step_template") {
       const originalType = current.getFieldValue("ORIGINAL_TYPE") || current.getFieldValue("OPERATION") || current.getFieldValue("PARAM_TEMPLATE") || "unsupported_step";
-      const name = current.getFieldValue("STEP_NAME") || current.getFieldValue("NAME") || originalType;
+      const stepDescription = current.getFieldValue("STEP_DESCRIPTION") || current.getFieldValue("DESCRIPTION") || "";
       const params: Record<string, unknown> = {};
       let kvBlock = current.getInputTargetBlock("PARAMS");
       while (kvBlock) {
@@ -139,7 +139,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       }
       steps.push({
         type: originalType,
-        name,
+        description: stepDescription || undefined,
         params,
       } as StepDefinition);
     } else {
@@ -156,7 +156,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
 
   const stepType = block.type.replace("step_", "");
   const runtimeStepType = toRuntimeStepType(stepType);
-  const name = block.getFieldValue("NAME") || runtimeStepType;
+  const description = block.getFieldValue("DESCRIPTION") || "";
   const catalogEntry = findCatalogEntry(stepType, catalog);
 
   const params: Record<string, unknown> = {};
@@ -265,7 +265,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
 
   return {
     type: runtimeStepType,
-    name,
+    description: description || undefined,
     params,
     expect: expect.length > 0 ? expect : undefined,
     store_in_memory: storeInMemory,

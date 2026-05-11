@@ -24,16 +24,15 @@
 import type { Block } from "blockly";
 
 /**
- * Resolves the step name for a given block. If the block is a step block
- * (type starts with `step_`), returns its NAME field. Otherwise walks up
- * the parent chain to find the nearest enclosing step block.
+ * Resolves a step identifier for a given block. If the block is a step block
+ * (type starts with `step_`), returns the step type derived from the block type.
+ * Otherwise walks up the parent chain to find the nearest enclosing step block.
  */
-export function resolveStepName(block: Block): string | null {
+export function resolveStepIdentifier(block: Block): string | null {
   let current: Block | null = block;
   while (current) {
     if (current.type.startsWith("step_")) {
-      const name = current.getFieldValue("NAME");
-      return typeof name === "string" && name.length > 0 ? name : null;
+      return current.type.replace(/^step_/, "");
     }
     current = current.getParent();
   }
