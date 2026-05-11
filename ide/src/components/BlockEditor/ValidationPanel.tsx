@@ -47,7 +47,7 @@ export interface ValidationPanelProps {
 export function collectBlockWarnings(ws: Blockly.WorkspaceSvg): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   for (const block of ws.getAllBlocks(false)) {
-    const warningBubble = block.getIcon(Blockly.icons.WarningIcon.type);
+    const warningBubble = block.getIcon(Blockly.icons.WarningIcon.TYPE);
     const warningText = warningBubble
       ? (warningBubble as Blockly.icons.WarningIcon).getText()
       : undefined;

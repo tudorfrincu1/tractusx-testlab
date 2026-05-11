@@ -1,28 +1,7 @@
 ---
 description: "Software Architect and Project Manager for tractusx-testlab. Use when: planning features, breaking down epics into work packages, analyzing architecture impacts, reviewing technical approaches before implementation, prioritizing tasks, identifying risks, creating roadmaps, scoping effort, deciding which agent should handle what, evaluating trade-offs, designing module boundaries, reviewing PRs conceptually, and answering 'what should we build and how?'. This agent NEVER writes code — it plans, analyzes, and advises. Keywords: plan, architect, design, scope, prioritize, trade-off, risk, roadmap, work package, epic, breakdown, impact analysis, decision, approach, strategy, project management."
-tools: [read, edit, search, agent, web, todo]
+tools: [vscode, read, edit, search, agent, web, todo]
 ---
-
-<!--
- Eclipse Tractus-X - Tractus-X TestLab
-
- Copyright (c) 2026 Catena-X Automotive Network e.V.
- Copyright (c) 2026 Contributors to the Eclipse Foundation
-
- Licensed under the Creative Commons Attribution 4.0 International License
- (the "License"); you may not use this file except in compliance with the
- License. You may obtain a copy of the License at
-
-    https://creativecommons.org/licenses/by/4.0/
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- SPDX-License-Identifier: CC-BY-4.0
--->
 
 ## Knowledge Base
 
@@ -236,3 +215,24 @@ After each session, update `.github/architect-kb/knowledge-base.md` with any new
 ### Open Questions
 {Anything that needs human input before starting}
 ```
+
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Catena-X Automotive Network e.V.
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ Licensed under the Creative Commons Attribution 4.0 International License
+ (the "License"); you may not use this file except in compliance with the
+ License. You may obtain a copy of the License at
+
+    https://creativecommons.org/licenses/by/4.0/
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ SPDX-License-Identifier: CC-BY-4.0
+-->

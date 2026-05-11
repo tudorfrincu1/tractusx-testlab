@@ -142,14 +142,14 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         name: "Variables",
         colour: blockColors.variableDef,
         contents: [
-          { kind: "block", type: "variable_def" },
-          { kind: "sep", gap: "16" },
-          ...variableContents,
-          { kind: "sep", gap: "16" },
           { kind: "block", type: "schema_import" },
           { kind: "sep", gap: "16" },
           { kind: "block", type: "import_variable" },
           { kind: "block", type: "export_variable" },
+          { kind: "sep", gap: "16" },
+          { kind: "block", type: "variable_def" },
+          { kind: "sep", gap: "16" },
+          ...variableContents,
         ],
       },
       {

@@ -21,13 +21,34 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBlocklyWorkspace } from "./useBlocklyWorkspace";
+import { setupWarningTooltip, type WarningShowRequest } from "./bubblePatch";
+import { WarningTooltip } from "./WarningTooltip";
 import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
-  useBlocklyWorkspace(containerRef);
+  const { workspace } = useBlocklyWorkspace(containerRef);
+  const [warning, setWarning] = useState<WarningShowRequest | null>(null);
 
-  return <div ref={containerRef} className="blockly-workspace-container" />;
+  const handleClose = useCallback(() => setWarning(null), []);
+
+  useEffect(() => {
+    if (!workspace) return;
+    return setupWarningTooltip(workspace, setWarning);
+  }, [workspace]);
+
+  return (
+    <>
+      <div ref={containerRef} className="blockly-workspace-container" />
+      {warning && (
+        <WarningTooltip
+          text={warning.text}
+          position={warning.position}
+          onClose={handleClose}
+        />
+      )}
+    </>
+  );
 }

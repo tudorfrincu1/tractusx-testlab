@@ -21,52 +21,133 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-/**
- * Monkey-patches Blockly's Bubble.prototype.setColour so that warning/text
- * bubbles use our dark-theme colours instead of inheriting the block colour.
- *
- * Must be called once, before any workspace is created.
- */
 import * as Blockly from "blockly";
 
-const BUBBLE_BG = "#1a1a2e";
-const BUBBLE_BORDER = "rgba(239,68,68,0.3)";
-const BUBBLE_TEXT_FILL = "#e0e0e0";
+export interface WarningShowRequest {
+  text: string;
+  position: { x: number; y: number };
+}
 
+/**
+ * SVG style that hides Blockly's native warning bubble while keeping
+ * the warning icon visible and clickable.
+ */
+const BUBBLE_HIDE_STYLE = `
+  .blocklyBubbleCanvas { display: none !important; }
+`;
+
+/**
+ * Injects a <style> into the workspace SVG to hide native bubbles.
+ */
+export function injectBubbleStyles(workspaceSvg: SVGElement): void {
+  if (workspaceSvg.querySelector("#testlab-bubble-style")) return;
+
+  const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  styleEl.id = "testlab-bubble-style";
+  styleEl.textContent = BUBBLE_HIDE_STYLE;
+  workspaceSvg.insertBefore(styleEl, workspaceSvg.firstChild);
+}
+
+/**
+ * Legacy no-op kept for backward compatibility with registerBlocks().
+ */
 export function patchBubbleColours(): void {
-  const BubbleProto = Blockly.bubbles.Bubble.prototype;
-  const original = BubbleProto.setColour;
+  // Intentionally empty — bubbles are now hidden; tooltip overlay replaces them.
+}
 
-  BubbleProto.setColour = function (colour: string) {
-    // Let Blockly do its normal work (sets this.colour, tail fill, bg fill)
-    original.call(this, colour);
+/**
+ * Sets up a document-level capture listener to intercept clicks on warning
+ * icons before Blockly's own element-level handlers fire. Invokes
+ * `onShowWarning` with the warning text and screen position.
+ * Returns a cleanup function.
+ */
+export function setupWarningTooltip(
+  workspace: Blockly.WorkspaceSvg,
+  onShowWarning: (req: WarningShowRequest) => void,
+): () => void {
+  const svgEl = workspace.getParentSvg();
+  if (!svgEl) return () => {};
 
-    // Now override the fills on the SVG children inside svgRoot
-    const root = (this as unknown as { svgRoot: SVGGElement }).svgRoot;
-    if (!root) return;
+  injectBubbleStyles(svgEl);
 
-    // Background rect — first <rect> child
-    const rect = root.querySelector("rect");
-    if (rect) {
-      rect.setAttribute("fill", BUBBLE_BG);
-      rect.setAttribute("stroke", BUBBLE_BORDER);
-      rect.setAttribute("stroke-width", "1.5");
-      rect.setAttribute("rx", "10");
-      rect.setAttribute("ry", "10");
+  function handlePointerDown(e: PointerEvent) {
+    const target = e.target as Element | null;
+    if (!target) return;
+
+    // Check if click is inside the workspace SVG
+    if (!svgEl.contains(target)) return;
+
+    // Find nearest icon group ancestor
+    const iconGroup = target.closest(".blocklyIconGroup") as SVGElement | null;
+    if (!iconGroup) return;
+
+    // Only handle warning icons specifically
+    if (!iconGroup.classList.contains("blocklyWarningIcon")) return;
+
+    // eslint-disable-next-line no-console
+    console.debug("[WarningTooltip] icon clicked");
+
+    // Traverse up to find block with data-id (more robust in SVG than .closest)
+    let current: Element | null = iconGroup.parentElement;
+    let blockId: string | null = null;
+    while (current && current !== svgEl) {
+      blockId = current.getAttribute("data-id");
+      if (blockId) break;
+      current = current.parentElement;
+    }
+    if (!blockId) {
+      // eslint-disable-next-line no-console
+      console.debug("[WarningTooltip] no blockId found");
+      return;
     }
 
-    // Tail path — element with class blocklyBubbleTail
-    const tail = root.querySelector(".blocklyBubbleTail");
-    if (tail) {
-      tail.setAttribute("fill", BUBBLE_BG);
-      tail.setAttribute("stroke", BUBBLE_BORDER);
-      tail.setAttribute("stroke-width", "1");
+    const block = workspace.getBlockById(blockId);
+    if (!block) {
+      // eslint-disable-next-line no-console
+      console.debug("[WarningTooltip] block not found for id:", blockId);
+      return;
     }
 
-    // Text elements inside the bubble
-    const texts = root.querySelectorAll(".blocklyBubbleText, .blocklyText");
-    for (const t of texts) {
-      t.setAttribute("fill", BUBBLE_TEXT_FILL);
+    // eslint-disable-next-line no-console
+    console.debug("[WarningTooltip] block found:", block.type);
+
+    // Check if this block has a warning icon
+    let warningText: string | undefined;
+    try {
+      const warningIcon = block.getIcon(Blockly.icons.WarningIcon.TYPE);
+      // eslint-disable-next-line no-console
+      console.debug("[WarningTooltip] warningIcon:", warningIcon);
+      if (warningIcon) {
+        warningText = (warningIcon as Blockly.icons.WarningIcon).getText();
+      }
+    } catch {
+      // Fallback: try getWarningText if available
+      warningText = (
+        block as unknown as { warning?: { getText?: () => string } }
+      ).warning?.getText?.();
     }
-  };
+
+    // eslint-disable-next-line no-console
+    console.debug("[WarningTooltip] warningText:", warningText);
+
+    if (!warningText) return;
+
+    // Position tooltip near the icon
+    const rect = iconGroup.getBoundingClientRect();
+
+    // Use setTimeout to escape Blockly's gesture system interference
+    setTimeout(() => {
+      onShowWarning({
+        text: warningText,
+        position: { x: rect.right + 8, y: rect.top - 4 },
+      });
+    }, 0);
+
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  // Attach to document in capture phase — fires before any element-level handlers
+  document.addEventListener("pointerdown", handlePointerDown, true);
+  return () => document.removeEventListener("pointerdown", handlePointerDown, true);
 }

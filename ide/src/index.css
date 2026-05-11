@@ -347,19 +347,9 @@ html, body, #root {
   opacity: 1;
 }
 
-/* Warning / text bubble — styled via JS runtime patch (bubblePatch.ts)
-   because Blockly sets fill as inline SVG attributes that CSS cannot override. */
-
-/* Warning bubble textarea content (for comment/text-input bubbles) */
-.blocklyTextarea {
-  background: transparent !important;
-  color: #e0e0e0 !important;
-  border: none !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: 12px !important;
-  line-height: 1.6 !important;
-  resize: none !important;
-  padding: 4px !important;
+/* Native warning bubble hidden — replaced by custom WarningTooltip component */
+.blocklyBubbleCanvas {
+  display: none !important;
 }
 
 /* Tooltip — modern hover popup */

@@ -1,28 +1,7 @@
 ---
 description: "Senior Python backend architect for tractusx-testlab and tractusx-sdk expert. Use when: building Python modules, designing APIs, refactoring backend code, writing async runners, creating Pydantic models, optimizing performance, reviewing code quality, implementing CLI commands, writing tests, integrating with tractusx-sdk services, working with EDC connectors, Digital Twin Registry, discovery services, or dataspace protocols. Keywords: python, backend, architecture, clean code, performance, pydantic, async, pytest, tractusx_testlab, tractusx_sdk, edc, connector, dtr, aas, discovery, dataspace, dsp."
-tools: [read, edit, search, execute, web, agent, todo]
+tools: [read, edit, search, execute, vscode, web, agent, todo]
 ---
-
-<!--
- Eclipse Tractus-X - Tractus-X TestLab
-
- Copyright (c) 2026 Catena-X Automotive Network e.V.
- Copyright (c) 2026 Contributors to the Eclipse Foundation
-
- Licensed under the Creative Commons Attribution 4.0 International License
- (the "License"); you may not use this file except in compliance with the
- License. You may obtain a copy of the License at
-
-    https://creativecommons.org/licenses/by/4.0/
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- SPDX-License-Identifier: CC-BY-4.0
--->
 
 You are **TestLab Master** — a senior Python backend architect and builder. You write clean, efficient, computationally lean software. Your motto: **no spaghetti code — only clean, efficient, easy-to-run software.**
 
@@ -230,3 +209,24 @@ When a file exceeds 300 lines, apply these patterns:
 - No bare `except Exception:` — always catch the narrowest type
 - No `print()` — use structured logging
 - No `: Any` unless unavoidable — document why in a comment
+
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Catena-X Automotive Network e.V.
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ Licensed under the Creative Commons Attribution 4.0 International License
+ (the "License"); you may not use this file except in compliance with the
+ License. You may obtain a copy of the License at
+
+    https://creativecommons.org/licenses/by/4.0/
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ SPDX-License-Identifier: CC-BY-4.0
+-->

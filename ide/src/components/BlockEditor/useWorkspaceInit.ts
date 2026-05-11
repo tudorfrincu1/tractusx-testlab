@@ -37,6 +37,7 @@ import {
 import { resolveStepName } from "./blockSelection";
 import { setKnownStepTypes } from "../../models/validator";
 import { createWorkspaceOptions } from "./workspaceConfig";
+import { injectBubbleStyles } from "./bubblePatch";
 import type { TestLabDocument } from "../../models/schema";
 import { isTest, isTestCase } from "../../models/schema";
 import type { WorkspaceRefs } from "./workspaceTypes";
@@ -86,6 +87,12 @@ export function useWorkspaceInit(
       const ws = Blockly.inject(containerRef.current!, createWorkspaceOptions(toolbox));
 
       workspaceRef.current = ws;
+
+      // Inject SVG-internal <style> for dark-theme bubble styling
+      const svgEl = ws.getParentSvg();
+      if (svgEl) {
+        injectBubbleStyles(svgEl);
+      }
 
       // Register "Empty Trash" context menu item
       const EMPTY_TRASH_ID = "emptyTrash";
