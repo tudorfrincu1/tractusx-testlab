@@ -120,6 +120,16 @@ Verify all internal links point to existing pages and anchors.
 ### Step 5: Navigation check
 Verify `mkdocs.yml` `nav:` section includes all new pages in the right location.
 
+## Token Economy
+
+- **Never echo back the task description** — start working immediately
+- **Never explain what you're about to do** — just do it
+- **Response format**: changed files list + diffs only (no full file dumps)
+- **Read only what you need**: if a file is over 100 lines, read only the target function/section
+- **Do NOT restate constraints** from the delegation prompt — acknowledge with one line, then code
+- **Max response length**: 200 lines unless the task genuinely requires more
+- **One read pass**: do not re-read files you already read in this session
+
 ## Output Standards
 
 - Apache-2.0 license header on all new `.md` files (HTML comment format)

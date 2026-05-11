@@ -25,6 +25,7 @@
 export interface BlockCatalogParam {
   name: string;
   type: string;
+  item_type?: string;
   required: boolean;
   description: string;
   default?: unknown;
@@ -45,12 +46,14 @@ export interface BlockCatalogEntry {
   params: BlockCatalogParam[];
   outputs?: BlockCatalogOutput[];
   depends_on?: string[];
+  dataspace_version?: string;
 }
 
 export interface BlockCatalogCategory {
   name: string;
   description?: string;
   service_type?: string;
+  dataspace_version?: string;
   blocks: BlockCatalogEntry[];
 }
 

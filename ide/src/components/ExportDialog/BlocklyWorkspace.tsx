@@ -182,8 +182,8 @@ export function BlocklyWorkspace() {
             setModelFromBlocks(merged as unknown as TestLabDocument);
           }
 
-          // Dynamic toolbox refresh — update Variables category
-          // when function block outputs or variable_def blocks change
+          // Dynamic toolbox refresh — Scratch-like: update Variables category
+          // when store_output or variable_def blocks change
           const currentVars = collectWorkspaceVariables(ws);
           const varSnapshot = JSON.stringify(currentVars);
           if (varSnapshot !== lastVarSnapshot) {

@@ -23,6 +23,7 @@
 
 import { useRef } from "react";
 import { useProjectStore } from "../../store/useProjectStore";
+import { useTestLabStore } from "../../store/useTestLabStore";
 import { yamlToModel } from "../../sync/yamlToModel";
 import { importProjectZip, importExampleFolder } from "../../store/projectIO";
 import { theme } from "../../theme/tractusxTheme";
@@ -114,6 +115,11 @@ export function WelcomeScreen() {
           dirty: new Map(),
           workspaceStates: {},
         });
+
+        const activeModel = useProjectStore.getState().getActiveModel();
+        if (activeModel) {
+          useTestLabStore.getState().loadModel(activeModel);
+        }
       }
     } catch {
       // Example not available

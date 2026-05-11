@@ -105,6 +105,20 @@
   overflow: hidden;
 }
 
+/* ===== Editor area (vertical: panels + validation) ===== */
+.editor-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.editor-area > .editor-panels {
+  flex: 1;
+  min-height: 0;
+}
+
 /* ===== Editor panels ===== */
 .editor-panels {
   flex: 1;
@@ -198,6 +212,54 @@
 .services-btn:hover {
   border-color: var(--tx-primary);
   color: var(--tx-text-bright);
+}
+
+/* ===== Validate button ===== */
+.validate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: transparent;
+  color: #999;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.validate-btn:hover {
+  color: #e0e0e0;
+  border-color: #777;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.validate-btn--stale {
+  color: #999;
+  border-color: #555;
+}
+
+.validate-btn--pass {
+  color: #66bb6a;
+  border-color: #66bb6a;
+  background: rgba(102, 187, 106, 0.08);
+}
+
+.validate-btn--pass:hover {
+  background: rgba(102, 187, 106, 0.15);
+}
+
+.validate-btn--fail {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.validate-btn--fail:hover {
+  background: rgba(255, 107, 107, 0.15);
 }
 
 /* ===== Editor controls ===== */

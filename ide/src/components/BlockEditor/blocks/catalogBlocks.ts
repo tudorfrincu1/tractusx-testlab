@@ -27,6 +27,8 @@ import type * as BlocklyType from "blockly";
 import { blockColors, getCategoryColor } from "../blockColors";
 import type { BlockCatalog } from "./catalogLoader";
 import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "./icons";
+import { SERVICE_TYPE_RESOLUTION } from "../toolbox/toolboxBuilder";
+import { useServiceStore } from "../../../store/useServiceStore";
 import {
   dynamicDropdown,
   collectMockEndpointIds,
@@ -89,6 +91,13 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                   .setCheck("key_value");
                 break;
 
+              case "array":
+                this.appendStatementInput(fieldKey)
+                  .appendField(blockIcon(Blockly, ICON_JSON))
+                  .appendField(paramLabel)
+                  .setCheck(param.item_type ?? "key_value");
+                break;
+
               case "endpoint_ref":
                 this.appendDummyInput()
                   .appendField(paramLabel)
@@ -131,7 +140,7 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                     new Blockly.FieldDropdown(
                       dynamicDropdown(
                         (ws) => {
-                          const vars = collectWorkspaceVariables(ws);
+                          const vars = collectWorkspaceVariables(ws, catalog);
                           return vars.length > 0
                             ? vars.map((v): [string, string] => [v, v])
                             : [["(no variables)", "__NONE__"]];
@@ -169,28 +178,43 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
           this.setTooltip(block.description);
         },
         onchange(this: Block) {
-          if (!block.depends_on || block.depends_on.length === 0) return;
           if (!this.workspace) return;
           if ("isDragging" in this.workspace && (this.workspace as WorkspaceSvg).isDragging()) return;
 
-          const requiredTypes = new Set(block.depends_on.map((t: string) => `step_${t}`));
-          let found = false;
+          const warnings: string[] = [];
 
-          for (const wsBlock of this.workspace.getAllBlocks(false)) {
-            if (wsBlock === this) continue;
-            if (requiredTypes.has(wsBlock.type)) {
-              found = true;
-              break;
+          // Check depends_on: required block types in workspace
+          if (block.depends_on && block.depends_on.length > 0) {
+            const requiredTypes = new Set(block.depends_on.map((t: string) => `step_${t}`));
+            let found = false;
+            for (const wsBlock of this.workspace.getAllBlocks(false)) {
+              if (wsBlock === this) continue;
+              if (requiredTypes.has(wsBlock.type)) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              warnings.push(
+                `Requires a mock endpoint block (${block.depends_on.join(" or ")}) to be present in the workspace.`
+              );
             }
           }
 
-          if (!found) {
-            this.setWarningText(
-              `Requires a mock endpoint block (${block.depends_on.join(" or ")}) to be present in the workspace.`
-            );
-          } else {
-            this.setWarningText(null);
+          // Check service availability: category must have a matching declared service
+          const serviceType = category.service_type;
+          if (serviceType) {
+            const requiredStoreTypes = SERVICE_TYPE_RESOLUTION[serviceType] ?? [serviceType];
+            const { services } = useServiceStore.getState();
+            const hasService = services.some((s) => requiredStoreTypes.includes(s.type));
+            if (!hasService) {
+              warnings.push(
+                `No service of type "${category.name}" is configured. Add one via Add/Remove Services.`
+              );
+            }
           }
+
+          this.setWarningText(warnings.length > 0 ? warnings.join("\n") : null);
         },
       };
     }

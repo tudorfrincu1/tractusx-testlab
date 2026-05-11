@@ -35,6 +35,7 @@ import {
   connectValue,
   createValueBlockFromString,
   toBlockValueString,
+  createArrayItemBlocks,
 } from "./helpers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
@@ -144,6 +145,12 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
                 kvBlocks.push(kvb);
               }
               attachChain(sb, fieldKey, kvBlocks);
+            }
+            break;
+          case "array":
+            if (Array.isArray(paramVal)) {
+              const itemBlocks = createArrayItemBlocks(ws, paramVal, p.item_type ?? "");
+              attachChain(sb, fieldKey, itemBlocks);
             }
             break;
           case "steps":

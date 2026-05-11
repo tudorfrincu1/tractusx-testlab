@@ -106,6 +106,15 @@ export function useToolboxRefresh(refs: WorkspaceRefs, ready: boolean): void {
             currentVars,
           ) as Blockly.utils.toolbox.ToolboxDefinition;
           ws.updateToolbox(newToolbox);
+
+          // Re-trigger validation on all blocks so service warnings update
+          for (const block of ws.getAllBlocks(false)) {
+            if (typeof block.onchange === "function") {
+              block.onchange(
+                new Blockly.Events.BlockChange(block, "field", "", "", ""),
+              );
+            }
+          }
         } catch {
           // Toolbox refresh can fail during workspace dispose
         }

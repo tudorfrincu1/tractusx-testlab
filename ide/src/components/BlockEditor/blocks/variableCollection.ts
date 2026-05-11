@@ -26,8 +26,10 @@ import type { Workspace } from "blockly";
 import type { Step } from "../../../models/schema";
 import { isTemplateStep } from "../../../models/schema";
 import { useProjectStore } from "../../../store/useProjectStore";
+import type { BlockCatalog } from "./catalogLoader";
+import { findCatalogEntry } from "./catalogLoader";
 
-export function collectWorkspaceVariables(workspace: Workspace): string[] {
+export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockCatalog): string[] {
   const vars = new Set<string>();
 
   const collectFromSteps = (steps?: Step[]) => {
@@ -108,6 +110,19 @@ export function collectWorkspaceVariables(workspace: Workspace): string[] {
   for (const b of workspace.getBlocksByType("import_variable", false)) {
     const varName = b.getFieldValue("OUTPUT_VAR");
     if (varName) vars.add(varName);
+  }
+
+  if (catalog) {
+    for (const b of workspace.getAllBlocks(false)) {
+      if (!b.type.startsWith("step_")) continue;
+      const stepType = b.type.slice(5);
+      const entry = findCatalogEntry(stepType, catalog);
+      if (entry?.outputs) {
+        for (const output of entry.outputs) {
+          if (output.name) vars.add(output.name);
+        }
+      }
+    }
   }
 
   return Array.from(vars).sort((a, b) => a.localeCompare(b));

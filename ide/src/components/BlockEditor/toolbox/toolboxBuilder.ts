@@ -23,32 +23,46 @@
 // It was reviewed and tested by a human committer.
 
 import { ScriptKind } from "../../../models/schema";
-import { useServiceStore } from "../../../store/useServiceStore";
 import type { BlockCatalog } from "../blocks/catalogLoader";
+import { useServiceStore } from "../../../store/useServiceStore";
 
-const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
-  "edc-connector": ["edc-connector"],
-  "digital-twin-registry": ["digital-twin-registry"],
-  "discovery-finder": ["discovery-finder"],
+export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
+  edc_connector: ["edc_connector_saturn", "edc_connector_jupiter"],
+  dtr: ["aas"],
+  discovery_finder: ["discovery_finder", "edc_discovery", "bpn_discovery"],
 };
 
-function isServiceCategoryEnabled(category: { service_type?: string }): boolean {
-  if (!category.service_type) return true;
+const SERVICE_TO_DATASPACE: Record<string, string> = {
+  edc_connector_saturn: "saturn",
+  edc_connector_jupiter: "jupiter",
+};
+
+export function getActiveDataspaceVersions(): Set<string> {
   const { services } = useServiceStore.getState();
-  const requiredTypes = SERVICE_TYPE_RESOLUTION[category.service_type] ?? [category.service_type];
-  return services.some((s) => requiredTypes.includes(s.type));
+  const versions = new Set<string>();
+  for (const s of services) {
+    const v = SERVICE_TO_DATASPACE[s.type];
+    if (v) versions.add(v);
+  }
+  return versions;
 }
 
 function buildServiceCategories(catalog: BlockCatalog): object[] {
+  const activeVersions = getActiveDataspaceVersions();
   return catalog
-    .filter((cat) => isServiceCategoryEnabled(cat))
     .map((cat) => ({
       kind: "category",
       name: cat.name,
-      contents: cat.blocks.map((b) => ({
-        kind: "block",
-        type: `step_${b.type}`,
-      })),
+      contents: cat.blocks
+        .filter((b) =>
+          !b.dataspace_version ||
+          activeVersions.size === 0 ||
+          activeVersions.has(b.dataspace_version)
+        )
+        .map((b) => ({
+          kind: "block",
+          type: `step_${b.type}`,
+        })),
     }));
 }
 
@@ -159,6 +173,19 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         kind: "category",
         name: "JSON",
         contents: [{ kind: "block", type: "key_value_pair" }],
+      },
+      {
+        kind: "category",
+        name: "EDC Structures",
+        colour: "#374151",
+        contents: [
+          { kind: "block", type: "asset_criterion" },
+          { kind: "block", type: "odrl_permission" },
+          { kind: "block", type: "odrl_prohibition" },
+          { kind: "block", type: "odrl_obligation" },
+          { kind: "block", type: "odrl_logical_constraint" },
+          { kind: "block", type: "odrl_constraint" },
+        ],
       },
     ],
   };

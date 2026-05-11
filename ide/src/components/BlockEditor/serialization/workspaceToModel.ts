@@ -32,7 +32,7 @@ import type {
 } from "../../../models/schema";
 import { useServiceStore } from "../../../store/useServiceStore";
 import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
-import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown } from "./helpers";
+import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
 import { toRuntimeStepType } from "./stepTypeAliases";
 import { parseUnsupportedParams } from "./unsupportedStepPayload";
 import { workspaceToTestCase } from "./workspaceToTestCase";
@@ -196,6 +196,17 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
         case "steps": {
           const nested = readStepChain(block.getInputTargetBlock(fieldKey), catalog);
           if (nested.length > 0) params[p.name] = nested;
+          break;
+        }
+        case "array": {
+          const items: unknown[] = [];
+          let itemBlock = block.getInputTargetBlock(fieldKey);
+          while (itemBlock) {
+            const serialized = serializeStructuralBlock(itemBlock);
+            if (serialized !== undefined) items.push(serialized);
+            itemBlock = itemBlock.getNextBlock();
+          }
+          if (items.length > 0) params[p.name] = items;
           break;
         }
         default: {

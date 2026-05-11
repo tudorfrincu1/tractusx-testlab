@@ -24,6 +24,7 @@
 
 import type { Block, Workspace } from "blockly";
 import type { Assertion } from "../../../models/schema";
+import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
 
 /** Read a value block's content as a plain string (or @variable reference). */
 export function readValueBlockAsString(block: Block | null): string | undefined {
@@ -202,4 +203,48 @@ export function readAssertionChain(block: Block | null): Assertion[] {
     current = current.getNextBlock();
   }
   return assertions;
+}
+
+export function serializeStructuralBlock(block: Block): unknown {
+  if (block.type === "asset_criterion") {
+    return {
+      operandLeft: block.getFieldValue("LEFT") || "",
+      operator: block.getFieldValue("OPERATOR") || "=",
+      operandRight: readValueBlockAsUnknown(block.getInputTargetBlock("RIGHT")),
+    };
+  }
+  const policyTypes = ["odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_constraint", "odrl_logical_constraint"];
+  if (policyTypes.includes(block.type)) {
+    return serializePolicyBlock(block);
+  }
+  return undefined;
+}
+
+const POLICY_RULE_TYPES = ["odrl_permission", "odrl_prohibition", "odrl_obligation"] as const;
+
+export function createArrayItemBlocks(
+  ws: Workspace,
+  items: unknown[],
+  itemType: string
+): Block[] {
+  const blocks: Block[] = [];
+  for (const item of items) {
+    if (typeof item !== "object" || item === null) continue;
+    const obj = item as Record<string, unknown>;
+
+    if (itemType === "asset_criterion") {
+      const b = makeBlock(ws, "asset_criterion");
+      b.setFieldValue(String(obj.operandLeft ?? ""), "LEFT");
+      setDropdownValue(b, "OPERATOR", String(obj.operator ?? "="));
+      if (obj.operandRight !== undefined) {
+        connectValue(b, "RIGHT", createValueBlockFromString(ws, toBlockValueString(obj.operandRight)));
+      }
+      blocks.push(b);
+    }
+
+    if ((POLICY_RULE_TYPES as readonly string[]).includes(itemType)) {
+      blocks.push(createPolicyRuleBlocks(ws, obj, itemType));
+    }
+  }
+  return blocks;
 }

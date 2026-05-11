@@ -220,3 +220,28 @@ Agent instructions live in `.github/instructions/` and agent definitions in `.gi
 - When delegating to agents: precise, detailed, verifiable instructions
 - When reviewing: specific issues with specific fixes — never vague feedback
 - Use tables for work package plans and result summaries
+
+## Token Economy — Delegation Efficiency
+
+### Context Transfer Rules
+- **Store shared context in session memory** — write once to `/memories/session/`, reference by path in all delegations
+- **Never repeat constraints inline** — agent files already contain quality rules; don't re-list them
+- **One exploration per codebase area** — after the first `Explore` call, store findings in session memory; never explore the same area twice
+
+### Delegation Sizing
+- **Batch independent WPs** — if two tasks touch different files and go to the same agent, combine them into one prompt
+- **Skip the architect for small scope** — if < 3 agents involved AND no cross-codebase impact, plan directly
+- **Line-targeted reads in prompts** — say "read lines 30-60" not "read the whole file"; agents will read less, respond faster
+
+### Agent Response Rules (enforced via agent instructions)
+- All specialist agents have a `## Token Economy` section requiring:
+  - No task echo-back
+  - No pre-explanation ("I will now...")
+  - Diffs-only output format
+  - Max 200 lines response
+  - Single read pass per file
+
+### Self-Monitoring
+- If a delegation prompt exceeds 500 words, it's too long — extract shared context to session memory
+- If an agent response exceeds 300 lines, the delegation was too vague — tighten the prompt next time
+- Track which agents consistently over-produce and add tighter constraints to their instructions

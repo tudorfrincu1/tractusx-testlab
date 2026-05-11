@@ -324,3 +324,27 @@ Watch for and fix these in all AI-generated code:
 - **Missing edge cases**: happy-path-only implementations
 - **Inconsistent patterns**: mixing styles within the same codebase
 - **Ignored instructions**: doing something different from what was asked
+
+---
+
+## Token Economy — Reducing Waste
+
+All agents must follow these rules to minimize token consumption:
+
+### Response Rules
+- **Never echo back the task description** — start working immediately
+- **Never explain what you're about to do** — just do it
+- **Response format**: changed files list + diffs only (no full file dumps)
+- **Max response length**: 200 lines for specialist agents, 300 lines for architect
+- **Do NOT restate constraints** from the delegation prompt — acknowledge with one line, then work
+
+### Reading Rules
+- **Read only what you need**: if a file is over 100 lines, read only the target function/section
+- **One read pass**: do not re-read files you already read in this session
+- **One exploration per area**: after the first exploration of a codebase area, store findings — never re-explore
+
+### Delegation Rules (for orchestrator)
+- **Store shared context in session memory** — write once, reference by path in all delegations
+- **Batch independent WPs** to the same agent when they touch different files
+- **Line-targeted reads** in prompts: say "read lines 30-60" not "read the whole file"
+- **Skip the architect for small scope** — if < 3 agents and no cross-codebase impact, plan directly
