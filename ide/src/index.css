@@ -335,53 +335,31 @@ html, body, #root {
   stroke: none !important;
 }
 
-/* Custom warning popup (replaces native Blockly bubble) */
-.custom-warning-popup {
-  background: #1a1a2e;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 10px;
-  padding: 0;
-  min-width: 200px;
-  max-width: 320px;
-  color: #e0e0e0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  animation: warningPopupIn 0.15s ease-out;
-  overflow: hidden;
+/* Warning icon — amber triangle, visible inside the block */
+.blocklyIconGroup.blockly-warning-icon .blocklyIconShape {
+  fill: #f59e0b !important;
+}
+.blocklyIconGroup.blockly-warning-icon {
+  cursor: pointer;
+  opacity: 0.9;
+}
+.blocklyIconGroup.blockly-warning-icon:hover {
+  opacity: 1;
 }
 
-.custom-warning-popup__header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: rgba(245, 158, 11, 0.08);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
-}
+/* Warning / text bubble — styled via JS runtime patch (bubblePatch.ts)
+   because Blockly sets fill as inline SVG attributes that CSS cannot override. */
 
-.custom-warning-popup__icon {
-  font-size: 14px;
-}
-
-.custom-warning-popup__title {
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #f59e0b;
-}
-
-.custom-warning-popup__body {
-  padding: 10px 12px;
-  color: #d1d5db;
-}
-
-@keyframes warningPopupIn {
-  from { opacity: 0; transform: translateX(-4px); }
-  to { opacity: 1; transform: translateX(0); }
+/* Warning bubble textarea content (for comment/text-input bubbles) */
+.blocklyTextarea {
+  background: transparent !important;
+  color: #e0e0e0 !important;
+  border: none !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  resize: none !important;
+  padding: 4px !important;
 }
 
 /* Tooltip — modern hover popup */

@@ -25,6 +25,7 @@
 import { ScriptKind } from "../../../models/schema";
 import type { BlockCatalog } from "../blocks/catalogLoader";
 import { useServiceStore } from "../../../store/useServiceStore";
+import { blockColors, getCategoryColor } from "../blockColors";
 
 export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
   edc_connector: ["edc_connector_saturn", "edc_connector_jupiter"],
@@ -53,6 +54,7 @@ function buildServiceCategories(catalog: BlockCatalog): object[] {
     .map((cat) => ({
       kind: "category",
       name: cat.name,
+      colour: getCategoryColor(cat.name),
       contents: cat.blocks
         .filter((b) =>
           !b.dataspace_version ||
@@ -75,21 +77,25 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         {
           kind: "category",
           name: "Tests",
+          colour: blockColors.testRef,
           contents: [{ kind: "block", type: "test_ref" }],
         },
         {
           kind: "category",
           name: "Variables",
+          colour: blockColors.variableDef,
           contents: [{ kind: "block", type: "variable_def" }],
         },
         {
           kind: "category",
           name: "Preconditions",
+          colour: blockColors.precondition,
           contents: [{ kind: "block", type: "precondition" }],
         },
         {
           kind: "category",
           name: "Authentication",
+          colour: blockColors.authentication,
           contents: [
             { kind: "block", type: "auth_oauth2" },
             { kind: "block", type: "auth_api_key" },
@@ -125,6 +131,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       {
         kind: "category",
         name: "Authentication",
+        colour: blockColors.authentication,
         contents: [
           { kind: "block", type: "auth_oauth2" },
           { kind: "block", type: "auth_api_key" },
@@ -133,6 +140,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       {
         kind: "category",
         name: "Variables",
+        colour: blockColors.variableDef,
         contents: [
           { kind: "block", type: "variable_def" },
           { kind: "sep", gap: "16" },
@@ -147,6 +155,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       {
         kind: "category",
         name: "Values",
+        colour: blockColors.valueString,
         contents: [
           { kind: "block", type: "value_string" },
           { kind: "block", type: "value_number" },
@@ -156,6 +165,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       {
         kind: "category",
         name: "Assertions",
+        colour: blockColors.assertion,
         contents: [
           { kind: "block", type: "assert_equals" },
           { kind: "block", type: "assert_not_equals" },
@@ -172,6 +182,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
       {
         kind: "category",
         name: "JSON",
+        colour: blockColors.json,
         contents: [{ kind: "block", type: "key_value_pair" }],
       },
       {

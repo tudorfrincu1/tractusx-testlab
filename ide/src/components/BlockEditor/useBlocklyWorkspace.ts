@@ -34,7 +34,6 @@ import {
 } from "./blockDefinitions";
 import { createWorkspaceOptions } from "./workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "./workspaceListeners";
-import { CustomWarningIcon, patchSetWarningText } from "./CustomWarningIcon";
 import type { ScriptDefinition, TestCaseDefinition } from "../../models/schema";
 import { isTest, isTestCase } from "../../models/schema";
 
@@ -76,13 +75,6 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
 
       registerBlocks(Blockly, catalog);
       const toolbox = buildToolbox(catalog, modelKind) as Blockly.utils.toolbox.ToolboxDefinition;
-
-      // Monkey-patch setWarningText to use CustomWarningIcon
-      patchSetWarningText();
-
-      // Also register for deserialization
-      Blockly.icons.registry.unregister(Blockly.icons.IconType.WARNING.toString());
-      Blockly.icons.registry.register(Blockly.icons.IconType.WARNING, CustomWarningIcon);
 
       const ws = Blockly.inject(
         containerRef.current!,

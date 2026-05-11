@@ -38,6 +38,7 @@ import { registerUtilityBlocks } from "./blocks/utilityBlocks";
 import { registerAssertionBlocks } from "./blocks/assertionBlocks";
 import { registerAuthBlocks } from "./blocks/authBlocks";
 import { buildToolbox } from "./toolbox/toolboxBuilder";
+import { patchBubbleColours } from "./bubblePatch";
 import { workspaceToModel } from "./serialization/workspaceToModel";
 import { populateWorkspaceFromModel, cleanupOrphanBlocks } from "./serialization/modelToWorkspace";
 import { collectWorkspaceVariables } from "./blocks/variableCollection";
@@ -48,6 +49,7 @@ export { loadBlockCatalog, buildToolbox, workspaceToModel, populateWorkspaceFrom
 
 /** Register all block types from the modular sub-modules. */
 export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog): void {
+  patchBubbleColours();
   registerStructuralBlocks(Blockly);
   registerValueBlocks(Blockly);
   registerRootBlocks(Blockly);
