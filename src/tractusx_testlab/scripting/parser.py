@@ -110,7 +110,16 @@ class YamlParser:
                 else:
                     tests.append(entry)
             elif isinstance(entry, dict):
-                tests.append(YamlParser._build_script(entry, base_dir=base_dir))
+                if keys.TEST in entry:
+                    rel_path = entry[keys.TEST]
+                    if base_dir:
+                        script_path = (base_dir / rel_path).resolve()
+                        if script_path.exists():
+                            tests.append(YamlParser.parse_script(script_path))
+                            continue
+                    tests.append(rel_path)
+                else:
+                    tests.append(YamlParser._build_script(entry, base_dir=base_dir))
 
         imports = [
             ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)

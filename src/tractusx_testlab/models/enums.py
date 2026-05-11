@@ -63,6 +63,9 @@ class AssertionType(str, enum.Enum):
     REGEX = "REGEX"
     NOT_CONTAINS = "NOT_CONTAINS"
     STATUS_CODE = "STATUS_CODE"
+    NOT_NULL = "NOT_NULL"
+    NOT_EMPTY = "NOT_EMPTY"
+    EQUALS = "EQUALS"
 
 
 class AssertionSeverity(str, enum.Enum):
@@ -93,6 +96,9 @@ class ServiceType(str, enum.Enum):
     DSP_CONSUMER = "DSP_CONSUMER"
     DSP_PROVIDER = "DSP_PROVIDER"
     DTR = "DTR"
+    EDC_CONNECTOR = "EDC_CONNECTOR"
+    EDC_CONNECTOR_SATURN = "EDC_CONNECTOR_SATURN"
+    EDC_CONNECTOR_JUPITER = "EDC_CONNECTOR_JUPITER"
 
 
 class PackageFormat(str, enum.Enum):

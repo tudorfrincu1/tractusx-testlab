@@ -43,6 +43,14 @@ from tractusx_sdk.extensions.testlab.models import (
 )
 from tractusx_testlab.models.definitions import StepDefinition
 
+# Maps compact assertion keys to their AssertionType values.
+_COMPACT_ASSERTION_MAP: dict[str, AssertionType] = {
+    keys.NOT_NULL: AssertionType.NOT_NULL,
+    keys.NOT_EMPTY: AssertionType.NOT_EMPTY,
+    keys.EQUALS: AssertionType.EQUALS,
+    keys.CONTAINS_KEY: AssertionType.CONTAINS,
+}
+
 
 def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
     """Parse a variables mapping into VariableDefinition instances."""
@@ -60,6 +68,8 @@ def parse_step(raw: dict) -> StepDefinition:
     expect_raw = raw.get(keys.EXPECT, [])
     expectations = [parse_assertion(assertion_data) for assertion_data in expect_raw]
 
+    output_defs_raw = raw.get(keys.OUTPUT_DEFINITIONS, [])
+
     return StepDefinition(
         type=raw.get(keys.TYPE, defaults.NAME),
         description=raw.get(keys.DESCRIPTION),
@@ -69,11 +79,20 @@ def parse_step(raw: dict) -> StepDefinition:
         expect=expectations,
         store_in_memory=raw.get(keys.STORE_IN_MEMORY),
         if_condition=raw.get(keys.IF),
+        output_definitions=output_defs_raw,
     )
 
 
 def parse_assertion(raw: dict) -> Assertion:
-    """Parse a single assertion dict into an Assertion model."""
+    """Parse a single assertion dict into an Assertion model.
+
+    Supports two formats:
+    - Classic: ``{type: "NOT_NULL", source: "INLINE", value: ...}``
+    - Compact: ``{output: "datasets", not_null: true}``
+    """
+    if keys.OUTPUT in raw:
+        return _parse_compact_assertion(raw)
+
     return Assertion(
         type=AssertionType(raw.get(keys.TYPE, defaults.ASSERTION_TYPE)),
         severity=AssertionSeverity(raw.get(keys.SEVERITY, defaults.ASSERTION_SEVERITY)),
@@ -84,13 +103,46 @@ def parse_assertion(raw: dict) -> Assertion:
     )
 
 
+def _parse_compact_assertion(raw: dict) -> Assertion:
+    """Parse an assertion written in the compact ``output:`` format."""
+    output_field = raw[keys.OUTPUT]
+    assertion_type: AssertionType | None = None
+    assertion_value = None
+
+    for key, a_type in _COMPACT_ASSERTION_MAP.items():
+        if key in raw:
+            assertion_type = a_type
+            raw_value = raw[key]
+            if a_type in (AssertionType.EQUALS, AssertionType.CONTAINS):
+                assertion_value = raw_value
+            break
+
+    if assertion_type is None:
+        assertion_type = AssertionType(defaults.ASSERTION_TYPE)
+
+    return Assertion(
+        type=assertion_type,
+        severity=AssertionSeverity(raw.get(keys.SEVERITY, defaults.ASSERTION_SEVERITY)),
+        source=ValueSource(raw.get(keys.SOURCE, defaults.VALUE_SOURCE)),
+        value=assertion_value,
+        path=output_field,
+        description=raw.get(keys.DESCRIPTION),
+    )
+
+
 def parse_service(raw: dict) -> ServiceDefinition:
     """Parse a single service dict into a ServiceDefinition."""
     raw_type = raw.get(keys.TYPE, defaults.SERVICE_TYPE)
+
+    base_url = raw.get(keys.BASE_URL, "")
+    config_block = raw.get(keys.CONFIG)
+    if not base_url and isinstance(config_block, dict):
+        base_url = config_block.get(keys.MANAGEMENT_URL, defaults.BASE_URL)
+
     return ServiceDefinition(
         name=raw.get(keys.NAME, defaults.NAME),
         type=ServiceType(raw_type.upper() if isinstance(raw_type, str) else raw_type),
-        base_url=raw.get(keys.BASE_URL, defaults.BASE_URL),
+        base_url=base_url or defaults.BASE_URL,
         auth=raw.get(keys.AUTH, {}),
         params=raw.get(keys.PARAMS),
     )

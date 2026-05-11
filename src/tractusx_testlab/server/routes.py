@@ -38,6 +38,7 @@ from fastapi.responses import JSONResponse
 from tractusx_sdk.extensions.testlab.models import JobStatus
 from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+from tractusx_sdk.extensions.testlab.server.mock_registry import get_mock
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
 
 _logger = logging.getLogger(__name__)
@@ -210,6 +211,16 @@ async def callback_webhook(
 
     matched = callbacks.resolve(full_path, method, headers, body)
     if not matched:
+        mock = get_mock(full_path, method)
+        if mock is not None:
+            # Also resolve so wait_for_call steps receive the payload
+            callbacks.resolve(full_path, method, headers, body)
+            return JSONResponse(content=mock.body, status_code=mock.status_code)
         raise HTTPException(404, f"No listener registered for {method} {full_path}")
+
+    # Check for a canned mock response to return
+    mock = get_mock(full_path, method)
+    if mock is not None:
+        return JSONResponse(content=mock.body, status_code=mock.status_code)
 
     return JSONResponse(content={"status": "received"})

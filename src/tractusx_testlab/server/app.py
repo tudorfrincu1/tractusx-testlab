@@ -35,6 +35,7 @@ from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
 from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
 from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+from tractusx_sdk.extensions.testlab.server.mock_registry import set_callback_manager
 from tractusx_sdk.extensions.testlab.server.routes import router
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
 
@@ -58,6 +59,7 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
     app.state.player = TestlabPlayer(config=config)
     app.state.storage = PackageStorage(base_dir=Path(config.storage_dir) / "packages")
     app.state.callbacks = CallbackManager()
+    set_callback_manager(app.state.callbacks)
 
     app.include_router(router)
 

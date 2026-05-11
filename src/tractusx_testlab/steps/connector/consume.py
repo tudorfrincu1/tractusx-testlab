@@ -148,7 +148,7 @@ class QueryCatalogByBpnlStep(BaseStep):
         )
 
 
-@step("negotiate_contract")
+@step("negotiate_contract", aliases=["negotiate"])
 class NegotiateContractStep(BaseStep):
     """Start an EDR contract negotiation.
 
@@ -185,7 +185,7 @@ class NegotiateContractStep(BaseStep):
         )
 
 
-@step("transfer_data")
+@step("transfer_data", aliases=["initiate_transfer"])
 class TransferDataStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         consumer = context.get_consumer_service()

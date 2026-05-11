@@ -20,22 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Server package — lazy imports to avoid circular dependencies with steps."""
+"""Utility steps: UUID generation, JSON extraction, and other helpers."""
 
-from __future__ import annotations
-
-
-def create_app(*args, **kwargs):
-    """Lazy proxy to app.create_app — avoids circular import at module load."""
-    from tractusx_sdk.extensions.testlab.server.app import create_app as _create_app
-    return _create_app(*args, **kwargs)
-
-
-def __getattr__(name):
-    if name == "PackageStorage":
-        from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
-        return PackageStorage
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-__all__ = ["create_app", "PackageStorage"]
+from tractusx_sdk.extensions.testlab.steps.utility import json_extract  # noqa: F401
+from tractusx_sdk.extensions.testlab.steps.utility import uuid_gen  # noqa: F401

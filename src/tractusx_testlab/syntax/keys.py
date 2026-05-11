@@ -65,6 +65,26 @@ VALUE = "value"
 PATH = "path"
 SOURCE = "source"
 SEVERITY = "severity"
+OUTPUT = "output"
+
+# -- Assertion type keys (compact format) ------------------------------------
+NOT_NULL = "not_null"
+NOT_EMPTY = "not_empty"
+EQUALS = "equals"
+CONTAINS_KEY = "contains"
+
+# -- Service config -----------------------------------------------------------
+CONFIG = "config"
+MANAGEMENT_URL = "management_url"
+
+# -- Step output definitions --------------------------------------------------
+OUTPUT_DEFINITIONS = "output_definitions"
+
+# -- Variable fields ----------------------------------------------------------
+RUNTIME = "runtime"
+
+# -- Test case entry ----------------------------------------------------------
+TEST = "test"
 
 # -- Dependency ref -----------------------------------------------------------
 FILE = "file"

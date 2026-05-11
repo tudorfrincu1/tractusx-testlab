@@ -73,6 +73,7 @@ class StepDefinition(BaseModel):
     expect: list[Assertion] = Field(default_factory=list)
     store_in_memory: Optional[dict[str, str]] = None
     if_condition: Optional[str] = Field(default=None, alias="if")
+    output_definitions: list[dict[str, str]] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
