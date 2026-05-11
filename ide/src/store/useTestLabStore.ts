@@ -58,6 +58,9 @@ interface TestLabState {
   setModelFromBlocks: (model: TestLabDocument) => void;
   setModelFromYaml: (yaml: string) => void;
   loadModel: (model: TestLabDocument) => void;
+  showValidation: boolean;
+  toggleValidation: () => void;
+  setShowValidation: (show: boolean) => void;
   setGraphMode: (mode: GraphMode) => void;
   selectNode: (nodeId: string | null) => void;
   selectStep: (stepName: string | null) => void;
@@ -126,6 +129,9 @@ export const useTestLabStore = create<TestLabState>((set, get) => {
       });
     },
 
+    showValidation: false,
+    toggleValidation: () => set((s) => ({ showValidation: !s.showValidation })),
+    setShowValidation: (show) => set({ showValidation: show }),
     setGraphMode: (mode) => set({ graphMode: mode }),
     selectNode: (nodeId) => set({ selectedNodeId: nodeId }),
     selectStep: (stepName) => set({ selectedStepName: stepName }),

@@ -22,9 +22,21 @@
 
 /* ValidationPanel — collapsible issues panel at the bottom of the block editor */
 
+.validation-panel__resize-handle {
+  height: 5px;
+  cursor: ns-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.validation-panel__resize-handle:hover,
+.validation-panel__resize-handle:active {
+  background: #0078d4;
+}
+
 .validation-panel {
   width: 100%;
-  height: 220px;
   background: #1e1e1e;
   border-top: 1px solid #404040;
   display: flex;

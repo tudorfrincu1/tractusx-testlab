@@ -429,3 +429,7 @@
 .readonly-toggle__knob--on {
   left: 16px;
 }
+
+.statusbar-issues-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}

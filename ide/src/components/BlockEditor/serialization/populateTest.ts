@@ -130,9 +130,14 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           case "endpoint_ref":
           case "service_ref":
           case "schema_path":
-          case "variable":
             setDropdownValue(sb, fieldKey, String(paramVal));
             break;
+          case "variable": {
+            let val = String(paramVal);
+            if (val.startsWith("@")) val = val.slice(1);
+            setDropdownValue(sb, fieldKey, val);
+            break;
+          }
           case "number":
             sb.setFieldValue(Number(paramVal), fieldKey);
             break;

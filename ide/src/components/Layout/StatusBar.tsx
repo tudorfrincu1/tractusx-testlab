@@ -34,6 +34,7 @@ import Science from "@mui/icons-material/Science";
 
 export function StatusBar() {
   const errors = useTestLabStore((s) => s.errors);
+  const toggleValidation = useTestLabStore((s) => s.toggleValidation);
   const model = useTestLabStore((s) => s.model);
   const activeFile = useProjectStore((s) => s.activeFile);
   const projectName = useProjectStore((s) => s.projectName);
@@ -69,6 +70,12 @@ export function StatusBar() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div
+          onClick={toggleValidation}
+          title="Toggle Issues Panel"
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", borderRadius: 3, padding: "0 4px" }}
+          className="statusbar-issues-toggle"
+        >
         {errorCount > 0 && (
           <span style={{ color: theme.colors.error, display: "flex", alignItems: "center", gap: 3 }}>
             <ErrorOutlined sx={{ fontSize: 13 }} />
@@ -87,6 +94,7 @@ export function StatusBar() {
             No issues
           </span>
         )}
+        </div>
         {isTest(model) && (
           <span>{stepCount} step{stepCount !== 1 ? "s" : ""}</span>
         )}

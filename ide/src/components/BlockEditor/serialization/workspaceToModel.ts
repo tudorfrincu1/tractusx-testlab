@@ -168,10 +168,14 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
         case "dropdown":
         case "endpoint_ref":
         case "service_ref":
-        case "schema_path":
-        case "variable": {
+        case "schema_path": {
           const val = block.getFieldValue(fieldKey);
           if (val && val !== "__NONE__") params[p.name] = val;
+          break;
+        }
+        case "variable": {
+          const val = block.getFieldValue(fieldKey);
+          if (val && val !== "__NONE__") params[p.name] = `@${val}`;
           break;
         }
         case "number": {

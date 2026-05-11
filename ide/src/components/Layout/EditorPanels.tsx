@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { BlocklyWorkspace } from "../BlockEditor/BlocklyWorkspace";
 import { BlockEditorErrorBoundary } from "../BlockEditor/BlockEditorErrorBoundary";
@@ -47,7 +47,6 @@ import {
   collectBlockWarnings,
   modelErrorsToIssues,
 } from "../BlockEditor/ValidationPanel";
-import type { ValidationIssue } from "../BlockEditor/ValidationPanel";
 import { useTestLabStore } from "../../store/useTestLabStore";
 
 export interface EditorPanelsProps {
@@ -63,9 +62,10 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
   const [yamlReadOnly, setYamlReadOnly] = useState(true);
   const [trashHasItems, setTrashHasItems] = useState(false);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
-  const [validationStatus, setValidationStatus] = useState<"stale" | "pass" | "fail">("stale");
+
+  const showValidation = useTestLabStore((s) => s.showValidation);
+  const setShowValidation = useTestLabStore((s) => s.setShowValidation);
+  const storeErrors = useTestLabStore((s) => s.errors);
 
   useEffect(() => {
     const ws = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg | null;
@@ -76,22 +76,34 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
         event.type === Blockly.Events.BLOCK_DELETE ||
         event.type === Blockly.Events.BLOCK_CHANGE ||
         event.type === Blockly.Events.BLOCK_MOVE;
-      if (isChange) {
-        setValidationStatus("stale");
+      if (isChange && !showValidation) {
+        // no-op: panel closed, nothing to update
       }
     };
     ws.addChangeListener(listener);
     return () => ws.removeChangeListener(listener);
-  }, [activeFile]);
+  }, [activeFile, showValidation]);
 
-  const handleValidate = () => {
+  const validationIssues = useMemo(() => {
+    if (!showValidation) return [];
     const ws = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg | null;
     const blockWarnings = ws ? collectBlockWarnings(ws) : [];
-    const modelErrors = modelErrorsToIssues(useTestLabStore.getState().errors);
-    const allIssues = [...modelErrors, ...blockWarnings];
-    setValidationIssues(allIssues);
+    const modelErrors = modelErrorsToIssues(storeErrors);
+    return [...modelErrors, ...blockWarnings];
+  }, [showValidation, storeErrors]);
+
+  const validationStatus = !showValidation
+    ? "stale"
+    : validationIssues.length === 0
+    ? "pass"
+    : "fail";
+
+  const handleValidate = () => {
+    if (showValidation) {
+      setShowValidation(false);
+      return;
+    }
     setShowValidation(true);
-    setValidationStatus(allIssues.length === 0 ? "pass" : "fail");
   };
 
   const handleEmptyTrash = () => {

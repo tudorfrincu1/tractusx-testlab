@@ -22,6 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
+import { useState, useEffect, useRef } from "react";
 import * as Blockly from "blockly";
 import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import WarningAmber from "@mui/icons-material/WarningAmber";
@@ -87,11 +88,40 @@ const SEVERITY_ICON = {
 } as const;
 
 export function ValidationPanel({ issues, onClose }: ValidationPanelProps) {
+  const [height, setHeight] = useState(220);
+  const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      document.body.style.cursor = "ns-resize";
+      document.body.style.userSelect = "none";
+      const delta = dragRef.current.startY - e.clientY;
+      setHeight(Math.max(80, Math.min(500, dragRef.current.startHeight + delta)));
+    };
+    const handleMouseUp = () => {
+      dragRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    dragRef.current = { startY: e.clientY, startHeight: height };
+  };
+
   const errorCount = issues.filter((i) => i.severity === "error").length;
   const warningCount = issues.filter((i) => i.severity === "warning").length;
 
   return (
-    <div className="validation-panel">
+    <div className="validation-panel" style={{ height }}>
+      <div className="validation-panel__resize-handle" onMouseDown={handleResizeStart} />
       <div className="validation-panel__header">
         <span className="validation-panel__title">Issues</span>
         {errorCount > 0 && (
