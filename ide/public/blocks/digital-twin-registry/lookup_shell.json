@@ -1,0 +1,13 @@
+{
+  "type": "lookup_shell",
+  "label": "Lookup Shell",
+  "description": "Look up an AAS shell by specific asset IDs.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "DTR service to query" },
+    { "name": "asset_ids", "type": "json", "required": true, "description": "Specific asset IDs to search for (key-value pairs)" }
+  ],
+  "outputs": [
+    { "name": "shell_ids", "description": "Array of matching shell IDs" },
+    { "name": "shell_descriptors", "description": "Full shell descriptors for matches" }
+  ]
+}

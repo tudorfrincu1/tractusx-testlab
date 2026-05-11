@@ -1,0 +1,215 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
+
+"""FastAPI routes for job execution and management."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import uuid
+from pathlib import Path
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+
+from tractusx_sdk.extensions.testlab.models import JobStatus
+from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+
+_logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/testlab", tags=["testlab"])
+
+
+def _get_player(request: Request) -> TestlabPlayer:
+    return request.app.state.player
+
+
+def _get_storage(request: Request) -> PackageStorage:
+    return request.app.state.storage
+
+
+def _get_callbacks(request: Request) -> CallbackManager:
+    return request.app.state.callbacks
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Package endpoints
+# ──────────────────────────────────────────────────────────────────────
+
+
+@router.post("/packages", status_code=201)
+async def upload_package(
+    file: UploadFile,
+    player: TestlabPlayer = Depends(_get_player),
+    storage: PackageStorage = Depends(_get_storage),
+) -> JSONResponse:
+    """Upload a .testpkg archive."""
+    if not file.filename or not file.filename.endswith(".testpkg"):
+        raise HTTPException(400, "File must be a .testpkg archive")
+
+    data = await file.read()
+    max_bytes = player._config.max_upload_bytes
+    if len(data) > max_bytes:
+        raise HTTPException(413, f"Package exceeds maximum size of {max_bytes} bytes")
+
+    package_id = uuid.uuid4().hex[:12]
+    stem = file.filename.rsplit(".", 1)[0]
+    parts = stem.rsplit("-", 1)
+    name = parts[0] if parts else stem
+    version = parts[1] if len(parts) > 1 else "1.0"
+
+    pkg = storage.save(package_id, name, version, data)
+    return JSONResponse(content=pkg.model_dump(mode="json"), status_code=201)
+
+
+@router.get("/packages")
+async def list_packages(storage: PackageStorage = Depends(_get_storage)) -> JSONResponse:
+    """List all uploaded packages."""
+    packages = storage.list_packages()
+    return JSONResponse(content=[package.model_dump(mode="json") for package in packages])
+
+
+@router.delete("/packages/{package_id}", status_code=204)
+async def delete_package(package_id: str, storage: PackageStorage = Depends(_get_storage)) -> None:
+    """Delete a stored package."""
+    if not storage.delete(package_id):
+        raise HTTPException(404, "Package not found")
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Job / execution endpoints
+# ──────────────────────────────────────────────────────────────────────
+
+
+@router.post("/run", status_code=202)
+async def run_test(
+    request: Request,
+    player: TestlabPlayer = Depends(_get_player),
+    storage: PackageStorage = Depends(_get_storage),
+) -> JSONResponse:
+    """Execute a test case from an uploaded package or a YAML path.
+
+    Body: ``{"package_id": "...", "runtime_vars": {...}}``
+    or    ``{"path": "...", "runtime_vars": {...}}``
+    """
+    body = await request.json()
+
+    package_id = body.get("package_id")
+    path = body.get("path")
+    runtime_vars = body.get("runtime_vars", {})
+
+    if not package_id and not path:
+        raise HTTPException(400, "Provide 'package_id' or 'path'")
+
+    if package_id:
+        pkg_path = storage.get_path(package_id)
+        if pkg_path is None:
+            raise HTTPException(404, f"Package '{package_id}' not found")
+        target = pkg_path
+    else:
+        target = Path(path)
+        if not target.exists():
+            raise HTTPException(404, f"File not found: {path}")
+
+    job = player.jobs.create(target.stem)
+    asyncio.create_task(_execute_in_background(player, target, runtime_vars))
+
+    return JSONResponse(
+        content={"job_id": job.job_id, "status": job.status.value},
+        status_code=202,
+    )
+
+
+async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_vars: dict) -> None:
+    """Run the player in the background, catching exceptions."""
+    try:
+        await player.run(target, runtime_vars=runtime_vars)
+    except (RuntimeError, ValueError, OSError) as exc:
+        _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
+
+
+@router.get("/jobs")
+async def list_jobs(
+    status: Optional[str] = None,
+    player: TestlabPlayer = Depends(_get_player),
+) -> JSONResponse:
+    """List all jobs, optionally filtered by status."""
+    status_filter = None
+    if status:
+        try:
+            status_filter = JobStatus(status.upper())
+        except ValueError:
+            raise HTTPException(400, f"Invalid status: {status}")
+
+    jobs = player.jobs.list_jobs(status=status_filter)
+    return JSONResponse(content=[job.model_dump(mode="json") for job in jobs])
+
+
+@router.get("/jobs/{job_id}")
+async def get_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Get details for a specific job."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    return JSONResponse(content=job.model_dump(mode="json"))
+
+
+@router.post("/jobs/{job_id}/cancel", status_code=200)
+async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Cancel a running job."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    player.jobs.cancel(job_id)
+    return JSONResponse(content={"job_id": job_id, "status": "CANCELLED"})
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Callback webhook endpoint
+# ──────────────────────────────────────────────────────────────────────
+
+
+@router.api_route("/callbacks/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def callback_webhook(
+    path: str,
+    request: Request,
+    callbacks: CallbackManager = Depends(_get_callbacks),
+) -> JSONResponse:
+    """Catch-all endpoint for async callback listeners."""
+    full_path = f"/callbacks/{path}"
+    method = request.method
+    headers = dict(request.headers)
+    body = None
+    if method in ("POST", "PUT"):
+        body = await request.json()
+
+    matched = callbacks.resolve(full_path, method, headers, body)
+    if not matched:
+        raise HTTPException(404, f"No listener registered for {method} {full_path}")
+
+    return JSONResponse(content={"status": "received"})

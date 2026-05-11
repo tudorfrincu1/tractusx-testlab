@@ -1,0 +1,120 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
+
+kind: test
+name: expose-testlab-asset
+version: "1.0"
+description: >
+  TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
+  data endpoint, and waits for the SUT to discover, negotiate, and pull data.
+  Verifies the SUT's consumer-side behavior per CX-0135.
+
+services:
+  - name: testlab_edc
+    type: edc_connector_saturn
+    config:
+      management_url: "@testlab_management_url"
+
+steps:
+  - type: create_asset
+    description: Register CCMAPI asset in TestLab EDC
+    params:
+      service: testlab_edc
+      name: "TestLab CCMAPI Endpoint"
+      description: "CCMAPI data endpoint for SUT consumer testing"
+      base_url: "@testlab_mock_base_url/api/v1/companycertificate"
+      content_type: "application/json"
+      properties:
+        dct:type:
+          "@id": "https://w3id.org/catenax/taxonomy#CCMAPI"
+        cx-common:version: "2.4.0"
+    store_in_memory:
+      testlab_asset_id: "asset_id"
+    expect:
+      - output: asset_id
+        not_null: true
+
+  - type: create_policy
+    description: Create BPN-restricted access policy for SUT
+    params:
+      service: testlab_edc
+      permissions:
+        - action: "use"
+          constraints:
+            - leftOperand: "BusinessPartnerNumber"
+              operator: "eq"
+              rightOperand: "@provider_bpn"
+    store_in_memory:
+      testlab_policy_id: "policy_id"
+    expect:
+      - output: policy_id
+        not_null: true
+
+  - type: create_contract_def
+    description: Create contract definition linking asset to policy
+    params:
+      service: testlab_edc
+      access_policy_id: "@testlab_policy_id"
+      contract_policy_id: "@testlab_policy_id"
+      asset_selector:
+        - operandLeft: "https://w3id.org/edc/v0.0.1/ns/id"
+          operator: "="
+          operandRight: "@testlab_asset_id"
+    store_in_memory:
+      testlab_contract_def_id: "contract_def_id"
+    expect:
+      - output: contract_def_id
+        not_null: true
+
+  - type: mock_endpoint
+    description: Expose mock CCMAPI data endpoint for SUT
+    params:
+      id: "ccmapi_data_source"
+      method: GET
+      path: "/api/v1/companycertificate"
+      response_status: 200
+      response_body:
+        businessPartnerNumber: "@provider_bpn"
+        type: "CCMAPI_DATA"
+        status: "ACTIVE"
+
+  - type: wait_for_call
+    description: Wait for SUT to discover, negotiate, and pull data
+    params:
+      endpoint_id: "ccmapi_data_source"
+      timeout_s: "@sut_response_timeout"
+    store_in_memory:
+      sut_request_body: "body"
+    expect:
+      - output: method
+        equals: "GET"
+      - output: body
+        not_null: true
+
+variables:
+  testlab_asset_id:
+    type: str
+  testlab_policy_id:
+    type: str
+  testlab_contract_def_id:
+    type: str

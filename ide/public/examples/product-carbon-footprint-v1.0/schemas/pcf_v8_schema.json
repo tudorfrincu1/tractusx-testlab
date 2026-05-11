@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductCarbonFootprint v8.0.0",
+  "description": "Schema for CX-0136 PCF v8.0.0 (urn:samm:io.catenax.pcf:8.0.0#Pcf) validation.",
+  "type": "object",
+  "required": ["pcfId", "specVersion", "carbonFootprint"],
+  "properties": {
+    "pcfId": { "type": "string", "format": "uuid" },
+    "specVersion": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "created": { "type": "string", "format": "date-time" },
+    "updated": { "type": "string", "format": "date-time" },
+    "companyName": { "type": "string" },
+    "companyIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "productDescription": { "type": "string" },
+    "productIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "productCategoryCpc": { "type": "string" },
+    "productNameCompany": { "type": "string" },
+    "carbonFootprint": {
+      "type": "object",
+      "required": ["productCarbonFootprint"],
+      "properties": {
+        "productCarbonFootprint": { "type": "number", "minimum": 0 },
+        "unitOfMeasure": { "type": "string" },
+        "fossilGhgEmissions": { "type": "number" },
+        "biogenicCarbonContent": { "type": "number" },
+        "reportingPeriodStart": { "type": "string", "format": "date-time" },
+        "reportingPeriodEnd": { "type": "string", "format": "date-time" },
+        "primaryDataShare": { "type": "number", "minimum": 0, "maximum": 100 },
+        "geographyCountrySubdivision": { "type": "string" },
+        "boundaryProcessesDescription": { "type": "string" },
+        "crossSectoralStandard": { "type": "string" }
+      }
+    }
+  }
+}

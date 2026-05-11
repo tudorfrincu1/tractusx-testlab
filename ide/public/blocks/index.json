@@ -1,0 +1,97 @@
+{
+  "version": "3.0",
+  "categories": [
+    {
+      "name": "Mock",
+      "description": "Define endpoints we expose that the SUT will call",
+      "blocks": [
+        "mock/mock_endpoint.json",
+        "mock/mock_dtr.json",
+        "mock/mock_discovery.json"
+      ]
+    },
+    {
+      "name": "Wait",
+      "description": "Pause test execution until the SUT calls a specific mock endpoint",
+      "blocks": [
+        "wait/wait_for_call.json"
+      ]
+    },
+    {
+      "name": "Function",
+      "description": "Pure data functions with hardcoded outputs",
+      "blocks": [
+        "function/generate_uuid.json",
+        "function/generate_bpn.json",
+        "function/template_string.json",
+        "function/load_json_file.json",
+        "function/json_path_extract.json",
+        "function/load_schema.json",
+        "function/extract_dataset.json"
+      ]
+    },
+    {
+      "name": "Flow",
+      "description": "Control test execution flow",
+      "blocks": [
+        "flow/retry.json",
+        "flow/delay.json",
+        "flow/log.json"
+      ]
+    },
+    {
+      "name": "EDC Connector",
+      "description": "Interact with an Eclipse Dataspace Connector (Management API)",
+      "service_type": "edc_connector",
+      "blocks": [
+        "edc-connector/query_catalog.json",
+        "edc-connector/negotiate.json",
+        "edc-connector/initiate_transfer.json",
+        "edc-connector/create_asset.json",
+        "edc-connector/create_policy.json",
+        "edc-connector/create_contract_def.json"
+      ]
+    },
+    {
+      "name": "Digital Twin Registry",
+      "description": "Interact with an AAS Digital Twin Registry",
+      "service_type": "dtr",
+      "blocks": [
+        "digital-twin-registry/register_shell.json",
+        "digital-twin-registry/lookup_shell.json",
+        "digital-twin-registry/add_submodel.json"
+      ]
+    },
+    {
+      "name": "Discovery Finder",
+      "description": "Interact with BPN/EDC discovery services",
+      "service_type": "discovery_finder",
+      "blocks": [
+        "discovery-finder/configure_discovery.json"
+      ]
+    },
+    {
+      "name": "HTTP",
+      "description": "Send HTTP requests directly or via EDC Dataplane",
+      "blocks": [
+        "http/http_call.json",
+        "http/http_call_dataplane.json"
+      ]
+    },
+    {
+      "name": "Notification",
+      "description": "Send and receive Catena-X notifications via EDC Dataplane",
+      "blocks": [
+        "notification/send_notification.json"
+      ]
+    },
+    {
+      "name": "Validation",
+      "description": "Validate data against policies and semantic schemas",
+      "blocks": [
+        "validation/validate_policy.json",
+        "validation/validate_semantic_schema.json"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "generate_bpn",
+  "label": "Generate BPN",
+  "description": "Generate a valid random Business Partner Number (BPN).",
+  "params": [
+    { "name": "prefix", "type": "dropdown", "required": false, "description": "BPN type prefix", "options": ["BPNL", "BPNS", "BPNA"] }
+  ],
+  "outputs": [
+    { "name": "bpn", "description": "The generated BPN string" }
+  ]
+}

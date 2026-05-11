@@ -1,0 +1,14 @@
+{
+  "type": "configure_discovery",
+  "label": "Configure Discovery",
+  "description": "Register or update BPN-to-EDC endpoint mappings in the discovery service.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "Discovery finder service" },
+    { "name": "bpn", "type": "string", "required": true, "description": "Business Partner Number to register" },
+    { "name": "endpoint", "type": "string", "required": true, "description": "EDC endpoint URL for this BPN" },
+    { "name": "type", "type": "dropdown", "required": false, "description": "Endpoint type", "options": ["DSP", "IDS"] }
+  ],
+  "outputs": [
+    { "name": "registration_id", "description": "ID of the discovery registration" }
+  ]
+}

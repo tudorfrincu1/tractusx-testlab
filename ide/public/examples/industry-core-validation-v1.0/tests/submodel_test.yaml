@@ -1,0 +1,65 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+kind: test
+name: submodel-test
+version: "1.0"
+description: Extract first shell descriptor and validate against the spec schema.
+
+setup:
+  - type: import_variable
+    name: Import shell_descriptors
+    params:
+      file: tests/shell_descriptors_test.yaml
+      export: shell_descriptors
+      variable: shell_descriptors
+
+steps:
+  - type: json_path_extract
+    name: Extract First Shell Descriptor
+    params:
+      variable: shell_descriptors
+      path: "result[0]"
+    store_in_memory:
+      first_descriptor: "value"
+    expect:
+      - output: value
+        not_empty: true
+
+  - type: load_schema
+    name: Load Shell Descriptor Spec Schema
+    params:
+      name: shell_descriptor_spec_schema
+      source: file
+      path: ../schemas/shell_descriptors_spec_jsonschema.json
+
+  - type: validate_semantic_schema
+    name: Validate Descriptor Against Spec
+    params:
+      variable: first_descriptor
+      schema_variable: shell_descriptor_spec_schema
+    expect:
+      - output: is_valid
+        equals: true
+
+variables:
+  first_descriptor:
+    type: str

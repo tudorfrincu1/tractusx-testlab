@@ -1,0 +1,11 @@
+{
+  "type": "template_string",
+  "label": "Template String",
+  "description": "Build a string from a template with @variable interpolation.",
+  "params": [
+    { "name": "template", "type": "string", "required": true, "description": "Template string — use @var_name for interpolation" }
+  ],
+  "outputs": [
+    { "name": "result", "description": "The interpolated string" }
+  ]
+}

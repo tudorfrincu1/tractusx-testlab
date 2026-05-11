@@ -1,0 +1,137 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
+
+"""JobManager — creation, lookup, state transitions, memory, and events."""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from tractusx_sdk.extensions.testlab.models import Job, JobEvent, JobMemory, JobStatus
+
+
+class JobManager:
+    """Manages the lifecycle of Job objects."""
+
+    __slots__ = ("_jobs",)
+
+    def __init__(self) -> None:
+        self._jobs: dict[str, Job] = {}
+
+    def create(self, test_case_id: str, package_name: Optional[str] = None) -> Job:
+        """Create a new job in QUEUED state."""
+        job = Job(
+            job_id=uuid.uuid4().hex,
+            test_case_id=test_case_id,
+            package_name=package_name,
+            status=JobStatus.QUEUED,
+            created_at=datetime.now(timezone.utc),
+            memory=JobMemory(),
+        )
+        self._jobs[job.job_id] = job
+        return job
+
+    def get(self, job_id: str) -> Optional[Job]:
+        return self._jobs.get(job_id)
+
+    def list_jobs(
+        self,
+        status: Optional[JobStatus] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Job]:
+        jobs = list(self._jobs.values())
+        if status:
+            jobs = [job for job in jobs if job.status == status]
+        return jobs[offset: offset + limit]
+
+    # ------------------------------------------------------------------
+    # State transitions
+    # ------------------------------------------------------------------
+
+    def start(self, job_id: str) -> None:
+        job = self._require(job_id)
+        job.status = JobStatus.RUNNING
+        job.started_at = datetime.now(timezone.utc)
+        self._event(job, "lifecycle", "Job started")
+
+    def complete(self, job_id: str) -> None:
+        job = self._require(job_id)
+        job.status = JobStatus.COMPLETED
+        job.finished_at = datetime.now(timezone.utc)
+        self._event(job, "lifecycle", "Job completed")
+
+    def fail(self, job_id: str, reason: str = "") -> None:
+        job = self._require(job_id)
+        job.status = JobStatus.FAILED
+        job.finished_at = datetime.now(timezone.utc)
+        job.error = reason or None
+        self._event(job, "lifecycle", f"Job failed: {reason}" if reason else "Job failed")
+
+    def wait(self, job_id: str, step_name: str, listener_url: str) -> None:
+        job = self._require(job_id)
+        job.status = JobStatus.WAITING
+        job.waiting_for = listener_url
+        job.current_step = step_name
+        self._event(job, "waiting", f"Waiting for callback at step {step_name}")
+
+    def resume(self, job_id: str) -> None:
+        job = self._require(job_id)
+        if job.status != JobStatus.WAITING:
+            return
+        job.status = JobStatus.RUNNING
+        job.waiting_for = None
+        self._event(job, "lifecycle", "Job resumed from WAITING")
+
+    def cancel(self, job_id: str) -> None:
+        job = self._require(job_id)
+        if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
+            return
+        job.status = JobStatus.CANCELLED
+        job.finished_at = datetime.now(timezone.utc)
+        self._event(job, "lifecycle", "Job cancelled")
+
+    def set_current_step(self, job_id: str, step_name: str) -> None:
+        job = self._require(job_id)
+        job.current_step = step_name
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _require(self, job_id: str) -> Job:
+        job = self._jobs.get(job_id)
+        if not job:
+            raise KeyError(f"Job '{job_id}' not found")
+        return job
+
+    @staticmethod
+    def _event(job: Job, event_type: str, description: str) -> None:
+        job.memory.log_event(JobEvent(
+            timestamp=datetime.now(timezone.utc),
+            event_type=event_type,
+            description=description,
+        ))

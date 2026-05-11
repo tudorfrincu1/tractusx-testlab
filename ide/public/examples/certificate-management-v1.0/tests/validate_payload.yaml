@@ -1,0 +1,78 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
+
+kind: test
+name: validate-certificate-payload
+version: "1.0"
+description: >
+  Fetch and validate certificate payload against CX-0135
+  BusinessPartnerCertificate semantic model v3.1.0.
+
+depends_on:
+  - file: tests/request_certificate.yaml
+    outputs:
+      - document_id
+
+steps:
+  - type: http_call
+    description: Fetch certificate payload from provider
+    params:
+      method: GET
+      url: "@data_address/companycertificate/@document_id"
+      headers:
+        Accept: "application/json"
+    store_in_memory:
+      certificate_json: "response_body"
+    expect:
+      - output: status_code
+        equals: 200
+      - output: response_body
+        not_empty: true
+
+  - type: validate_semantic_schema
+    description: Validate certificate against CX-0135 schema
+    params:
+      variable: "certificate_json"
+      semantic_id: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+    store_in_memory:
+      validation_status: "is_valid"
+      validation_errors: "validation_errors"
+    expect:
+      - output: is_valid
+        equals: true
+
+  - type: json_path_extract
+    description: Validate certificate type matches requested type
+    params:
+      variable: "certificate_json"
+      path: "certificateType"
+    expect:
+      - output: value
+        equals: "@certificate_type"
+
+variables:
+  validation_status:
+    type: str
+  validation_errors:
+    type: str
+
