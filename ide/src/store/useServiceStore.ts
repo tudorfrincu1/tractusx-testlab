@@ -138,6 +138,7 @@ interface ServiceState {
   setServices: (services: ServiceDefinition[]) => void;
   getServicesByType: (type: ServiceType) => ServiceDefinition[];
   hasServiceType: (type: ServiceType) => boolean;
+  ensureServiceExists: (storeTypes: string[]) => ServiceDefinition | undefined;
   addAuth: (auth: AuthDefinition) => void;
   updateAuth: (name: string, auth: AuthDefinition) => void;
   removeAuth: (name: string) => void;
@@ -166,6 +167,29 @@ export const useServiceStore = create<ServiceState>((set, get) => ({
   getServicesByType: (type) => get().services.filter((s) => s.type === type),
 
   hasServiceType: (type) => get().services.some((s) => s.type === type),
+
+  ensureServiceExists: (storeTypes) => {
+    const { services } = get();
+    const existing = services.find((s) => storeTypes.includes(s.type));
+    if (existing) return existing;
+
+    const schema = SERVICE_SCHEMAS.find((sc) => storeTypes.includes(sc.type));
+    if (!schema) return undefined;
+
+    const config: Record<string, unknown> = {};
+    for (const field of schema.fields) {
+      config[field.name] = field.default ?? "";
+    }
+
+    const newService: ServiceDefinition = {
+      name: `${schema.defaultName} (auto)`,
+      type: schema.type,
+      config,
+    };
+
+    set((state) => ({ services: [...state.services, newService] }));
+    return newService;
+  },
 
   addAuth: (auth) =>
     set((state) => ({ authentications: [...state.authentications, auth] })),

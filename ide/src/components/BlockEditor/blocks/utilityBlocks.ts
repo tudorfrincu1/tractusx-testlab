@@ -51,20 +51,6 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
     },
   };
 
-  Blockly.Blocks["output_entry"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_STORE))
-        .appendField(new Blockly.FieldTextInput("variable_name"), "OUTPUT_NAME")
-        .appendField(":")
-        .appendField(new Blockly.FieldTextInput("$"), "OUTPUT_EXPR");
-      this.setPreviousStatement(true, "output_entry");
-      this.setNextStatement(true, "output_entry");
-      this.setColour(blockColors.root);
-      this.setTooltip("Declare a test-level output variable exposed to dependent tests");
-    },
-  };
-
   Blockly.Blocks["schema_import"] = {
     init(this: Block) {
       this.appendDummyInput()

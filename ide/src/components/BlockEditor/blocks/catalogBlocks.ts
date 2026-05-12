@@ -203,16 +203,14 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
             }
           }
 
-          // Check service availability: category must have a matching declared service
+          // Check service availability: auto-declare if missing
           const serviceType = category.service_type;
           if (serviceType) {
             const requiredStoreTypes = SERVICE_TYPE_RESOLUTION[serviceType] ?? [serviceType];
-            const { services } = useServiceStore.getState();
+            const { services, ensureServiceExists } = useServiceStore.getState();
             const hasService = services.some((s) => requiredStoreTypes.includes(s.type));
             if (!hasService) {
-              warnings.push(
-                `No service of type "${category.name}" is configured. Add one via Add/Remove Services.`
-              );
+              ensureServiceExists(requiredStoreTypes);
             }
           }
 
