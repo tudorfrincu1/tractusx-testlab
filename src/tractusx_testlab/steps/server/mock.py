@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 
 from tractusx_sdk.extensions.testlab.models import StepDefinition
 from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.server.mock_registry import (
+from tractusx_testlab.server.mock_registry import (
     MockResponse,
     register_mock,
 )

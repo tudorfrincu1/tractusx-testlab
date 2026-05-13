@@ -38,6 +38,7 @@ import {
   createArrayItemBlocks,
 } from "./helpers";
 import { populateAssertions } from "./populateAssertions";
+import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -87,6 +88,11 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
         setDropdownValue(sb, "SCHEMA_PATH", String(step.params.path));
         sb.setFieldValue(String(step.params.name || "schema_var"), "OUTPUT_SCHEMA");
         blocks.push(sb);
+        continue;
+      }
+
+      if (step.type === "precondition_policy_config") {
+        blocks.push(deserializePreconditionPolicyBlock(ws, step));
         continue;
       }
 

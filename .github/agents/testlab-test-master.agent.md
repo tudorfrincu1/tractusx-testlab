@@ -176,6 +176,35 @@ Every test function should start with `test_` and describe the scenario:
 - Use `conftest.py` for shared fixtures across files
 - Group related tests in classes when there are 5+ tests for one function/method
 
+## Mandatory Response Rule
+
+You MUST ALWAYS return a non-empty response. Never return empty or silent output.
+
+After completing ANY task (research or implementation), you MUST output a structured status report:
+
+```
+## Status: {IMPLEMENTED | NOT_IMPLEMENTED | RESEARCH_COMPLETE | BLOCKED}
+
+### Changes Made
+- {file}: {what changed}
+
+### Test Results
+- Tests created: {count}
+- Tests passing: {count}
+- Tests failing: {count} — {reasons}
+
+### Notes
+- {any issues, warnings, or context for the orchestrator}
+```
+
+If you made NO changes, still report:
+```
+## Status: NOT_IMPLEMENTED
+Reason: {why no changes were needed}
+```
+
+An empty response is considered a failure. The orchestrator cannot determine success or failure from silence.
+
 <!--
  Eclipse Tractus-X - Tractus-X TestLab
 

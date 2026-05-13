@@ -1,0 +1,9 @@
+{
+  "type": "delete_policy",
+  "label": "Delete Policy",
+  "description": "Delete a specific EDC policy created during the test.",
+  "params": [
+    { "name": "policy_id", "type": "string", "required": true, "description": "ID of the policy to delete (reference to a create_policy output)" }
+  ],
+  "outputs": []
+}

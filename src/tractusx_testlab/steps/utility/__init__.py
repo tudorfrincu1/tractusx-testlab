@@ -22,5 +22,5 @@
 
 """Utility steps: UUID generation, JSON extraction, and other helpers."""
 
-from tractusx_sdk.extensions.testlab.steps.utility import json_extract  # noqa: F401
-from tractusx_sdk.extensions.testlab.steps.utility import uuid_gen  # noqa: F401
+import tractusx_testlab.steps.utility.json_extract  # noqa: F401
+import tractusx_testlab.steps.utility.uuid_gen  # noqa: F401

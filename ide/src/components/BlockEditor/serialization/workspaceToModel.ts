@@ -36,6 +36,7 @@ import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, se
 import { toRuntimeStepType } from "./stepTypeAliases";
 import { parseUnsupportedParams } from "./unsupportedStepPayload";
 import { workspaceToTestCase } from "./workspaceToTestCase";
+import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
   _Blockly: typeof BlocklyType,
@@ -142,6 +143,9 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         description: stepDescription || undefined,
         params,
       } as StepDefinition);
+    } else if (current.type === "step_precondition_policy_config") {
+      const step = serializePreconditionPolicyBlock(current);
+      if (step) steps.push(step);
     } else {
       const step = blockToStep(current, catalog);
       if (step) steps.push(step);

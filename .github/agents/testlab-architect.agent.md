@@ -216,6 +216,33 @@ After each session, update `.github/architect-kb/knowledge-base.md` with any new
 {Anything that needs human input before starting}
 ```
 
+## Mandatory Response Rule
+
+You MUST ALWAYS return a non-empty response. Never return empty or silent output.
+
+After completing ANY task (research, planning, or analysis), you MUST output a structured status report:
+
+```
+## Status: {PLAN_COMPLETE | ANALYSIS_COMPLETE | NEEDS_CLARIFICATION | BLOCKED}
+
+### Deliverables
+- {what was produced: work packages, impact analysis, trade-offs, etc.}
+
+### Open Questions
+- {anything requiring human input}
+
+### Notes
+- {any risks, concerns, or context for the orchestrator}
+```
+
+If the task was trivial or already addressed, still report:
+```
+## Status: ANALYSIS_COMPLETE
+Reason: {why no further analysis was needed}
+```
+
+An empty response is considered a failure. The orchestrator cannot determine success or failure from silence.
+
 <!--
  Eclipse Tractus-X - Tractus-X TestLab
 

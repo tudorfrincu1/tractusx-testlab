@@ -22,5 +22,5 @@
 
 """Server-integration steps: mock endpoints and callback waiting."""
 
-from tractusx_sdk.extensions.testlab.steps.server import mock  # noqa: F401
-from tractusx_sdk.extensions.testlab.steps.server import wait  # noqa: F401
+import tractusx_testlab.steps.server.mock  # noqa: F401
+import tractusx_testlab.steps.server.wait  # noqa: F401

@@ -53,6 +53,10 @@ class TestScript:
         return self.definition.steps
 
     @property
+    def preconditions(self):
+        return self.definition.preconditions
+
+    @property
     def setup(self):
         return self.definition.setup
 

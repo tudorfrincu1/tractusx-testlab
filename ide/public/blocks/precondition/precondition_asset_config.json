@@ -1,0 +1,12 @@
+{
+  "type": "precondition_asset_config",
+  "label": "Asset Config",
+  "description": "Pre-configure an asset definition that must exist before test execution",
+  "params": [
+    { "name": "dct_type", "type": "string", "required": true, "description": "DCT Type URI" },
+    { "name": "properties", "type": "json", "required": false, "description": "Asset properties (aas:semantic-id, dct:type, etc.)" }
+  ],
+  "outputs": [
+    { "name": "config_result", "description": "The asset configuration object" }
+  ]
+}

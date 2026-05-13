@@ -34,6 +34,8 @@ import {
 } from "./blockDefinitions";
 import { createWorkspaceOptions } from "./workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "./workspaceListeners";
+import { attachServiceAutoDeclareListener } from "./serviceAutoDeclare";
+import { attachPhaseEnforcementListener } from "./phaseEnforcement";
 import type { ScriptDefinition, TestCaseDefinition } from "../../models/schema";
 import { isTest, isTestCase } from "../../models/schema";
 
@@ -148,6 +150,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       });
       attachFlyoutListener(ws);
       attachSelectionListener(ws, selectStep);
+      attachServiceAutoDeclareListener(ws, catalog);
+      attachPhaseEnforcementListener(ws, catalog);
 
       setReady(true);
     })();

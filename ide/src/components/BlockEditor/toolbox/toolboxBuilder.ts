@@ -23,9 +23,10 @@
 // It was reviewed and tested by a human committer.
 
 import { ScriptKind } from "../../../models/schema";
-import type { BlockCatalog } from "../blocks/catalogLoader";
+import type { BlockCatalog, BlockCatalogCategory } from "../blocks/catalogLoader";
 import { useServiceStore } from "../../../store/useServiceStore";
 import { blockColors, getCategoryColor } from "../blockColors";
+import { PHASE_DEFINITIONS } from "./phaseConfig";
 
 export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
   edc_connector: ["edc_connector_saturn", "edc_connector_jupiter"],
@@ -48,29 +49,76 @@ export function getActiveDataspaceVersions(): Set<string> {
   return versions;
 }
 
-function buildServiceCategories(catalog: BlockCatalog): object[] {
-  const activeVersions = getActiveDataspaceVersions();
-  return catalog
-    .map((cat) => ({
-      kind: "category",
-      name: cat.name,
-      colour: getCategoryColor(cat.name),
-      contents: cat.blocks
-        .filter((b) =>
+/** Build a toolbox category object from a single catalog category. */
+function buildCatalogCategory(
+  cat: BlockCatalogCategory,
+  activeVersions: Set<string>,
+): object {
+  return {
+    kind: "category",
+    name: cat.name,
+    colour: getCategoryColor(cat.name),
+    contents: cat.blocks
+      .filter(
+        (b) =>
           !b.dataspace_version ||
           activeVersions.size === 0 ||
-          activeVersions.has(b.dataspace_version)
-        )
-        .map((b) => ({
-          kind: "block",
-          type: `step_${b.type}`,
-        })),
-    }));
+          activeVersions.has(b.dataspace_version),
+      )
+      .map((b) => ({ kind: "block", type: `step_${b.type}` })),
+  };
+}
+
+/** Build a map from category name to its toolbox category object. */
+function buildCategoryMap(catalog: BlockCatalog): Map<string, object> {
+  const activeVersions = getActiveDataspaceVersions();
+  const map = new Map<string, object>();
+  for (const cat of catalog) {
+    map.set(cat.name, buildCatalogCategory(cat, activeVersions));
+  }
+  return map;
+}
+
+/** Build nested phase-group categories for the step-editor toolbox. */
+function buildPhaseGroups(catalog: BlockCatalog): object[] {
+  const categoryMap = buildCategoryMap(catalog);
+  const phases: object[] = [];
+
+  for (const phase of PHASE_DEFINITIONS) {
+    const children: object[] = [];
+    for (const catName of phase.categories) {
+      const cat = categoryMap.get(catName);
+      if (cat) {
+        children.push(cat);
+      }
+    }
+    if (phase.blockGroups) {
+      for (const group of phase.blockGroups) {
+        children.push({
+          kind: "category",
+          name: group.name,
+          colour: group.colour,
+          contents: group.blocks.map((type) => ({ kind: "block", type })),
+        });
+      }
+    }
+    if (children.length > 0) {
+      phases.push({
+        kind: "category",
+        name: phase.name,
+        colour: phase.colour,
+        expanded: "true",
+        contents: children,
+      });
+    }
+  }
+
+  return phases;
 }
 
 export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables?: string[]): object {
   if (kind === "test-case") {
-    const serviceCategories = buildServiceCategories(catalog);
+    const serviceCategories = [...buildCategoryMap(catalog).values()];
     return {
       kind: "categoryToolbox",
       contents: [
@@ -122,12 +170,13 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
   }
   variableContents.push({ kind: "block", type: "variable_get" });
 
-  const categoryContents = buildServiceCategories(catalog);
+  const phaseGroups = buildPhaseGroups(catalog);
 
   return {
     kind: "categoryToolbox",
     contents: [
-      ...categoryContents,
+      ...phaseGroups,
+      { kind: "sep" },
       {
         kind: "category",
         name: "Authentication",
@@ -143,9 +192,6 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         colour: blockColors.variableDef,
         contents: [
           { kind: "block", type: "schema_import" },
-          { kind: "sep", gap: "16" },
-          { kind: "block", type: "import_variable" },
-          { kind: "block", type: "export_variable" },
           { kind: "sep", gap: "16" },
           { kind: "block", type: "variable_def" },
           { kind: "sep", gap: "16" },

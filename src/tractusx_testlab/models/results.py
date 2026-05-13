@@ -35,9 +35,10 @@ from tractusx_sdk.extensions.testlab.models.definitions import Assertion
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
     ScriptStatus,
-    StepPhase,
     StepStatus,
 )
+from tractusx_testlab.models.enums import StepPhase
+from tractusx_testlab.models.preconditions import PreconditionLog
 
 
 class HttpRequest(BaseModel):
@@ -77,6 +78,7 @@ class StepResult(BaseModel):
     error_traceback: Optional[str] = None
     output: Optional[Any] = None
     assertions: list[AssertionResult] = Field(default_factory=list)
+    precondition_logs: list[PreconditionLog] = Field(default_factory=list)
 
 
 class CallbackResult(BaseModel):

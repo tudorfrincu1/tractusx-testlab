@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 
 from tractusx_sdk.extensions.testlab.models import ListenerDefinition, StepDefinition
 from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.server.mock_registry import get_callback_manager
+from tractusx_testlab.server.mock_registry import get_callback_manager
 from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:

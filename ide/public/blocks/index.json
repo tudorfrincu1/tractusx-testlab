@@ -2,6 +2,15 @@
   "version": "3.0",
   "categories": [
     {
+      "name": "Precondition",
+      "description": "Define preconditions that must be in place before test execution",
+      "blocks": [
+        "precondition/precondition_asset_config.json",
+        "precondition/precondition_policy_config.json",
+        "precondition/precondition_contract_config.json"
+      ]
+    },
+    {
       "name": "Mock",
       "description": "Define endpoints we expose that the SUT will call",
       "blocks": [
@@ -91,6 +100,16 @@
       "blocks": [
         "validation/validate_policy.json",
         "validation/validate_semantic_schema.json"
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "description": "Undo resources created during the test (assets, policies, shells)",
+      "blocks": [
+        "cleanup/auto_cleanup.json",
+        "cleanup/delete_asset.json",
+        "cleanup/delete_policy.json",
+        "cleanup/delete_shell.json"
       ]
     }
   ]

@@ -34,12 +34,14 @@ from tractusx_sdk.extensions.testlab.models.definitions import (
     DependencyRef,
     ImportDefinition,
     ListenerDefinition,
-    ScriptDefinition,
     ServiceDefinition,
     TestCaseDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.definitions import StepDefinition  # local override — no name field
+from tractusx_testlab.models.definitions import (  # local overrides
+    ScriptDefinition,  # adds preconditions field
+    StepDefinition,    # no name field
+)
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
     AssertionType,
@@ -51,10 +53,10 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     SdkCallMode,
     ServiceState,
     ServiceType,
-    StepPhase,
     StepStatus,
     ValueSource,
 )
+from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
 from tractusx_sdk.extensions.testlab.models.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
@@ -68,6 +70,12 @@ from tractusx_sdk.extensions.testlab.models.jobs import (
     JobEvent,
     JobMemory,
 )
+from tractusx_testlab.models.preconditions import (
+    PreconditionLog,
+    PreconditionLogCategory,
+    PreconditionLogType,
+)
+from tractusx_testlab.models.results import StepResult  # local override — adds precondition_logs
 from tractusx_sdk.extensions.testlab.models.results import (
     AssertionResult,
     AssertionSummary,
@@ -75,7 +83,6 @@ from tractusx_sdk.extensions.testlab.models.results import (
     HttpRequest,
     HttpResponse,
     ScriptResult,
-    StepResult,
     TestCaseResult,
 )
 from tractusx_sdk.extensions.testlab.models.security import (
@@ -122,6 +129,10 @@ __all__ = [
     # server
     "UploadedPackage",
     "VaultConfig",
+    # preconditions
+    "PreconditionLog",
+    "PreconditionLogCategory",
+    "PreconditionLogType",
     # results
     "AssertionResult",
     "AssertionSummary",

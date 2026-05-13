@@ -118,6 +118,7 @@ class ServiceState(str, enum.Enum):
 
 class StepPhase(str, enum.Enum):
     """Identifies which execution phase a step belongs to."""
+    PRECONDITION = "PRECONDITION"
     SETUP = "SETUP"
     MAIN = "MAIN"
     CLEANUP = "CLEANUP"

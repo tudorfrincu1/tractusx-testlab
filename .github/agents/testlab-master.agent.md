@@ -129,6 +129,8 @@ The testlab backend uses the SDK directly. You are an expert in its module struc
 If ANY check fails, fix it before delivering. No exceptions.
 
 ### Step 1: File size check
+Read `.github/backend-kb/knowledge-base.md` if available, so you can remember your knowlage.
+Then
 Run this command and fix any files that appear:
 ```bash
 find src -name '*.py' | xargs wc -l | awk '$1 > 300 && !/total/' | sort -rn
@@ -162,6 +164,14 @@ If any `print()` calls exist, replace with `logging.getLogger(__name__)`.
 ```bash
 python -m pytest tests/ -x -q
 ```
+
+### Step 6. Persist New Knowledge (if needed)
+After each session, update `.github/backend-kb/knowledge-base.md` with any new:
+- Decisions that were made and approved
+- Patterns that were applied (or discovered)
+- Risks that materialized
+- Lessons from anything that went wrong or unexpectedly well
+- Open questions that arose but were not resolved
 
 ## How to Split Oversized Files
 
@@ -209,6 +219,33 @@ When a file exceeds 300 lines, apply these patterns:
 - No bare `except Exception:` — always catch the narrowest type
 - No `print()` — use structured logging
 - No `: Any` unless unavoidable — document why in a comment
+
+## Mandatory Response Rule
+
+You MUST ALWAYS return a non-empty response. Never return empty or silent output.
+
+After completing ANY task (research or implementation), you MUST output a structured status report:
+
+```
+## Status: {IMPLEMENTED | NOT_IMPLEMENTED | RESEARCH_COMPLETE | BLOCKED}
+
+### Changes Made
+- {file}: {what changed}
+
+### Verification
+- {command}: {result}
+
+### Notes
+- {any issues, warnings, or context for the orchestrator}
+```
+
+If you made NO changes (e.g., the code already satisfied the requirements), still report:
+```
+## Status: NOT_IMPLEMENTED
+Reason: {why no changes were needed}
+```
+
+An empty response is considered a failure. The orchestrator cannot determine success or failure from silence.
 
 <!--
  Eclipse Tractus-X - Tractus-X TestLab

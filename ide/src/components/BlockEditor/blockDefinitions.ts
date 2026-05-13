@@ -33,6 +33,7 @@ import { registerStructuralBlocks } from "./blocks/structuralBlocks";
 import { registerValueBlocks } from "./blocks/valueBlocks";
 import { registerRootBlocks } from "./blocks/rootBlocks";
 import { registerPolicyBlocks } from "./blocks/policyBlocks";
+import { registerPreconditionBlocks } from "./blocks/preconditionBlocks";
 import { registerCatalogBlocks } from "./blocks/catalogBlocks";
 import { registerUtilityBlocks } from "./blocks/utilityBlocks";
 import { registerAssertionBlocks } from "./blocks/assertionBlocks";
@@ -54,6 +55,7 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
   registerValueBlocks(Blockly);
   registerRootBlocks(Blockly);
   registerPolicyBlocks(Blockly);
+  registerPreconditionBlocks(Blockly);
   registerUtilityBlocks(Blockly);
   registerAuthBlocks(Blockly);
   registerAssertionBlocks(Blockly, catalog);

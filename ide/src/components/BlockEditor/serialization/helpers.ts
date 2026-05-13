@@ -213,7 +213,7 @@ export function serializeStructuralBlock(block: Block): unknown {
       operandRight: readValueBlockAsUnknown(block.getInputTargetBlock("RIGHT")),
     };
   }
-  const policyTypes = ["odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_constraint", "odrl_logical_constraint"];
+  const policyTypes = ["odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_constraint", "odrl_constraint_jupiter", "odrl_logical_constraint"];
   if (policyTypes.includes(block.type)) {
     return serializePolicyBlock(block);
   }
