@@ -32,7 +32,7 @@ from typing import Any
 from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
 from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
 from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
+from tractusx_testlab.player.jobs import JobManager
 from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params
 from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
 from tractusx_sdk.extensions.testlab.scripting.script import TestScript
@@ -115,6 +115,7 @@ async def execute_setup_steps(
     setup_status = ScriptStatus.COMPLETED
 
     for step_idx, step_def in enumerate(script.definition.setup):
+        await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[setup:{step_idx}]:{step_def.type}"
         monitor.on_step_started(job_id, step_idx, f"setup:{step_def.type}")
         jobs.set_current_step(job_id, step_name)
@@ -169,6 +170,7 @@ async def execute_main_steps(
     script_status = ScriptStatus.COMPLETED
 
     for step_idx, step_def in enumerate(script.definition.steps):
+        await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[{step_idx}]:{step_def.type}"
         monitor.on_step_started(job_id, step_idx, step_def.type)
         jobs.set_current_step(job_id, step_name)

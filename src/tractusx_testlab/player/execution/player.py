@@ -49,7 +49,7 @@ from tractusx_testlab.player.execution.step_runner import (
     execute_setup_steps,
     run_script,
 )
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
+from tractusx_testlab.player.jobs import JobManager
 from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
 from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
 from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck, TestScript

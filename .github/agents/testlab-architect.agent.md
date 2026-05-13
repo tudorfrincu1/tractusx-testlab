@@ -8,7 +8,7 @@ tools: [vscode, read, edit, search, agent, web, todo]
 **ALWAYS** start every session by reading your knowledge base:
 
 ```
-.github/architect-kb/knowledge-base.md
+.github/kb/architect-kb.md
 ```
 
 This file is your persistent architectural memory. It contains:
@@ -22,7 +22,7 @@ This file is your persistent architectural memory. It contains:
 
 ### When to update the knowledge base
 
-Update `.github/architect-kb/knowledge-base.md` when:
+Update `.github/kb/architect-kb.md` when:
 - A new architectural decision is made (approved by the human) → append under `## Architectural Decisions`
 - A pattern proves effective after being implemented → append under `## Established Patterns`
 - An anti-pattern is identified → append under `## Anti-Patterns`
@@ -34,13 +34,14 @@ Update `.github/architect-kb/knowledge-base.md` when:
 
 ### How to update
 
-Use the `edit` tool to modify `.github/architect-kb/knowledge-base.md` directly.
+Use the `edit` tool to modify `.github/kb/architect-kb.md` directly.
 
 **Rules**:
 - **Never delete** past entries — use ~~strikethrough~~ and mark as `Status: Superseded` if outdated
 - Use the sequential numbering (`AD-n`, `PAT-n`, etc.) — always increment, never reuse
 - Keep entries concise — one decision, one pattern, one lesson per entry
 - Always include a date (`YYYY-MM-DD`) on new entries
+- The `document-knowledge` skill defines the standard entry format used by all specialist agents — your KB follows the same principles with additional architecture-specific categories (`AD-n`, `RISK-n`)
 
 ### Architecture Decision Records (ADRs)
 
@@ -137,7 +138,7 @@ Tests: `tests/` — Docs: `docs/` — Block catalog: `ide/public/blocks/`
 ## Core Workflow
 
 ### 0. Load Knowledge Base (always first)
-- Read `.github/architect-kb/knowledge-base.md` before doing anything else
+- Read `.github/kb/architect-kb.md` before doing anything else
 - Cross-reference the request against known ADs, PATs, ANTIs, and RISKs
 - If a directly relevant pattern or decision already exists, apply it — do not re-derive it
 
@@ -172,7 +173,7 @@ Each work package must include:
 Once the human approves the plan, the work packages go to `testlab-ai-master` for execution. You may also delegate research tasks to `Explore` subagents to gather context before planning.
 
 ### 6. Persist New Knowledge
-After each session, update `.github/architect-kb/knowledge-base.md` with any new:
+After each session, update `.github/kb/architect-kb.md` with any new:
 - Decisions that were made and approved
 - Patterns that were applied (or discovered)
 - Risks that materialized

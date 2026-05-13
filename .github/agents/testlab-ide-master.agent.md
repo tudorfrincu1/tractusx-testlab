@@ -1,6 +1,6 @@
 ---
 description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor."
-tools: [read, edit, vscode, search, execute, web, agent, todo, browser]
+tools: [read, edit, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
 
@@ -176,12 +176,15 @@ Search your output for `: any` or `as any`. Replace with `unknown` + narrowing o
 cd ide && npx tsc --noEmit && npx vite build
 ```
 ### Step 5. Persist New Knowledge (if needed)
-After each session, update `.github/ide-kb/knowledge-base.md` with any new:
-- Decisions that were made and approved
-- Patterns that were applied (or discovered)
-- Risks that materialized
-- Lessons from anything that went wrong or unexpectedly well
-- Open questions that arose but were not resolved
+Use the `document-knowledge` skill to update `.github/kb/ide-kb.md` when you discover:
+- A **pattern** that proved effective (prefix: `PAT`)
+- A **gotcha** or subtle trap (prefix: `GOTCHA`)
+- An **anti-pattern** to avoid (prefix: `ANTI`)
+- A **lesson learned** from a mistake (prefix: `LESSON`)
+- A **reusable fix** to a recurring problem (prefix: `FIX`)
+- An **API quirk** that isn't obvious from docs (prefix: `API`)
+
+Read the skill for entry format and numbering rules. This is a quick detour, not a separate task.
 
 ## How to Split Oversized Files
 

@@ -95,6 +95,12 @@ class ExecutionMonitor:
     def on_job_completed(self, job_id: str, status: JobStatus) -> None:
         self._emit("job.completed", job_id=job_id, status=status.value)
 
+    def on_job_paused(self, job_id: str) -> None:
+        self._emit("job.paused", job_id=job_id)
+
+    def on_job_resumed(self, job_id: str) -> None:
+        self._emit("job.resumed", job_id=job_id)
+
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------

@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -43,19 +44,28 @@ from tractusx_sdk.extensions.testlab.models import (
 )
 from tractusx_testlab.models.enums import ScriptKind
 from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
 from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck  # SDK alias
+
+from tractusx_testlab.server._event_buffer import BufferedEvent, EventBuffer
 
 _logger = logging.getLogger(__name__)
 
 _TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
-streaming_router = APIRouter(tags=["streaming"])
+streaming_router = APIRouter(prefix="/test-execution", tags=["streaming"])
 
 
 def _get_player(request: Request) -> TestlabPlayer:
     return request.app.state.player
+
+
+def _get_event_buffer(request: Request) -> EventBuffer:
+    """Lazy-init the event buffer on app state."""
+    if not hasattr(request.app.state, "event_buffer"):
+        request.app.state.event_buffer = EventBuffer()
+    return request.app.state.event_buffer
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -126,20 +136,33 @@ async def _execute_tck_bg(
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.get("/jobs/{job_id}/stream")
+@streaming_router.get("/{job_id}/stream")
 async def stream_job_events(
     job_id: str,
+    request: Request,
     player: TestlabPlayer = Depends(_get_player),
+    event_buffer: EventBuffer = Depends(_get_event_buffer),
 ) -> StreamingResponse:
-    """Stream live execution events for a job via Server-Sent Events."""
+    """Stream live execution events for a job via Server-Sent Events.
+
+    Supports reconnection: send ``Last-Event-ID`` header to replay missed events.
+    """
     job = player.jobs.get(job_id)
     if job is None:
         raise HTTPException(404, f"Job '{job_id}' not found")
 
+    last_event_id_raw = request.headers.get("last-event-id")
+    last_event_id: int | None = None
+    if last_event_id_raw is not None:
+        try:
+            last_event_id = int(last_event_id_raw)
+        except ValueError:
+            last_event_id = None
+
     queue = create_event_queue(player.monitor)
 
     return StreamingResponse(
-        sse_event_generator(queue),
+        sse_event_generator(queue, job_id, event_buffer, last_event_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -170,23 +193,53 @@ def create_event_queue(monitor: ExecutionMonitor) -> asyncio.Queue[tuple[str, di
 
 async def sse_event_generator(
     queue: asyncio.Queue[tuple[str, dict[str, Any]]],
+    job_id: str,
+    event_buffer: EventBuffer,
+    last_event_id: int | None = None,
     timeout_s: float = 600.0,
 ) -> AsyncGenerator[str, None]:
     """Yield SSE-formatted strings from *queue* until a terminal event arrives.
 
+    Features:
+        - **Replay**: If *last_event_id* is set, replays buffered events first.
+        - **Heartbeat**: Sends ``:keepalive`` comment every 15 s when idle.
+        - **Event IDs**: Every event includes a monotonic ``id:`` field.
+        - **Buffer**: Events are stored for future replay on reconnect.
+
     Args:
         queue: Event queue populated by :func:`create_event_queue`.
-        timeout_s: Maximum seconds to wait for the next event before closing.
+        job_id: Job identifier for buffer scoping.
+        event_buffer: Shared event buffer instance.
+        last_event_id: If set, replay events with ID > this value.
+        timeout_s: Maximum seconds without a *real* event before closing.
     """
+    # Phase 1: replay buffered events
+    if last_event_id is not None:
+        for buffered in event_buffer.get_events_after(job_id, last_event_id):
+            yield _format_sse(buffered.id, buffered.event, buffered.data)
+
+    # Phase 2: live stream with heartbeat
+    last_real_event = time.monotonic()
     try:
         while True:
             try:
-                event, payload = await asyncio.wait_for(queue.get(), timeout=timeout_s)
+                event, payload = await asyncio.wait_for(queue.get(), timeout=15.0)
             except TimeoutError:
-                yield _format_sse("stream.timeout", {"reason": "No events received within timeout"})
-                return
+                if time.monotonic() - last_real_event > timeout_s:
+                    event_id = event_buffer.next_id(job_id)
+                    timeout_data = {"reason": "No events received within timeout"}
+                    event_buffer.append(
+                        job_id, BufferedEvent(id=event_id, event="stream.timeout", data=timeout_data),
+                    )
+                    yield _format_sse(event_id, "stream.timeout", timeout_data)
+                    return
+                yield ":keepalive\n\n"
+                continue
 
-            yield _format_sse(event, payload)
+            last_real_event = time.monotonic()
+            event_id = event_buffer.next_id(job_id)
+            event_buffer.append(job_id, BufferedEvent(id=event_id, event=event, data=payload))
+            yield _format_sse(event_id, event, payload)
 
             if event in _TERMINAL_EVENTS:
                 return
@@ -195,7 +248,7 @@ async def sse_event_generator(
         return
 
 
-def _format_sse(event: str, data: dict[str, Any]) -> str:
-    """Format a single SSE message."""
+def _format_sse(event_id: int, event: str, data: dict[str, Any]) -> str:
+    """Format a single SSE message with an ``id:`` field."""
     payload = json.dumps(data, default=str)
-    return f"event: {event}\ndata: {payload}\n\n"
+    return f"id: {event_id}\nevent: {event}\ndata: {payload}\n\n"

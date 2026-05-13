@@ -36,7 +36,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from tractusx_sdk.extensions.testlab.models import JobStatus
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
 from tractusx_sdk.extensions.testlab.server.mock_registry import get_mock
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
@@ -157,12 +157,12 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
         _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
 
 
-@router.get("/jobs")
+@router.get("/test-execution")
 async def list_jobs(
     status: Optional[str] = None,
     player: TestlabPlayer = Depends(_get_player),
 ) -> JSONResponse:
-    """List all jobs, optionally filtered by status."""
+    """List all executions, optionally filtered by status."""
     status_filter = None
     if status:
         try:
@@ -174,16 +174,16 @@ async def list_jobs(
     return JSONResponse(content=[job.model_dump(mode="json") for job in jobs])
 
 
-@router.get("/jobs/{job_id}")
+@router.get("/test-execution/{job_id}")
 async def get_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
-    """Get details for a specific job."""
+    """Get details for a specific execution."""
     job = player.jobs.get(job_id)
     if job is None:
         raise HTTPException(404, f"Job '{job_id}' not found")
     return JSONResponse(content=job.model_dump(mode="json"))
 
 
-@router.post("/jobs/{job_id}/cancel", status_code=200)
+@router.post("/test-execution/{job_id}/cancel", status_code=200)
 async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
     """Cancel a running job."""
     job = player.jobs.get(job_id)
@@ -191,6 +191,30 @@ async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) 
         raise HTTPException(404, f"Job '{job_id}' not found")
     player.jobs.cancel(job_id)
     return JSONResponse(content={"job_id": job_id, "status": "CANCELLED"})
+
+
+@router.post("/test-execution/{job_id}/pause", status_code=200)
+async def pause_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Pause a running execution."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    if str(job.status) != "RUNNING":
+        raise HTTPException(409, f"Job '{job_id}' is not running (status: {job.status.value})")
+    player.jobs.pause(job_id)
+    return JSONResponse(content={"job_id": job_id, "status": "PAUSED"})
+
+
+@router.post("/test-execution/{job_id}/resume", status_code=200)
+async def resume_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Resume a paused execution."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    if str(job.status) != "PAUSED":
+        raise HTTPException(409, f"Job '{job_id}' is not paused (status: {job.status.value})")
+    player.jobs.resume(job_id)
+    return JSONResponse(content={"job_id": job_id, "status": "RUNNING"})
 
 
 # ──────────────────────────────────────────────────────────────────────
