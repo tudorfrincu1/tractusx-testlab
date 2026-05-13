@@ -22,30 +22,43 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Testlab CLI package — wires sub-command modules into the main Typer app."""
+"""CLI command for starting the Testlab mock server."""
 
 from __future__ import annotations
 
 import typer
 
-app = typer.Typer(
-    name="testlab",
-    help="Tractus-X Testlab CLI — compile, encrypt, validate, and run TCKs.",
-    add_completion=False,
-)
-
-# Register all commands by importing their modules (each calls @app.command())
-from tractusx_testlab.cli import keys as _keys  # noqa: E402, F401
-from tractusx_testlab.cli import validate as _validate  # noqa: E402, F401
-from tractusx_testlab.cli import compile as _compile  # noqa: E402, F401
-from tractusx_testlab.cli import run as _run  # noqa: E402, F401
-from tractusx_testlab.cli import serve as _serve  # noqa: E402, F401
+from tractusx_testlab.cli import app
 
 
-def main() -> None:
-    """Entry point for the ``testlab`` console script."""
-    app()
+@app.command()
+def serve(
+    host: str = typer.Option(
+        "0.0.0.0",
+        "--host",
+        help="Bind address for the server.",
+    ),
+    port: int = typer.Option(
+        8000,
+        "--port",
+        "-p",
+        help="Port to listen on.",
+    ),
+    reload: bool = typer.Option(
+        False,
+        "--reload",
+        help="Enable auto-reload for development.",
+    ),
+) -> None:
+    """Start the Testlab FastAPI mock server via uvicorn."""
+    import uvicorn
 
+    typer.echo(f"Starting Testlab server on {host}:{port} (reload={reload})")
 
-if __name__ == "__main__":
-    main()
+    uvicorn.run(
+        "tractusx_testlab.server.app:create_app",
+        host=host,
+        port=port,
+        reload=reload,
+        factory=True,
+    )

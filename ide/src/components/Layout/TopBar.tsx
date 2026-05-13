@@ -38,7 +38,9 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { ToolbarButton } from "./TopBarButtons";
 import { TopBarExampleMenu } from "./TopBarExampleMenu";
 import { ExecuteButton } from "../ExecutionControls/ExecuteButton";
+import { CompileButton } from "../ExecutionControls/CompileButton";
 import { BackendSettings } from "../ExecutionControls/BackendSettings";
+import { useAutoCompile } from "../../hooks/useAutoCompile";
 import "../ExecutionControls/ExecutionControls.css";
 
 export function TopBar() {
@@ -50,6 +52,8 @@ export function TopBar() {
   const loadFromDocument = useProjectStore((s) => s.loadFromDocument);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+
+  useAutoCompile();
 
   const handleGoHome = () => {
     useProjectStore.setState({ hasProject: false, activeFile: null });
@@ -216,6 +220,7 @@ export function TopBar() {
       {/* Right: actions */}
       {hasProject && (
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <CompileButton />
         <ExecuteButton />
         <BackendSettings />
         <div className="execution-divider" />

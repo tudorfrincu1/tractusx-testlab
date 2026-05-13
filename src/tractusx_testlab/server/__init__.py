@@ -27,7 +27,7 @@ from __future__ import annotations
 
 def create_app(*args, **kwargs):
     """Lazy proxy to app.create_app — avoids circular import at module load."""
-    from tractusx_sdk.extensions.testlab.server.app import create_app as _create_app
+    from tractusx_testlab.server.app import create_app as _create_app
     return _create_app(*args, **kwargs)
 
 

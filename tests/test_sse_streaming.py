@@ -99,7 +99,7 @@ def _make_event_queue(
 
 
 class TestYamlSubmission:
-    """POST /testlab/run/yaml endpoint tests."""
+    """POST /testlab/run endpoint tests."""
 
     @pytest.mark.asyncio
     async def test_run_yaml_returns_job_id(
@@ -117,7 +117,7 @@ class TestYamlSubmission:
         ):
             parser_cls.return_value.parse_script_from_dict.return_value = mock_def
             response = await client.post(
-                "/testlab/run/yaml",
+                "/testlab/run",
                 content=b"name: my-test\nsteps: []",
             )
 
@@ -131,7 +131,7 @@ class TestYamlSubmission:
         self, client: AsyncClient,
     ) -> None:
         response = await client.post(
-            "/testlab/run/yaml",
+            "/testlab/run",
             content=b"{{invalid: yaml: : :",
         )
         assert response.status_code == 400
@@ -140,7 +140,7 @@ class TestYamlSubmission:
     async def test_run_yaml_rejects_empty_body(
         self, client: AsyncClient,
     ) -> None:
-        response = await client.post("/testlab/run/yaml", content=b"")
+        response = await client.post("/testlab/run", content=b"")
         assert response.status_code == 400
 
 
@@ -150,7 +150,7 @@ class TestYamlSubmission:
 
 
 class TestSseStreaming:
-    """GET /testlab/jobs/{job_id}/stream endpoint tests."""
+    """GET /testlab/run/{job_id}/stream endpoint tests."""
 
     @pytest.mark.asyncio
     async def test_stream_returns_event_stream_content_type(
@@ -160,7 +160,7 @@ class TestSseStreaming:
         queue = _make_event_queue(("job.completed", {"status": "completed"}))
 
         with patch(f"{_STREAMING_MODULE}.create_event_queue", return_value=queue):
-            response = await client.get(f"/testlab/jobs/{job.job_id}/stream")
+            response = await client.get(f"/testlab/run/{job.job_id}/stream")
 
         assert "text/event-stream" in response.headers["content-type"]
 
@@ -168,7 +168,7 @@ class TestSseStreaming:
     async def test_stream_unknown_job_returns_404(
         self, client: AsyncClient,
     ) -> None:
-        response = await client.get("/testlab/jobs/nonexistent/stream")
+        response = await client.get("/testlab/run/nonexistent/stream")
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -183,7 +183,7 @@ class TestSseStreaming:
         )
 
         with patch(f"{_STREAMING_MODULE}.create_event_queue", return_value=queue):
-            response = await client.get(f"/testlab/jobs/{job.job_id}/stream")
+            response = await client.get(f"/testlab/run/{job.job_id}/stream")
 
         body = response.text
         assert "event: step.started" in body
@@ -199,7 +199,7 @@ class TestSseStreaming:
         )
 
         with patch(f"{_STREAMING_MODULE}.create_event_queue", return_value=queue):
-            response = await client.get(f"/testlab/jobs/{job.job_id}/stream")
+            response = await client.get(f"/testlab/run/{job.job_id}/stream")
 
         body = response.text
         assert "event: job.completed" in body
@@ -216,15 +216,16 @@ class TestSseStreaming:
         )
 
         with patch(f"{_STREAMING_MODULE}.create_event_queue", return_value=queue):
-            response = await client.get(f"/testlab/jobs/{job.job_id}/stream")
+            response = await client.get(f"/testlab/run/{job.job_id}/stream")
 
         messages = response.text.strip().split("\n\n")
         for msg in messages:
             lines = msg.strip().split("\n")
-            assert len(lines) >= 2, f"SSE message needs event + data lines: {msg}"
-            assert lines[0].startswith("event: "), f"Missing event field: {lines[0]}"
-            assert lines[1].startswith("data: "), f"Missing data field: {lines[1]}"
-            data_str = lines[1].removeprefix("data: ")
+            assert len(lines) >= 3, f"SSE message needs id + event + data lines: {msg}"
+            assert lines[0].startswith("id: "), f"Missing id field: {lines[0]}"
+            assert lines[1].startswith("event: "), f"Missing event field: {lines[1]}"
+            assert lines[2].startswith("data: "), f"Missing data field: {lines[2]}"
+            data_str = lines[2].removeprefix("data: ")
             json.loads(data_str)  # must be valid JSON
 
 
@@ -241,7 +242,7 @@ class TestCorsMiddleware:
         self, client: AsyncClient,
     ) -> None:
         response = await client.get(
-            "/testlab/jobs/nonexistent/stream",
+            "/testlab/run/nonexistent/stream",
             headers={"Origin": "http://localhost:3000"},
         )
         assert response.headers.get("access-control-allow-origin") == "*"
@@ -251,7 +252,7 @@ class TestCorsMiddleware:
         self, client: AsyncClient,
     ) -> None:
         response = await client.options(
-            "/testlab/run/yaml",
+            "/testlab/run",
             headers={
                 "Origin": "http://localhost:3000",
                 "Access-Control-Request-Method": "POST",

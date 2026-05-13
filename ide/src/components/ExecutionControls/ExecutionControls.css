@@ -19,6 +19,77 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+/* ── Compile button ─────────────────────────────────────────────────────── */
+
+.compile-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.compile-btn--idle {
+  color: #e0e0e0;
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+.compile-btn--idle:hover:not(:disabled) {
+  background: #383838;
+  border-color: #555;
+}
+
+.compile-btn--compiling {
+  color: #e0e0e0;
+  background: #2d2d2d;
+  border-color: #FFD700;
+}
+
+.compile-btn--ok {
+  color: #1a1a1a;
+  background: #66bb6a;
+  border-color: #66bb6a;
+}
+
+.compile-btn--ok:hover:not(:disabled) {
+  background: #81c784;
+  border-color: #81c784;
+}
+
+.compile-btn--error {
+  color: #fff;
+  background: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.compile-btn--error:hover:not(:disabled) {
+  background: #e53935;
+  border-color: #e53935;
+}
+
+.compile-btn--stale {
+  color: #1a1a1a;
+  background: #FFD700;
+  border-color: #FFD700;
+}
+
+.compile-btn--stale:hover:not(:disabled) {
+  background: #ffe033;
+  border-color: #ffe033;
+}
+
+.compile-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Execute button ─────────────────────────────────────────────────────── */
 
 .execute-btn {

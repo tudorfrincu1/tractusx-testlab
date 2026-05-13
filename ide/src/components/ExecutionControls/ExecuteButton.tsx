@@ -26,12 +26,14 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import { useExecutionStore } from "../../store/useExecutionStore";
 import { useProjectStore } from "../../store/useProjectStore";
+import { useCompileStore } from "../../store/useCompileStore";
 import { modelToYaml } from "../../sync/modelToYaml";
 import "./ExecutionControls.css";
 
 /**
  * Execute / Cancel button for the top bar.
  * Hidden when no backend URL is configured.
+ * Disabled until the current YAML compiles successfully.
  */
 export function ExecuteButton() {
   const isConnected = useExecutionStore((s) => s.connectionStatus === "connected");
@@ -39,12 +41,15 @@ export function ExecuteButton() {
   const execute = useExecutionStore((s) => s.execute);
   const cancel = useExecutionStore((s) => s.cancel);
   const hasProject = useProjectStore((s) => s.hasProject);
-  const testCase = useProjectStore((s) => s.testCase);
+  const getActiveModel = useProjectStore((s) => s.getActiveModel);
+  const compileStatus = useCompileStore((s) => s.compileStatus);
 
   const handleExecute = useCallback(() => {
-    const yaml = modelToYaml(testCase);
+    const model = getActiveModel();
+    if (!model) return;
+    const yaml = modelToYaml(model);
     execute(yaml);
-  }, [testCase, execute]);
+  }, [getActiveModel, execute]);
 
   if (!isConnected) return null;
 
@@ -62,11 +67,14 @@ export function ExecuteButton() {
     );
   }
 
+  const isCompileOk = compileStatus === "ok";
+
   return (
     <button
       className="execute-btn execute-btn--run"
       onClick={handleExecute}
-      disabled={!hasProject}
+      disabled={!hasProject || !isCompileOk}
+      title={!isCompileOk ? "Compile first" : "Execute test"}
       type="button"
     >
       <PlayArrowIcon sx={{ fontSize: 14 }} />

@@ -38,15 +38,17 @@ from fastapi.responses import JSONResponse
 from tractusx_sdk.extensions.testlab.models import JobStatus
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
-from tractusx_sdk.extensions.testlab.server.mock_registry import get_mock
+from tractusx_testlab.server.mock_registry import get_mock
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
 
+from tractusx_testlab.server.compile import compile_router
 from tractusx_testlab.server.streaming import streaming_router
 
 _logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/testlab", tags=["testlab"])
 router.include_router(streaming_router)
+router.include_router(compile_router)
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -110,7 +112,7 @@ async def delete_package(package_id: str, storage: PackageStorage = Depends(_get
 # ──────────────────────────────────────────────────────────────────────
 
 
-@router.post("/run", status_code=202)
+@router.post("/run/package", status_code=202)
 async def run_test(
     request: Request,
     player: TestlabPlayer = Depends(_get_player),

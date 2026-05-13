@@ -39,13 +39,12 @@ from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
 from tractusx_sdk.extensions.testlab.models import (
-    ScriptKind as _SdkScriptKind,
     TestCaseDefinition as TckDefinition,  # SDK alias
 )
 from tractusx_testlab.models.enums import ScriptKind
 from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
+from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck  # SDK alias
 
 from tractusx_testlab.server._event_buffer import BufferedEvent, EventBuffer
@@ -54,7 +53,7 @@ _logger = logging.getLogger(__name__)
 
 _TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
-streaming_router = APIRouter(prefix="/test-execution", tags=["streaming"])
+streaming_router = APIRouter(tags=["streaming"])
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -73,7 +72,7 @@ def _get_event_buffer(request: Request) -> EventBuffer:
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.post("/run/yaml", status_code=202)
+@streaming_router.post("/run", status_code=202)
 async def run_yaml(
     request: Request,
     player: TestlabPlayer = Depends(_get_player),
@@ -136,7 +135,7 @@ async def _execute_tck_bg(
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.get("/{job_id}/stream")
+@streaming_router.get("/run/{job_id}/stream")
 async def stream_job_events(
     job_id: str,
     request: Request,

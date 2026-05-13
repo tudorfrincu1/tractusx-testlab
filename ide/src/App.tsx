@@ -26,6 +26,7 @@ import "./App.css";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { TopBar } from "./components/Layout/TopBar";
 import { StatusBar } from "./components/Layout/StatusBar";
+import { NotificationBar } from "./components/Layout/NotificationBar";
 import { EditorPanels } from "./components/Layout/EditorPanels";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
 import { TckDashboard } from "./components/TckDashboard/TckDashboard";
@@ -153,6 +154,7 @@ export default function App() {
           </>
         )}
       </div>
+      <NotificationBar />
       <StatusBar />
     </div>
   );
