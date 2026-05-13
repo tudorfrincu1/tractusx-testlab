@@ -567,12 +567,12 @@ Example projects are bundled in the IDE and appear on the Welcome Screen and in 
 mkdir -p ide/public/examples/my-example-v1.0/tests/
 ```
 
-### Step 2 — Create the test case file
+### Step 2 — Create the TCK file
 
 Create `ide/public/examples/my-example-v1.0/index.yaml`:
 
 ```yaml
-kind: test-case
+kind: tck
 name: my-example
 version: "1.0"
 description: A brief description of what this example demonstrates.
@@ -631,7 +631,7 @@ Open `ide/src/components/Layout/TopBar.tsx` and add the same entry to the exampl
 
 1. Reload the IDE
 2. Click "My Example" on the Welcome Screen
-3. The project should load with the test case dashboard showing your test(s)
+3. The project should load with the TCK dashboard showing your test(s)
 4. Click a test to see it in the block editor
 5. Verify the YAML preview matches your YAML files
 

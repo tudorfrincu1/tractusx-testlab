@@ -27,12 +27,12 @@
 
 import yaml from "js-yaml";
 import type { TestLabDocument } from "../models/schema";
-import { isTestCase, isTestRef } from "../models/schema";
+import { isTck, isTestRef } from "../models/schema";
 
 export function modelToYaml(model: TestLabDocument): string {
   const clean = stripEmpty(structuredClone(model));
 
-  if (isTestCase(model)) {
+  if (isTck(model)) {
     const tc = clean as Record<string, unknown>;
     if (Array.isArray(tc.tests)) {
       tc.tests = tc.tests.map((t: unknown) => {

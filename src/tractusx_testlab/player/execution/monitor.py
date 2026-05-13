@@ -57,8 +57,8 @@ class ExecutionMonitor:
     # Events
     # ------------------------------------------------------------------
 
-    def on_job_started(self, job_id: str, test_case: str) -> None:
-        self._emit("job.started", job_id=job_id, test_case=test_case)
+    def on_job_started(self, job_id: str, tck: str) -> None:
+        self._emit("job.started", job_id=job_id, tck=tck)
 
     def on_script_started(self, job_id: str, script_name: str, index: int) -> None:
         self._emit("script.started", job_id=job_id, script=script_name, index=index)

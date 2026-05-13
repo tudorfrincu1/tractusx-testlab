@@ -96,13 +96,13 @@ class TestCcmYamlParsing:
             )
 
 class TestCcmIndexParsing:
-    def test_ccm_index_parses_as_test_case(self) -> None:
+    def test_ccm_index_parses_as_tck(self) -> None:
 
         index_path = CCM_DIR / "index.yaml"
         with open(index_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        assert data["kind"] == "test-case"
+        assert data["kind"] == "tck"
         assert data["name"] == "certificate-management"
         tests = data.get("tests", [])
         assert len(tests) == 5, f"Expected 5 tests, got {len(tests)}"

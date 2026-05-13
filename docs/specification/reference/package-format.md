@@ -17,11 +17,11 @@ SPDX-License-Identifier: CC-BY-4.0
 
 -->
 
-# Package Format (.testpkg)
+# Package Format (.tckpkg)
 
 ## Overview
 
-A `.testpkg` file is a ZIP archive that bundles compiled test scripts, their required assets, and a manifest into a single portable, distributable artifact. Packages are produced by the Compiler and consumed by the Player.
+A `.tckpkg` file is a ZIP archive that bundles compiled test scripts, their required assets, and a manifest into a single portable, distributable artifact. Packages are produced by the Compiler and consumed by the Player.
 
 Packages can be compiled in two modes:
 
@@ -39,15 +39,15 @@ flowchart LR
     end
 
     D --> MODE{--plain?}
-    MODE -->|Yes| PLAIN[".testpkg<br/>(plain ZIP, dev only)"]
-    MODE -->|No| ENC[".testpkg<br/>(encrypted, default)"]
+    MODE -->|Yes| PLAIN[".tckpkg<br/>(plain ZIP, dev only)"]
+    MODE -->|No| ENC[".tckpkg<br/>(encrypted, default)"]
 
     ENC --> SIGN[Sign with Ed25519<br/>compiler key]
-    SIGN --> E[".testpkg<br/>(encrypted + signed)"]
+    SIGN --> E[".tckpkg<br/>(encrypted + signed)"]
 
     PLAIN --> F[Share / Upload / Store]
     E --> F
-    F --> G[Player loads .testpkg]
+    F --> G[Player loads .tckpkg]
     G --> DETECT{security block<br/>in manifest?}
     DETECT -->|No| H[Verify SHA-256 checksum]
     DETECT -->|Yes| DEC[Verify signature<br/>Decrypt payload]
@@ -67,7 +67,7 @@ flowchart LR
 
 ```mermaid
 graph TD
-    PKG["my_test_case-2.0.testpkg"]
+    PKG["my_tck-2.0.tckpkg"]
     PKG --> MAN["manifest.yaml"]
     PKG --> SCRIPTS["tests/"]
     PKG --> ASSETS["assets/"]
@@ -94,7 +94,7 @@ In the default encrypted mode, scripts and assets are combined into a single enc
 
 ```mermaid
 graph TD
-    PKG["my_test_case-2.0.testpkg"]
+    PKG["my_tck-2.0.tckpkg"]
     PKG --> MAN["manifest.yaml<br/><i>(unencrypted — metadata + security block)</i>"]
     PKG --> PAYLOAD["payload.enc<br/><i>(AES-256-GCM encrypted tar of tests/ + assets/)</i>"]
     PKG --> SIG["signature.sig<br/><i>(Ed25519 signature over manifest + payload)</i>"]
@@ -173,7 +173,7 @@ security:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | `string` | Human-readable package name, matching the test case name |
+| `name` | `string` | Human-readable package name, matching the TCK name |
 | `version` | `string` | Package version (SemVer recommended) |
 | `sdk_version` | `string` | SDK version used to compile the package |
 | `compiled_at` | `string` (ISO 8601) | Timestamp when the package was compiled |
@@ -191,7 +191,7 @@ security:
 
 ## Integrity Verification
 
-When the Player loads a `.testpkg`, it:
+When the Player loads a `.tckpkg`, it:
 
 1. Extracts the `checksum` field from `manifest.yaml`
 2. Recomputes the SHA-256 hash over the `tests/` and `assets/` contents
@@ -201,11 +201,11 @@ When the Player loads a `.testpkg`, it:
 
 ### Encrypted Package Verification
 
-When loading an encrypted `.testpkg`, the Player performs additional verification:
+When loading an encrypted `.tckpkg`, the Player performs additional verification:
 
 ```mermaid
 flowchart TD
-    LOAD["Load .testpkg"] --> READ["Read manifest.yaml"]
+    LOAD["Load .tckpkg"] --> READ["Read manifest.yaml"]
     READ --> DETECT{"security block<br/>present?"}
 
     DETECT -->|No| PLAIN["Plain mode:<br/>verify SHA-256 only"]
@@ -284,12 +284,12 @@ The Player's trust store (`~/.testlab/trusted_compilers/`) is a directory of Ed2
 ### Command
 
 ```bash
-testlab compile test-case.yaml \
+testlab compile tck.yaml \
   --encrypt \
   --authorize-player ~/keys/player1.pub \
   --authorize-player ~/keys/player2.pub \
   --signing-key ./compiler_signing.pem \
-  --output my_test_case-2.0.testpkg
+  --output my_tck-2.0.tckpkg
 ```
 
 ### Compiler Workflow (Encrypted Mode)
@@ -316,7 +316,7 @@ testlab compile test-case.yaml \
 | Integrity check | SHA-256 checksum | SHA-256 checksum + Ed25519 signature |
 | Compiler requirement | None (no key needed) | Ed25519 signing key (`--signing-key`) |
 | Player requirement | None | RSA key pair + compiler in trust store |
-| CLI flag | `testlab compile test-case.yaml` | `testlab compile test-case.yaml --encrypt ...` |
+| CLI flag | `testlab compile tck.yaml` | `testlab compile tck.yaml --encrypt ...` |
 | Backward compatible | Yes (always) | Yes (Players without keys can still run plain packages) |
 
 ---

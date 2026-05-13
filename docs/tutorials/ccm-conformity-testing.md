@@ -73,7 +73,7 @@ flowchart TD
 The suite uses an `index.yaml` file that declares metadata, variables, and references individual test files:
 
 ```yaml
-kind: test-case
+kind: tck
 name: certificate-management
 version: "1.0"
 
@@ -191,10 +191,10 @@ To create a test suite for a different Catena-X standard:
 
 ### Reading results programmatically
 
-The `TestCaseResult` object contains the full execution tree:
+The `TckResult` object contains the full execution tree:
 
 ```
-TestCaseResult
+TckResult
 ├── status: PASSED | FAILED
 ├── scripts: list[ScriptResult]
 │   ├── script_name: "request-certificate"

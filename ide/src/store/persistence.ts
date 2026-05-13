@@ -21,19 +21,19 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { ScriptDefinition, TestCaseDefinition, TestLabDocument } from "../models/schema";
+import type { ScriptDefinition, TckDefinition, TestLabDocument } from "../models/schema";
 import {
-  isTestCase,
+  isTck,
   isTest,
   isTestRef,
-  createEmptyTestCase,
+  createEmptyTck,
   createEmptyTest,
   ScriptKind,
 } from "../models/schema";
 import { yamlToModel } from "../sync/yamlToModel";
 import { modelToYaml } from "../sync/modelToYaml";
 import { useTestLabStore } from "./useTestLabStore";
-import { buildTestCaseTestsArray } from "./helpers";
+import { buildTckTestsArray } from "./helpers";
 import type { ActiveFile, SchemaFile, ProjectState } from "./types";
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
@@ -45,7 +45,7 @@ export const OLD_STORAGE_KEY = "testlab-ide-state";
 
 export interface SerializedProject {
   projectName: string;
-  testCaseYaml: string;
+  tckYaml: string;
   tests: Record<string, string>;
   schemas: Record<string, string>;
   testOrder: string[];
@@ -61,10 +61,10 @@ export function saveProjectToLocalStorage(
   set: (state: Partial<ProjectState>) => void,
 ): void {
   try {
-    const { projectName, testCase, tests, schemas, testOrder, activeFile, workspaceStates } = get();
+    const { projectName, tck, tests, schemas, testOrder, activeFile, workspaceStates } = get();
     const serialized: SerializedProject = {
       projectName,
-      testCaseYaml: modelToYaml(testCase),
+      tckYaml: modelToYaml(tck),
       tests: Object.fromEntries(
         [...tests.entries()].map(([k, v]) => [k, modelToYaml(v)])
       ),
@@ -90,8 +90,8 @@ export function loadSerializedProject(
 ): boolean {
   try {
     const data: SerializedProject = JSON.parse(raw);
-    const tcResult = yamlToModel(data.testCaseYaml);
-    if (!tcResult.ok || !isTestCase(tcResult.model)) return false;
+    const tcResult = yamlToModel(data.tckYaml);
+    if (!tcResult.ok || !isTck(tcResult.model)) return false;
 
     const testsMap = new Map<string, ScriptDefinition>();
     for (const [name, yaml] of Object.entries(data.tests)) {
@@ -109,11 +109,11 @@ export function loadSerializedProject(
     set({
       hasProject: true,
       projectName: data.projectName,
-      testCase: tcResult.model,
+      tck: tcResult.model,
       tests: testsMap,
       schemas: schemasMap,
       testOrder: data.testOrder ?? [],
-      activeFile: data.activeFile ?? { type: "test-case", name: "index" },
+      activeFile: data.activeFile ?? { type: "tck", name: "index" },
       dirty: new Map(),
       workspaceStates: data.workspaceStates ?? {},
     });
@@ -164,14 +164,14 @@ export function loadProjectFromLocalStorage(
   return false;
 }
 
-/** Load a TestLabDocument (test-case or standalone test) into the store. */
+/** Load a TestLabDocument (tck or standalone test) into the store. */
 export function loadDocumentIntoStore(
   doc: TestLabDocument,
   name: string | undefined,
   set: (state: Partial<ProjectState>) => void,
   get: () => ProjectState,
 ): void {
-  if (isTestCase(doc)) {
+  if (isTck(doc)) {
     const tc = doc;
     const projectName = name ?? tc.name ?? "Untitled";
     const testsMap = new Map<string, ScriptDefinition>();
@@ -202,28 +202,28 @@ export function loadDocumentIntoStore(
       }
     }
 
-    const cleanTc: TestCaseDefinition = {
+    const cleanTc: TckDefinition = {
       ...tc,
       name: projectName,
-      tests: buildTestCaseTestsArray(order),
+      tests: buildTckTestsArray(order),
     };
 
     set({
       hasProject: true,
       projectName,
       projectGeneration: get().projectGeneration + 1,
-      testCase: cleanTc,
+      tck: cleanTc,
       tests: testsMap,
       testOrder: order,
       schemas: new Map(),
-      activeFile: { type: "test-case", name: "index" },
+      activeFile: { type: "tck", name: "index" },
       dirty: new Map(),
       workspaceStates: {},
     });
   } else if (isTest(doc)) {
     const script = doc as ScriptDefinition;
     const projectName = name ?? script.name ?? "Untitled";
-    const tc = createEmptyTestCase();
+    const tc = createEmptyTck();
     tc.name = projectName;
     tc.tests = [{ test: script.name }];
 
@@ -231,7 +231,7 @@ export function loadDocumentIntoStore(
       hasProject: true,
       projectName,
       projectGeneration: get().projectGeneration + 1,
-      testCase: tc,
+      tck: tc,
       tests: new Map([[script.name, script]]),
       testOrder: [script.name],
       schemas: new Map(),

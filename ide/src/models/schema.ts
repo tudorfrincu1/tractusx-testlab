@@ -28,7 +28,7 @@
 
 export const ScriptKind = {
   TEST: "test",
-  TEST_CASE: "test-case",
+  TCK: "tck",
 } as const;
 export type ScriptKind = (typeof ScriptKind)[keyof typeof ScriptKind];
 
@@ -206,8 +206,8 @@ export interface StandardRef {
   version?: string;
 }
 
-export interface TestCaseDefinition {
-  kind: typeof ScriptKind.TEST_CASE;
+export interface TckDefinition {
+  kind: typeof ScriptKind.TCK;
   name: string;
   version?: string;
   dataspace_version?: string;
@@ -220,10 +220,10 @@ export interface TestCaseDefinition {
   tests: (ScriptDefinition | string | TestRef)[];
 }
 
-export type TestLabDocument = ScriptDefinition | TestCaseDefinition;
+export type TestLabDocument = ScriptDefinition | TckDefinition;
 
-export function isTestCase(doc: TestLabDocument): doc is TestCaseDefinition {
-  return doc.kind === ScriptKind.TEST_CASE;
+export function isTck(doc: TestLabDocument): doc is TckDefinition {
+  return doc.kind === ScriptKind.TCK;
 }
 
 export function isTest(doc: TestLabDocument): doc is ScriptDefinition {
@@ -249,10 +249,10 @@ export function createEmptyTest(): ScriptDefinition {
   };
 }
 
-export function createEmptyTestCase(): TestCaseDefinition {
+export function createEmptyTck(): TckDefinition {
   return {
-    kind: ScriptKind.TEST_CASE,
-    name: "new-test-case",
+    kind: ScriptKind.TCK,
+    name: "new-tck",
     version: "1.0",
     tests: [],
   };

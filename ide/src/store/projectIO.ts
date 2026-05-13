@@ -22,8 +22,8 @@
 // It was reviewed and tested by a human committer.
 
 import JSZip from "jszip";
-import type { TestCaseDefinition, ScriptDefinition } from "../models/schema";
-import { isTestCase, isTest } from "../models/schema";
+import type { TckDefinition, ScriptDefinition } from "../models/schema";
+import { isTck, isTest } from "../models/schema";
 import { modelToYaml } from "../sync/modelToYaml";
 import { yamlToModel } from "../sync/yamlToModel";
 import type { SchemaFile } from "./useProjectStore";
@@ -37,7 +37,7 @@ export { importExampleFolder } from "./importExample";
 
 export async function exportProjectZip(
   projectName: string,
-  testCase: TestCaseDefinition,
+  tck: TckDefinition,
   tests: Map<string, ScriptDefinition>,
   schemas: Map<string, SchemaFile>,
   testOrder: string[],
@@ -46,8 +46,8 @@ export async function exportProjectZip(
   const root = zip.folder(projectName);
   if (!root) return;
 
-  // index.yaml — the test case root
-  root.file(INDEX_FILE, modelToYaml(testCase));
+  // index.yaml — the TCK root
+  root.file(INDEX_FILE, modelToYaml(tck));
 
   // tests/ folder
   const testsFolder = root.folder("tests");
@@ -78,7 +78,7 @@ export async function exportProjectZip(
 
 export interface ImportedProject {
   projectName: string;
-  testCase: TestCaseDefinition;
+  tck: TckDefinition;
   tests: Map<string, ScriptDefinition>;
   schemas: Map<string, SchemaFile>;
   testOrder: string[];
@@ -99,7 +99,7 @@ export async function importProjectZip(file: File): Promise<ImportedProject | nu
 
   const indexYaml = await indexFile.async("text");
   const tcResult = yamlToModel(indexYaml);
-  if (!tcResult.ok || !isTestCase(tcResult.model)) return null;
+  if (!tcResult.ok || !isTck(tcResult.model)) return null;
 
   // Read tests/ folder
   const tests = new Map<string, ScriptDefinition>();
@@ -123,8 +123,8 @@ export async function importProjectZip(file: File): Promise<ImportedProject | nu
     }
   }
 
-  // Preserve order from testCase.tests[] if available
-  const orderedFromTc = extractOrderFromTestCase(tcResult.model, tests);
+  // Preserve order from tck.tests[] if available
+  const orderedFromTc = extractOrderFromTck(tcResult.model, tests);
   const finalOrder = orderedFromTc.length > 0 ? orderedFromTc : testOrder;
 
   // Read schemas/ folder
@@ -144,7 +144,7 @@ export async function importProjectZip(file: File): Promise<ImportedProject | nu
 
   return {
     projectName,
-    testCase: tcResult.model,
+    tck: tcResult.model,
     tests,
     schemas,
     testOrder: finalOrder,
@@ -179,8 +179,8 @@ function findRootPrefix(entries: string[]): string {
   return allMatch ? prefix : "";
 }
 
-function extractOrderFromTestCase(
-  tc: TestCaseDefinition,
+function extractOrderFromTck(
+  tc: TckDefinition,
   available: Map<string, ScriptDefinition>,
 ): string[] {
   const order: string[] = [];
@@ -198,7 +198,7 @@ function extractOrderFromTestCase(
       }
     }
   }
-  // Add any tests not referenced in test case
+  // Add any tests not referenced in TCK
   for (const name of available.keys()) {
     if (!order.includes(name)) order.push(name);
   }

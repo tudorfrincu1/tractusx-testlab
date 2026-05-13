@@ -34,8 +34,8 @@ import {
   populateWorkspaceFromModel,
   collectWorkspaceVariables,
 } from "../BlockEditor/blockDefinitions";
-import type { ScriptDefinition, TestLabDocument, TestCaseDefinition } from "../../models/schema";
-import { isTest, isTestCase } from "../../models/schema";
+import type { ScriptDefinition, TestLabDocument, TckDefinition } from "../../models/schema";
+import { isTest, isTck } from "../../models/schema";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,7 +125,7 @@ export function BlocklyWorkspace() {
       isUpdatingFromStore.current = true;
 
       // Create root block based on kind
-      const rootType = modelKind === "test-case" ? "test_case_root" : "test_root";
+      const rootType = modelKind === "tck" ? "tck_root" : "test_root";
       const rootBlock = ws.newBlock(rootType);
       rootBlock.initSvg();
       rootBlock.render();
@@ -137,8 +137,8 @@ export function BlocklyWorkspace() {
         rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-      } else if (isTestCase(currentModel)) {
-        rootBlock.setFieldValue(currentModel.name || "my-test-case", "NAME");
+      } else if (isTck(currentModel)) {
+        rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
       }
@@ -244,11 +244,11 @@ export function BlocklyWorkspace() {
         }
         populateWorkspaceFromModel(ws, rootBlock, model, catalog);
       }
-    } else if (isTestCase(model)) {
-      const tc = model as TestCaseDefinition;
-      const rootBlock = ws.getBlocksByType("test_case_root", false)[0];
+    } else if (isTck(model)) {
+      const tc = model as TckDefinition;
+      const rootBlock = ws.getBlocksByType("tck_root", false)[0];
       if (rootBlock) {
-        rootBlock.setFieldValue(tc.name || "my-test-case", "NAME");
+        rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
         rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
         rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
 

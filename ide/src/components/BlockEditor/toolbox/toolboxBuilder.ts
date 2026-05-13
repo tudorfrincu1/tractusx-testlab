@@ -117,7 +117,7 @@ function buildPhaseGroups(catalog: BlockCatalog): object[] {
 }
 
 export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables?: string[]): object {
-  if (kind === "test-case") {
+  if (kind === "tck") {
     const serviceCategories = [...buildCategoryMap(catalog).values()];
     return {
       kind: "categoryToolbox",

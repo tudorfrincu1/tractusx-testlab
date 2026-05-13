@@ -21,8 +21,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { TestCaseDefinition, ScriptDefinition, TestRef } from "../models/schema";
-import { isTestCase, isTest, isTestRef } from "../models/schema";
+import type { TckDefinition, ScriptDefinition, TestRef } from "../models/schema";
+import { isTck, isTest, isTestRef } from "../models/schema";
 import { yamlToModel } from "../sync/yamlToModel";
 import type { SchemaFile } from "./useProjectStore";
 import type { ImportedProject } from "./projectIO";
@@ -46,19 +46,19 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
   if (isTest(tcResult.model)) {
     return {
       projectName: tcResult.model.name,
-      testCase: {
-        kind: "test-case" as const,
+      tck: {
+        kind: "tck" as const,
         name: tcResult.model.name,
         version: tcResult.model.version,
         tests: [{ test: tcResult.model.name }],
-      } as TestCaseDefinition,
+      } as TckDefinition,
       tests: new Map([[tcResult.model.name, tcResult.model]]),
       schemas: new Map(),
       testOrder: [tcResult.model.name],
     };
   }
 
-  if (!isTestCase(tcResult.model)) return null;
+  if (!isTck(tcResult.model)) return null;
   const tc = tcResult.model;
 
   // Collect test file paths from test refs
@@ -95,7 +95,7 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
     }
   }
 
-  // Rewrite test refs in the test case to use clean names
+  // Rewrite test refs in the TCK to use clean names
   const cleanTests = tc.tests.map((entry) => {
     if (isTestRef(entry)) {
       const cleanName = pathToName.get(entry.test);
@@ -148,7 +148,7 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
 
   return {
     projectName: tc.name,
-    testCase: tc,
+    tck: tc,
     tests,
     schemas,
     testOrder,
@@ -156,12 +156,12 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
 }
 
 function deriveTestOrder(
-  testCase: TestCaseDefinition,
+  tck: TckDefinition,
   tests: Map<string, ScriptDefinition>,
   fallbackOrder: string[],
 ): string[] {
   const available = new Set(tests.keys());
-  const refs = testCase.tests
+  const refs = tck.tests
     .filter((entry): entry is TestRef => isTestRef(entry))
     .map((entry, index) => ({
       name: entry.test,

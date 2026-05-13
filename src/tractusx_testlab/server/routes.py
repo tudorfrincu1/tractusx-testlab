@@ -41,9 +41,12 @@ from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
 from tractusx_sdk.extensions.testlab.server.mock_registry import get_mock
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
 
+from tractusx_testlab.server.streaming import streaming_router
+
 _logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/testlab", tags=["testlab"])
+router.include_router(streaming_router)
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -69,9 +72,9 @@ async def upload_package(
     player: TestlabPlayer = Depends(_get_player),
     storage: PackageStorage = Depends(_get_storage),
 ) -> JSONResponse:
-    """Upload a .testpkg archive."""
-    if not file.filename or not file.filename.endswith(".testpkg"):
-        raise HTTPException(400, "File must be a .testpkg archive")
+    """Upload a .tckpkg archive."""
+    if not file.filename or not file.filename.endswith(".tckpkg"):
+        raise HTTPException(400, "File must be a .tckpkg archive")
 
     data = await file.read()
     max_bytes = player._config.max_upload_bytes
@@ -113,7 +116,7 @@ async def run_test(
     player: TestlabPlayer = Depends(_get_player),
     storage: PackageStorage = Depends(_get_storage),
 ) -> JSONResponse:
-    """Execute a test case from an uploaded package or a YAML path.
+    """Execute a TCK from an uploaded package or a YAML path.
 
     Body: ``{"package_id": "...", "runtime_vars": {...}}``
     or    ``{"path": "...", "runtime_vars": {...}}``

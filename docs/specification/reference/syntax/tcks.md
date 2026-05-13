@@ -17,16 +17,16 @@ SPDX-License-Identifier: CC-BY-4.0
 
 -->
 
-# Test Cases (`kind: test-case`)
+# TCKs (`kind: tck`)
 
-A **test case** is a manifest that groups multiple [tests](tests.md) under shared variables. Tests are referenced by file path via `"!include"` directives, inline definition, or library import.
+A **TCK** is a manifest that groups multiple [tests](tests.md) under shared variables. Tests are referenced by file path via `"!include"` directives, inline definition, or library import.
 
 ---
 
 ## Structure
 
 ```yaml
-kind: test-case
+kind: tck
 name: "connector_regression"
 version: "2.0"
 description: "Full regression for saturn connectors"
@@ -47,9 +47,9 @@ tests:
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `kind` | `string` | Recommended | auto-detected | Must be `test-case`. |
-| `name` | `string` | **Yes** | — | Identifier for the test case. Used in logs and package manifests. |
-| `version` | `string` | No | `"1.0"` | Semantic version of the test case. |
+| `kind` | `string` | Recommended | auto-detected | Must be `tck`. |
+| `name` | `string` | **Yes** | — | Identifier for the TCK. Used in logs and package manifests. |
+| `version` | `string` | No | `"1.0"` | Semantic version of the TCK. |
 | `description` | `string` | No | — | Human-readable description. |
 | `shared_variables` | `dict` | No | — | Variables shared across all tests in this case. Override individual test defaults. |
 | `tests` | `list` | **Yes** | — | Ordered list of tests to execute. Entries can be `"!include"` file references, inline definitions, or `import` directives. |
@@ -63,7 +63,7 @@ Tests can be included in three ways:
 
 ### 1. `"!include"` Directive (string)
 
-A string starting with `"!include "` followed by a relative file path. The parser resolves the file relative to the test case YAML and loads it as a test definition.
+A string starting with `"!include "` followed by a relative file path. The parser resolves the file relative to the TCK YAML and loads it as a test definition.
 
 ```yaml
 tests:
@@ -73,7 +73,7 @@ tests:
 
 ### 2. Inline Definition
 
-A test can be defined directly inside the test case:
+A test can be defined directly inside the TCK:
 
 ```yaml
 tests:
@@ -113,7 +113,7 @@ tests:
 
 ## Shared Variables
 
-Shared variables are declared at the test case level and are available to all tests within the case. They override individual test defaults but are themselves overridden by runtime `--var` flags.
+Shared variables are declared at the TCK level and are available to all tests within the case. They override individual test defaults but are themselves overridden by runtime `--var` flags.
 
 ```yaml
 shared_variables:

@@ -32,7 +32,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 from tractusx_sdk.extensions.testlab.models.enums import JobStatus
-from tractusx_sdk.extensions.testlab.models.results import TestCaseResult
+from tractusx_sdk.extensions.testlab.models.results import TestCaseResult as TckResult  # SDK alias
 
 
 class JobEvent(BaseModel):
@@ -63,7 +63,7 @@ class Job(BaseModel):
     job_id: str
     status: JobStatus = JobStatus.QUEUED
     package_name: Optional[str] = None
-    test_case_id: Optional[str] = None
+    tck_id: Optional[str] = None
     runtime_vars: dict = Field(default_factory=dict)
     memory: JobMemory = Field(default_factory=JobMemory)
     created_at: datetime = Field(default_factory=datetime.now)
@@ -73,5 +73,5 @@ class Job(BaseModel):
     current_script: Optional[str] = None
     current_step: Optional[str] = None
     waiting_for: Optional[str] = None
-    result: Optional[TestCaseResult] = None
+    result: Optional[TckResult] = None
     error: Optional[str] = None

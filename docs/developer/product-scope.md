@@ -27,11 +27,11 @@ This page defines what TestLab delivers, what MVP does not cover, and how the ID
 
 ## Product mission
 
-TestLab enables teams to author, version, compile, and execute certification test cases for Tractus-X related standards with a visual workflow for domain experts and a deterministic runtime for automation.
+TestLab enables teams to author, version, compile, and execute certification TCKs for Tractus-X related standards with a visual workflow for domain experts and a deterministic runtime for automation.
 
 The product has two integrated components:
 
-1. IDE (authoring): users configure tests with reusable blocks and test-case structure.
+1. IDE (authoring): users configure tests with reusable blocks and tck structure.
 2. Python compiler and runner (execution): YAML is validated, compiled, and executed against the SUT with structured feedback.
 
 ## MVP scope
@@ -40,13 +40,13 @@ The product has two integrated components:
 
 | Area | In scope definition |
 |---|---|
-| Test authoring | Create and maintain test cases in the IDE, including setup, execution steps, and teardown. |
+| Test authoring | Create and maintain TCKs in the IDE, including setup, execution steps, and teardown. |
 | Domain usability | Support non-technical users through labeled blocks, defaults, and guided structure. |
 | YAML generation | Generate YAML from the IDE model and keep it synchronized with authoring state. |
 | Compilation | Validate syntax and structural constraints before execution. |
-| Execution | Run test cases in defined order with prerequisite-aware workflows. |
+| Execution | Run TCKs in defined order with prerequisite-aware workflows. |
 | Validation | Validate inbound and outbound API interactions, payloads, assertions, and process outcomes. |
-| Reuse | Reuse capabilities (blocks/step patterns/templates) across test cases and standards. |
+| Reuse | Reuse capabilities (blocks/step patterns/templates) across TCKs and standards. |
 | Versioning | Support versioned standard profiles and extension via additive capabilities. |
 | Traceability | Provide execution feedback that links outcomes back to tests and steps. |
 | Determinism | Ensure reproducible runs given the same inputs, ordering, and SUT behavior. |
@@ -67,7 +67,7 @@ The product has two integrated components:
 | Term | Definition |
 |---|---|
 | Test case | Ordered container of tests that defines shared context, prerequisites, and execution intent for one certification scenario. |
-| Test | Executable unit within a test case, composed of setup, execution steps, assertions, and optional teardown/export logic. |
+| Test | Executable unit within a TCK, composed of setup, execution steps, assertions, and optional teardown/export logic. |
 | Capability | Reusable functional building block that encodes a repeatable behavior pattern (for example, asset creation or schema validation). |
 | Block | Visual IDE representation of a capability or structural element, mapped to typed step data in YAML. |
 | Prerequisite | Condition or upstream output required before a step or test can execute safely and meaningfully. |
@@ -80,7 +80,7 @@ The product has two integrated components:
 
 The lifecycle is one continuous chain from visual authoring to actionable feedback:
 
-1. Author in IDE: user assembles test case/test logic using blocks and explicit ordering.
+1. Author in IDE: user assembles TCK/test logic using blocks and explicit ordering.
 2. Produce YAML: IDE serializes the model into YAML for portability and review.
 3. Compile: compiler validates structure, references, and executable consistency.
 4. Execute: runner orchestrates setup, execution, validation, and teardown against the SUT.
@@ -112,7 +112,7 @@ Execution semantics are strict because certification flows depend on prerequisit
 | Prerequisites are explicit | A step/test cannot run if required inputs or upstream outputs are missing. |
 | Setup harmonization is mandatory | Setup semantics must be consistent across reusable capabilities and standards. |
 | Failure handling is deterministic | Hard prerequisite failures stop dependent execution paths and surface clear errors. |
-| Reuse must preserve behavior | Reused capability blocks keep stable contracts across test cases. |
+| Reuse must preserve behavior | Reused capability blocks keep stable contracts across TCKs. |
 
 ## Standard versioning strategy
 
@@ -122,8 +122,8 @@ TestLab supports standards that evolve over time (for example, yearly revisions)
 
 1. Maintain a stable base capability set for cross-version reuse.
 2. Add version-specific extensions as additive capability profiles.
-3. Keep compatibility boundaries explicit so older test cases remain executable.
-4. Version test cases and capability packages together for traceable evolution.
+3. Keep compatibility boundaries explicit so older TCKs remain executable.
+4. Version TCKs and capability packages together for traceable evolution.
 
 ### Practical model
 
@@ -131,7 +131,7 @@ TestLab supports standards that evolve over time (for example, yearly revisions)
 |---|---|
 | Base capabilities | Common behaviors reused across multiple standard versions. |
 | Version extension | Additional or adjusted capabilities for a specific standard release. |
-| Test case mapping | Explicit link between test case version and capability profile version. |
+| Test case mapping | Explicit link between TCK version and capability profile version. |
 
 ## Validation model
 
@@ -191,7 +191,7 @@ sequenceDiagram
 | Goal | Scope expectation |
 |---|---|
 | Usability for non-technical users | Domain-focused block labels, safe defaults, and minimal plumbing exposure. |
-| Traceability | Every failed or passed outcome can be traced to test case, test, and step intent. |
+| Traceability | Every failed or passed outcome can be traced to TCK, test, and step intent. |
 | Determinism | Given the same configuration and SUT behavior, runs produce reproducible outcomes. |
 
 ## Acceptance criteria: scope is clear

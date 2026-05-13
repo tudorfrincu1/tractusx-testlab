@@ -23,11 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block } from "blockly";
-import type { TestCaseDefinition, TestRef } from "../../../models/schema";
+import type { TckDefinition, TestRef } from "../../../models/schema";
 import { readValueBlockAsString } from "./helpers";
 
-export function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
-  const name = root.getFieldValue("NAME") || "my-test-case";
+export function workspaceToTck(root: Block): Partial<TckDefinition> {
+  const name = root.getFieldValue("NAME") || "my-tck";
   const version = root.getFieldValue("VERSION") || "1.0";
   const description = root.getFieldValue("DESCRIPTION") || "";
 
@@ -69,11 +69,11 @@ export function workspaceToTestCase(root: Block): Partial<TestCaseDefinition> {
   }
 
   return {
-    kind: "test-case",
+    kind: "tck",
     name,
     version,
     description,
     preconditions: preconditions.length > 0 ? preconditions : undefined,
     tests,
-  } as Partial<TestCaseDefinition>;
+  } as Partial<TckDefinition>;
 }

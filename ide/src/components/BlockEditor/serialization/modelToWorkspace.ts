@@ -25,9 +25,9 @@
 import type { Block, Workspace } from "blockly";
 import type {
   TestLabDocument,
-  TestCaseDefinition,
+  TckDefinition,
 } from "../../../models/schema";
-import { isTestCase, isTest, isTestRef } from "../../../models/schema";
+import { isTck, isTest, isTestRef } from "../../../models/schema";
 import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
 import { deriveTestLabel } from "../blocks/icons";
 import {
@@ -45,8 +45,8 @@ export function populateWorkspaceFromModel(
   model: TestLabDocument,
   catalog: BlockCatalog
 ) {
-  if (isTestCase(model)) {
-    populateTestCase(ws, root, model);
+  if (isTck(model)) {
+    populateTck(ws, root, model);
   } else if (isTest(model)) {
     populateTest(ws, root, model, catalog);
   }
@@ -73,7 +73,7 @@ export function populateWorkspaceFromModel(
   }
 }
 
-function populateTestCase(ws: Workspace, root: Block, tc: TestCaseDefinition) {
+function populateTck(ws: Workspace, root: Block, tc: TckDefinition) {
   if (tc.preconditions) {
     const preBlocks: Block[] = [];
     for (const pre of tc.preconditions) {

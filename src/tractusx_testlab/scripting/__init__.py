@@ -22,6 +22,6 @@
 
 from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
 from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript, TestCase
+from tractusx_sdk.extensions.testlab.scripting.script import TestScript, TestCase as Tck  # SDK alias
 
-__all__ = ["YamlParser", "StepRegistry", "TestScript", "TestCase"]
+__all__ = ["YamlParser", "StepRegistry", "TestScript", "Tck"]

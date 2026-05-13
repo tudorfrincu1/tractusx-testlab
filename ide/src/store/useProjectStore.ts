@@ -22,11 +22,11 @@
 // It was reviewed and tested by a human committer.
 
 import { create } from "zustand";
-import type { TestCaseDefinition } from "../models/schema";
-import { createEmptyTestCase, createEmptyTest } from "../models/schema";
+import type { TckDefinition } from "../models/schema";
+import { createEmptyTck, createEmptyTest } from "../models/schema";
 import { modelToYaml } from "../sync/modelToYaml";
 import { exportProjectZip, downloadFile } from "./projectIO";
-import { uniqueName, buildTestCaseTestsArray } from "./helpers";
+import { uniqueName, buildTckTestsArray } from "./helpers";
 import { getAggregatedVariables as computeAggregatedVariables, getTestSummaries as computeTestSummaries } from "./selectors";
 import type { AggregatedVariable, TestSummary } from "./selectors";
 import { saveProjectToLocalStorage, loadProjectFromLocalStorage, loadDocumentIntoStore } from "./persistence";
@@ -38,20 +38,20 @@ const INDEX_FILE = "index";
 
 export const useProjectStore = create<ProjectState>((set, get) => {
 
-  function syncTestCaseArray() {
-    const { testCase, testOrder } = get();
-    const updated: TestCaseDefinition = {
-      ...testCase,
-      tests: buildTestCaseTestsArray(testOrder),
+  function syncTckArray() {
+    const { tck, testOrder } = get();
+    const updated: TckDefinition = {
+      ...tck,
+      tests: buildTckTestsArray(testOrder),
     };
-    set({ testCase: updated });
+    set({ tck: updated });
   }
 
   return {
   hasProject: false,
-  projectName: "new-test-case",
+  projectName: "new-tck",
   projectGeneration: 0,
-  testCase: createEmptyTestCase(),
+  tck: createEmptyTck(),
   tests: new Map(),
   schemas: new Map(),
   testOrder: [],
@@ -60,18 +60,18 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   workspaceStates: {},
 
   createProject: (name) => {
-    const projectName = name ?? "new-test-case";
-    const tc = createEmptyTestCase();
+    const projectName = name ?? "new-tck";
+    const tc = createEmptyTck();
     tc.name = projectName;
     set({
       hasProject: true,
       projectName,
       projectGeneration: get().projectGeneration + 1,
-      testCase: tc,
+      tck: tc,
       tests: new Map(),
       schemas: new Map(),
       testOrder: [],
-      activeFile: { type: "test-case", name: INDEX_FILE },
+      activeFile: { type: "tck", name: INDEX_FILE },
       dirty: new Map(),
       workspaceStates: {},
     });
@@ -90,7 +90,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     const nextOrder = [...testOrder, testName];
 
     set({ tests: next, testOrder: nextOrder });
-    syncTestCaseArray();
+    syncTckArray();
     get().saveToLocalStorage();
     return testName;
   },
@@ -102,11 +102,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     const nextOrder = testOrder.filter((n) => n !== name);
     const nextActive =
       activeFile?.type === "test" && activeFile.name === name
-        ? { type: "test-case" as const, name: INDEX_FILE }
+        ? { type: "tck" as const, name: INDEX_FILE }
         : activeFile;
 
     set({ tests: next, testOrder: nextOrder, activeFile: nextActive });
-    syncTestCaseArray();
+    syncTckArray();
     get().saveToLocalStorage();
   },
 
@@ -134,7 +134,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     }
 
     set({ tests: next, testOrder: nextOrder, activeFile: nextActive, dirty: dirtyMap });
-    syncTestCaseArray();
+    syncTckArray();
     get().saveToLocalStorage();
   },
 
@@ -153,7 +153,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     const nextOrder = [...get().testOrder, copyName];
 
     set({ tests: next, testOrder: nextOrder });
-    syncTestCaseArray();
+    syncTckArray();
     get().saveToLocalStorage();
     return copyName;
   },
@@ -168,7 +168,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     next.splice(newIndex, 0, name);
 
     set({ testOrder: next });
-    syncTestCaseArray();
+    syncTckArray();
     get().saveToLocalStorage();
   },
 
@@ -180,8 +180,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     get().markDirty(name);
     get().saveToLocalStorage();
   },
-  updateTestCase: (model) => {
-    set({ testCase: model, projectName: model.name });
+  updateTck: (model) => {
+    set({ tck: model, projectName: model.name });
     get().markDirty(INDEX_FILE);
     get().saveToLocalStorage();
   },
@@ -204,7 +204,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     next.delete(name);
     const nextActive =
       activeFile?.type === "schema" && activeFile.name === name
-        ? { type: "test-case" as const, name: INDEX_FILE }
+        ? { type: "tck" as const, name: INDEX_FILE }
         : activeFile;
     set({ schemas: next, activeFile: nextActive });
     get().saveToLocalStorage();
@@ -239,36 +239,36 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   getSchemaNames: () => [...get().schemas.keys()],
 
   getActiveModel: () => {
-    const { activeFile, testCase, tests } = get();
+    const { activeFile, tck, tests } = get();
     if (!activeFile) return null;
-    if (activeFile.type === "test-case") return testCase;
+    if (activeFile.type === "tck") return tck;
     if (activeFile.type === "test") return tests.get(activeFile.name) ?? null;
     return null;
   },
 
   getAggregatedVariables: () => {
-    const { testCase, tests, testOrder } = get();
-    return computeAggregatedVariables(testCase, tests, testOrder);
+    const { tck, tests, testOrder } = get();
+    return computeAggregatedVariables(tck, tests, testOrder);
   },
   getTestSummaries: () => {
-    const { testCase, tests, testOrder } = get();
-    return computeTestSummaries(testCase, tests, testOrder);
+    const { tck, tests, testOrder } = get();
+    return computeTestSummaries(tck, tests, testOrder);
   },
-  updateTestCaseField: (field, value) => {
-    const testCase = { ...get().testCase, [field]: value };
-    set({ testCase });
-    syncTestCaseArray();
+  updateTckField: (field, value) => {
+    const tck = { ...get().tck, [field]: value };
+    set({ tck });
+    syncTckArray();
     get().markDirty(INDEX_FILE);
     get().saveToLocalStorage();
   },
   exportZip: async () => {
-    const { projectName, testCase, tests, schemas, testOrder } = get();
-    await exportProjectZip(projectName, testCase, tests, schemas, testOrder);
+    const { projectName, tck, tests, schemas, testOrder } = get();
+    await exportProjectZip(projectName, tck, tests, schemas, testOrder);
   },
   exportFile: (name, type) => {
-    const { testCase, tests, schemas } = get();
-    if (type === "test-case") {
-      downloadFile(`${INDEX_FILE}.yaml`, modelToYaml(testCase), "application/x-yaml");
+    const { tck, tests, schemas } = get();
+    if (type === "tck") {
+      downloadFile(`${INDEX_FILE}.yaml`, modelToYaml(tck), "application/x-yaml");
     } else if (type === "test") {
       const model = tests.get(name);
       if (model) downloadFile(`${name}.yaml`, modelToYaml(model), "application/x-yaml");

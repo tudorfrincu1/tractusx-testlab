@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""CLI command for executing test cases."""
+"""CLI command for executing TCKs."""
 
 from __future__ import annotations
 
@@ -37,18 +37,18 @@ from tractusx_testlab.cli import app
 
 @app.command()
 def run(
-    target: Path = typer.Argument(..., help="Test case manifest (.yaml) or package (.testpkg)."),
+    target: Path = typer.Argument(..., help="TCK manifest (.yaml) or package (.tckpkg)."),
     config_file: Optional[Path] = typer.Option(
         None, "--config", "-c",
         help="YAML config file with variable overrides (e.g. saturn_tck_int.yaml).",
     ),
     player_keys: Optional[Path] = typer.Option(
         None, "--player-keys", "-k",
-        help="Directory with the player identity (required for .testpkg files).",
+        help="Directory with the player identity (required for .tckpkg files).",
     ),
     compiler_pub: Optional[Path] = typer.Option(
         None, "--compiler-pub",
-        help="Path to the compiler's signing.pub (required for .testpkg files).",
+        help="Path to the compiler's signing.pub (required for .tckpkg files).",
     ),
     var: Optional[list[str]] = typer.Option(
         None, "--var",
@@ -59,16 +59,16 @@ def run(
         help="Directory for log output. Defaults to ./logs in the current directory.",
     ),
 ) -> None:
-    """Load and execute a test case, printing results to stdout."""
+    """Load and execute a TCK, printing results to stdout."""
     from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
     from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
     from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 
     runtime_vars = _build_runtime_vars(config_file, var)
 
-    if target.suffix == ".testpkg" and (player_keys is None or compiler_pub is None):
+    if target.suffix == ".tckpkg" and (player_keys is None or compiler_pub is None):
         typer.echo(
-            "Error: --player-keys and --compiler-pub are required for .testpkg files.",
+            "Error: --player-keys and --compiler-pub are required for .tckpkg files.",
             err=True,
         )
         raise typer.Exit(1)
@@ -76,12 +76,12 @@ def run(
     config = TestlabConfig(logs_dir=logs_dir or Path.cwd() / "logs")
     player = TestlabPlayer(config=config)
 
-    test_case = _load_test_case(target, player_keys, compiler_pub)
-    total_steps = test_case.total_steps()
+    tck = _load_tck(target, player_keys, compiler_pub)
+    total_steps = tck.total_steps()
 
     _print_run_header(target, config_file, config, runtime_vars, total_steps)
 
-    result = _execute_with_progress(player, test_case, runtime_vars, total_steps)
+    result = _execute_with_progress(player, tck, runtime_vars, total_steps)
 
     _print_run_results(result, StepStatus, ScriptStatus)
 
@@ -119,17 +119,17 @@ def _build_runtime_vars(
     return runtime_vars
 
 
-def _load_test_case(
+def _load_tck(
     target: Path,
     player_keys: Optional[Path],
     compiler_pub: Optional[Path],
 ):
-    """Load a test case from YAML or encrypted .testpkg."""
+    """Load a TCK from YAML or encrypted .tckpkg."""
     from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
 
     loader = Loader()
 
-    if target.suffix == ".testpkg":
+    if target.suffix == ".tckpkg":
         from tractusx_sdk.extensions.testlab.security.crypto.keygen import load_private_key, load_public_key
 
         priv = load_private_key(player_keys / "encryption.pem")
@@ -162,8 +162,8 @@ def _print_run_header(
     typer.echo()
 
 
-def _execute_with_progress(player, test_case, runtime_vars: dict[str, str], total_steps: int):
-    """Run the test case with a rich progress bar and return the result."""
+def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_steps: int):
+    """Run the TCK with a rich progress bar and return the result."""
     from rich.progress import (
         BarColumn,
         Progress,
@@ -197,7 +197,7 @@ def _execute_with_progress(player, test_case, runtime_vars: dict[str, str], tota
 
         player.monitor.add_callback(_on_progress)
         return asyncio.run(
-            player.run_test_case(test_case, runtime_vars=runtime_vars or None)
+            player.run_tck(tck, runtime_vars=runtime_vars or None)
         )
 
 

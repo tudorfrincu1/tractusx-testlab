@@ -160,14 +160,14 @@ Expected output from `testlab --help`:
 ```
 Usage: testlab [OPTIONS] COMMAND [ARGS]...
 
-  Tractus-X Testlab CLI — compile, encrypt, validate, and run test cases.
+  Tractus-X Testlab CLI — compile, encrypt, validate, and run TCKs.
 
 Commands:
-  compile     Compile a YAML test script into an encrypted, signed .testpkg archive.
-  decompile   Decrypt and verify an encrypted .testpkg, extracting the original YAML.
-  info        Display the manifest of a compiled .testpkg package.
+  compile     Compile a YAML test script into an encrypted, signed .tckpkg archive.
+  decompile   Decrypt and verify an encrypted .tckpkg, extracting the original YAML.
+  info        Display the manifest of a compiled .tckpkg package.
   keygen      Generate RSA (encryption) + Ed25519 (signing) key pairs.
-  run         Load and execute a test case, printing results to stdout.
+  run         Load and execute a TCK, printing results to stdout.
   validate    Validate a YAML test script without compiling.
 ```
 

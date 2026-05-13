@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
 from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
@@ -62,5 +63,12 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
     set_callback_manager(app.state.callbacks)
 
     app.include_router(router)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    )
 
     return app

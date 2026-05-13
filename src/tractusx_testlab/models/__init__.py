@@ -35,7 +35,7 @@ from tractusx_sdk.extensions.testlab.models.definitions import (
     ImportDefinition,
     ListenerDefinition,
     ServiceDefinition,
-    TestCaseDefinition,
+    TestCaseDefinition as TckDefinition,  # SDK alias
     VariableDefinition,
 )
 from tractusx_testlab.models.definitions import (  # local overrides
@@ -48,7 +48,6 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     FailurePolicy,
     JobStatus,
     PackageFormat,
-    ScriptKind,
     ScriptStatus,
     SdkCallMode,
     ServiceState,
@@ -56,6 +55,7 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     StepStatus,
     ValueSource,
 )
+from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
 from tractusx_sdk.extensions.testlab.models.exceptions import (
     DuplicateServiceError,
@@ -83,7 +83,7 @@ from tractusx_sdk.extensions.testlab.models.results import (
     HttpRequest,
     HttpResponse,
     ScriptResult,
-    TestCaseResult,
+    TestCaseResult as TckResult,  # SDK alias
 )
 from tractusx_sdk.extensions.testlab.models.security import (
     Base64Bytes,
@@ -119,7 +119,7 @@ __all__ = [
     "ScriptDefinition",
     "ServiceDefinition",
     "StepDefinition",
-    "TestCaseDefinition",
+    "TckDefinition",
     "VariableDefinition",
     # security
     "Base64Bytes",
@@ -141,7 +141,7 @@ __all__ = [
     "HttpResponse",
     "ScriptResult",
     "StepResult",
-    "TestCaseResult",
+    "TckResult",
     # jobs
     "Job",
     "JobEvent",

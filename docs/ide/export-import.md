@@ -34,7 +34,7 @@ Click the **Export** button in the top bar to open the Export Dialog.
 The dialog shows two panels:
 
 - **Left panel** — File tree showing all project files:
-    - `index.yaml` (test case)
+    - `index.yaml` (TCK)
     - `tests/` folder with all test files
     - `schemas/` folder with all schema files
 - **Right panel** — Preview of the selected file's content
@@ -80,8 +80,8 @@ There are two ways to import:
 
 | Format | What happens |
 |--------|-------------|
-| `.zip` | Extracts the full project — test case, tests, and schemas |
-| `.yaml` / `.yml` (test case) | Loads as a project with the test case and referenced tests |
+| `.zip` | Extracts the full project — TCK, tests, and schemas |
+| `.yaml` / `.yml` (TCK) | Loads as a project with the TCK and referenced tests |
 | `.yaml` / `.yml` (single test) | Loads as a minimal project with one test |
 
 ## Auto-Save & Local Storage

@@ -24,7 +24,7 @@
 
 Sub-modules:
     execution — core player, step context, and execution monitor
-    loading   — test case loading, dependency ordering, parameter resolution
+    loading   — TCK loading, dependency ordering, parameter resolution
     jobs      — job lifecycle management
 """
 

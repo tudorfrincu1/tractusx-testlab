@@ -31,40 +31,40 @@ const DATASPACE_VERSIONS = ["saturn", "R25.03", "R25.06", "R24.12", "R24.08"] as
 /* ── Main Component ─────────────────────────────────────────────────────── */
 
 export function MetadataSection() {
-  const testCase = useProjectStore((s) => s.testCase);
-  const updateField = useProjectStore((s) => s.updateTestCaseField);
+  const tck = useProjectStore((s) => s.tck);
+  const updateField = useProjectStore((s) => s.updateTckField);
 
   return (
     <SectionCard title="Metadata">
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px 16px" }}>
         <InlineField
           label="Name"
-          value={testCase.name}
+          value={tck.name}
           onChange={(v) => updateField("name", v)}
         />
         <VersionField
           label="Version"
-          value={testCase.version ?? ""}
+          value={tck.version ?? ""}
           onChange={(v) => updateField("version", v)}
         />
         <SelectField
           label="Dataspace Version"
-          value={testCase.dataspace_version ?? ""}
+          value={tck.dataspace_version ?? ""}
           options={DATASPACE_VERSIONS}
           onChange={(v) => updateField("dataspace_version", v || undefined)}
         />
         <InlineField
           label="Author"
-          value={testCase.author ?? ""}
+          value={tck.author ?? ""}
           onChange={(v) => updateField("author", v || undefined)}
           placeholder="team or person"
         />
         <div style={{ gridColumn: "2 / 4" }}>
           <InlineField
             label="Description"
-            value={testCase.description ?? ""}
+            value={tck.description ?? ""}
             onChange={(v) => updateField("description", v || undefined)}
-            placeholder="What does this test case verify?"
+            placeholder="What does this TCK verify?"
             isMultiline
           />
         </div>
@@ -72,12 +72,12 @@ export function MetadataSection() {
 
       <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
         <StandardsField
-          values={testCase.standards ?? []}
+          values={tck.standards ?? []}
           onChange={(v) => updateField("standards", v.length > 0 ? v : undefined)}
         />
         <TagField
           label="Tags"
-          values={testCase.tags ?? []}
+          values={tck.tags ?? []}
           onChange={(v) => updateField("tags", v.length > 0 ? v : undefined)}
           placeholder="e.g. integration"
           chipColor="rgba(15, 118, 110, 0.25)"

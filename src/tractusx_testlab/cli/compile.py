@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""CLI commands for compiling, decompiling, and inspecting .testpkg archives."""
+"""CLI commands for compiling, decompiling, and inspecting .tckpkg archives."""
 
 from __future__ import annotations
 
@@ -48,14 +48,14 @@ def compile(
     ),
     output: Optional[Path] = typer.Option(
         None, "--output", "-o",
-        help="Output .testpkg path. Defaults to <script_name>.testpkg.",
+        help="Output .tckpkg path. Defaults to <script_name>.tckpkg.",
     ),
     version: Optional[str] = typer.Option(
         None, "--version", "-v",
         help="Connector version for version-specific validation.",
     ),
 ) -> None:
-    """Compile a YAML test script into an encrypted, signed .testpkg archive."""
+    """Compile a YAML test script into an encrypted, signed .tckpkg archive."""
     from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
     from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
     from tractusx_sdk.extensions.testlab.security.crypto.keygen import _fingerprint
@@ -72,19 +72,19 @@ def compile(
         typer.echo(f"  Authorized player: {pub_path.name} ({fingerprint[:16]}...)")
 
     compiler = Compiler()
-    out = output or script.with_suffix(".testpkg")
+    out = output or script.with_suffix(".tckpkg")
 
-    # Detect whether input is a test case manifest or a single test
+    # Detect whether input is a TCK manifest or a single test
     import yaml as _yaml
-    from tractusx_sdk.extensions.testlab.player.loading.loader import _detect_kind
-    from tractusx_sdk.extensions.testlab.models import ScriptKind
+    from tractusx_testlab.player.loading.loader import _detect_kind
+    from tractusx_testlab.models.enums import ScriptKind
     with open(script, "r", encoding="utf-8") as script_handle:
         raw = _yaml.safe_load(script_handle)
-    is_test_case = isinstance(raw, dict) and _detect_kind(raw) == ScriptKind.TEST_CASE
+    is_tck = isinstance(raw, dict) and _detect_kind(raw) == ScriptKind.TCK
 
     try:
-        if is_test_case:
-            manifest, validation = compiler.compile_test_case(
+        if is_tck:
+            manifest, validation = compiler.compile_tck(
                 manifest_path=script,
                 compiler_identity=compiler_identity,
                 recipient_keys=recipient_keys,
@@ -116,9 +116,9 @@ def compile(
 
 @app.command()
 def info(
-    package: Path = typer.Argument(..., help="Path to a .testpkg archive."),
+    package: Path = typer.Argument(..., help="Path to a .tckpkg archive."),
 ) -> None:
-    """Display the manifest of a compiled .testpkg package."""
+    """Display the manifest of a compiled .tckpkg package."""
     from tractusx_sdk.extensions.testlab.compiler.packager import Packager
 
     manifest = Packager.read_manifest(package)
@@ -127,7 +127,7 @@ def info(
 
 @app.command()
 def decompile(
-    package: Path = typer.Argument(..., help="Path to the .testpkg archive to decompile."),
+    package: Path = typer.Argument(..., help="Path to the .tckpkg archive to decompile."),
     player_keys: Path = typer.Option(
         ..., "--player-keys", "-k",
         help="Directory containing the player identity (encryption.pem).",
@@ -145,7 +145,7 @@ def decompile(
         help="Print decrypted YAML to stdout instead of writing a file.",
     ),
 ) -> None:
-    """Decrypt and verify an encrypted .testpkg, extracting the original YAML."""
+    """Decrypt and verify an encrypted .tckpkg, extracting the original YAML."""
     from tractusx_sdk.extensions.testlab.compiler.packager import Packager
     from tractusx_sdk.extensions.testlab.security.crypto.keygen import load_private_key, load_public_key
 

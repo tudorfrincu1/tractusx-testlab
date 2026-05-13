@@ -270,9 +270,10 @@ html, body, #root {
   stroke-width: 2px !important;
 }
 
-/* Toolbox category icon dots */
+/* Toolbox category collapse/expand arrows — white on dark background */
 .blocklyTreeIcon {
-  display: none !important;
+  color: #ffffff !important;
+  border-color: transparent transparent transparent #ffffff !important;
 }
 
 /* Flyout blocks */

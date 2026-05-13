@@ -28,8 +28,8 @@ import {
   workspaceToModel,
   populateWorkspaceFromModel,
 } from "./blockDefinitions";
-import type { TestLabDocument, ScriptDefinition, TestCaseDefinition } from "../../models/schema";
-import { isTest, isTestCase } from "../../models/schema";
+import type { TestLabDocument, ScriptDefinition, TckDefinition } from "../../models/schema";
+import { isTest, isTck } from "../../models/schema";
 import type { WorkspaceRefs } from "./workspaceTypes";
 
 /** Dispose every block chained to a statement input on `root`. */
@@ -136,11 +136,11 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);
         }
-      } else if (isTestCase(model)) {
-        const tc = model as TestCaseDefinition;
-        const rootBlock = ws.getBlocksByType("test_case_root", false)[0];
+      } else if (isTck(model)) {
+        const tc = model as TckDefinition;
+        const rootBlock = ws.getBlocksByType("tck_root", false)[0];
         if (rootBlock) {
-          rootBlock.setFieldValue(tc.name || "my-test-case", "NAME");
+          rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
           rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
           rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
 

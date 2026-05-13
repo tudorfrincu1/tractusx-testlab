@@ -38,10 +38,11 @@ from tractusx_sdk.extensions.testlab.models import (
     ImportDefinition,
     ListenerDefinition,
     ScriptDefinition,
-    ScriptKind,
+    ScriptKind as _SdkScriptKind,
     SdkCallMode,
-    TestCaseDefinition,
+    TestCaseDefinition as TckDefinition,  # SDK alias
 )
+from tractusx_testlab.models.enums import ScriptKind
 
 from tractusx_sdk.extensions.testlab.scripting._builders import (
     parse_depends_on,
@@ -58,7 +59,7 @@ _INCLUDE_PREFIX = "!include "
 
 
 class YamlParser:
-    """Parses YAML test scripts and test-case manifests into definition models."""
+    """Parses YAML test scripts and TCK manifests into definition models."""
 
     @staticmethod
     def parse_script(path: Path) -> ScriptDefinition:
@@ -66,17 +67,17 @@ class YamlParser:
         return YamlParser._build_script(data)
 
     @staticmethod
-    def parse_test_case(path: Path) -> TestCaseDefinition:
+    def parse_tck(path: Path) -> TckDefinition:
         data = YamlParser._load_yaml(path)
-        return YamlParser._build_test_case(data, base_dir=path.parent)
+        return YamlParser._build_tck(data, base_dir=path.parent)
 
     @staticmethod
     def parse_script_from_dict(data: dict) -> ScriptDefinition:
         return YamlParser._build_script(data)
 
     @staticmethod
-    def parse_test_case_from_dict(data: dict, base_dir: Optional[Path] = None) -> TestCaseDefinition:
-        return YamlParser._build_test_case(data, base_dir=base_dir)
+    def parse_tck_from_dict(data: dict, base_dir: Optional[Path] = None) -> TckDefinition:
+        return YamlParser._build_tck(data, base_dir=base_dir)
 
     @staticmethod
     def _load_yaml(path: Path) -> dict:
@@ -87,7 +88,7 @@ class YamlParser:
         return data
 
     @staticmethod
-    def _build_test_case(data: dict, base_dir: Optional[Path] = None) -> TestCaseDefinition:
+    def _build_tck(data: dict, base_dir: Optional[Path] = None) -> TckDefinition:
         shared_vars = parse_variables(data.get(keys.VARIABLES, {}))
 
         tests_raw = data.get(keys.TESTS, [])
@@ -129,8 +130,8 @@ class YamlParser:
         tests = resolve_file_dependencies(tests, base_dir, YamlParser.parse_script)
         infer_output_dependencies(tests)
 
-        return TestCaseDefinition(
-            kind=ScriptKind.TEST_CASE,
+        return TckDefinition(
+            kind=ScriptKind.TCK,
             name=data.get(keys.NAME, defaults.NAME),
             version=data.get(keys.VERSION, defaults.VERSION),
             description=data.get(keys.DESCRIPTION),

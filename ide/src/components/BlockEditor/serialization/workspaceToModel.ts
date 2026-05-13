@@ -35,7 +35,7 @@ import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
 import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
 import { toRuntimeStepType } from "./stepTypeAliases";
 import { parseUnsupportedParams } from "./unsupportedStepPayload";
-import { workspaceToTestCase } from "./workspaceToTestCase";
+import { workspaceToTck } from "./workspaceToTck";
 import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
@@ -43,9 +43,9 @@ export function workspaceToModel(
   workspace: Workspace,
   catalog: BlockCatalog
 ): Partial<TestLabDocument> {
-  const testCaseRoot = workspace.getBlocksByType("test_case_root", false)[0];
-  if (testCaseRoot) {
-    return workspaceToTestCase(testCaseRoot);
+  const tckRoot = workspace.getBlocksByType("tck_root", false)[0];
+  if (tckRoot) {
+    return workspaceToTck(tckRoot);
   }
 
   const rootBlock = workspace.getBlocksByType("test_root", false)[0];

@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Result models — execution-time structures for steps, scripts, and test cases."""
+"""Result models — execution-time structures for steps, scripts, and TCKs."""
 
 from __future__ import annotations
 
@@ -113,8 +113,8 @@ class ScriptResult(BaseModel):
     error: Optional[str] = None
 
 
-class TestCaseResult(BaseModel):
-    test_case_id: str = ""
+class TckResult(BaseModel):
+    tck_id: str = ""
     package_name: str = ""
     status: ScriptStatus = ScriptStatus.IDLE
     scripts: list[ScriptResult] = Field(default_factory=list)
@@ -139,5 +139,5 @@ class TestCaseResult(BaseModel):
         return sum(len(script.steps) for script in self.scripts)
 
     @property
-    def test_case_name(self) -> str:
-        return self.test_case_id
+    def tck_name(self) -> str:
+        return self.tck_id

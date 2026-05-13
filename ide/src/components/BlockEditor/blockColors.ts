@@ -29,7 +29,7 @@
 export const blockColors = {
   /** Root / structural blocks */
   root: "#1E293B",
-  rootTestCase: "#1E293B",
+  rootTck: "#1E293B",
 
   /** Variable system */
   variableDef: "#5B21B6",

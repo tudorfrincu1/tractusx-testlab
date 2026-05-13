@@ -69,7 +69,7 @@ All three derive from a shared in-memory model (`TestLabDocument`) managed via Z
 │        ├───▶│   useProjectStore (Zustand)    │                   │
 │             │                                │                   │
 │             │   tests: Map<name, Script>     │                   │
-│             │   testCase: TestCaseDefinition  │                  │
+│             │   tck: TckDefinition  │                  │
 │             │   schemas: Map<name, Schema>    │                  │
 │             │   activeFile: ActiveFile        │                  │
 │             │   workspaceStates: per-file     │                  │
@@ -153,7 +153,7 @@ Additionally, `isUpdatingFromStore` ref in BlocklyWorkspace suppresses change ev
 │Explorer│  Center Panel           │  Right Panel      │
 │(resize │  (BlocklyWorkspace      │  (YamlEditor      │
 │ 160-   │   or SchemaEditor       │   or Graph        │
-│ 500px) │   or TestCaseDashboard) │   or hidden)      │
+│ 500px) │   or TckDashboard) │   or hidden)      │
 │        │                         │                   │
 ├────────┴─────────────────────────┴───────────────────┤
 │  StatusBar (24px fixed)                              │
@@ -166,7 +166,7 @@ The center panel content depends on the active file type:
 | Active file type | Center panel | Right panel options |
 |---|---|---|
 | `test` | BlocklyWorkspace | YAML Editor, Dependency Graph |
-| `test-case` | TestCaseDashboard | YAML Editor |
+| `tck` | TckDashboard | YAML Editor |
 | `schema` | SchemaEditor (read-only JSON) | Hidden |
 | None | WelcomeScreen | Hidden |
 
@@ -182,7 +182,7 @@ If no saved state exists (first time opening a file), the workspace is built fro
 
 ## Project persistence
 
-The entire project (test case, all tests, schemas, test order) is serialized to `localStorage` under the key `"testlab-project"`. Auto-save runs on a 1-second debounce after any model change.
+The entire project (TCK, all tests, schemas, test order) is serialized to `localStorage` under the key `"testlab-project"`. Auto-save runs on a 1-second debounce after any model change.
 
 The project can also be exported as a ZIP file with this structure:
 

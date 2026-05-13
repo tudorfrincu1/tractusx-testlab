@@ -30,7 +30,7 @@ import typer
 
 app = typer.Typer(
     name="testlab",
-    help="Tractus-X Testlab CLI — compile, encrypt, validate, and run test cases.",
+    help="Tractus-X Testlab CLI — compile, encrypt, validate, and run TCKs.",
     add_completion=False,
 )
 

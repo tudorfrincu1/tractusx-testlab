@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Definition models — authoring / compile-time structures for scripts and test cases."""
+"""Definition models — authoring / compile-time structures for scripts and TCKs."""
 
 from __future__ import annotations
 
@@ -34,11 +34,11 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
     AssertionType,
     FailurePolicy,
-    ScriptKind,
     SdkCallMode,
     ServiceType,
     ValueSource,
 )
+from tractusx_testlab.models.enums import ScriptKind
 
 
 class DependencyRef(BaseModel):
@@ -117,8 +117,8 @@ class ImportDefinition(BaseModel):
     override: Optional[dict] = None
 
 
-class TestCaseDefinition(BaseModel):
-    kind: ScriptKind = ScriptKind.TEST_CASE
+class TckDefinition(BaseModel):
+    kind: ScriptKind = ScriptKind.TCK
     name: str
     version: str = "1.0"
     description: Optional[str] = None

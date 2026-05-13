@@ -127,4 +127,4 @@ class StepPhase(str, enum.Enum):
 class ScriptKind(str, enum.Enum):
     """Explicit type discriminator for YAML files, following the Kubernetes ``kind:`` convention."""
     TEST = "test"
-    TEST_CASE = "test-case"
+    TCK = "tck"

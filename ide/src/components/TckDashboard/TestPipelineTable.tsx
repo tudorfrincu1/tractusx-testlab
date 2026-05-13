@@ -40,7 +40,7 @@ interface TestPipelineTableProps {
 export function TestPipelineTable({ onSelectFile }: TestPipelineTableProps) {
   const tests = useProjectStore((s) => s.tests);
   const testOrder = useProjectStore((s) => s.testOrder);
-  const testCase = useProjectStore((s) => s.testCase);
+  const tck = useProjectStore((s) => s.tck);
   const addTest = useProjectStore((s) => s.addTest);
   const removeTest = useProjectStore((s) => s.removeTest);
   const duplicateTest = useProjectStore((s) => s.duplicateTest);
@@ -48,7 +48,7 @@ export function TestPipelineTable({ onSelectFile }: TestPipelineTableProps) {
 
   const summaries = useMemo(
     () => useProjectStore.getState().getTestSummaries(),
-    [tests, testOrder, testCase],
+    [tests, testOrder, tck],
   );
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);

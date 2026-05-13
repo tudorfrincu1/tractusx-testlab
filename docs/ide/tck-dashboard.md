@@ -21,13 +21,13 @@
 <!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
 <!-- It was reviewed and tested by a human committer. -->
 
-# Test Case Dashboard
+# TCK Dashboard
 
-The Test Case Dashboard appears when you select the `index.yaml` (test case) file in the Project Explorer. It provides an overview of your entire test pipeline.
+The TCK Dashboard appears when you select the `index.yaml` (TCK) file in the Project Explorer. It provides an overview of your entire test pipeline.
 
 ## Dashboard Header
 
-The header displays the test case name with version and dataspace version badges.
+The header displays the TCK name with version and dataspace version badges.
 
 ## Tabs
 
@@ -39,18 +39,18 @@ The Pipeline tab (default) shows three sections:
 
 #### Metadata Section
 
-Edit the test case's top-level properties:
+Edit the TCK's top-level properties:
 
 | Field | Description |
 |-------|-------------|
-| **Name** | Test case name (displayed in the top bar) |
+| **Name** | TCK name (displayed in the top bar) |
 | **Version** | Semantic version string |
 | **Dataspace Version** | Target dataspace version (e.g., `saturn`, `jupiter`) |
-| **Description** | Free-text description of what the test case validates |
+| **Description** | Free-text description of what the TCK validates |
 
 #### Variables Overview
 
-Lists all variables defined at the test-case level. Each variable shows:
+Lists all variables defined at the tck level. Each variable shows:
 
 - Variable name
 - Type (`str`, `int`, `bool`, etc.)
@@ -83,6 +83,6 @@ The Data Flow tab will show a visualization of how data flows between tests in t
 !!! note "Coming soon"
     The Data Flow tab is under development and will be available in a future release.
 
-## Editing the Test Case
+## Editing the TCK
 
 All metadata fields are editable directly in the dashboard. Changes sync to the YAML representation in real time — you can verify by switching to a test file and checking the generated output.

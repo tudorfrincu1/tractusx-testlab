@@ -52,7 +52,7 @@ export interface FlowData {
 export function buildDataFlow(
   testOrder: string[],
   tests: Map<string, ScriptDefinition>,
-  testCaseVariables: Record<string, unknown> | undefined,
+  tckVariables: Record<string, unknown> | undefined,
 ): FlowData {
   const nodes: FlowNode[] = [];
   const producerMap = new Map<string, string>();
@@ -67,7 +67,7 @@ export function buildDataFlow(
     const vars = [...new Set([...varsFromDefinitions, ...varsFromInputs])];
 
     for (const input of script.inputs ?? []) {
-      if (!input.source || input.source === "test-case") continue;
+      if (!input.source || input.source === "tck") continue;
       const producer = input.source.split(".")[0];
       if (!producer || producer === name) continue;
       const key = `${producer}→${name}`;
@@ -132,7 +132,7 @@ export function buildDataFlow(
     edges.push({ from, to, variables: [...vars] });
   }
 
-  const sharedVariables = testCaseVariables ? Object.keys(testCaseVariables) : [];
+  const sharedVariables = tckVariables ? Object.keys(tckVariables) : [];
 
   return { nodes, edges, sharedVariables };
 }

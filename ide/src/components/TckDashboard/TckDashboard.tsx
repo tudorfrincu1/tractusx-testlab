@@ -34,12 +34,12 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 
 type DashboardTab = "pipeline" | "dataflow";
 
-interface TestCaseDashboardProps {
+interface TckDashboardProps {
   onSelectFile: (file: ActiveFile) => void;
 }
 
-export function TestCaseDashboard({ onSelectFile }: TestCaseDashboardProps) {
-  const testCase = useProjectStore((s) => s.testCase);
+export function TckDashboard({ onSelectFile }: TckDashboardProps) {
+  const tck = useProjectStore((s) => s.tck);
   const [activeTab, setActiveTab] = useState<DashboardTab>("pipeline");
 
   return (
@@ -52,9 +52,9 @@ export function TestCaseDashboard({ onSelectFile }: TestCaseDashboardProps) {
     }}>
       {/* ── Header ─────────────────────────────────────────── */}
       <DashboardHeader
-        name={testCase.name}
-        version={testCase.version}
-        dataspaceVersion={testCase.dataspace_version}
+        name={tck.name}
+        version={tck.version}
+        dataspaceVersion={tck.dataspace_version}
       />
 
       {/* ── Tab bar ────────────────────────────────────────── */}

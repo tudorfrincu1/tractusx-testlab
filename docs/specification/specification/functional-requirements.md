@@ -32,7 +32,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | FR-AUTH-07 | Each step SHALL support an `on_failure` policy: `abort` (stop script), `continue` (proceed to next step), or `skip_rest` (skip remaining steps, run cleanup). Default: `abort`. | Must |
 | FR-AUTH-08 | Each step MAY specify a `timeout_s` value. If the step exceeds this timeout, it SHALL be treated as a failure. | Should |
 | FR-AUTH-09 | Scripts SHALL define an optional `cleanup` block — a list of steps that always execute regardless of prior step failures. | Must |
-| FR-AUTH-10 | Test cases SHALL be authored as YAML files (`test-case.yaml`) containing an ordered `tests` list and optionally `shared_variables` available to all tests. Test cases SHALL support importing predefined tests via `import:` with optional `override:` blocks. | Must |
+| FR-AUTH-10 | Test cases SHALL be authored as YAML files (`tck.yaml`) containing an ordered `tests` list and optionally `shared_variables` available to all tests. Test cases SHALL support importing predefined tests via `import:` with optional `override:` blocks. | Must |
 
 ## Expected Results / Assertions (FR-ASSERT)
 
@@ -41,7 +41,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | FR-ASSERT-01 | Each step MAY declare an `expect` block containing a list of assertions to evaluate against the step's output. | Must |
 | FR-ASSERT-02 | Assertions SHALL support the following types: `exact` (deep equality), `schema` (JSON Schema validation), `contains` (subset match), `regex` (pattern match), `status_code` (HTTP status comparison). | Must |
 | FR-ASSERT-03 | Each assertion SHALL declare a `severity`: `hard` (assertion failure = step failure) or `soft` (assertion failure = warning, step still passes). | Must |
-| FR-ASSERT-04 | Expected values SHALL be sourceable from three origins via the `source` field: `inline` (value embedded directly in YAML), `file` (loaded from a file path, resolved relative to `.testpkg` assets or local filesystem), `variable` (value is a `${var}` reference resolved from context). Default: `inline`. | Must |
+| FR-ASSERT-04 | Expected values SHALL be sourceable from three origins via the `source` field: `inline` (value embedded directly in YAML), `file` (loaded from a file path, resolved relative to `.tckpkg` assets or local filesystem), `variable` (value is a `${var}` reference resolved from context). Default: `inline`. | Must |
 | FR-ASSERT-05 | Inline values SHALL accept both native YAML structures and raw JSON strings. When a string value is valid JSON, the assertion engine SHALL auto-parse it before comparison. | Must |
 | FR-ASSERT-06 | Each assertion MAY specify a `field` property (dot-notation path with bracket indexing, e.g., `response.submodels[0].payload.catenaXId`) to target a specific field in the step output. When omitted, the assertion evaluates against the entire output. | Should |
 | FR-ASSERT-07 | Assertion results SHALL be recorded per step in `StepResult.assertions` and summarized per script in `ScriptResult.assertion_summary` (total, passed, failed_hard, failed_soft). | Must |
@@ -51,29 +51,29 @@ SPDX-License-Identifier: CC-BY-4.0
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-COMP-01 | The Compiler SHALL accept YAML source as a file path, string, or dict (for programmatic/API input). | Must |
-| FR-COMP-02 | Compilation SHALL validate all `${var}` references in step parameters. Every reference MUST match a declared variable or a `shared_variable` (in test cases). Unresolved references that are not declared `runtime: true` SHALL cause compilation failure. | Must |
+| FR-COMP-02 | Compilation SHALL validate all `${var}` references in step parameters. Every reference MUST match a declared variable or a `shared_variable` (in TCKs). Unresolved references that are not declared `runtime: true` SHALL cause compilation failure. | Must |
 | FR-COMP-03 | Compilation SHALL validate every `step.type` exists in the Step Registry for the script's declared `dataspace_version`. Missing step types SHALL cause compilation failure. | Must |
 | FR-COMP-04 | Compilation SHALL stamp metadata: SDK version, compilation timestamp, SHA-256 checksum. | Must |
 | FR-COMP-05 | Compilation failures SHALL produce a `ValidationResult` containing a list of errors and warnings with clear, actionable messages. | Must |
-| FR-COMP-06 | For test cases, the Compiler SHALL perform cross-test validation: shared variables must be consistent, and all tests must be individually valid. The Compiler SHALL resolve `import:` references from the library path and merge `override:` blocks. | Must |
+| FR-COMP-06 | For TCKs, the Compiler SHALL perform cross-test validation: shared variables must be consistent, and all tests must be individually valid. The Compiler SHALL resolve `import:` references from the library path and merge `override:` blocks. | Must |
 
 ## Packaging (FR-PKG)
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-PKG-01 | The Packager SHALL produce a `.testpkg` file — a ZIP archive containing: `manifest.yaml`, `scripts/` directory with compiled script YAML files, and an optional `assets/` directory with bundled files (schemas, sample data). | Must |
+| FR-PKG-01 | The Packager SHALL produce a `.tckpkg` file — a ZIP archive containing: `manifest.yaml`, `scripts/` directory with compiled script YAML files, and an optional `assets/` directory with bundled files (schemas, sample data). | Must |
 | FR-PKG-02 | The `manifest.yaml` SHALL contain: package name, version, SDK version, compilation timestamp, list of dataspace versions used across scripts, list of script names, and SHA-256 checksum. | Must |
-| FR-PKG-03 | The Packager SHALL support unpacking: `unpack(path) -> CompiledTestCase`. On unpack, the SHA-256 checksum SHALL be verified. Tampered packages SHALL be rejected. | Must |
-| FR-PKG-04 | A single `.testpkg` SHALL support bundling multiple tests (a test case). | Must |
-| FR-PKG-05 | File-sourced assertion values (schemas, expected payloads) SHALL be bundled in the `assets/` directory of the `.testpkg` and resolved at execution time via `StepContext.resolve_asset_path()`. | Must |
+| FR-PKG-03 | The Packager SHALL support unpacking: `unpack(path) -> CompiledTck`. On unpack, the SHA-256 checksum SHALL be verified. Tampered packages SHALL be rejected. | Must |
+| FR-PKG-04 | A single `.tckpkg` SHALL support bundling multiple tests (a TCK). | Must |
+| FR-PKG-05 | File-sourced assertion values (schemas, expected payloads) SHALL be bundled in the `assets/` directory of the `.tckpkg` and resolved at execution time via `StepContext.resolve_asset_path()`. | Must |
 
 ## Player / Execution (FR-PLAY)
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-PLAY-01 | The Player SHALL be a singleton instance (module-level), accessible as `testlab.player`. | Must |
-| FR-PLAY-02 | The Player SHALL load test packages from: `.testpkg` file path, raw YAML file/string (compile-on-load), or pre-compiled dict. | Must |
-| FR-PLAY-03 | On loading a `.testpkg`, the Player SHALL verify the SHA-256 checksum and emit a warning if the SDK version in the manifest differs from the running SDK version. It SHALL NOT hard-fail on SDK version mismatch. | Must |
+| FR-PLAY-02 | The Player SHALL load test packages from: `.tckpkg` file path, raw YAML file/string (compile-on-load), or pre-compiled dict. | Must |
+| FR-PLAY-03 | On loading a `.tckpkg`, the Player SHALL verify the SHA-256 checksum and emit a warning if the SDK version in the manifest differs from the running SDK version. It SHALL NOT hard-fail on SDK version mismatch. | Must |
 | FR-PLAY-04 | The Player SHALL execute scripts asynchronously using `asyncio`. | Must |
 | FR-PLAY-05 | For each script, the Player SHALL create an isolated `StepContext` initialized with the script's `dataspace_version`, declared variable defaults, and any provided `runtime_vars`. The context SHALL also hold a reference to the parent `Job`. | Must |
 | FR-PLAY-06 | Steps SHALL be executed sequentially in declared order. For each step, the Player SHALL: (1) resolve `${var}` references from the context, (2) look up the step implementation from the registry by `(step_type, dataspace_version)`, (3) execute with `asyncio.wait_for(timeout)`, (4) evaluate assertions from the `expect` block, (5) record the `StepResult` in the Monitor. | Must |
@@ -82,7 +82,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | FR-PLAY-09 | Cleanup steps SHALL always execute regardless of prior step outcomes. | Must |
 | FR-PLAY-10 | The Player SHALL support running multiple jobs concurrently (each in a separate `asyncio.Task` with an isolated `StepContext` and independent `Job` instance). | Should |
 | FR-PLAY-11 | The Player SHALL support cancellation by `job_id`. Cancellation SHALL transition the job to `CANCELLED`, stop execution after the current step completes, and run cleanup steps. | Should |
-| FR-PLAY-12 | For test cases, tests SHALL execute sequentially. Shared variables SHALL be propagated to each test's context. Each test SHALL have an isolated context (no variable leakage between tests beyond shared variables). Job memory SHALL be shared across all tests within the same job. | Must |
+| FR-PLAY-12 | For TCKs, tests SHALL execute sequentially. Shared variables SHALL be propagated to each test's context. Each test SHALL have an isolated context (no variable leakage between tests beyond shared variables). Job memory SHALL be shared across all tests within the same job. | Must |
 
 ## Job Lifecycle (FR-JOB)
 
@@ -102,9 +102,9 @@ SPDX-License-Identifier: CC-BY-4.0
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-MON-01 | The Monitor SHALL maintain in-memory state for all active and completed jobs, tests, and test case runs. | Must |
-| FR-MON-02 | The Monitor SHALL be queryable at any time: `get_job(job_id) -> Job`, `get_status(script_id) -> ScriptResult`, `get_current_step(script_id) -> StepResult`, `get_test_case_status(test_case_id) -> TestCaseResult`, `list_jobs(status?) -> list[Job]`, `list_runs() -> list`. | Must |
-| FR-MON-03 | The Monitor SHALL support event callbacks: `on_step_start`, `on_step_complete`, `on_script_complete`, `on_test_case_complete`, `on_failure`, `on_job_waiting`, `on_job_resumed`. Users SHALL be able to register async callbacks. | Should |
+| FR-MON-01 | The Monitor SHALL maintain in-memory state for all active and completed jobs, tests, and TCK runs. | Must |
+| FR-MON-02 | The Monitor SHALL be queryable at any time: `get_job(job_id) -> Job`, `get_status(script_id) -> ScriptResult`, `get_current_step(script_id) -> StepResult`, `get_tck_status(tck_id) -> TckResult`, `list_jobs(status?) -> list[Job]`, `list_runs() -> list`. | Must |
+| FR-MON-03 | The Monitor SHALL support event callbacks: `on_step_start`, `on_step_complete`, `on_script_complete`, `on_tck_complete`, `on_failure`, `on_job_waiting`, `on_job_resumed`. Users SHALL be able to register async callbacks. | Should |
 | FR-MON-04 | The Monitor SHALL be thread-safe (protected by `asyncio.Lock`). | Must |
 | FR-MON-05 | The Monitor SHALL expose a `SyncBackend` protocol interface for future persistence backends (e.g., PostgreSQL) to persist job state and memory across restarts. | Should |
 
@@ -113,8 +113,8 @@ SPDX-License-Identifier: CC-BY-4.0
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-LOG-01 | The logging system SHALL produce structured JSON-lines (`.jsonl`) log files. | Must |
-| FR-LOG-02 | Each log entry SHALL contain: `timestamp`, `level`, `test_case_id`, `script_id`, `script_name`, `dataspace_version`, `step_name`, `step_type`, `status`, `duration_ms`, `request`, `response`, `assertions`, `error`, `message`, `data`. | Must |
-| FR-LOG-03 | Log files SHALL be organized as: `logs/testlab/{test_case_name}/{YYYY-MM-DD}/{HH-MM-SS}_{test_case_id}.jsonl`. | Must |
+| FR-LOG-02 | Each log entry SHALL contain: `timestamp`, `level`, `tck_id`, `script_id`, `script_name`, `dataspace_version`, `step_name`, `step_type`, `status`, `duration_ms`, `request`, `response`, `assertions`, `error`, `message`, `data`. | Must |
+| FR-LOG-03 | Log files SHALL be organized as: `logs/testlab/{tck_name}/{YYYY-MM-DD}/{HH-MM-SS}_{tck_id}.jsonl`. | Must |
 | FR-LOG-04 | On completion, the log file SHALL be renamed with a `_PASS` or `_FAIL` suffix. | Should |
 | FR-LOG-05 | Console output SHALL provide a human-readable summary table (formatted like the existing TCK `print_summary` output). | Must |
 | FR-LOG-06 | Assertion results (including soft failures) SHALL be logged with their expected vs. actual values. | Must |
@@ -205,7 +205,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | FR-SRV-01 | The Player SHALL support **standalone mode** via a CLI command `testlab serve` that starts a FastAPI server on a configurable port (default: `8100`). The server SHALL expose job management endpoints (`/jobs`, `/jobs/{job_id}`, `/jobs/{job_id}/cancel`, `/jobs/{job_id}/memory`, `/jobs/{job_id}/events`), execution endpoints (`/run`), package management endpoints (`/packages`), and callback routes. | Must |
 | FR-SRV-02 | The Player SHALL support **embedded mode** via `TestlabPlayer.from_app(fastapi_app)`, which mounts the testlab routes as a sub-application on an existing FastAPI instance. The Player SHALL share the host application's lifecycle (startup/shutdown). | Must |
 | FR-SRV-03 | Dynamic API routes declared in YAML `listen` blocks SHALL be mountable and unmountable at runtime without restarting the server. In embedded mode, routes SHALL be mounted on the host application's router. | Should |
-| FR-SRV-04 | The server SHALL expose a `POST /api/v1/packages` endpoint that accepts `.testpkg` files via multipart form upload. Both encrypted and plain packages SHALL be accepted. The server SHALL validate the package structure (manifest presence, checksum if plain) and store it in a configurable storage directory (default: `~/.testlab/packages/`). On success, the response SHALL return the `package_id` (derived from `name-version`), name, version, format (`PLAIN` or `ENCRYPTED`), size, upload timestamp, and checksum. | Must |
+| FR-SRV-04 | The server SHALL expose a `POST /api/v1/packages` endpoint that accepts `.tckpkg` files via multipart form upload. Both encrypted and plain packages SHALL be accepted. The server SHALL validate the package structure (manifest presence, checksum if plain) and store it in a configurable storage directory (default: `~/.testlab/packages/`). On success, the response SHALL return the `package_id` (derived from `name-version`), name, version, format (`PLAIN` or `ENCRYPTED`), size, upload timestamp, and checksum. | Must |
 | FR-SRV-05 | The server SHALL expose `GET /api/v1/packages` (list all uploaded packages), `GET /api/v1/packages/{package_id}` (get metadata), and `DELETE /api/v1/packages/{package_id}` (remove a package). The `/run` endpoint SHALL accept a `package` field referencing either an uploaded `package_id` or a filesystem path. | Must |
 | FR-SRV-06 | Package storage SHALL be scoped per server instance. The storage directory SHALL be configurable via `--storage-dir <path>` CLI flag or `TESTLAB_STORAGE_DIR` environment variable. The server SHALL reject uploads that exceed a configurable maximum size (default: 50 MB, configurable via `--max-upload-size`). | Should |
 
@@ -213,10 +213,10 @@ SPDX-License-Identifier: CC-BY-4.0
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-SEC-01 | The Compiler SHALL encrypt the `.testpkg` payload **by default** using AES-256-GCM with a randomly generated 256-bit key. An explicit `--plain` flag SHALL disable encryption for local development use only. When `--plain` is used, the Compiler SHALL emit a warning that the package contains unprotected secrets. | Must |
+| FR-SEC-01 | The Compiler SHALL encrypt the `.tckpkg` payload **by default** using AES-256-GCM with a randomly generated 256-bit key. An explicit `--plain` flag SHALL disable encryption for local development use only. When `--plain` is used, the Compiler SHALL emit a warning that the package contains unprotected secrets. | Must |
 | FR-SEC-02 | The Compiler SHALL accept one or more `--authorize-player <public_key_file>` arguments. Each Player's RSA public key (2048-bit minimum) SHALL be used to wrap the AES content-encryption key via RSA-OAEP with SHA-256 padding. The resulting key blocks SHALL be stored in `manifest.yaml` under `security.authorized_players`. | Must |
 | FR-SEC-03 | The Compiler SHALL sign the package (manifest + encrypted payload) using Ed25519 with a `--signing-key <compiler_pem>` argument. The signature SHALL be stored in the archive as `signature.sig`. The Compiler's public key fingerprint SHALL be recorded in `security.compiler_id`. | Must |
-| FR-SEC-04 | The Player SHALL, on loading an encrypted `.testpkg`, locate its own `player_id` (public key fingerprint) in `security.authorized_players`. If not found, the Player SHALL abort with a clear `PackageAuthorizationError`. | Must |
+| FR-SEC-04 | The Player SHALL, on loading an encrypted `.tckpkg`, locate its own `player_id` (public key fingerprint) in `security.authorized_players`. If not found, the Player SHALL abort with a clear `PackageAuthorizationError`. | Must |
 | FR-SEC-05 | The Player SHALL decrypt the AES content-encryption key using its RSA private key (RSA-OAEP-SHA256), then decrypt `payload.enc` using AES-256-GCM. Decryption failures SHALL raise `PackageDecryptionError`. | Must |
 | FR-SEC-06 | The Player SHALL verify the Ed25519 signature against compiler public keys stored in the trust store (`~/.testlab/trusted_compilers/`). If no matching trusted compiler key is found, or if the signature is invalid, the Player SHALL abort with `PackageSignatureError`. | Must |
 | FR-SEC-07 | The CLI SHALL provide key management commands: `testlab keygen` (generate Player RSA key pair to `~/.testlab/keys/`), `testlab keygen --compiler` (generate Compiler Ed25519 + RSA key pair), and `testlab export-key --player` (export Player public key for sharing). | Must |

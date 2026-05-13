@@ -31,14 +31,14 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import LinkIcon from "@mui/icons-material/Link";
 
 export function VariablesOverview() {
-  const testCase = useProjectStore((s) => s.testCase);
+  const tck = useProjectStore((s) => s.tck);
   const tests = useProjectStore((s) => s.tests);
   const testOrder = useProjectStore((s) => s.testOrder);
-  const updateField = useProjectStore((s) => s.updateTestCaseField);
+  const updateField = useProjectStore((s) => s.updateTckField);
 
   const variables = useMemo(
     () => useProjectStore.getState().getAggregatedVariables(),
-    [testCase, tests, testOrder],
+    [tck, tests, testOrder],
   );
 
   if (variables.length === 0) {
@@ -52,7 +52,7 @@ export function VariablesOverview() {
   }
 
   const handleDefaultChange = (varName: string, newDefault: string) => {
-    const current = { ...(testCase.variables ?? {}) };
+    const current = { ...(tck.variables ?? {}) };
     const existing = current[varName] ?? variables.find((v) => v.name === varName)?.definition;
     if (!existing) return;
     current[varName] = { ...existing, default: newDefault || undefined };
@@ -92,15 +92,15 @@ function VariableRow({ variable, onDefaultChange }: {
   variable: AggregatedVariable;
   onDefaultChange: (value: string) => void;
 }) {
-  const { name, definition, usedBy, isTestCaseLevel } = variable;
+  const { name, definition, usedBy, isTckLevel } = variable;
 
   return (
     <tr style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
       {/* Name */}
       <td style={tdStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {isTestCaseLevel && (
-            <LinkIcon sx={{ fontSize: 13, color: theme.colors.primary, opacity: 0.7 }} titleAccess="Defined at test-case level" />
+          {isTckLevel && (
+            <LinkIcon sx={{ fontSize: 13, color: theme.colors.primary, opacity: 0.7 }} titleAccess="Defined at TCK level" />
           )}
           <code style={{ fontSize: 11, color: theme.colors.primaryLight }}>{name}</code>
         </div>

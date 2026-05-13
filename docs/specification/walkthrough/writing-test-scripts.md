@@ -19,7 +19,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Writing Test Scripts
 
-This section walks through creating YAML tests from scratch, organizing them into a test case, and bundling supporting assets.
+This section walks through creating YAML tests from scratch, organizing them into a TCK, and bundling supporting assets.
 
 ## Project Structure
 
@@ -33,7 +33,7 @@ my-connector-tests/
 ├── assets/
 │   └── schemas/
 │       └── serial-part-3.0.json       # JSON Schema for validation
-└── test-case.yaml                     # Test case definition (ties tests together)
+└── tck.yaml                     # Test case definition (ties tests together)
 ```
 
 ## Step 1 — Write the First Test Script
@@ -355,22 +355,22 @@ assets/schemas/serial-part-3.0.json
 }
 ```
 
-This file will be bundled into the `.testpkg` under `assets/schemas/` and referenced by assertions via `source: file` + `path: "schemas/serial-part-3.0.json"`.
+This file will be bundled into the `.tckpkg` under `assets/schemas/` and referenced by assertions via `source: file` + `path: "schemas/serial-part-3.0.json"`.
 
 ---
 
-## Step 4 — Create the Test Case Definition
+## Step 4 — Create the TCK Definition
 
-Create `test-case.yaml` at the project root — this ties tests together and defines shared variables that are inherited by all tests.
+Create `tck.yaml` at the project root — this ties tests together and defines shared variables that are inherited by all tests.
 
 ```yaml
-# test-case.yaml
+# tck.yaml
 name: "connector_e2e"
 version: "1.0"
-description: "End-to-end connector test case: provisioning, consumption, and submodel validation"
+description: "End-to-end connector TCK: provisioning, consumption, and submodel validation"
 
 # ─── Shared Variables ───────────────────────────────────────────────
-# Available to ALL tests in this test case.
+# Available to ALL tests in this TCK.
 # Tests can also declare their own variables (test-local).
 shared_variables:
   provider_url:
@@ -411,10 +411,10 @@ tests:
 
 ### Importing Predefined Tests
 
-Tests often repeat across test cases — only some parameters change. Instead of duplicating YAML files, you can **import** predefined tests from a test library and **override** specific values:
+Tests often repeat across TCKs — only some parameters change. Instead of duplicating YAML files, you can **import** predefined tests from a test library and **override** specific values:
 
 ```yaml
-# test-case.yaml — reusing predefined tests
+# tck.yaml — reusing predefined tests
 name: "connector_staging"
 version: "1.0"
 description: "Staging environment connector tests with custom BPN"
@@ -462,14 +462,14 @@ tests:
 | `import: "<library>/<test>@<version>"` | Import a predefined test from a registered test library |
 | `override.variables` | Override specific variable declarations (defaults, types, descriptions) |
 | `override.steps` | Override individual step parameters by step name |
-| `"!include tests/<file>.yaml"` | Include a local test file (relative to test case file) |
+| `"!include tests/<file>.yaml"` | Include a local test file (relative to TCK file) |
 
 The Compiler resolves imports at compile-time. Predefined tests are fetched from the test library path (configurable via `--library-path` or the `TESTLAB_LIBRARY_PATH` environment variable).
 
-### What the Test Case Does
+### What the TCK Does
 
 - **`shared_variables`** — Defined once, available to all tests. Avoids duplicating OAuth2 credentials and URLs across tests.
-- **`"!include"`** — String directive that loads external test files into the test case. Tests are still validated individually.
+- **`"!include"`** — String directive that loads external test files into the TCK. Tests are still validated individually.
 - **`import`** — References a predefined test from a shared library. Supports `override` to customize variables or steps without modifying the original.
 - **Execution order** — Tests run sequentially. Each test gets an isolated `StepContext` seeded with the shared variables (no variable leakage between tests).
 
@@ -485,7 +485,7 @@ my-connector-tests/
 ├── assets/
 │   └── schemas/
 │       └── serial-part-3.0.json       # Assertion schema
-└── test-case.yaml                     # Test case definition
+└── tck.yaml                     # Test case definition
 ```
 
 You're ready to compile. Continue to [Compiling Packages](compiling-packages.md).

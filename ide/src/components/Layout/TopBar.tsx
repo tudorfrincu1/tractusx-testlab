@@ -37,6 +37,9 @@ import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { ToolbarButton } from "./TopBarButtons";
 import { TopBarExampleMenu } from "./TopBarExampleMenu";
+import { ExecuteButton } from "../ExecutionControls/ExecuteButton";
+import { BackendSettings } from "../ExecutionControls/BackendSettings";
+import "../ExecutionControls/ExecutionControls.css";
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName);
@@ -70,7 +73,7 @@ export function TopBar() {
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
-          activeFile: { type: "test-case", name: "index" },
+          activeFile: { type: "tck", name: "index" },
           dirty: new Map(),
         });
         useProjectStore.getState().saveToLocalStorage();
@@ -99,7 +102,7 @@ export function TopBar() {
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
-          activeFile: { type: "test-case", name: "index" },
+          activeFile: { type: "tck", name: "index" },
           dirty: new Map(),
           workspaceStates: {},
         });
@@ -173,19 +176,19 @@ export function TopBar() {
               padding: "2px 8px",
               borderRadius: 4,
               background:
-                activeFile.type === "test-case"
+                activeFile.type === "tck"
                   ? "rgba(255, 215, 0, 0.15)"
                   : activeFile.type === "schema"
                     ? "rgba(66, 165, 245, 0.15)"
                     : theme.colors.bgLighter,
               color:
-                activeFile.type === "test-case"
+                activeFile.type === "tck"
                   ? theme.colors.primary
                   : activeFile.type === "schema"
                     ? "#42a5f5"
                     : theme.colors.textMuted,
               border: `1px solid ${
-                activeFile.type === "test-case"
+                activeFile.type === "tck"
                   ? theme.colors.primary
                   : activeFile.type === "schema"
                     ? "#42a5f5"
@@ -196,14 +199,14 @@ export function TopBar() {
               gap: 4,
             }}
           >
-            {activeFile.type === "test-case" ? (
+            {activeFile.type === "tck" ? (
               <PlaylistAddIcon sx={{ fontSize: 12 }} />
             ) : activeFile.type === "schema" ? (
               <InsertDriveFileIcon sx={{ fontSize: 12 }} />
             ) : (
               <ScienceIcon sx={{ fontSize: 12 }} />
             )}
-            {activeFile.type === "test-case" ? "index.yaml" : `${activeFile.name}.${activeFile.type === "schema" ? "json" : "yaml"}`}
+            {activeFile.type === "tck" ? "index.yaml" : `${activeFile.name}.${activeFile.type === "schema" ? "json" : "yaml"}`}
           </span>
         )}
         </>
@@ -213,6 +216,9 @@ export function TopBar() {
       {/* Right: actions */}
       {hasProject && (
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <ExecuteButton />
+        <BackendSettings />
+        <div className="execution-divider" />
         <ToolbarButton
           label="New Project"
           icon={<NoteAddIcon sx={{ fontSize: 14 }} />}

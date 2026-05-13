@@ -28,12 +28,12 @@
 import {
   type TestLabDocument,
   type ScriptDefinition,
-  type TestCaseDefinition,
+  type TckDefinition,
   type StepDefinition,
   ScriptKind,
   AssertionOperator,
   FailurePolicy,
-  isTestCase,
+  isTck,
   isTestRef,
   isTemplateStep,
 } from "./schema";
@@ -66,8 +66,8 @@ export function validate(doc: TestLabDocument): ValidationError[] {
     errors.push({ path: "kind", message: `Invalid kind: ${doc.kind}`, severity: "error" });
   }
 
-  if (isTestCase(doc)) {
-    validateTestCase(doc, errors);
+  if (isTck(doc)) {
+    validateTck(doc, errors);
   } else {
     validateScript(doc as ScriptDefinition, errors);
   }
@@ -200,7 +200,7 @@ function validateStep(
   }
 }
 
-function validateTestCase(tc: TestCaseDefinition, errors: ValidationError[]) {
+function validateTck(tc: TckDefinition, errors: ValidationError[]) {
   if (!tc.tests || tc.tests.length === 0) {
     errors.push({ path: "tests", message: "At least one test is required", severity: "warning" });
   }

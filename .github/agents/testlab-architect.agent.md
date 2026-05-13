@@ -30,6 +30,7 @@ Update `.github/architect-kb/knowledge-base.md` when:
 - A lesson is learned from a failed approach or a surprising success → append under `## Lessons Learned`
 - A previously open question is resolved → update `## Open Architectural Questions`
 - A new unresolved trade-off appears → add to `## Open Architectural Questions`
+- A new architectural decision is made (approved by the human) → also create an ADR file (see below)
 
 ### How to update
 
@@ -40,6 +41,45 @@ Use the `edit` tool to modify `.github/architect-kb/knowledge-base.md` directly.
 - Use the sequential numbering (`AD-n`, `PAT-n`, etc.) — always increment, never reuse
 - Keep entries concise — one decision, one pattern, one lesson per entry
 - Always include a date (`YYYY-MM-DD`) on new entries
+
+### Architecture Decision Records (ADRs)
+
+When a new architectural decision is made and approved by the human, you MUST:
+
+1. **Append** to the knowledge base under `## Architectural Decisions` (as before)
+2. **Create** an ADR file at `docs/developer/decision-records/ADR-NNNN-slug.md`
+
+ADR file naming:
+- Sequential numbering: `ADR-0001`, `ADR-0002`, etc. — check existing files for the next number
+- Slug: lowercase-kebab-case summary of the decision (e.g., `phase-based-toolbox-grouping`)
+
+ADR format (Michael Nygard):
+```markdown
+# ADR-NNNN: Title
+
+## Status
+Accepted | Proposed | Deprecated | Superseded by ADR-NNNN
+
+## Date
+YYYY-MM-DD
+
+## Context
+What motivates this decision?
+
+## Decision
+What did we decide?
+
+## Consequences
+What becomes easier or harder?
+```
+
+Rules for ADRs:
+- Apache-2.0 license header (HTML comment) at top
+- AI subtitle after license header
+- Under 100 lines
+- Short factual sentences — no marketing
+- Update `docs/developer/decision-records/index.md` table with the new entry
+- Update `mkdocs.yml` nav with the new file
 
 
 

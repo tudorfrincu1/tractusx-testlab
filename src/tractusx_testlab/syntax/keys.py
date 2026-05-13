@@ -42,7 +42,7 @@ CLEANUP = "cleanup"
 SERVICES = "services"
 LISTEN = "listen"
 
-# -- Test case ----------------------------------------------------------------
+# -- TCK ----------------------------------------------------------------------
 TESTS = "tests"
 DEPENDS_ON = "depends_on"
 OUTPUTS = "outputs"

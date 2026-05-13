@@ -41,11 +41,11 @@ class JobManager:
     def __init__(self) -> None:
         self._jobs: dict[str, Job] = {}
 
-    def create(self, test_case_id: str, package_name: Optional[str] = None) -> Job:
+    def create(self, tck_id: str, package_name: Optional[str] = None) -> Job:
         """Create a new job in QUEUED state."""
         job = Job(
             job_id=uuid.uuid4().hex,
-            test_case_id=test_case_id,
+            tck_id=tck_id,
             package_name=package_name,
             status=JobStatus.QUEUED,
             created_at=datetime.now(timezone.utc),

@@ -32,13 +32,13 @@ import OutputIcon from "@mui/icons-material/Output";
 import ScienceIcon from "@mui/icons-material/Science";
 
 export function DataFlowView() {
-  const testCase = useProjectStore((s) => s.testCase);
+  const tck = useProjectStore((s) => s.tck);
   const tests = useProjectStore((s) => s.tests);
   const testOrder = useProjectStore((s) => s.testOrder);
 
   const flow = useMemo(
-    () => buildDataFlow(testOrder, tests, testCase.variables),
-    [testOrder, tests, testCase.variables],
+    () => buildDataFlow(testOrder, tests, tck.variables),
+    [testOrder, tests, tck.variables],
   );
 
   if (flow.nodes.length === 0) {

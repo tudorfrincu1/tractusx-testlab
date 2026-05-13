@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from tractusx_sdk.extensions.testlab.models import (
     ScriptDefinition,
-    TestCaseDefinition,
+    TestCaseDefinition as TckDefinition,  # SDK alias
 )
 
 
@@ -87,12 +87,12 @@ class TestScript:
         return len(self.definition.steps)
 
 
-class TestCase:
-    """Runtime wrapper for a test case definition."""
+class Tck:
+    """Runtime wrapper for a TCK definition."""
 
     __slots__ = ("definition", "_scripts")
 
-    def __init__(self, definition: TestCaseDefinition):
+    def __init__(self, definition: TckDefinition):
         self.definition = definition
         self._scripts: list[TestScript] = []
         for test_definition in definition.tests:
