@@ -26,10 +26,12 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
@@ -67,8 +69,17 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
+
+    @app.get("/testlab/health", tags=["testlab"])
+    async def health() -> JSONResponse:
+        """Lightweight health check for IDE connectivity validation."""
+        try:
+            version = importlib.metadata.version("tractusx-testlab")
+        except importlib.metadata.PackageNotFoundError:
+            version = "unknown"
+        return JSONResponse(content={"status": "ok", "version": version})
 
     return app

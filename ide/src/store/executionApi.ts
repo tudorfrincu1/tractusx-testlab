@@ -26,6 +26,71 @@
  * Handles YAML submission and SSE event streaming.
  */
 
+/** Response from GET /testlab/health */
+export interface HealthResponse {
+  status: string;
+  version: string;
+}
+
+/** Timeout in milliseconds for health check requests. */
+const HEALTH_CHECK_TIMEOUT_MS = 5000;
+
+/**
+ * Validate that a URL string starts with http:// or https://.
+ * Does NOT make a network request.
+ */
+export function isValidBackendUrl(url: string): boolean {
+  return /^https?:\/\/.+/.test(url);
+}
+
+/**
+ * Check backend health by calling GET {backendUrl}/testlab/health.
+ * Uses AbortController with a 5-second timeout.
+ * Accepts an optional external signal to allow cancellation from callers.
+ */
+export async function checkBackendHealth(
+  backendUrl: string,
+  externalSignal?: AbortSignal,
+): Promise<HealthResponse> {
+  if (!isValidBackendUrl(backendUrl)) {
+    throw new Error("Invalid URL: must start with http:// or https://");
+  }
+
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(
+    () => timeoutController.abort(),
+    HEALTH_CHECK_TIMEOUT_MS,
+  );
+
+  /** Abort if either the timeout or external signal fires. */
+  const onExternalAbort = () => timeoutController.abort();
+  externalSignal?.addEventListener("abort", onExternalAbort);
+
+  try {
+    const res = await fetch(`${backendUrl}/testlab/health`, {
+      signal: timeoutController.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Backend error: ${res.status} ${res.statusText}`);
+    }
+    return (await res.json()) as HealthResponse;
+  } catch (err: unknown) {
+    if (externalSignal?.aborted) {
+      throw new Error("Connection cancelled");
+    }
+    if (timeoutController.signal.aborted) {
+      throw new Error("Connection timed out after 5 seconds");
+    }
+    if (err instanceof TypeError) {
+      throw new Error("Failed to connect: server unreachable");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+    externalSignal?.removeEventListener("abort", onExternalAbort);
+  }
+}
+
 /** Response from POST /testlab/run/yaml */
 export interface SubmitResponse {
   job_id: string;

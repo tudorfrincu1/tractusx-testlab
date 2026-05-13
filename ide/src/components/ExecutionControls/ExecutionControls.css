@@ -121,6 +121,22 @@
   background: #666;
 }
 
+.backend-status-dot--connecting {
+  background: #FFD700;
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.6);
+  animation: backend-dot-pulse 1s ease-in-out infinite;
+}
+
+.backend-status-dot--error {
+  background: #ff6b6b;
+  box-shadow: 0 0 4px rgba(255, 107, 107, 0.6);
+}
+
+@keyframes backend-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ── Popover ────────────────────────────────────────────────────────────── */
 
 .backend-popover-anchor {
@@ -229,4 +245,39 @@
   height: 20px;
   background: #404040;
   flex-shrink: 0;
+}
+
+/* ── Backend popover: validation hint ───────────────────────────────────── */
+
+.backend-popover__hint {
+  font-size: 11px;
+  color: #ff6b6b;
+  margin: 4px 0 0;
+}
+
+.backend-popover__input--invalid {
+  border-color: #ff6b6b;
+}
+
+/* ── Backend popover: error message ─────────────────────────────────────── */
+
+.backend-popover__error {
+  color: #ff6b6b;
+}
+
+/* ── Backend popover: connecting spinner ────────────────────────────────── */
+
+.backend-popover__spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-top-color: #FFD700;
+  border-radius: 50%;
+  animation: execute-spin 0.6s linear infinite;
+}
+
+.backend-popover__connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

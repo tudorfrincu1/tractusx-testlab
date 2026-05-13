@@ -21,22 +21,32 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
 import { useExecutionStore } from "../../store/useExecutionStore";
+import { isValidBackendUrl } from "../../store/executionApi";
 import "./ExecutionControls.css";
 
 /**
  * Gear/plug icon button with a popover for configuring the backend URL.
+ * Supports connecting, connected, error, and disconnected states.
  */
 export function BackendSettings() {
   const backendUrl = useExecutionStore((s) => s.backendUrl);
-  const isConnected = useExecutionStore((s) => s.isConnected);
-  const setBackendUrl = useExecutionStore((s) => s.setBackendUrl);
+  const connectionStatus = useExecutionStore((s) => s.connectionStatus);
+  const connectionError = useExecutionStore((s) => s.connectionError);
+  const connect = useExecutionStore((s) => s.connect);
+  const disconnect = useExecutionStore((s) => s.disconnect);
 
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(backendUrl);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isConnecting = connectionStatus === "connecting";
+  const isConnected = connectionStatus === "connected";
+  const isError = connectionStatus === "error";
+
+  const draftValid = useMemo(() => isValidBackendUrl(draft.trim()), [draft]);
 
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => {
@@ -45,28 +55,39 @@ export function BackendSettings() {
     });
   }, [backendUrl]);
 
-  const handleConnect = useCallback(() => {
+  const handleConnect = useCallback(async () => {
     const trimmed = draft.trim();
-    setBackendUrl(trimmed);
-    if (trimmed) setIsOpen(false);
-  }, [draft, setBackendUrl]);
+    if (!trimmed) return;
+    await connect(trimmed);
+    if (useExecutionStore.getState().connectionStatus === "connected") {
+      setIsOpen(false);
+    }
+  }, [draft, connect]);
 
   const handleDisconnect = useCallback(() => {
-    setBackendUrl("");
+    disconnect();
     setDraft("");
-  }, [setBackendUrl]);
+  }, [disconnect]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") handleConnect();
+      if (e.key === "Enter" && draftValid && !isConnecting) handleConnect();
       if (e.key === "Escape") setIsOpen(false);
     },
-    [handleConnect],
+    [handleConnect, draftValid, isConnecting],
   );
 
   const handleBackdropClick = useCallback(() => {
     setIsOpen(false);
   }, []);
+
+  const dotClass = isConnected
+    ? "backend-status-dot--connected"
+    : isError
+      ? "backend-status-dot--error"
+      : isConnecting
+        ? "backend-status-dot--connecting"
+        : "backend-status-dot--disconnected";
 
   return (
     <div className="backend-popover-anchor">
@@ -76,9 +97,7 @@ export function BackendSettings() {
         title="Backend connection settings"
         type="button"
       >
-        <span
-          className={`backend-status-dot ${isConnected ? "backend-status-dot--connected" : "backend-status-dot--disconnected"}`}
-        />
+        <span className={`backend-status-dot ${dotClass}`} />
         <SettingsInputComponentIcon sx={{ fontSize: 14 }} />
       </button>
 
@@ -94,15 +113,16 @@ export function BackendSettings() {
             <div className="backend-popover__input-row">
               <input
                 ref={inputRef}
-                className="backend-popover__input"
+                className={`backend-popover__input ${draft.trim() && !draftValid ? "backend-popover__input--invalid" : ""}`}
                 type="url"
                 placeholder="http://localhost:8000"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
+                disabled={isConnecting}
                 autoFocus
               />
-              {isConnected ? (
+              {isConnected || isConnecting ? (
                 <button
                   className="backend-popover__connect-btn backend-popover__connect-btn--disconnect"
                   onClick={handleDisconnect}
@@ -115,18 +135,34 @@ export function BackendSettings() {
                   className="backend-popover__connect-btn backend-popover__connect-btn--connect"
                   onClick={handleConnect}
                   type="button"
-                  disabled={!draft.trim()}
+                  disabled={!draftValid || isConnecting}
                 >
                   Connect
                 </button>
               )}
             </div>
 
+            {draft.trim() && !draftValid && (
+              <p className="backend-popover__hint">
+                URL must start with http:// or https://
+              </p>
+            )}
+
             <div className="backend-popover__status">
-              <span
-                className={`backend-status-dot ${isConnected ? "backend-status-dot--connected" : "backend-status-dot--disconnected"}`}
-              />
-              {isConnected ? `Connected to ${backendUrl}` : "Not connected"}
+              <span className={`backend-status-dot ${dotClass}`} />
+              {isConnecting && (
+                <>
+                  <span className="backend-popover__spinner" />
+                  Connecting…
+                </>
+              )}
+              {isConnected && `Connected to ${backendUrl}`}
+              {isError && (
+                <span className="backend-popover__error">
+                  {connectionError ?? "Connection failed"}
+                </span>
+              )}
+              {connectionStatus === "disconnected" && "Not connected"}
             </div>
           </div>
         </>

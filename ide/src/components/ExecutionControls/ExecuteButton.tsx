@@ -34,7 +34,7 @@ import "./ExecutionControls.css";
  * Hidden when no backend URL is configured.
  */
 export function ExecuteButton() {
-  const backendUrl = useExecutionStore((s) => s.backendUrl);
+  const isConnected = useExecutionStore((s) => s.connectionStatus === "connected");
   const isExecuting = useExecutionStore((s) => s.isExecuting);
   const execute = useExecutionStore((s) => s.execute);
   const cancel = useExecutionStore((s) => s.cancel);
@@ -46,7 +46,7 @@ export function ExecuteButton() {
     execute(yaml);
   }, [testCase, execute]);
 
-  if (!backendUrl) return null;
+  if (!isConnected) return null;
 
   if (isExecuting) {
     return (

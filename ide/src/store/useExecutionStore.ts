@@ -36,6 +36,8 @@ import type {
   JobEvent,
 } from "../models/execution";
 import { submitTestYaml, connectJobStream } from "./executionApi";
+import type { ConnectionStatus } from "./connectionManager";
+import { performConnect, performDisconnect } from "./connectionManager";
 
 /* ── localStorage persistence ───────────────────────────────────────────── */
 
@@ -60,10 +62,15 @@ function saveBackendUrl(url: string): void {
 /* ── Store interface ────────────────────────────────────────────────────── */
 
 interface ExecutionStore {
-  // Connection config (persisted)
+  // Connection state (persisted URL, validated status)
   backendUrl: string;
-  setBackendUrl: (url: string) => void;
+  connectionStatus: ConnectionStatus;
+  connectionError: string | null;
   isConnected: boolean;
+
+  // Connection actions
+  connect: (url: string) => Promise<void>;
+  disconnect: () => void;
 
   // Execution state
   jobId: string | null;
@@ -73,7 +80,7 @@ interface ExecutionStore {
   error: string | null;
   isExecuting: boolean;
 
-  // Actions
+  // Execution actions
   execute: (yaml: string) => Promise<void>;
   cancel: () => void;
   clearResults: () => void;
@@ -116,26 +123,52 @@ let abortStream: (() => void) | null = null;
 
 /* ── Store ──────────────────────────────────────────────────────────────── */
 
-export const useExecutionStore = create<ExecutionStore>((set, get) => ({
-  backendUrl: loadBackendUrl(),
-  isConnected: loadBackendUrl() !== "",
+export const useExecutionStore = create<ExecutionStore>((set, get) => {
+  const persistedUrl = loadBackendUrl();
 
-  jobId: null,
-  jobStatus: null,
-  currentPhase: null,
-  steps: [],
-  error: null,
-  isExecuting: false,
+  /** Shared setState wrapper that also persists the URL. */
+  const setConnectionState = (
+    partial: Partial<{ backendUrl: string; connectionStatus: ConnectionStatus; connectionError: string | null }>,
+  ) => {
+    if ("backendUrl" in partial) {
+      saveBackendUrl(partial.backendUrl ?? "");
+    }
+    set({
+      ...partial,
+      isConnected: (partial.connectionStatus ?? get().connectionStatus) === "connected",
+    });
+  };
 
-  setBackendUrl: (url) => {
-    saveBackendUrl(url);
-    set({ backendUrl: url, isConnected: url !== "" });
-  },
+  // Auto-revalidate persisted URL on load
+  if (persistedUrl) {
+    performConnect(persistedUrl, setConnectionState);
+  }
+
+  return {
+    backendUrl: persistedUrl,
+    connectionStatus: persistedUrl ? "connecting" : "disconnected",
+    connectionError: null,
+    isConnected: false,
+
+    connect: async (url) => {
+      await performConnect(url, setConnectionState);
+    },
+
+    disconnect: () => {
+      performDisconnect(setConnectionState);
+    },
+
+    jobId: null,
+    jobStatus: null,
+    currentPhase: null,
+    steps: [],
+    error: null,
+    isExecuting: false,
 
   execute: async (yaml) => {
-    const { backendUrl, isExecuting, cancel } = get();
-    if (!backendUrl) {
-      set({ error: "No backend URL configured" });
+    const { backendUrl, connectionStatus, isExecuting, cancel } = get();
+    if (connectionStatus !== "connected" || !backendUrl) {
+      set({ error: "Not connected to backend" });
       return;
     }
     if (isExecuting) {
@@ -192,7 +225,8 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
       isExecuting: false,
     });
   },
-}));
+  };
+});
 
 /* ── SSE event dispatcher ───────────────────────────────────────────────── */
 
