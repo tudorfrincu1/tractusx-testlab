@@ -24,6 +24,7 @@
 kind: test
 name: request-certificate
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Request certificate via CCMAPI endpoint.
   Query catalog for CCMAPI offers, negotiate contract,
@@ -32,8 +33,7 @@ description: >
 services:
   - name: provider_edc
     type: edc_connector_saturn
-    config:
-      management_url: "@provider_address"
+    base_url: "@provider_address"
 
 output_definitions:
   - name: request_id
@@ -125,11 +125,4 @@ steps:
       - output: request_status
         not_null: true
 
-variables:
-  request_id:
-    type: str
-  request_status:
-    type: str
-  document_id:
-    type: str
 

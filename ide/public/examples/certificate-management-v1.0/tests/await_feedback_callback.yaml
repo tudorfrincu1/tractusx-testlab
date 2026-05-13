@@ -24,6 +24,7 @@
 kind: test
 name: await-feedback-callback
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Listen for provider callback after certificate processing and verify
   feedback payload semantics for CX-0135 path /companycertificate/status.
@@ -33,7 +34,7 @@ depends_on:
     outputs:
       - request_id
 
-steps:
+setup:
   - type: mock_endpoint
     description: Expose callback endpoint for provider feedback
     params:
@@ -44,6 +45,7 @@ steps:
       response_body:
         accepted: true
 
+steps:
   - type: wait_for_call
     description: Block until provider callback arrives
     params:
@@ -92,10 +94,4 @@ steps:
       - output: value
         not_null: true
 
-variables:
-  callback_request_id:
-    type: str
-  callback_feedback_status:
-    type: str
-  callback_feedback_message:
-    type: str
+

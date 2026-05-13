@@ -51,11 +51,11 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     ScriptStatus,
     SdkCallMode,
     ServiceState,
-    ServiceType,
     StepStatus,
     ValueSource,
 )
 from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
+from tractusx_testlab.models.enums import ServiceType  # local override — adds EDC connector types
 from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
 from tractusx_sdk.extensions.testlab.models.exceptions import (
     DuplicateServiceError,

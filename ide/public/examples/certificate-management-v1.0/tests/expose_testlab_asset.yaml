@@ -24,6 +24,7 @@
 kind: test
 name: expose-testlab-asset
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
   data endpoint, and waits for the SUT to discover, negotiate, and pull data.
@@ -32,10 +33,9 @@ description: >
 services:
   - name: testlab_edc
     type: edc_connector_saturn
-    config:
-      management_url: "@testlab_management_url"
+    base_url: "@testlab_management_url"
 
-steps:
+setup:
   - type: create_asset
     description: Register CCMAPI asset in TestLab EDC
     params:
@@ -98,6 +98,7 @@ steps:
         type: "CCMAPI_DATA"
         status: "ACTIVE"
 
+steps:
   - type: wait_for_call
     description: Wait for SUT to discover, negotiate, and pull data
     params:
@@ -111,10 +112,21 @@ steps:
       - output: body
         not_null: true
 
-variables:
-  testlab_asset_id:
-    type: str
-  testlab_policy_id:
-    type: str
-  testlab_contract_def_id:
-    type: str
+cleanup:
+  - type: delete_asset
+    description: Remove CCMAPI asset from TestLab EDC
+    params:
+      service: testlab_edc
+      asset_id: "@testlab_asset_id"
+
+  - type: delete_policy
+    description: Remove access policy from TestLab EDC
+    params:
+      service: testlab_edc
+      policy_id: "@testlab_policy_id"
+
+  - type: delete_contract_definition
+    description: Remove contract definition from TestLab EDC
+    params:
+      service: testlab_edc
+      contract_def_id: "@testlab_contract_def_id"

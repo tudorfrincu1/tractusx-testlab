@@ -25,18 +25,14 @@ kind: tck
 name: certificate-management
 version: "1.0"
 description: >
-  Validate CCMAPI certificate management workflow per CX-0135:
+  Validate CCMAPI certificate management workflow per CX-0135 v2.4.0:
   (1) Request certificate from provider
   (2) Validate certificate payload against schema
   (3) Await provider feedback callback
   (4) Send feedback notification and await acknowledgment
   (5) Expose TestLab as provider and verify SUT consumer behavior
 
-standards:
-  - id: CX-0135
-    version: "2.4.0"
-
-variables:
+shared_variables:
   provider_address:
     type: str
     description: Provider EDC DSP endpoint

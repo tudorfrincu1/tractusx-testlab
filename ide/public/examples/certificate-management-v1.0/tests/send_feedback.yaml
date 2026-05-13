@@ -24,6 +24,7 @@
 kind: test
 name: send-feedback-notification
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Send a CCMAPI feedback notification to the provider via EDC dataplane (SEND direction)
   and await the provider's RECEIVE acknowledgment on a TestLab mock endpoint.
@@ -40,8 +41,18 @@ depends_on:
 services:
   - name: provider_edc
     type: edc_connector_saturn
-    config:
-      management_url: "@provider_address"
+    base_url: "@provider_address"
+
+setup:
+  - type: mock_endpoint
+    description: Expose mock endpoint for provider RECEIVE acknowledgment
+    params:
+      id: "notification_receive_ack"
+      method: POST
+      path: "/companycertificate/notification/receive"
+      response_status: 200
+      response_body:
+        received: true
 
 steps:
   - type: query_catalog
@@ -94,16 +105,6 @@ steps:
       notification_dataplane_url: "data_address"
       notification_edr_token: "edr_token"
 
-  - type: mock_endpoint
-    description: Expose mock endpoint for provider RECEIVE acknowledgment
-    params:
-      id: "notification_receive_ack"
-      method: POST
-      path: "/companycertificate/notification/receive"
-      response_status: 200
-      response_body:
-        received: true
-
   - type: generate_uuid
     description: Generate notification ID
     store_in_memory:
@@ -149,9 +150,3 @@ steps:
     expect:
       - output: value
         not_null: true
-
-variables:
-  notification_id:
-    type: str
-  notification_ack_status:
-    type: str

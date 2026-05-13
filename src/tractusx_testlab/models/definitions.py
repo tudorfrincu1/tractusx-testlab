@@ -35,16 +35,10 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionType,
     FailurePolicy,
     SdkCallMode,
-    ServiceType,
     ValueSource,
 )
-from tractusx_testlab.models.enums import ScriptKind
-
-
-class DependencyRef(BaseModel):
-    """Reference to an external test file used as a dependency."""
-    file: str
-    outputs: list[str] = Field(default_factory=list)
+from tractusx_sdk.extensions.testlab.models import DependencyRef
+from tractusx_testlab.models.enums import ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):

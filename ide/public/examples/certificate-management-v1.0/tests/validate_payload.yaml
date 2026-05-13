@@ -24,6 +24,7 @@
 kind: test
 name: validate-certificate-payload
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Fetch and validate certificate payload against CX-0135
   BusinessPartnerCertificate semantic model v3.1.0.
@@ -70,9 +71,4 @@ steps:
       - output: value
         equals: "@certificate_type"
 
-variables:
-  validation_status:
-    type: str
-  validation_errors:
-    type: str
 
