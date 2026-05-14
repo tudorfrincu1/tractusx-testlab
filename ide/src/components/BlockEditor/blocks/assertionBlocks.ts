@@ -26,6 +26,7 @@ import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../blockColors";
 import { findCatalogEntry, type BlockCatalog } from "./catalogLoader";
+import { collectSchemaVariables, dynamicDropdown } from "./dropdownProviders";
 
 /** Collect output names from the parent step block's catalog entry */
 function collectParentOutputs(block: Block, catalog: BlockCatalog): Array<[string, string]> {
@@ -155,11 +156,21 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
         .appendField("Assert")
         .appendField(new Blockly.FieldDropdown(outputDropdown(catalog) as () => Array<[string, string]>), "OUTPUT")
         .appendField("validates against schema");
-      this.appendValueInput("SEMANTIC_ID").appendField("semantic id:").setCheck("param_value");
+      this.appendDummyInput()
+        .appendField("schema:")
+        .appendField(
+          new Blockly.FieldDropdown(
+            dynamicDropdown(
+              (ws) => collectSchemaVariables(ws),
+              "(no schemas loaded)"
+            ) as () => Array<[string, string]>
+          ),
+          "SCHEMA_REF"
+        );
       this.setPreviousStatement(true, "assertion");
       this.setNextStatement(true, "assertion");
       this.setColour(blockColors.assertion);
-      this.setTooltip("Assert that output validates against a semantic schema (e.g. CX-0135)");
+      this.setTooltip("Assert that output validates against a schema loaded via Import Schema");
     },
   };
 

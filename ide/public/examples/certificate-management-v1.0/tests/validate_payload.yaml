@@ -34,6 +34,16 @@ depends_on:
     outputs:
       - document_id
 
+setup:
+  - type: load_schema
+    description: Load BusinessPartnerCertificate v3.1.0 schema
+    params:
+      name: bpc_schema
+      source: file
+      path: ../schemas/business_partner_certificate_schema.json
+    store_in_memory:
+      bpc_schema: "$"
+
 steps:
   - type: http_call
     description: Fetch certificate payload from provider
@@ -52,7 +62,7 @@ steps:
         output: response_body
       - type: "SCHEMA_VALIDATION"
         output: response_body
-        schema: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+        schema: "@bpc_schema"
 
   - type: json_path_extract
     description: Validate certificate type matches requested type

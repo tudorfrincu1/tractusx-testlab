@@ -140,8 +140,14 @@ function createAssertionBlock(
       return makeValueAssertion(ws, "assert_matches", output, "PATTERN", a.value);
     case AssertionOperator.SCHEMA:
       return makeValueAssertion(ws, "assert_schema", output, "SCHEMA", a.value);
-    case AssertionOperator.VALIDATES_AGAINST_SCHEMA:
-      return makeValueAssertion(ws, "assert_validates_schema", output, "SEMANTIC_ID", a.schema);
+    case AssertionOperator.VALIDATES_AGAINST_SCHEMA: {
+      const ab = makeBlock(ws, "assert_validates_schema");
+      setDropdownValue(ab, "OUTPUT", output);
+      const rawSchema = typeof a.schema === "string" ? a.schema : "";
+      const schemaVal = rawSchema.startsWith("@") ? rawSchema.slice(1) : rawSchema;
+      if (schemaVal) setDropdownValue(ab, "SCHEMA_REF", schemaVal);
+      return ab;
+    }
     case AssertionOperator.GREATER_THAN:
     case AssertionOperator.LESS_THAN:
     case AssertionOperator.GREATER_OR_EQUAL:

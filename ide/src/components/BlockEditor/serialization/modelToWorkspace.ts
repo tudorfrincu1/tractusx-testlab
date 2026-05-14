@@ -36,9 +36,8 @@ import {
   attachChain,
   connectValue,
   createValueBlockFromString,
-  flushDeferredDropdowns,
-  clearDeferredDropdowns,
 } from "./helpers";
+import * as deferredDropdowns from "./deferredDropdowns";
 import { populateTest } from "./populateTest";
 
 export function populateWorkspaceFromModel(
@@ -48,7 +47,7 @@ export function populateWorkspaceFromModel(
   catalog: BlockCatalog
 ) {
   // Clear any stale deferred values from a previous import
-  clearDeferredDropdowns();
+  deferredDropdowns.clear();
 
   if (isTck(model)) {
     populateTck(ws, root, model);
@@ -66,7 +65,7 @@ export function populateWorkspaceFromModel(
   // Pass 2: Re-apply all dropdown values that were queued during block
   // creation. Now that every block exists and is rendered, getOptions()
   // returns the full list and the values will stick.
-  flushDeferredDropdowns(ws);
+  deferredDropdowns.flush(ws);
 }
 
 function populateTck(ws: Workspace, root: Block, tc: TckDefinition) {

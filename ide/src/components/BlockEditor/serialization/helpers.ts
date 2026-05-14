@@ -25,6 +25,7 @@
 import type { Block, Workspace } from "blockly";
 import { type Assertion, AssertionOperator } from "../../../models/schema";
 import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
+import * as deferredDropdowns from "./deferredDropdowns";
 
 /** Maps the assert_compare block dropdown values to typed YAML assertion types. */
 const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
@@ -85,20 +86,6 @@ export function makeBlock(ws: Workspace, type: string): Block {
   return b;
 }
 
-/**
- * Queue of dropdown values to apply after all blocks are created and rendered.
- * During bulk import, Blockly's render pass triggers field validation which
- * reverts dropdown values that aren't yet in getOptions(). This queue preserves
- * the intended values so they can be re-applied in a second pass.
- */
-interface DeferredDropdown {
-  blockId: string;
-  fieldName: string;
-  value: string;
-}
-
-const deferredDropdowns: DeferredDropdown[] = [];
-
 export function setDropdownValue(block: Block, fieldName: string, value: string) {
   const field = block.getField(fieldName);
   if (!field) return;
@@ -119,44 +106,10 @@ export function setDropdownValue(block: Block, fieldName: string, value: string)
     f.selectedOption = match ?? [value, value];
   }
   // Queue the value for re-application after the render pass
-  deferredDropdowns.push({ blockId: block.id, fieldName, value });
+  deferredDropdowns.enqueue(block.id, fieldName, value);
 }
 
-/**
- * Re-apply all queued dropdown values. Call this AFTER all blocks have been
- * created and rendered, so that Blockly's field validation (triggered by
- * render) cannot revert the values.
- */
-export function flushDeferredDropdowns(ws: Workspace): void {
-  const queue = deferredDropdowns.splice(0);
-  for (const { blockId, fieldName, value } of queue) {
-    const block = ws.getBlockById(blockId);
-    if (!block) continue;
-    const field = block.getField(fieldName);
-    if (!field) continue;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const f = field as any;
-    const original = f.doClassValidation_;
-    f.doClassValidation_ = (v: string) => v;
-    try {
-      field.setValue(value);
-    } finally {
-      f.doClassValidation_ = original;
-    }
-    if (typeof f.getOptions === "function") {
-      f.getOptions(true);
-      const opts = f.getOptions(false) as Array<[string, string]>;
-      const match = opts.find(([, v]: [string, string]) => v === value);
-      f.selectedOption = match ?? [value, value];
-      if (typeof f.forceRerender === "function") f.forceRerender();
-    }
-  }
-}
-
-/** Discard any queued dropdown values without applying them. */
-export function clearDeferredDropdowns(): void {
-  deferredDropdowns.length = 0;
-}
+export { deferredDropdowns };
 
 export function attachChain(parent: Block, inputName: string, blocks: Block[]) {
   if (blocks.length === 0) return;
@@ -243,8 +196,9 @@ export function readAssertionChain(block: Block | null): Assertion[] {
         break;
       }
       case "assert_validates_schema": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("SEMANTIC_ID")) || "";
-        assertions.push({ type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema: val });
+        const schemaRef = current.getFieldValue("SCHEMA_REF") || "";
+        const schema = schemaRef && schemaRef !== "__NONE__" ? `@${schemaRef}` : "";
+        assertions.push({ type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema });
         break;
       }
       case "assert_compare": {
