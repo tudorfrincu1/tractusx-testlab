@@ -76,7 +76,7 @@ async def execute_http_request(step: "Step", ctx: ExecutionContext) -> StepResul
 
     try:
         resp_body = response.json()
-    except (ValueError, Exception):  # noqa: BLE001 — httpx decode errors are broad
+    except ValueError:
         resp_body = response.text
 
     return StepResult(
@@ -105,7 +105,7 @@ async def execute_create_asset(step: "Step", ctx: ExecutionContext) -> StepResul
 
     try:
         body = response.json()
-    except (ValueError, Exception):  # noqa: BLE001
+    except ValueError:
         body = response.text
 
     asset_id: str = ""
@@ -140,7 +140,7 @@ async def execute_query_catalog(step: "Step", ctx: ExecutionContext) -> StepResu
 
     try:
         body = response.json()
-    except (ValueError, Exception):  # noqa: BLE001
+    except ValueError:
         body = response.text
 
     return StepResult(
@@ -169,7 +169,7 @@ async def execute_negotiate_access(step: "Step", ctx: ExecutionContext) -> StepR
 
     try:
         body = response.json()
-    except (ValueError, Exception):  # noqa: BLE001
+    except ValueError:
         body = response.text
 
     negotiation_id: str = ""
@@ -202,7 +202,7 @@ async def execute_fetch_data(step: "Step", ctx: ExecutionContext) -> StepResult:
 
     try:
         body = response.json()
-    except (ValueError, Exception):  # noqa: BLE001
+    except ValueError:
         body = response.text
 
     transfer_id: str = ""

@@ -126,7 +126,7 @@ def _make_handler(mock_server: "MockServer") -> type:
             self.end_headers()
             self.wfile.write(payload)
 
-        def log_message(self, fmt: str, *args: Any) -> None:  # noqa: ANN001
+        def log_message(self, fmt: str, *args: Any) -> None:
             pass  # suppress stdlib HTTP server request logging
 
     return _Handler

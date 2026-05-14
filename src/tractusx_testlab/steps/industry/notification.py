@@ -28,6 +28,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import requests
+
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
@@ -52,8 +54,6 @@ class SendNotificationStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinition
     ) -> StepOutput:
-        import requests as _requests
-
         dataplane_url = params.get("dataplane_url") or context.get_variable(
             DATAPLANE_ENDPOINT
         )
@@ -68,7 +68,7 @@ class SendNotificationStep(BaseStep):
         timeout = params.get("timeout", 30)
 
         req = HttpRequest(method="POST", url=dataplane_url, headers=headers, body=notification)
-        resp = _requests.post(
+        resp = requests.post(
             dataplane_url, json=notification, headers=headers, timeout=timeout
         )
         try:

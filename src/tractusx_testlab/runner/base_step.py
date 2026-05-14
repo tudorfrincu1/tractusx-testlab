@@ -32,6 +32,8 @@ from typing import TYPE_CHECKING, Any
 
 from tractusx_testlab.exceptions import ExecutionError
 
+_INDEX_PATTERN: re.Pattern[str] = re.compile(r"\d+")
+
 if TYPE_CHECKING:
     from tractusx_testlab.models.test_models import Assertion, Severity
 
@@ -97,7 +99,7 @@ def _extract_path(body: Any, path: str | None) -> Any:  # Any: JSON body can be 
         if isinstance(current, dict):
             current = current.get(segment)
         elif isinstance(current, list):
-            if not re.fullmatch(r"\d+", segment):
+            if not _INDEX_PATTERN.fullmatch(segment):
                 return None
             index = int(segment)
             if index >= len(current):
