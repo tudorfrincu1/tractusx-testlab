@@ -33,19 +33,20 @@ export const ScriptKind = {
 export type ScriptKind = (typeof ScriptKind)[keyof typeof ScriptKind];
 
 export const AssertionOperator = {
-  EQUALS: "equals",
-  NOT_EQUALS: "not_equals",
-  CONTAINS: "contains",
-  NOT_CONTAINS: "not_contains",
-  MATCHES: "matches",
-  SCHEMA: "schema",
-  NOT_NULL: "not_null",
-  NOT_EMPTY: "not_empty",
-  GREATER_THAN: "greater_than",
-  LESS_THAN: "less_than",
-  GREATER_OR_EQUAL: "greater_or_equal",
-  LESS_OR_EQUAL: "less_or_equal",
-  BETWEEN: "between",
+  EQUALS: "EQUALS",
+  NOT_EQUALS: "NOT_EQUALS",
+  CONTAINS: "CONTAINS",
+  NOT_CONTAINS: "NOT_CONTAINS",
+  MATCHES: "REGEX",
+  SCHEMA: "SCHEMA",
+  VALIDATES_AGAINST_SCHEMA: "SCHEMA_VALIDATION",
+  NOT_NULL: "NOT_NULL",
+  NOT_EMPTY: "NOT_EMPTY",
+  GREATER_THAN: "GREATER_THAN",
+  LESS_THAN: "LESS_THAN",
+  GREATER_OR_EQUAL: "GREATER_OR_EQUAL",
+  LESS_OR_EQUAL: "LESS_OR_EQUAL",
+  BETWEEN: "BETWEEN",
 } as const;
 export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
 
@@ -98,8 +99,12 @@ export interface VariableDefinition {
 }
 
 export interface Assertion {
+  type: AssertionOperator;
   output: string;
-  [operator: string]: unknown;
+  value?: unknown;
+  schema?: string;
+  min?: unknown;
+  max?: unknown;
 }
 
 export interface TestInputDefinition {

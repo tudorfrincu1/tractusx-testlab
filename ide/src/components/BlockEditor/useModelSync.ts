@@ -151,10 +151,8 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
         }
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug("[BlocklyWorkspace] sync from model failed:", err);
-      }
+      // eslint-disable-next-line no-console
+      console.warn("[useModelSync] Failed to sync model to workspace:", err);
     }
 
     isUpdatingFromStore.current = false;

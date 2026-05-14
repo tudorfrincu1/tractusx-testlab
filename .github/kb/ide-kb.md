@@ -10,7 +10,11 @@
 
 <!-- Format: ### PAT-{n}: {Title} -->
 
-_No entries yet. Append patterns here as they are discovered._
+### PAT-1: SSE stream module extraction
+When `executionApi.ts` grew past 300 lines after adding reconnection, the SSE streaming logic (parser + `connectJobStream`) was extracted to `store/sseStream.ts`. The API file re-exports `connectJobStream` so callers don't need to change imports. SSE event *handlers* (type guards + dispatch) live in `store/sseEventHandlers.ts` to avoid circular deps with the Zustand store.
+
+### PAT-2: Fire-and-forget API calls for immediate UI feedback
+`cancel()` aborts the local stream immediately for instant UX, then POSTs to the backend endpoint as fire-and-forget. Pause/resume use `await` because the user needs feedback if the API call fails.
 
 ---
 
@@ -18,7 +22,8 @@ _No entries yet. Append patterns here as they are discovered._
 
 <!-- Format: ### GOTCHA-{n}: {Title} -->
 
-_No entries yet. Append gotchas here as they are discovered._
+### GOTCHA-1: SSE event handler state types and circular deps
+Extracting `handleSseEvent` from the store creates a potential circular import (`sseEventHandlers → useExecutionStore → sseEventHandlers`). Solution: define a narrow `SseHandlerState` interface in the handlers file instead of importing `ExecutionStore`. Zustand's `set()` accepts partials, so the narrow type is structurally compatible.
 
 ---
 
@@ -50,7 +55,8 @@ _No entries yet. Append reusable fixes here as they are discovered._
 
 <!-- Format: ### API-{n}: {Title} -->
 
-_No entries yet. Append API quirks here as they are discovered._
+### API-1: Backend execution API path migration
+The backend migrated from `/testlab/run/` and `/testlab/jobs/` to `/testlab/test-execution/`. Key endpoints: `POST .../run/yaml` (submit), `GET .../{id}/stream` (SSE), `POST .../{id}/cancel|pause|resume`. Health stays at `/testlab/health`. SSE stream now includes `id:` lines for Last-Event-ID replay.
 
 <!--
  Eclipse Tractus-X - Tractus-X TestLab

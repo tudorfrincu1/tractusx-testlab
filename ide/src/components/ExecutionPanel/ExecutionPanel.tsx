@@ -23,11 +23,15 @@
 
 import { useState, useMemo } from "react";
 import { useExecutionStore } from "../../store/useExecutionStore";
+import { useResizablePanel } from "../../hooks/useResizablePanel";
 import { StepCard } from "./StepCard";
+import { StepFlowView } from "./StepFlowView";
 import type { ExecutionPhase } from "../../models/execution";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import GridViewIcon from "@mui/icons-material/GridView";
 import "./ExecutionPanel.css";
 
 /* ── Phase tab definitions ──────────────────────────────────────────────── */
@@ -55,6 +59,12 @@ export function ExecutionPanel() {
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [selectedPhase, setSelectedPhase] = useState<ExecutionPhase>("precondition");
+  const [viewMode, setViewMode] = useState<"list" | "flow">("flow");
+  const { height: panelHeight, handleMouseDown } = useResizablePanel({
+    minHeight: 80,
+    maxHeightVh: 70,
+    defaultHeight: 200,
+  });
 
   // Auto-follow the current phase
   const activePhase = currentPhase ?? selectedPhase;
@@ -88,8 +98,18 @@ export function ExecutionPanel() {
   const panelClass = `execution-panel execution-panel--${isExpanded ? "expanded" : "collapsed"}`;
   const statusClass = jobStatus ? `execution-panel__status-badge--${jobStatus}` : "";
 
+  const panelStyle = isExpanded ? { height: panelHeight } : undefined;
+
   return (
-    <div className={panelClass}>
+    <div className={panelClass} style={panelStyle}>
+      {/* Resize handle */}
+      {isExpanded && (
+        <div
+          className="execution-panel__resize-handle"
+          onMouseDown={handleMouseDown}
+        />
+      )}
+
       {/* Header */}
       <div
         className="execution-panel__header"
@@ -107,6 +127,18 @@ export function ExecutionPanel() {
           <span className="execution-panel__job-id">{jobId}</span>
         )}
         <span className="execution-panel__spacer" />
+        <button
+          className="execution-panel__view-toggle"
+          onClick={(e) => {
+            e.stopPropagation();
+            setViewMode((m) => (m === "list" ? "flow" : "list"));
+          }}
+          title={viewMode === "list" ? "Switch to flow view" : "Switch to list view"}
+        >
+          {viewMode === "list"
+            ? <GridViewIcon sx={{ fontSize: 14 }} />
+            : <ViewListIcon sx={{ fontSize: 14 }} />}
+        </button>
         <button
           className="execution-panel__collapse-btn"
           onClick={(e) => {
@@ -162,6 +194,8 @@ export function ExecutionPanel() {
               <div className="execution-panel__empty">
                 No steps in this phase yet
               </div>
+            ) : viewMode === "flow" ? (
+              <StepFlowView steps={phaseSteps} />
             ) : (
               phaseSteps.map((step) => (
                 <StepCard key={step.index} step={step} />

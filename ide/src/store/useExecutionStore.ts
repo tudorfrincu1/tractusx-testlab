@@ -31,11 +31,15 @@ import type {
   ExecutionPhase,
   ExecutionStep,
   JobStatus,
-  StepEvent,
-  PhaseEvent,
-  JobEvent,
 } from "../models/execution";
-import { submitTestYaml, connectJobStream } from "./executionApi";
+import {
+  submitTestYaml,
+  connectJobStream,
+  cancelExecution,
+  pauseExecution,
+  resumeExecution,
+} from "./executionApi";
+import { handleSseEvent } from "./sseEventHandlers";
 import type { ConnectionStatus } from "./connectionManager";
 import { performConnect, performDisconnect } from "./connectionManager";
 
@@ -83,38 +87,9 @@ interface ExecutionStore {
   // Execution actions
   execute: (yaml: string) => Promise<void>;
   cancel: () => void;
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
   clearResults: () => void;
-}
-
-/* ── Type guards for SSE event payloads ─────────────────────────────────── */
-
-function isStepEvent(data: unknown): data is StepEvent {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "step_index" in data &&
-    "status" in data
-  );
-}
-
-function isPhaseEvent(data: unknown): data is PhaseEvent {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "phase" in data &&
-    "status" in data &&
-    !("step_index" in data)
-  );
-}
-
-function isJobEvent(data: unknown): data is JobEvent {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "job_id" in data &&
-    "status" in data &&
-    !("phase" in data)
-  );
 }
 
 /* ── Abort handle (module-scoped, not serialized) ───────────────────────── */
@@ -208,9 +183,39 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => {
   },
 
   cancel: () => {
+    const { backendUrl, jobId } = get();
     abortStream?.();
     abortStream = null;
     set({ isExecuting: false, jobStatus: "cancelled" });
+    if (backendUrl && jobId) {
+      cancelExecution(backendUrl, jobId).catch(() => {
+        /* best-effort — stream already aborted locally */
+      });
+    }
+  },
+
+  pause: async () => {
+    const { backendUrl, jobId, jobStatus } = get();
+    if (!backendUrl || !jobId || jobStatus !== "running") return;
+    try {
+      await pauseExecution(backendUrl, jobId);
+      set({ jobStatus: "paused" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      set({ error: message });
+    }
+  },
+
+  resume: async () => {
+    const { backendUrl, jobId, jobStatus } = get();
+    if (!backendUrl || !jobId || jobStatus !== "paused") return;
+    try {
+      await resumeExecution(backendUrl, jobId);
+      set({ jobStatus: "running" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      set({ error: message });
+    }
   },
 
   clearResults: () => {
@@ -227,71 +232,3 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => {
   },
   };
 });
-
-/* ── SSE event dispatcher ───────────────────────────────────────────────── */
-
-type SetState = (
-  partial: Partial<ExecutionStore> | ((s: ExecutionStore) => Partial<ExecutionStore>),
-) => void;
-
-function handleSseEvent(
-  set: SetState,
-  eventType: string,
-  data: unknown,
-): void {
-  switch (eventType) {
-    case "step.started":
-    case "step.completed":
-    case "step.failed":
-    case "step.skipped":
-      if (isStepEvent(data)) {
-        handleStepEvent(set, data);
-      }
-      break;
-
-    case "phase.started":
-    case "phase.completed":
-    case "phase.failed":
-      if (isPhaseEvent(data)) {
-        set({ currentPhase: data.phase });
-      }
-      break;
-
-    case "job.completed":
-    case "job.failed":
-    case "job.cancelled":
-      if (isJobEvent(data)) {
-        set({ jobStatus: data.status, isExecuting: false });
-      }
-      break;
-
-    case "job.started":
-      if (isJobEvent(data)) {
-        set({ jobStatus: data.status });
-      }
-      break;
-  }
-}
-
-function handleStepEvent(set: SetState, event: StepEvent): void {
-  const step: ExecutionStep = {
-    index: event.step_index,
-    name: event.step_name,
-    type: event.step_type,
-    phase: event.phase,
-    status: event.status,
-    duration_s: event.duration_s,
-    error: event.error,
-  };
-
-  set((state) => {
-    const existing = state.steps.findIndex((s) => s.index === step.index);
-    const updated = [...state.steps];
-    if (existing >= 0) {
-      updated[existing] = step;
-    } else {
-      updated.push(step);
-    }
-    return { steps: updated };
-  });
-}

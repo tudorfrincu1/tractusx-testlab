@@ -153,11 +153,16 @@ export function useWorkspaceInit(
           rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
           rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
         }
-        populateWorkspaceFromModel(ws, rootBlock, currentModel, catalog);
-        cleanupOrphanBlocks(ws, rootBlock);
+        try {
+          populateWorkspaceFromModel(ws, rootBlock, currentModel, catalog);
+          cleanupOrphanBlocks(ws, rootBlock);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn("[useWorkspaceInit] Failed to populate workspace from model:", err);
+        }
       }
 
-      const initialVars = collectWorkspaceVariables(ws);
+      const initialVars = collectWorkspaceVariables(ws, catalog);
       if (initialVars.length > 0) {
         const refreshedToolbox = buildToolbox(
           catalog,

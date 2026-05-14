@@ -34,8 +34,9 @@ import {
   collectExportedVariables,
 } from "./dropdownProviders";
 import { collectWorkspaceVariables } from "./variableCollection";
+import type { BlockCatalog } from "./catalogLoader";
 
-export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
+export function registerUtilityBlocks(Blockly: typeof BlocklyType, catalog?: BlockCatalog) {
   Blockly.Blocks["depends_on_entry"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -86,7 +87,7 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
           new Blockly.FieldDropdown(
             dynamicDropdown(
               (ws) => {
-                const vars = collectWorkspaceVariables(ws);
+                const vars = collectWorkspaceVariables(ws, catalog);
                 return vars.length > 0
                   ? vars.map((v): [string, string] => [v, v])
                   : [["(no variables)", "__NONE__"]];

@@ -1,5 +1,5 @@
 ---
-description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor."
+description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests, debugging frontend issues. Use the `debug-ide` skill for systematic bug diagnosis and resolution. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor, debug, fix, troubleshoot."
 tools: [read, edit, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
@@ -175,7 +175,11 @@ Search your output for `: any` or `as any`. Replace with `unknown` + narrowing o
 ```bash
 cd ide && npx tsc --noEmit && npx vite build
 ```
-### Step 5. Persist New Knowledge (if needed)
+
+### Step 5: Debug issues (if needed)
+Use the `debug-ide` skill when diagnosing bugs. It provides a structured 4-phase workflow: Reproduce → Diagnose → Fix → Verify. Includes a cheat sheet mapping symptoms to starting points and a list of common IDE failure patterns.
+
+### Step 6. Persist New Knowledge (if needed)
 Use the `document-knowledge` skill to update `.github/kb/ide-kb.md` when you discover:
 - A **pattern** that proved effective (prefix: `PAT`)
 - A **gotcha** or subtle trap (prefix: `GOTCHA`)

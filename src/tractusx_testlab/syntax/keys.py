@@ -73,7 +73,22 @@ OUTPUT = "output"
 NOT_NULL = "not_null"
 NOT_EMPTY = "not_empty"
 EQUALS = "equals"
+NOT_EQUALS = "not_equals"
 CONTAINS_KEY = "contains"
+NOT_CONTAINS_KEY = "not_contains"
+MATCHES = "matches"
+SCHEMA_KEY = "schema"
+VALIDATES_AGAINST_SCHEMA = "validates_against_schema"
+GREATER_THAN = "greater_than"
+LESS_THAN = "less_than"
+GREATER_OR_EQUAL = "greater_or_equal"
+LESS_OR_EQUAL = "less_or_equal"
+BETWEEN = "between"
+
+# -- Typed assertion extra fields --------------------------------------------
+ASSERTION_SCHEMA = "schema"
+ASSERTION_MIN = "min"
+ASSERTION_MAX = "max"
 
 # -- Service config -----------------------------------------------------------
 CONFIG = "config"

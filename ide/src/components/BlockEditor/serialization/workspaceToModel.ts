@@ -239,34 +239,6 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
 
   const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
-  if (stepType === "send_notification") {
-    const notification: Record<string, unknown> = {};
-    const header: Record<string, unknown> = {};
-    const headerFields = ["classification", "severity", "status", "type"];
-
-    if (params.notification_id) header.notificationId = params.notification_id;
-    if (params.sender_bpn) header.senderBPN = params.sender_bpn;
-    if (params.recipient_bpn) header.recipientBPN = params.recipient_bpn;
-    for (const hf of headerFields) {
-      if (params[hf]) {
-        header[hf] = params[hf];
-        delete params[hf];
-      }
-    }
-    delete params.notification_id;
-    delete params.sender_bpn;
-    delete params.recipient_bpn;
-
-    if (Object.keys(header).length > 0) notification.header = header;
-    if (params.content) {
-      notification.content = params.content;
-      delete params.content;
-    }
-    if (Object.keys(notification).length > 0) {
-      params.notification = notification;
-    }
-  }
-
   return {
     type: runtimeStepType,
     description: description || undefined,

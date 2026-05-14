@@ -197,7 +197,7 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
           rootBlock.setFieldValue(script.version || "1.0", "VERSION");
           rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
-          for (const input of ["SETUP", "STEPS", "CLEANUP"]) {
+          for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);

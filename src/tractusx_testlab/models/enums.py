@@ -67,6 +67,13 @@ class AssertionType(str, enum.Enum):
     NOT_NULL = "NOT_NULL"
     NOT_EMPTY = "NOT_EMPTY"
     EQUALS = "EQUALS"
+    NOT_EQUALS = "NOT_EQUALS"
+    SCHEMA_VALIDATION = "SCHEMA_VALIDATION"
+    GREATER_THAN = "GREATER_THAN"
+    LESS_THAN = "LESS_THAN"
+    GREATER_OR_EQUAL = "GREATER_OR_EQUAL"
+    LESS_OR_EQUAL = "LESS_OR_EQUAL"
+    BETWEEN = "BETWEEN"
 
 
 class AssertionSeverity(str, enum.Enum):

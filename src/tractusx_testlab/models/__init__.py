@@ -30,7 +30,6 @@ continues to work unchanged.
 """
 
 from tractusx_sdk.extensions.testlab.models.definitions import (
-    Assertion,
     DependencyRef,
     ImportDefinition,
     ListenerDefinition,
@@ -39,12 +38,12 @@ from tractusx_sdk.extensions.testlab.models.definitions import (
     VariableDefinition,
 )
 from tractusx_testlab.models.definitions import (  # local overrides
+    Assertion,       # adds schema_ref, min, max fields
     ScriptDefinition,  # adds preconditions field
     StepDefinition,    # no name field
 )
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
-    AssertionType,
     FailurePolicy,
     JobStatus,
     PackageFormat,
@@ -54,6 +53,7 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     StepStatus,
     ValueSource,
 )
+from tractusx_testlab.models.enums import AssertionType  # local override — adds typed assertion types
 from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.enums import ServiceType  # local override — adds EDC connector types
 from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION

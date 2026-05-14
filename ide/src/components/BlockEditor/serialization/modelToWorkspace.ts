@@ -36,6 +36,8 @@ import {
   attachChain,
   connectValue,
   createValueBlockFromString,
+  flushDeferredDropdowns,
+  clearDeferredDropdowns,
 } from "./helpers";
 import { populateTest } from "./populateTest";
 
@@ -45,32 +47,26 @@ export function populateWorkspaceFromModel(
   model: TestLabDocument,
   catalog: BlockCatalog
 ) {
+  // Clear any stale deferred values from a previous import
+  clearDeferredDropdowns();
+
   if (isTck(model)) {
     populateTck(ws, root, model);
   } else if (isTest(model)) {
     populateTest(ws, root, model, catalog);
   }
 
+  // Pass 1: Render all blocks. This triggers Blockly's built-in field
+  // validation which may revert dropdown values that aren't yet in
+  // getOptions() (e.g. variable dropdowns before all step blocks exist).
   for (const block of ws.getAllBlocks(false)) {
     (block as unknown as { render: () => void }).render();
   }
 
-  for (const block of ws.getAllBlocks(false)) {
-    for (const input of block.inputList) {
-      for (const field of input.fieldRow) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const f = field as any;
-        if (typeof f.getOptions !== "function") continue;
-        const value = typeof f.getValue === "function" ? f.getValue() : undefined;
-        f.getOptions(true);
-        if (value && value !== "__NONE__") {
-          const opts = f.getOptions(false) as Array<[string, string]>;
-          const match = opts.find(([, v]: [string, string]) => v === value);
-          if (match) f.selectedOption_ = match;
-        }
-      }
-    }
-  }
+  // Pass 2: Re-apply all dropdown values that were queued during block
+  // creation. Now that every block exists and is rendered, getOptions()
+  // returns the full list and the values will stick.
+  flushDeferredDropdowns(ws);
 }
 
 function populateTck(ws: Workspace, root: Block, tc: TckDefinition) {

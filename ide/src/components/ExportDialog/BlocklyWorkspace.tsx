@@ -229,8 +229,8 @@ export function BlocklyWorkspace() {
         rootBlock.setFieldValue(script.version || "1.0", "VERSION");
         rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
-        // Re-populate child blocks (steps in setup/steps/cleanup)
-        for (const input of ["SETUP", "STEPS", "CLEANUP"]) {
+        // Re-populate child blocks (steps in setup/steps/teardown)
+        for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
           const conn = rootBlock.getInput(input)?.connection;
           if (conn) {
             // Dispose ALL blocks in the chain, not just the first

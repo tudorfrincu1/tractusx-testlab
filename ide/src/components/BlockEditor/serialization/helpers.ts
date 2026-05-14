@@ -23,8 +23,16 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Assertion } from "../../../models/schema";
+import { type Assertion, AssertionOperator } from "../../../models/schema";
 import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
+
+/** Maps the assert_compare block dropdown values to typed YAML assertion types. */
+const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
+  greater_than: AssertionOperator.GREATER_THAN,
+  less_than: AssertionOperator.LESS_THAN,
+  greater_or_equal: AssertionOperator.GREATER_OR_EQUAL,
+  less_or_equal: AssertionOperator.LESS_OR_EQUAL,
+};
 
 /** Read a value block's content as a plain string (or @variable reference). */
 export function readValueBlockAsString(block: Block | null): string | undefined {
@@ -77,6 +85,20 @@ export function makeBlock(ws: Workspace, type: string): Block {
   return b;
 }
 
+/**
+ * Queue of dropdown values to apply after all blocks are created and rendered.
+ * During bulk import, Blockly's render pass triggers field validation which
+ * reverts dropdown values that aren't yet in getOptions(). This queue preserves
+ * the intended values so they can be re-applied in a second pass.
+ */
+interface DeferredDropdown {
+  blockId: string;
+  fieldName: string;
+  value: string;
+}
+
+const deferredDropdowns: DeferredDropdown[] = [];
+
 export function setDropdownValue(block: Block, fieldName: string, value: string) {
   const field = block.getField(fieldName);
   if (!field) return;
@@ -93,8 +115,47 @@ export function setDropdownValue(block: Block, fieldName: string, value: string)
     f.getOptions(true);
     const opts = f.getOptions(false) as Array<[string, string]>;
     const match = opts.find(([, v]: [string, string]) => v === value);
-    if (match) f.selectedOption_ = match;
+    // Blockly 12 uses `selectedOption` (no trailing underscore)
+    f.selectedOption = match ?? [value, value];
   }
+  // Queue the value for re-application after the render pass
+  deferredDropdowns.push({ blockId: block.id, fieldName, value });
+}
+
+/**
+ * Re-apply all queued dropdown values. Call this AFTER all blocks have been
+ * created and rendered, so that Blockly's field validation (triggered by
+ * render) cannot revert the values.
+ */
+export function flushDeferredDropdowns(ws: Workspace): void {
+  const queue = deferredDropdowns.splice(0);
+  for (const { blockId, fieldName, value } of queue) {
+    const block = ws.getBlockById(blockId);
+    if (!block) continue;
+    const field = block.getField(fieldName);
+    if (!field) continue;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const f = field as any;
+    const original = f.doClassValidation_;
+    f.doClassValidation_ = (v: string) => v;
+    try {
+      field.setValue(value);
+    } finally {
+      f.doClassValidation_ = original;
+    }
+    if (typeof f.getOptions === "function") {
+      f.getOptions(true);
+      const opts = f.getOptions(false) as Array<[string, string]>;
+      const match = opts.find(([, v]: [string, string]) => v === value);
+      f.selectedOption = match ?? [value, value];
+      if (typeof f.forceRerender === "function") f.forceRerender();
+    }
+  }
+}
+
+/** Discard any queued dropdown values without applying them. */
+export function clearDeferredDropdowns(): void {
+  deferredDropdowns.length = 0;
 }
 
 export function attachChain(parent: Block, inputName: string, blocks: Block[]) {
@@ -153,51 +214,59 @@ export function readAssertionChain(block: Block | null): Assertion[] {
     switch (current.type) {
       case "assert_equals": {
         const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ output, equals: val });
+        assertions.push({ type: AssertionOperator.EQUALS, output, value: val });
         break;
       }
       case "assert_not_equals": {
         const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ output, not_equals: val });
+        assertions.push({ type: AssertionOperator.NOT_EQUALS, output, value: val });
         break;
       }
       case "assert_contains": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ output, contains: val });
+        assertions.push({ type: AssertionOperator.CONTAINS, output, value: val });
         break;
       }
       case "assert_not_contains": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ output, not_contains: val });
+        assertions.push({ type: AssertionOperator.NOT_CONTAINS, output, value: val });
         break;
       }
       case "assert_matches": {
         const val = readValueBlockAsString(current.getInputTargetBlock("PATTERN")) || "";
-        assertions.push({ output, matches: val });
+        assertions.push({ type: AssertionOperator.MATCHES, output, value: val });
         break;
       }
       case "assert_schema": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SCHEMA")) || "";
-        assertions.push({ output, schema: val });
+        assertions.push({ type: AssertionOperator.SCHEMA, output, value: val });
+        break;
+      }
+      case "assert_validates_schema": {
+        const val = readValueBlockAsString(current.getInputTargetBlock("SEMANTIC_ID")) || "";
+        assertions.push({ type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema: val });
         break;
       }
       case "assert_compare": {
         const operator = current.getFieldValue("OPERATOR") || "greater_than";
         const val = readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "";
-        assertions.push({ output, [operator]: val });
+        const assertType = COMPARE_OP_TO_TYPE[operator];
+        if (assertType) {
+          assertions.push({ type: assertType, output, value: val });
+        }
         break;
       }
       case "assert_between": {
         const min = readValueBlockAsString(current.getInputTargetBlock("MIN")) || "";
         const max = readValueBlockAsString(current.getInputTargetBlock("MAX")) || "";
-        assertions.push({ output, between: [min, max] });
+        assertions.push({ type: AssertionOperator.BETWEEN, output, min, max });
         break;
       }
       case "assert_not_null":
-        assertions.push({ output, not_null: true });
+        assertions.push({ type: AssertionOperator.NOT_NULL, output });
         break;
       case "assert_not_empty":
-        assertions.push({ output, not_empty: true });
+        assertions.push({ type: AssertionOperator.NOT_EMPTY, output });
         break;
     }
     current = current.getNextBlock();

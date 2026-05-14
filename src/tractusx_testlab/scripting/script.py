@@ -27,8 +27,12 @@
 from __future__ import annotations
 
 from tractusx_sdk.extensions.testlab.models import (
+    ScriptDefinition as SdkScriptDefinition,
+    TestCaseDefinition as SdkTckDefinition,
+)
+from tractusx_testlab.models.definitions import (
     ScriptDefinition,
-    TestCaseDefinition as TckDefinition,  # SDK alias
+    TckDefinition,
 )
 
 
@@ -92,11 +96,11 @@ class Tck:
 
     __slots__ = ("definition", "_scripts")
 
-    def __init__(self, definition: TckDefinition):
+    def __init__(self, definition: TckDefinition | SdkTckDefinition):
         self.definition = definition
         self._scripts: list[TestScript] = []
         for test_definition in definition.tests:
-            if isinstance(test_definition, ScriptDefinition):
+            if isinstance(test_definition, (ScriptDefinition, SdkScriptDefinition)):
                 self._scripts.append(TestScript(test_definition))
 
     @property

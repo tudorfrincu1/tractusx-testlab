@@ -32,13 +32,12 @@ from pydantic import BaseModel, Field
 
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
-    AssertionType,
     FailurePolicy,
     SdkCallMode,
     ValueSource,
 )
 from tractusx_sdk.extensions.testlab.models import DependencyRef
-from tractusx_testlab.models.enums import ScriptKind, ServiceType
+from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):
@@ -56,6 +55,11 @@ class Assertion(BaseModel):
     value: Optional[Any] = None
     path: Optional[str] = None
     description: Optional[str] = None
+    schema_ref: Optional[str] = Field(default=None, alias="schema")
+    min: Optional[Any] = None
+    max: Optional[Any] = None
+
+    model_config = {"populate_by_name": True}
 
 
 class StepDefinition(BaseModel):

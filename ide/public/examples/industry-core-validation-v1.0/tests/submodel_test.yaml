@@ -41,8 +41,8 @@ steps:
     store_in_memory:
       first_descriptor: "value"
     expect:
-      - output: value
-        not_empty: true
+      - type: "NOT_EMPTY"
+        output: value
 
   - type: load_schema
     name: Load Shell Descriptor Spec Schema
@@ -57,8 +57,9 @@ steps:
       variable: first_descriptor
       schema_variable: shell_descriptor_spec_schema
     expect:
-      - output: is_valid
-        equals: true
+      - type: "EQUALS"
+        output: is_valid
+        value: true
 
 variables:
   first_descriptor:

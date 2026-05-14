@@ -91,7 +91,7 @@ export async function checkBackendHealth(
   }
 }
 
-/** Response from POST /testlab/run */
+/** Response from POST /testlab/test-execution/run/yaml */
 export interface SubmitResponse {
   job_id: string;
   status: string;
@@ -105,7 +105,7 @@ export async function submitTestYaml(
   backendUrl: string,
   yaml: string,
 ): Promise<SubmitResponse> {
-  const res = await fetch(`${backendUrl}/testlab/run`, {
+  const res = await fetch(`${backendUrl}/testlab/test-execution/run/yaml`, {
     method: "POST",
     headers: { "Content-Type": "application/x-yaml" },
     body: yaml,
@@ -116,105 +116,57 @@ export async function submitTestYaml(
   return res.json() as Promise<SubmitResponse>;
 }
 
-/** Parsed SSE event with type and data payload. */
-interface SseEvent {
-  type: string;
-  data: string;
-}
+export { connectJobStream } from "./sseStream";
+
+/* ── Execution control endpoints ────────────────────────────────────────── */
 
 /**
- * Parse raw SSE text chunks into discrete events.
- * Handles the `event:` / `data:` / blank-line protocol.
+ * Cancel a running execution.
+ * POST /testlab/test-execution/{jobId}/cancel
  */
-function parseSseChunk(chunk: string): SseEvent[] {
-  const events: SseEvent[] = [];
-  let currentType = "message";
-  let currentData = "";
-
-  for (const line of chunk.split("\n")) {
-    if (line.startsWith("event:")) {
-      currentType = line.slice(6).trim();
-    } else if (line.startsWith("data:")) {
-      currentData += line.slice(5).trim();
-    } else if (line.trim() === "" && currentData) {
-      events.push({ type: currentType, data: currentData });
-      currentType = "message";
-      currentData = "";
-    }
-  }
-  return events;
-}
-
-/**
- * Connect to the backend SSE stream for a running job.
- * Uses fetch + ReadableStream for fine-grained control.
- *
- * @returns A cleanup function that aborts the connection.
- */
-export function connectJobStream(
+export async function cancelExecution(
   backendUrl: string,
   jobId: string,
-  onEvent: (eventType: string, data: unknown) => void,
-  onError: (error: Error) => void,
-  onClose: () => void,
-): () => void {
-  const controller = new AbortController();
+): Promise<void> {
+  const res = await fetch(
+    `${backendUrl}/testlab/test-execution/${encodeURIComponent(jobId)}/cancel`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    throw new Error(`Cancel failed: ${res.status} ${res.statusText}`);
+  }
+}
 
-  const consume = async () => {
-    try {
-      const res = await fetch(
-        `${backendUrl}/testlab/run/${encodeURIComponent(jobId)}/stream`,
-        {
-          headers: { Accept: "text/event-stream" },
-          signal: controller.signal,
-        },
-      );
+/**
+ * Pause a running execution.
+ * POST /testlab/test-execution/{jobId}/pause
+ */
+export async function pauseExecution(
+  backendUrl: string,
+  jobId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${backendUrl}/testlab/test-execution/${encodeURIComponent(jobId)}/pause`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    throw new Error(`Pause failed: ${res.status} ${res.statusText}`);
+  }
+}
 
-      if (!res.ok) {
-        throw new Error(`Stream error: ${res.status} ${res.statusText}`);
-      }
-
-      const reader = res.body?.getReader();
-      if (!reader) {
-        throw new Error("Response body is not readable");
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // Process complete events (separated by double newline)
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() ?? "";
-
-        for (const part of parts) {
-          const events = parseSseChunk(part + "\n\n");
-          for (const evt of events) {
-            try {
-              const parsed: unknown = JSON.parse(evt.data);
-              onEvent(evt.type, parsed);
-            } catch {
-              onEvent(evt.type, evt.data);
-            }
-          }
-        }
-      }
-
-      onClose();
-    } catch (err: unknown) {
-      if (controller.signal.aborted) return;
-      onError(err instanceof Error ? err : new Error(String(err)));
-    }
-  };
-
-  consume();
-
-  return () => {
-    controller.abort();
-  };
+/**
+ * Resume a paused execution.
+ * POST /testlab/test-execution/{jobId}/resume
+ */
+export async function resumeExecution(
+  backendUrl: string,
+  jobId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${backendUrl}/testlab/test-execution/${encodeURIComponent(jobId)}/resume`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    throw new Error(`Resume failed: ${res.status} ${res.statusText}`);
+  }
 }

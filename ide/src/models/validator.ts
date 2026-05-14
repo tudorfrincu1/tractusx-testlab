@@ -155,22 +155,18 @@ function validateStep(
         severity: "error",
       });
     }
-    const operators = Object.keys(assertion).filter((k) => k !== "output");
-    if (operators.length === 0) {
+    if (!assertion.type) {
       errors.push({
         path: `${path}.expect`,
-        message: "Assertion must specify an operator",
+        message: "Assertion must specify a type",
         severity: "error",
       });
-    }
-    for (const op of operators) {
-      if (!Object.values(AssertionOperator).includes(op as AssertionOperator)) {
-        errors.push({
-          path: `${path}.expect`,
-          message: `Invalid assertion operator: ${op}`,
-          severity: "error",
-        });
-      }
+    } else if (!Object.values(AssertionOperator).includes(assertion.type as AssertionOperator)) {
+      errors.push({
+        path: `${path}.expect`,
+        message: `Invalid assertion type: ${assertion.type}`,
+        severity: "error",
+      });
     }
   }
 

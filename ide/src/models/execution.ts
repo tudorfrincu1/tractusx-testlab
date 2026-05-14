@@ -28,7 +28,7 @@
 
 export type ExecutionPhase = "precondition" | "setup" | "main" | "cleanup";
 export type StepStatus = "pending" | "running" | "passed" | "failed" | "skipped" | "waiting";
-export type JobStatus = "queued" | "running" | "waiting" | "completed" | "failed" | "cancelled";
+export type JobStatus = "queued" | "running" | "waiting" | "paused" | "completed" | "failed" | "cancelled";
 
 /** SSE event payload for individual step status changes. */
 export interface StepEvent {

@@ -1,5 +1,5 @@
 ---
-description: "Senior Python backend architect for tractusx-testlab and tractusx-sdk expert. Use when: building Python modules, designing APIs, refactoring backend code, writing async runners, creating Pydantic models, optimizing performance, reviewing code quality, implementing CLI commands, writing tests, integrating with tractusx-sdk services, working with EDC connectors, Digital Twin Registry, discovery services, or dataspace protocols. Keywords: python, backend, architecture, clean code, performance, pydantic, async, pytest, tractusx_testlab, tractusx_sdk, edc, connector, dtr, aas, discovery, dataspace, dsp."
+description: "Senior Python backend architect for tractusx-testlab and tractusx-sdk expert. Use when: building Python modules, designing APIs, refactoring backend code, writing async runners, creating Pydantic models, optimizing performance, reviewing code quality, implementing CLI commands, writing tests, integrating with tractusx-sdk services, working with EDC connectors, Digital Twin Registry, discovery services, or dataspace protocols, debugging backend issues. Use the `debug-backend` skill for systematic bug diagnosis and resolution. Keywords: python, backend, architecture, clean code, performance, pydantic, async, pytest, tractusx_testlab, tractusx_sdk, edc, connector, dtr, aas, discovery, dataspace, dsp, debug, fix, troubleshoot."
 tools: [read, edit, search, execute, vscode, web, agent, todo, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
@@ -165,7 +165,10 @@ If any `print()` calls exist, replace with `logging.getLogger(__name__)`.
 python -m pytest tests/ -x -q
 ```
 
-### Step 6. Persist New Knowledge (if needed)
+### Step 6: Debug issues (if needed)
+Use the `debug-backend` skill when diagnosing bugs. It provides a structured 4-phase workflow: Reproduce → Diagnose → Fix → Verify. Includes a cheat sheet mapping symptoms to starting points and a list of common Python/async/Pydantic failure patterns.
+
+### Step 7. Persist New Knowledge (if needed)
 Use the `document-knowledge` skill to update `.github/kb/backend-kb.md` when you discover:
 - A **pattern** that proved effective (prefix: `PAT`)
 - A **gotcha** or subtle trap (prefix: `GOTCHA`)

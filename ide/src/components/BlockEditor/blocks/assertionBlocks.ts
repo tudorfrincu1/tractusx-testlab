@@ -45,8 +45,22 @@ function outputDropdown(catalog: BlockCatalog): (this: any) => Array<[string, st
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (this: any): Array<[string, string]> {
     const b = this.getSourceBlock?.();
-    if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
-    return collectParentOutputs(b, catalog);
+    if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) {
+      const cur = this.getValue?.() ?? "";
+      if (cur && cur !== "__NONE__") return [[cur, cur]];
+      return [["—", "__NONE__"]];
+    }
+    const options = collectParentOutputs(b, catalog);
+    // Preserve the current value even if the parent step isn't attached yet
+    const currentVal = this.getValue?.() ?? "";
+    if (
+      currentVal &&
+      currentVal !== "__NONE__" &&
+      !options.some(([, v]: [string, string]) => v === currentVal)
+    ) {
+      options.unshift([currentVal, currentVal]);
+    }
+    return options;
   };
 }
 
@@ -132,6 +146,20 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
       this.setNextStatement(true, "assertion");
       this.setColour(blockColors.assertion);
       this.setTooltip("Assert that output conforms to a JSON Schema");
+    },
+  };
+
+  Blockly.Blocks["assert_validates_schema"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(new Blockly.FieldDropdown(outputDropdown(catalog) as () => Array<[string, string]>), "OUTPUT")
+        .appendField("validates against schema");
+      this.appendValueInput("SEMANTIC_ID").appendField("semantic id:").setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output validates against a semantic schema (e.g. CX-0135)");
     },
   };
 

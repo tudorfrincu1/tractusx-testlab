@@ -52,11 +52,11 @@ export { loadBlockCatalog, buildToolbox, workspaceToModel, populateWorkspaceFrom
 export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog): void {
   patchBubbleColours();
   registerStructuralBlocks(Blockly);
-  registerValueBlocks(Blockly);
+  registerValueBlocks(Blockly, catalog);
   registerRootBlocks(Blockly);
   registerPolicyBlocks(Blockly);
   registerPreconditionBlocks(Blockly);
-  registerUtilityBlocks(Blockly);
+  registerUtilityBlocks(Blockly, catalog);
   registerAuthBlocks(Blockly);
   registerAssertionBlocks(Blockly, catalog);
   registerCatalogBlocks(Blockly, catalog);

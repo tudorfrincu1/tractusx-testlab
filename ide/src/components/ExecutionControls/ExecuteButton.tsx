@@ -24,6 +24,7 @@
 import { useCallback } from "react";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
+import PauseIcon from "@mui/icons-material/Pause";
 import { useExecutionStore } from "../../store/useExecutionStore";
 import { useProjectStore } from "../../store/useProjectStore";
 import { useCompileStore } from "../../store/useCompileStore";
@@ -31,15 +32,18 @@ import { modelToYaml } from "../../sync/modelToYaml";
 import "./ExecutionControls.css";
 
 /**
- * Execute / Cancel button for the top bar.
+ * Execute / Pause / Resume / Stop button group for the top bar.
  * Hidden when no backend URL is configured.
  * Disabled until the current YAML compiles successfully.
  */
 export function ExecuteButton() {
   const isConnected = useExecutionStore((s) => s.connectionStatus === "connected");
   const isExecuting = useExecutionStore((s) => s.isExecuting);
+  const jobStatus = useExecutionStore((s) => s.jobStatus);
   const execute = useExecutionStore((s) => s.execute);
   const cancel = useExecutionStore((s) => s.cancel);
+  const pause = useExecutionStore((s) => s.pause);
+  const resume = useExecutionStore((s) => s.resume);
   const hasProject = useProjectStore((s) => s.hasProject);
   const getActiveModel = useProjectStore((s) => s.getActiveModel);
   const compileStatus = useCompileStore((s) => s.compileStatus);
@@ -51,19 +55,51 @@ export function ExecuteButton() {
     execute(yaml);
   }, [getActiveModel, execute]);
 
+  const handlePause = useCallback(() => { pause(); }, [pause]);
+  const handleResume = useCallback(() => { resume(); }, [resume]);
+
   if (!isConnected) return null;
 
   if (isExecuting) {
+    const showPause = jobStatus === "running";
+    const showResume = jobStatus === "paused";
+    const showSpinner = !jobStatus || jobStatus === "queued";
+
     return (
-      <button
-        className="execute-btn execute-btn--cancel"
-        onClick={cancel}
-        type="button"
-      >
-        <StopIcon sx={{ fontSize: 14 }} />
-        <span className="execute-spinner" />
-        Cancel
-      </button>
+      <div className="execute-btn-group">
+        {showPause && (
+          <button
+            className="execute-btn execute-btn--pause"
+            onClick={handlePause}
+            type="button"
+            title="Pause execution"
+          >
+            <PauseIcon sx={{ fontSize: 14 }} />
+            Pause
+          </button>
+        )}
+        {showResume && (
+          <button
+            className="execute-btn execute-btn--resume"
+            onClick={handleResume}
+            type="button"
+            title="Resume execution"
+          >
+            <PlayArrowIcon sx={{ fontSize: 14 }} />
+            Resume
+          </button>
+        )}
+        <button
+          className="execute-btn execute-btn--cancel"
+          onClick={cancel}
+          type="button"
+          title="Stop execution"
+        >
+          <StopIcon sx={{ fontSize: 14 }} />
+          {showSpinner && <span className="execute-spinner" />}
+          Stop
+        </button>
+      </div>
     );
   }
 
@@ -74,7 +110,7 @@ export function ExecuteButton() {
       className="execute-btn execute-btn--run"
       onClick={handleExecute}
       disabled={!hasProject || !isCompileOk}
-      title={!isCompileOk ? "Compile first" : "Execute test"}
+      title={isCompileOk ? "Execute test" : "Compile first"}
       type="button"
     >
       <PlayArrowIcon sx={{ fontSize: 14 }} />

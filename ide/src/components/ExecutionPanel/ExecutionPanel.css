@@ -31,11 +31,27 @@
 }
 
 .execution-panel--expanded {
-  max-height: 300px;
+  /* height controlled by useResizablePanel via inline style */
 }
 
 .execution-panel--collapsed {
   max-height: 36px;
+}
+
+/* ── Resize handle ───────────────────────────────────────────────────────── */
+
+.execution-panel__resize-handle {
+  height: 4px;
+  cursor: row-resize;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.execution-panel__resize-handle:hover {
+  background: var(--tx-border);
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */

@@ -63,8 +63,9 @@ steps:
     store_in_memory:
       submodel_data: "response_body"
     expect:
-      - output: status_code
-        equals: 200
+      - type: "EQUALS"
+        output: status_code
+        value: 200
 
   - type: load_schema
     name: Load Notification Payload Schema
@@ -79,8 +80,9 @@ steps:
       variable: submodel_data
       schema_variable: notification_payload_schema
     expect:
-      - output: is_valid
-        equals: true
+      - type: "EQUALS"
+        output: is_valid
+        value: true
 
 variables:
   submodel_url:

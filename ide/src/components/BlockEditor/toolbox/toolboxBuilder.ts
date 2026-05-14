@@ -219,6 +219,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "assert_not_contains" },
           { kind: "block", type: "assert_matches" },
           { kind: "block", type: "assert_schema" },
+          { kind: "block", type: "assert_validates_schema" },
           { kind: "block", type: "assert_compare" },
           { kind: "block", type: "assert_between" },
           { kind: "block", type: "assert_not_null" },

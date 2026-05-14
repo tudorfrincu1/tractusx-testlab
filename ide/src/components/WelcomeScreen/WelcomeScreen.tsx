@@ -107,7 +107,7 @@ export function WelcomeScreen() {
           hasProject: true,
           projectName: project.projectName,
           projectGeneration: useProjectStore.getState().projectGeneration + 1,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,

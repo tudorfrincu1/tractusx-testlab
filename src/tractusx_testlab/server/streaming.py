@@ -38,14 +38,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
-from tractusx_sdk.extensions.testlab.models import (
-    TestCaseDefinition as TckDefinition,  # SDK alias
-)
+from tractusx_testlab.models.definitions import TckDefinition
 from tractusx_testlab.models.enums import ScriptKind
 from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck  # SDK alias
+from tractusx_testlab.scripting.script import Tck
 
 from tractusx_testlab.server._event_buffer import BufferedEvent, EventBuffer
 
@@ -53,7 +51,7 @@ _logger = logging.getLogger(__name__)
 
 _TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
-streaming_router = APIRouter(tags=["streaming"])
+streaming_router = APIRouter(prefix="/test-execution", tags=["streaming"])
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -72,7 +70,7 @@ def _get_event_buffer(request: Request) -> EventBuffer:
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.post("/run", status_code=202)
+@streaming_router.post("/run/yaml", status_code=202)
 async def run_yaml(
     request: Request,
     player: TestlabPlayer = Depends(_get_player),
@@ -125,7 +123,7 @@ async def _execute_tck_bg(
 ) -> None:
     """Run a TCK in the background, catching exceptions."""
     try:
-        await player.run_tck(tck)
+        await player.run_test_case(tck)
     except (RuntimeError, ValueError, OSError) as exc:
         _logger.warning("Background execution failed for job %s: %s", job_id, exc)
 
@@ -135,7 +133,7 @@ async def _execute_tck_bg(
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.get("/run/{job_id}/stream")
+@streaming_router.get("/{job_id}/stream")
 async def stream_job_events(
     job_id: str,
     request: Request,
