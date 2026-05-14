@@ -31,10 +31,10 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.models import Job, ServiceDefinition, ServiceNotFoundError, ServiceType
-from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
-from tractusx_sdk.extensions.testlab.syntax import defaults
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.models import Job, ServiceDefinition, ServiceNotFoundError, ServiceType
+from tractusx_testlab.services.manager import ServiceManager
+from tractusx_testlab.syntax import defaults
 
 
 class StepContext:

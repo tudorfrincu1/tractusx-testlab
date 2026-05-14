@@ -32,7 +32,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from tractusx_sdk.extensions.testlab.models import PackageFormat, UploadedPackage
+from tractusx_testlab.models import PackageFormat, UploadedPackage
 
 
 class PackageStorage:

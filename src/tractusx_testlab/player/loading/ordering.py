@@ -30,7 +30,7 @@ from collections import defaultdict, deque
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.scripting.script import TestScript
+    from tractusx_testlab.scripting.script import TestScript
 
 
 def topological_sort(scripts: list["TestScript"]) -> list["TestScript"]:

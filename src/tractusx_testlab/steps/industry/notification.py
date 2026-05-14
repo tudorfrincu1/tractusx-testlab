@@ -28,39 +28,62 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.syntax.context_vars import DATAPLANE_ENDPOINT, EDR_TOKEN
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 @step("send_notification")
 class SendNotificationStep(BaseStep):
-    """Send a notification through the dataspace using the SDK NotificationConsumerService."""
+    """Send a Catena-X notification via EDC Dataplane using EDR token.
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        notif_service = context.get_notification_service()
-        from tractusx_sdk.industry.models.notifications.notification import Notification
+    Params:
+        dataplane_url (str): Dataplane endpoint URL; falls back to context variable.
+        edr_token (str): EDR authorization token; falls back to context variable.
+        notification (dict): Notification payload.
+        notification_type (str, optional): Sets header.notificationType if provided.
+        timeout (int, optional): Request timeout in seconds (default 30).
+    """
 
-        notification = Notification(**params["notification"])
-        provider_bpn = params["provider_bpn"]
-        provider_dsp = params["provider_dsp_url"]
-        endpoint_path = params.get("endpoint_path", "")
+    async def execute(
+        self, params: dict, context: "StepContext", definition: StepDefinition
+    ) -> StepOutput:
+        import requests as _requests
 
-        result = notif_service.send_notification(
-            provider_bpn=provider_bpn,
-            provider_dsp_url=provider_dsp,
-            notification=notification,
-            endpoint_path=endpoint_path,
-            timeout=params.get("timeout", 30),
+        dataplane_url = params.get("dataplane_url") or context.get_variable(
+            DATAPLANE_ENDPOINT
         )
+        edr_token = params.get("edr_token") or context.get_variable(EDR_TOKEN)
+        notification = params.get("notification", {})
+        notification_type = params.get("notification_type", "")
+
+        if notification_type and "header" in notification:
+            notification["header"]["notificationType"] = notification_type
+
+        headers = {"Authorization": edr_token, "Content-Type": "application/json"}
+        timeout = params.get("timeout", 30)
+
+        req = HttpRequest(method="POST", url=dataplane_url, headers=headers, body=notification)
+        resp = _requests.post(
+            dataplane_url, json=notification, headers=headers, timeout=timeout
+        )
+        try:
+            resp_body = resp.json()
+        except (ValueError, TypeError):
+            resp_body = resp.text
 
         return StepOutput(
-            value=result,
-            request=HttpRequest(method="POST", url=provider_dsp, body=notification.to_data()),
-            response=HttpResponse(status_code=200 if result else 500, body=result),
+            value=resp_body,
+            request=req,
+            response=HttpResponse(
+                status_code=resp.status_code,
+                headers=dict(resp.headers),
+                body=resp_body,
+            ),
         )
 
 

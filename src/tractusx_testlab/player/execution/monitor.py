@@ -29,8 +29,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Callable
 
-from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.logging.structured import StructuredLogger
+from tractusx_testlab.models import (
     JobStatus,
     ScriptResult,
     StepResult,

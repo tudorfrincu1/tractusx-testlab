@@ -30,7 +30,7 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.steps.base import BaseStep
+    from tractusx_testlab.steps.base import BaseStep
 
 logger = logging.getLogger(__name__)
 

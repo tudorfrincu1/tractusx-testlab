@@ -31,12 +31,12 @@ from typing import Optional
 
 from fastapi import FastAPI
 
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
-from tractusx_sdk.extensions.testlab.server.routes import router
-from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+from tractusx_testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.server.callbacks import CallbackManager
+from tractusx_testlab.server.routes import router
+from tractusx_testlab.server.storage import PackageStorage
 
 
 def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:

@@ -27,15 +27,16 @@
 from __future__ import annotations
 
 import json
+import uuid
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.dataspace.models.connector.model_factory import ModelFactory
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 @step("create_asset")
@@ -105,6 +106,39 @@ class CreateContractDefinitionStep(BaseStep):
             usage_policy_id=params["usage_policy_id"],
             access_policy_id=params["access_policy_id"],
             asset_id=params["asset_id"],
+        )
+        return StepOutput(
+            value=result,
+            request=HttpRequest(method="POST", url=url, body=params),
+            response=HttpResponse(status_code=200 if result else 500, body=result),
+        )
+
+
+@step("create_contract_def")
+class CreateContractDefStep(BaseStep):
+    """Create a contract definition (frontend-facing alias with simplified params).
+
+    Params:
+        contract_def_id (str, optional): Contract definition ID (auto-generated if omitted).
+        access_policy_id (str): ID of the access policy.
+        contract_policy_id (str, optional): ID of the usage/contract policy.
+        asset_id (str, optional): ID of the asset.
+    """
+
+    async def execute(
+        self, params: dict, context: "StepContext", definition: StepDefinition
+    ) -> StepOutput:
+        provider = context.get_provider_service()
+        url = f"{context.get_provider_base_url()}/v3/contractdefinitions"
+        contract_id = params.get("contract_def_id") or str(uuid.uuid4())
+
+        result = provider.create_contract(
+            contract_id=contract_id,
+            usage_policy_id=params.get(
+                "contract_policy_id", params.get("access_policy_id", "")
+            ),
+            access_policy_id=params.get("access_policy_id", ""),
+            asset_id=params.get("asset_id", ""),
         )
         return StepOutput(
             value=result,

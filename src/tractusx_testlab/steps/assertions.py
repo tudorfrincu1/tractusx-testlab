@@ -35,7 +35,7 @@ import jsonschema
 # Matches a path segment with a predicate filter: ``name[key=value]``
 _PREDICATE_RE = re.compile(r"^([^\[]+)\[([^=\]]+)=([^\]]*)\]$")
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     Assertion,
     AssertionResult,
     AssertionSeverity,

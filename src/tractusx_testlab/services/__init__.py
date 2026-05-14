@@ -22,6 +22,6 @@
 
 """Service lifecycle management module."""
 
-from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
+from tractusx_testlab.services.manager import ServiceManager
 
 __all__ = ["ServiceManager"]

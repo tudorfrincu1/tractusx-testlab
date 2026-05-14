@@ -30,9 +30,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from tractusx_sdk.extensions.testlab.models import ScriptDefinition, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.syntax import defaults
+from tractusx_testlab.models import ScriptDefinition, StepDefinition
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.syntax import defaults
 
 
 @dataclass(slots=True)

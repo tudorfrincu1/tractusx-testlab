@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.config.loader import ConfigLoader
 
 __all__ = ["TestlabConfig", "ConfigLoader"]

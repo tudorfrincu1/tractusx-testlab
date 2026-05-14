@@ -29,10 +29,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.dataspace.tools.dsp_tools import DspTools
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
-from tractusx_sdk.extensions.testlab.syntax.context_vars import (
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.syntax.context_vars import (
     CATALOG_POLICY,
     CATALOG_TARGET,
     DATAPLANE_ENDPOINT,
@@ -43,7 +43,7 @@ from tractusx_sdk.extensions.testlab.syntax.context_vars import (
 )
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 @step("query_catalog")

@@ -31,9 +31,9 @@ from typing import Any, Optional, Union
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.syntax import defaults, keys
+from tractusx_testlab.syntax import defaults, keys
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     DependencyRef,
     ImportDefinition,
     ListenerDefinition,
@@ -43,13 +43,13 @@ from tractusx_sdk.extensions.testlab.models import (
     TestCaseDefinition,
 )
 
-from tractusx_sdk.extensions.testlab.scripting._builders import (
+from tractusx_testlab.scripting._builders import (
     parse_depends_on,
     parse_service,
     parse_step,
     parse_variables,
 )
-from tractusx_sdk.extensions.testlab.scripting._dependencies import (
+from tractusx_testlab.scripting._dependencies import (
     infer_output_dependencies,
     resolve_file_dependencies,
 )

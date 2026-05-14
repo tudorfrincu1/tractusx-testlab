@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -37,30 +36,20 @@ from tractusx_testlab.cli import app
 @app.command()
 def validate(
     script: Path = typer.Argument(..., help="Path to the YAML test script."),
-    version: Optional[str] = typer.Option(
-        None, "--version", "-v",
-        help="Connector version for version-specific validation (e.g. 'saturn').",
-    ),
+    verbose: bool = typer.Option(False, "--verbose", help="Enable verbose output."),
 ) -> None:
-    """Validate a YAML test script without compiling."""
-    from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+    """Validate a YAML test script."""
+    from tractusx_testlab.compiler.yaml_compiler import compile_yaml
+    from tractusx_testlab.exceptions import CompilationError, ValidationError
 
-    compiler = Compiler()
-    result = compiler.validate(script, version=version)
+    if not script.exists():
+        typer.echo(f"Error: file not found: {script}", err=True)
+        raise typer.Exit(1)
 
-    if not result.issues:
-        typer.echo(f"OK — {script.name} is valid (no issues)")
+    try:
+        test = compile_yaml(script)
+        typer.echo(f"Valid: {test.name}")
         raise typer.Exit(0)
-
-    for issue in result.issues:
-        prefix = "ERROR" if issue.level == "error" else "WARN "
-        loc = f" (step {issue.step_index})" if issue.step_index is not None else ""
-        typer.echo(f"  [{prefix}]{loc} {issue.message}")
-
-    if result.valid:
-        typer.echo(f"\nValid with {len(result.issues)} warning(s)")
-        raise typer.Exit(0)
-    else:
-        errors = sum(1 for issue in result.issues if issue.level == "error")
-        typer.echo(f"\nInvalid — {errors} error(s)")
+    except (CompilationError, ValidationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)

@@ -31,10 +31,10 @@ from typing import Optional
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.models import ScriptKind, TestCaseDefinition
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.models import ScriptKind, TestCaseDefinition
+from tractusx_testlab.scripting.parser import YamlParser
+from tractusx_testlab.scripting.script import TestCase
 
 
 def _detect_kind(data: dict) -> ScriptKind:

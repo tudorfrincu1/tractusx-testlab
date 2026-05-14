@@ -30,7 +30,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import CallbackResult, ListenerDefinition
+from tractusx_testlab.models import CallbackResult, ListenerDefinition
 
 
 class CallbackManager:

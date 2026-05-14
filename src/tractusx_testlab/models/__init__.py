@@ -25,11 +25,11 @@
 """
 Testlab data models package.
 
-Re-exports all public symbols so that ``from tractusx_sdk.extensions.testlab.models import X``
+Re-exports all public symbols so that ``from tractusx_testlab.models import X``
 continues to work unchanged.
 """
 
-from tractusx_sdk.extensions.testlab.models.definitions import (
+from tractusx_testlab.models.definitions import (
     Assertion,
     DependencyRef,
     ImportDefinition,
@@ -40,7 +40,7 @@ from tractusx_sdk.extensions.testlab.models.definitions import (
     VariableDefinition,
 )
 from tractusx_testlab.models.definitions import StepDefinition  # local override — no name field
-from tractusx_sdk.extensions.testlab.models.enums import (
+from tractusx_testlab.models.enums import (
     AssertionSeverity,
     AssertionType,
     FailurePolicy,
@@ -55,7 +55,7 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     StepStatus,
     ValueSource,
 )
-from tractusx_sdk.extensions.testlab.models.exceptions import (
+from tractusx_testlab.models.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
     ServiceNotFoundError,
@@ -63,12 +63,12 @@ from tractusx_sdk.extensions.testlab.models.exceptions import (
     ServiceTypeMismatchError,
     StepConfigError,
 )
-from tractusx_sdk.extensions.testlab.models.jobs import (
+from tractusx_testlab.models.jobs import (
     Job,
     JobEvent,
     JobMemory,
 )
-from tractusx_sdk.extensions.testlab.models.results import (
+from tractusx_testlab.models.results import (
     AssertionResult,
     AssertionSummary,
     CallbackResult,
@@ -78,13 +78,13 @@ from tractusx_sdk.extensions.testlab.models.results import (
     StepResult,
     TestCaseResult,
 )
-from tractusx_sdk.extensions.testlab.models.security import (
+from tractusx_testlab.models.security import (
     Base64Bytes,
     EncryptedKeyBlock,
     PackageManifest,
     SecurityBlock,
 )
-from tractusx_sdk.extensions.testlab.models.server import (
+from tractusx_testlab.models.server import (
     UploadedPackage,
     VaultConfig,
 )

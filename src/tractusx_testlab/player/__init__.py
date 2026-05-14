@@ -28,13 +28,13 @@ Sub-modules:
     jobs      — job lifecycle management
 """
 
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
-from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.player.jobs import JobManager
+from tractusx_testlab.player.loading.loader import Loader
+from tractusx_testlab.player.loading.ordering import topological_sort
+from tractusx_testlab.player.loading.resolver import resolve_params, resolve_service_def
 
 __all__ = [
     # Execution

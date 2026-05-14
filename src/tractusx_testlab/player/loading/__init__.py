@@ -22,8 +22,8 @@
 
 """Loading sub-module — test case loading, dependency ordering, and parameter resolution."""
 
-from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
-from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
+from tractusx_testlab.player.loading.loader import Loader
+from tractusx_testlab.player.loading.ordering import topological_sort
+from tractusx_testlab.player.loading.resolver import resolve_params, resolve_service_def
 
 __all__ = ["Loader", "topological_sort", "resolve_params", "resolve_service_def"]

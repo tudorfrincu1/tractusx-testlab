@@ -30,7 +30,7 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from tractusx_sdk.extensions.testlab.models.enums import (
+from tractusx_testlab.models.enums import (
     AssertionSeverity,
     AssertionType,
     FailurePolicy,

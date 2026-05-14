@@ -22,6 +22,6 @@
 
 """Logging module."""
 
-from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
+from tractusx_testlab.logging.structured import StructuredLogger
 
 __all__ = ["StructuredLogger"]

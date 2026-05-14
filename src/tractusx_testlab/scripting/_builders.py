@@ -28,9 +28,9 @@ from __future__ import annotations
 
 from typing import Union
 
-from tractusx_sdk.extensions.testlab.syntax import defaults, keys
+from tractusx_testlab.syntax import defaults, keys
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     Assertion,
     AssertionSeverity,
     AssertionType,

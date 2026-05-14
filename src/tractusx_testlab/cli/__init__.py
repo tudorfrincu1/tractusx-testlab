@@ -41,6 +41,18 @@ from tractusx_testlab.cli import compile as _compile  # noqa: E402, F401
 from tractusx_testlab.cli import run as _run  # noqa: E402, F401
 
 
+@app.command()
+def version() -> None:
+    """Print the version of tractusx-testlab."""
+    from importlib.metadata import PackageNotFoundError, version as _version
+    try:
+        ver = _version("tractusx-testlab")
+    except PackageNotFoundError:
+        ver = "0.1.0"
+    typer.echo(f"tractusx-testlab {ver}")
+    raise typer.Exit(0)
+
+
 def main() -> None:
     """Entry point for the ``testlab`` console script."""
     app()

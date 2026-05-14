@@ -27,16 +27,16 @@ Sub-modules:
     trust  — player identity, trust store, and vault client
 """
 
-from tractusx_sdk.extensions.testlab.security.crypto.encryption import encrypt_package, decrypt_package
-from tractusx_sdk.extensions.testlab.security.crypto.keygen import (
+from tractusx_testlab.security.crypto.encryption import encrypt_package, decrypt_package
+from tractusx_testlab.security.crypto.keygen import (
     KeyPair,
     generate_ed25519_keypair,
     generate_rsa_keypair,
 )
-from tractusx_sdk.extensions.testlab.security.crypto.signing import sign_bytes, verify_signature
-from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
-from tractusx_sdk.extensions.testlab.security.trust.trust_store import TrustStore
-from tractusx_sdk.extensions.testlab.security.trust.vault import VaultClient
+from tractusx_testlab.security.crypto.signing import sign_bytes, verify_signature
+from tractusx_testlab.security.trust.identity import PlayerIdentity
+from tractusx_testlab.security.trust.trust_store import TrustStore
+from tractusx_testlab.security.trust.vault import VaultClient
 
 __all__ = [
     # Crypto

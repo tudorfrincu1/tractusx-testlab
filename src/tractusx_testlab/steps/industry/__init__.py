@@ -22,6 +22,7 @@
 
 """Industry-layer steps: DTR / AAS and notification interactions."""
 
-from tractusx_sdk.extensions.testlab.steps.industry import dtr  # noqa: F401
-from tractusx_sdk.extensions.testlab.steps.industry import notification  # noqa: F401
-from tractusx_sdk.extensions.testlab.steps.industry import submodels  # noqa: F401
+from tractusx_testlab.steps.industry import dtr  # noqa: F401
+from tractusx_testlab.steps.industry import dtr_extra  # noqa: F401
+from tractusx_testlab.steps.industry import notification  # noqa: F401
+from tractusx_testlab.steps.industry import submodels  # noqa: F401

@@ -29,7 +29,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     AssertionResult,
     AssertionSummary,
     ScriptResult,
@@ -38,14 +38,14 @@ from tractusx_sdk.extensions.testlab.models import (
     StepResult,
     StepStatus,
 )
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript
-from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
-from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.jobs import JobManager
+from tractusx_testlab.player.loading.resolver import resolve_params, resolve_service_def
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.scripting.script import TestScript
+from tractusx_testlab.steps.assertions import AssertionEngine
+from tractusx_testlab.steps.conditions import ConditionEvaluator
 
 
 async def run_step(

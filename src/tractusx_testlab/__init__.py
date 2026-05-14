@@ -24,20 +24,20 @@
 
 """extensions.testlab — automated interoperability testing for Tractus-X dataspaces."""
 
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry, step
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase, TestScript
-from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
-from tractusx_sdk.extensions.testlab.server.app import create_app
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.compiler.compiler import Compiler
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.compiler.validator import ScriptValidator
+from tractusx_testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.jobs import JobManager
+from tractusx_testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.scripting.parser import YamlParser
+from tractusx_testlab.scripting.registry import StepRegistry, step
+from tractusx_testlab.scripting.script import TestCase, TestScript
+from tractusx_testlab.security.trust.identity import PlayerIdentity
+from tractusx_testlab.server.app import create_app
+from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 __all__ = [
     # Player

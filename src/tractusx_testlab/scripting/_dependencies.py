@@ -29,9 +29,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from tractusx_sdk.extensions.testlab.syntax import patterns
+from tractusx_testlab.syntax import patterns
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     DependencyRef,
     ScriptDefinition,
 )

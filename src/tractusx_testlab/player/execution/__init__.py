@@ -22,10 +22,10 @@
 
 """Execution sub-module — core test execution engine, context, and monitoring."""
 
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.player.execution.step_runner import (
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.player.execution.step_runner import (
     execute_cleanup_steps,
     execute_main_steps,
     execute_setup_steps,

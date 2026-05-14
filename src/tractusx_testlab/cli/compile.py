@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""CLI commands for compiling, decompiling, and inspecting .testpkg archives."""
+"""CLI commands for compiling and inspecting test scripts."""
 
 from __future__ import annotations
 
@@ -38,80 +38,23 @@ from tractusx_testlab.cli import app
 @app.command()
 def compile(
     script: Path = typer.Argument(..., help="Path to the YAML test script to compile."),
-    compiler_keys: Path = typer.Option(
-        ..., "--compiler-keys", "-c",
-        help="Directory containing the compiler identity (signing.pem, encryption.*).",
-    ),
-    player_pub: list[Path] = typer.Option(
-        ..., "--player-pub", "-p",
-        help="Path(s) to player RSA public key(s) (encryption.pub). Can be repeated.",
-    ),
-    output: Optional[Path] = typer.Option(
-        None, "--output", "-o",
-        help="Output .testpkg path. Defaults to <script_name>.testpkg.",
-    ),
-    version: Optional[str] = typer.Option(
-        None, "--version", "-v",
-        help="Connector version for version-specific validation.",
-    ),
+    verbose: bool = typer.Option(False, "--verbose", help="Enable verbose output."),
 ) -> None:
-    """Compile a YAML test script into an encrypted, signed .testpkg archive."""
-    from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
-    from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
-    from tractusx_sdk.extensions.testlab.security.crypto.keygen import _fingerprint
+    """Compile a YAML test script and output JSON."""
+    from tractusx_testlab.compiler.yaml_compiler import compile_yaml
+    from tractusx_testlab.exceptions import CompilationError, ValidationError
 
-    # Load compiler identity
-    compiler_identity = PlayerIdentity.load(compiler_keys)
-
-    # Load recipient public keys
-    recipient_keys: dict[str, bytes] = {}
-    for pub_path in player_pub:
-        pub_bytes = pub_path.read_bytes()
-        fingerprint = _fingerprint(pub_bytes)
-        recipient_keys[fingerprint] = pub_bytes
-        typer.echo(f"  Authorized player: {pub_path.name} ({fingerprint[:16]}...)")
-
-    compiler = Compiler()
-    out = output or script.with_suffix(".testpkg")
-
-    # Detect whether input is a test case manifest or a single test
-    import yaml as _yaml
-    from tractusx_sdk.extensions.testlab.player.loading.loader import _detect_kind
-    from tractusx_sdk.extensions.testlab.models import ScriptKind
-    with open(script, "r", encoding="utf-8") as script_handle:
-        raw = _yaml.safe_load(script_handle)
-    is_test_case = isinstance(raw, dict) and _detect_kind(raw) == ScriptKind.TEST_CASE
-
-    try:
-        if is_test_case:
-            manifest, validation = compiler.compile_test_case(
-                manifest_path=script,
-                compiler_identity=compiler_identity,
-                recipient_keys=recipient_keys,
-                output_path=out,
-                version=version,
-            )
-        else:
-            manifest, validation = compiler.compile(
-                script_path=script,
-                compiler_identity=compiler_identity,
-                recipient_keys=recipient_keys,
-                output_path=out,
-                version=version,
-            )
-    except (ValueError, FileNotFoundError) as exc:
-        typer.echo(f"Compilation failed: {exc}", err=True)
+    if not script.exists():
+        typer.echo(f"Error: file not found: {script}", err=True)
         raise typer.Exit(1)
 
-    typer.echo(f"\nCompiled → {out}")
-    typer.echo(f"  Checksum : {manifest.checksum[:32]}...")
-    typer.echo(f"  Signed by: {manifest.security.compiler_id[:32]}...")
-    typer.echo(f"  Players  : {len(manifest.security.authorized_players)}")
-
-    if validation.issues:
-        for issue in validation.issues:
-            prefix = "WARN " if issue.level == "warning" else "ERROR"
-            typer.echo(f"  [{prefix}] {issue.message}")
+    try:
+        test = compile_yaml(script)
+        typer.echo(test.model_dump_json(indent=2))
+        raise typer.Exit(0)
+    except (CompilationError, ValidationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -119,7 +62,7 @@ def info(
     package: Path = typer.Argument(..., help="Path to a .testpkg archive."),
 ) -> None:
     """Display the manifest of a compiled .testpkg package."""
-    from tractusx_sdk.extensions.testlab.compiler.packager import Packager
+    from tractusx_testlab.compiler.packager import Packager
 
     manifest = Packager.read_manifest(package)
     typer.echo(json.dumps(json.loads(manifest.model_dump_json()), indent=2))
@@ -146,8 +89,8 @@ def decompile(
     ),
 ) -> None:
     """Decrypt and verify an encrypted .testpkg, extracting the original YAML."""
-    from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-    from tractusx_sdk.extensions.testlab.security.crypto.keygen import load_private_key, load_public_key
+    from tractusx_testlab.compiler.packager import Packager
+    from tractusx_testlab.security.crypto.keygen import load_private_key, load_public_key
 
     priv_key_path = player_keys / "encryption.pem"
     if not priv_key_path.exists():

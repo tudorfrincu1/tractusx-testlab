@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from tractusx_sdk.extensions.testlab.server.app import create_app
-from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+from tractusx_testlab.server.app import create_app
+from tractusx_testlab.server.storage import PackageStorage
 
 __all__ = ["create_app", "PackageStorage"]
