@@ -2,6 +2,7 @@
  * Eclipse Tractus-X — TestLab IDE
  *
  * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.

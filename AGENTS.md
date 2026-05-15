@@ -146,7 +146,7 @@ Replace `Codex` and `o3` with the actual tool and model name being used.
 - Functional components only — no class components
 - `unknown` + narrowing instead of `any` — no `: any` or `as any`
 - No `console.log` — use structured error handling
-- No inline `style={{}}` — use CSS files or CSS modules
+- No inline `style={% raw %}{{}}{% endraw %}` — use CSS files or CSS modules
 - Custom hooks extract all non-trivial logic out of components
 - Props interfaces co-located with components, exported for testing
 - `as const` assertions on literal objects

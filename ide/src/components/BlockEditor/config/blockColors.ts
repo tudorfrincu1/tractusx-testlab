@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Tractus-X TestLab
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -34,7 +35,7 @@ export const blockColors = {
   /** Variable system */
   variableDef: "#5B21B6",
   variableGet: "#5B21B6",
-  valueString: "#475569",
+  valueString: "#000000",
   valueJsonPath: "#0E7490",
   storeOutput: "#5B21B6",
 
@@ -47,8 +48,8 @@ export const blockColors = {
   authentication: "#7C3AED",
 
   /** Data blocks */
-  json: "#374151",
-  keyValue: "#374151",
+  json: "#5f92e5",
+  keyValue: "#0042ac",
   valueJson: "#92400E",
 
   /** Step category colors (catalog-driven) — each category gets a unique hue */

@@ -1,7 +1,7 @@
 <!--
  Eclipse Tractus-X - Tractus-X TestLab
 
- Copyright (c) 2025 Contributors to the Eclipse Foundation
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
 
  See the NOTICE file(s) distributed with this work for additional
  information regarding copyright ownership.
@@ -209,7 +209,7 @@ Every agent has a **Mandatory Self-Review Checklist** that runs before deliverin
 | Type safety | `cd ide && npx tsc --noEmit` | Zero errors |
 | Build | `cd ide && npx vite build` | Success |
 | No `any` | Search for `: any` or `as any` | Zero matches |
-| No inline styles | Search for `style={{` | Zero matches (in new code) |
+| No inline styles | Search for `style={% raw %}{{{% endraw %}` | Zero matches (in new code) |
 
 ### Python Quality Gates
 
