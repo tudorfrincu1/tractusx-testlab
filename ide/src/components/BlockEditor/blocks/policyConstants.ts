@@ -70,6 +70,24 @@ export const SATURN_OPERATORS: DropdownOption[] = [
   ["isPartOf", "isPartOf"],
 ];
 
+/**
+ * Jupiter (legacy EDC v0.8–0.10) ODRL constraint options.
+ * Prefixed with tx:/cx-policy: namespace URIs.
+ */
+export const JUPITER_LEFT_OPERANDS: DropdownOption[] = [
+  ["BusinessPartnerNumber", "tx:BusinessPartnerNumber"],
+  ["Membership", "cx-policy:Membership"],
+  ["FrameworkAgreement", "cx-policy:FrameworkAgreement"],
+  ["UsagePurpose", "cx-policy:UsagePurpose"],
+  ["ContractReference", "cx-policy:ContractReference"],
+];
+
+export const JUPITER_OPERATORS: DropdownOption[] = [
+  ["eq", "odrl:eq"],
+  ["neq", "odrl:neq"],
+  ["in", "odrl:in"],
+];
+
 /** All valid leftOperand values (excluding the __CUSTOM__ sentinel). */
 export const KNOWN_LEFT_OPERANDS: readonly string[] = SATURN_LEFT_OPERANDS
   .map(([, value]) => value)

@@ -1,6 +1,6 @@
 ---
-description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor."
-tools: [read, edit, vscode, search, execute, web, agent, todo, browser]
+description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests, debugging frontend issues. Use the `debug-ide` skill for systematic bug diagnosis and resolution. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor, debug, fix, troubleshoot."
+tools: [read, edit, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
 
@@ -156,6 +156,8 @@ This is non-negotiable. You MUST:
 If ANY check fails, fix it before delivering. No exceptions.
 
 ### Step 1: File size check
+Read `.github/ide-kb/knowledge-base.md` if available, so you can remember your knowlage.
+Then
 Run this command and fix any files that appear:
 ```bash
 find ide/src -name '*.ts' -o -name '*.tsx' | xargs wc -l | awk '$1 > 300 && !/total/' | sort -rn
@@ -173,6 +175,20 @@ Search your output for `: any` or `as any`. Replace with `unknown` + narrowing o
 ```bash
 cd ide && npx tsc --noEmit && npx vite build
 ```
+
+### Step 5: Debug issues (if needed)
+Use the `debug-ide` skill when diagnosing bugs. It provides a structured 4-phase workflow: Reproduce → Diagnose → Fix → Verify. Includes a cheat sheet mapping symptoms to starting points and a list of common IDE failure patterns.
+
+### Step 6. Persist New Knowledge (if needed)
+Use the `document-knowledge` skill to update `.github/kb/ide-kb.md` when you discover:
+- A **pattern** that proved effective (prefix: `PAT`)
+- A **gotcha** or subtle trap (prefix: `GOTCHA`)
+- An **anti-pattern** to avoid (prefix: `ANTI`)
+- A **lesson learned** from a mistake (prefix: `LESSON`)
+- A **reusable fix** to a recurring problem (prefix: `FIX`)
+- An **API quirk** that isn't obvious from docs (prefix: `API`)
+
+Read the skill for entry format and numbering rules. This is a quick detour, not a separate task.
 
 ## How to Split Oversized Files
 
@@ -213,6 +229,33 @@ When a file exceeds 300 lines, apply these patterns:
 - No file exceeds 300 lines — verified by running the file size check command
 - No inline `style={{}}` — all styles in CSS files
 - No `: any` or `as any` — use `unknown` + narrowing
+
+## Mandatory Response Rule
+
+You MUST ALWAYS return a non-empty response. Never return empty or silent output.
+
+After completing ANY task (research or implementation), you MUST output a structured status report:
+
+```
+## Status: {IMPLEMENTED | NOT_IMPLEMENTED | RESEARCH_COMPLETE | BLOCKED}
+
+### Changes Made
+- {file}: {what changed}
+
+### Verification
+- {command}: {result}
+
+### Notes
+- {any issues, warnings, or context for the orchestrator}
+```
+
+If you made NO changes (e.g., the code already satisfied the requirements), still report:
+```
+## Status: NOT_IMPLEMENTED
+Reason: {why no changes were needed}
+```
+
+An empty response is considered a failure. The orchestrator cannot determine success or failure from silence.
 
 <!--
  Eclipse Tractus-X - Tractus-X TestLab

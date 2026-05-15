@@ -1,6 +1,6 @@
-# Certificate Management Test Cases in the IDE — Step-by-Step Guide
+# Certificate Management TCKs in the IDE — Step-by-Step Guide
 
-This guide walks you through creating certificate management test cases using the TestLab IDE. By the end, you'll be able to create and run tests that validate the complete certificate exchange workflow (request → validate → feedback).
+This guide walks you through creating certificate management TCKs using the TestLab IDE. By the end, you'll be able to create and run tests that validate the complete certificate exchange workflow (request → validate → feedback).
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ Each step depends on the output of the previous step. The IDE automatically link
 
 ---
 
-## Step 1: Create a New Certificate Test Case
+## Step 1: Create a New Certificate TCK
 
-### 1.1 Welcome Screen → New Test Case
+### 1.1 Welcome Screen → New TCK
 
 1. **Open IDE** → You see the Welcome Screen
-2. **Click "New Test Case"** (big blue button)
+2. **Click "New TCK"** (big blue button)
 3. **Name it**: `Certificate_ISO9001_Validation` (use underscores, no spaces)
 4. **Pick a template**: Select **"Certificate Management (CX-0135)"**
    - The IDE pre-fills setup/teardown blocks

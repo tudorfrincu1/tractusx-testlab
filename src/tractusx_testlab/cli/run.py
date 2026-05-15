@@ -22,11 +22,12 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""CLI command for executing test scripts."""
+"""CLI command for executing TCKs."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -35,9 +36,17 @@ from tractusx_testlab.cli import app
 
 @app.command()
 def run(
-    script: Path = typer.Argument(..., help="Test YAML script to run."),
+    script: Path = typer.Argument(..., help="Test YAML script or TCK manifest to run."),
+    config_file: Optional[Path] = typer.Option(
+        None, "--config", "-c",
+        help="YAML config file with variable overrides.",
+    ),
+    var: Optional[list[str]] = typer.Option(
+        None, "--var",
+        help="Runtime variable override as KEY=VALUE. Can be repeated.",
+    ),
 ) -> None:
-    """Run a test script."""
+    """Run a YAML test script and print step results."""
     from tractusx_testlab.compiler.yaml_compiler import compile_yaml
     from tractusx_testlab.exceptions import CompilationError, ValidationError
     from tractusx_testlab.runner.test_runner import run_test
@@ -52,6 +61,29 @@ def run(
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
 
+    runtime_vars: dict[str, str] = {}
+    if config_file is not None:
+        import yaml as _yaml
+        if not config_file.exists():
+            typer.echo(f"Error: config file not found: {config_file}", err=True)
+            raise typer.Exit(1)
+        with open(config_file, "r", encoding="utf-8") as fh:
+            config_data = _yaml.safe_load(fh) or {}
+        variables = config_data.get("variables", {})
+        for var_name, var_def in variables.items():
+            if isinstance(var_def, dict) and var_def.get("default") is not None:
+                runtime_vars[var_name] = str(var_def["default"])
+            elif not isinstance(var_def, dict):
+                runtime_vars[var_name] = str(var_def)
+
+    if var:
+        for entry in var:
+            if "=" not in entry:
+                typer.echo(f"Invalid --var format (expected KEY=VALUE): {entry}", err=True)
+                raise typer.Exit(1)
+            key, value = entry.split("=", 1)
+            runtime_vars[key] = value
+
     report = run_test(test)
     total = len(report.steps)
     passed = sum(1 for s in report.steps if s.is_passed)
@@ -65,3 +97,4 @@ def run(
             typer.echo(f"    Error: {step.error}")
 
     raise typer.Exit(0 if report.is_passed else 1)
+

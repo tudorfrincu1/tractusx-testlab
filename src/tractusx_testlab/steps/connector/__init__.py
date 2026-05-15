@@ -23,8 +23,8 @@
 # Import all connector step modules to trigger @step registrations
 from tractusx_testlab.steps.connector.provision import *  # noqa: F401, F403
 from tractusx_testlab.steps.connector.consume import *  # noqa: F401, F403
-from tractusx_testlab.steps.connector.negotiate import *  # noqa: F401, F403
 from tractusx_testlab.steps.connector.dataplane import *  # noqa: F401, F403
 from tractusx_testlab.steps.connector.cleanup import *  # noqa: F401, F403
 from tractusx_testlab.steps.connector.utils import *  # noqa: F401, F403
 from tractusx_testlab.steps.connector.dsp import *  # noqa: F401, F403
+from tractusx_testlab.steps.connector.extract import *  # noqa: F401, F403

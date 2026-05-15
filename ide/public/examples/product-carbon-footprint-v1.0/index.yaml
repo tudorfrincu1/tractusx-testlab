@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
 
-kind: test-case
+kind: tck
 name: product-carbon-footprint
 version: "1.0"
 description: Validate PCF data exchange — offer discovery, data fetch, and schema validation.

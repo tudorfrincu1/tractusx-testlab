@@ -28,10 +28,10 @@ Every YAML file starts with a `kind:` field that declares its type, following th
 | Type | `kind:` value | Purpose | Key field |
 |------|--------------|---------|----------|
 | **Test** | `test` | A single, self-contained test targeting one dataspace version. Contains variables, services, steps, assertions, and cleanup. | `steps:` |
-| **Test Case** | `test-case` | A manifest that groups multiple tests under shared variables. References tests by file path or inline definition. | `tests:` |
+| **TCK** | `tck` | A manifest that groups multiple tests under shared variables. References tests by file path or inline definition. | `tests:` |
 
 !!! tip "Auto-detection"
-    For backward compatibility, if `kind:` is omitted the Player auto-detects the type from the document structure: a `tests:` key means **test case**, otherwise **test**.
+    For backward compatibility, if `kind:` is omitted the Player auto-detects the type from the document structure: a `tests:` key means **TCK**, otherwise **test**.
 
 ---
 
@@ -45,11 +45,11 @@ Every YAML file starts with a `kind:` field that declares its type, following th
 
     Structure and fields of a `kind: test` document — variables, steps, cleanup, and the complete field reference.
 
--   :material-format-list-group:{ .lg .middle } **[Test Cases](test-cases.md)**
+-   :material-format-list-group:{ .lg .middle } **[TCKs](tcks.md)**
 
     ---
 
-    How to compose multiple tests into a `kind: test-case` manifest with shared variables, `"!include"` directives, and library imports.
+    How to compose multiple tests into a `kind: tck` manifest with shared variables, `"!include"` directives, and library imports.
 
 -   :material-source-branch:{ .lg .middle } **[Dependencies & Outputs](dependencies-and-outputs.md)**
 
@@ -87,7 +87,7 @@ Every YAML file starts with a `kind:` field that declares its type, following th
 
 ## Quick Example
 
-A minimal test and the test case that runs it:
+A minimal test and the TCK that runs it:
 
 === "Test (`kind: test`)"
 
@@ -108,10 +108,10 @@ A minimal test and the test case that runs it:
             severity: HARD
     ```
 
-=== "Test Case (`kind: test-case`)"
+=== "TCK (`kind: tck`)"
 
     ```yaml
-    kind: test-case
+    kind: tck
     name: regression-suite
     version: "1.0"
 

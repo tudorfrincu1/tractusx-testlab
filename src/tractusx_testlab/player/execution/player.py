@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""TestlabPlayer — async executor that runs test cases script-by-script, step-by-step."""
+"""TestlabPlayer — async executor that runs TCKs script-by-script, step-by-step."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ from tractusx_testlab.models import (
     ScriptResult,
     ScriptStatus,
     StepResult,
-    TestCaseResult,
+    TckResult,
 )
 from tractusx_testlab.player.execution.context import StepContext
 from tractusx_testlab.player.execution.monitor import ExecutionMonitor
@@ -52,7 +52,7 @@ from tractusx_testlab.player.execution.step_runner import (
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.player.loading.loader import Loader
 from tractusx_testlab.player.loading.ordering import topological_sort
-from tractusx_testlab.scripting.script import TestCase, TestScript
+from tractusx_testlab.scripting.script import Tck, TestScript
 from tractusx_testlab.services.manager import ServiceManager
 
 # Ensure built-in steps are registered
@@ -65,7 +65,7 @@ class TestlabPlayer:
     Usage::
 
         player = TestlabPlayer()
-        result = await player.run("my_test_case.yaml")
+        result = await player.run("my_tck.yaml")
     """
 
     __slots__ = ("_config", "_logger", "_monitor", "_jobs", "_loader")
@@ -89,18 +89,18 @@ class TestlabPlayer:
     # Public API
     # ------------------------------------------------------------------
 
-    async def run(self, path: str | Path, runtime_vars: Optional[dict] = None) -> TestCaseResult:
-        """Load and execute a test case, returning the full result."""
-        test_case = self._loader.load(Path(path))
-        return await self.run_test_case(test_case, runtime_vars=runtime_vars)
+    async def run(self, path: str | Path, runtime_vars: Optional[dict] = None) -> TckResult:
+        """Load and execute a TCK, returning the full result."""
+        tck = self._loader.load(Path(path))
+        return await self.run_tck(tck, runtime_vars=runtime_vars)
 
-    async def run_test_case(
+    async def run_tck(
         self,
-        test_case: TestCase,
+        tck: Tck,
         runtime_vars: Optional[dict] = None,
-    ) -> TestCaseResult:
-        """Execute a loaded TestCase object."""
-        job = self._jobs.create(test_case.name)
+    ) -> TckResult:
+        """Execute a loaded Tck object."""
+        job = self._jobs.create(tck.name)
         if runtime_vars:
             job.runtime_vars = runtime_vars
 
@@ -108,30 +108,30 @@ class TestlabPlayer:
 
         job_logger = self._logger.for_job(job.job_id)
         monitor = self._create_job_monitor(job_logger)
-        monitor.on_job_started(job.job_id, test_case.name)
+        monitor.on_job_started(job.job_id, tck.name)
 
         svc_mgr = ServiceManager()
         context = StepContext(services=svc_mgr, job=job, config=self._config)
 
-        self._seed_context_variables(context, test_case, runtime_vars)
+        self._seed_context_variables(context, tck, runtime_vars)
 
-        test_case_started_at = datetime.now(timezone.utc)
-        ordered_scripts = topological_sort(test_case.scripts)
+        tck_started_at = datetime.now(timezone.utc)
+        ordered_scripts = topological_sort(tck.scripts)
         script_results = await self._execute_scripts_in_order(
             ordered_scripts, context, job, monitor,
         )
-        test_case_finished_at = datetime.now(timezone.utc)
+        tck_finished_at = datetime.now(timezone.utc)
 
         svc_mgr.teardown()
 
-        result = self._build_test_case_result(
-            test_case.name, script_results, test_case_started_at, test_case_finished_at,
+        result = self._build_tck_result(
+            tck.name, script_results, tck_started_at, tck_finished_at,
         )
         self._finalize_job(job, result, monitor, job_logger)
         return result
 
     # ------------------------------------------------------------------
-    # Test case helpers
+    # TCK helpers
     # ------------------------------------------------------------------
 
     def _create_job_monitor(self, job_logger: StructuredLogger) -> ExecutionMonitor:
@@ -144,12 +144,12 @@ class TestlabPlayer:
     @staticmethod
     def _seed_context_variables(
         context: StepContext,
-        test_case: TestCase,
+        tck: Tck,
         runtime_vars: Optional[dict],
     ) -> None:
         """Seed context with shared variables (medium priority) and runtime vars (highest)."""
-        if test_case.definition.shared_variables:
-            for var_name, var_def in test_case.definition.shared_variables.items():
+        if tck.definition.shared_variables:
+            for var_name, var_def in tck.definition.shared_variables.items():
                 if var_def.default is not None:
                     context.set_variable(var_name, var_def.default)
 
@@ -217,16 +217,16 @@ class TestlabPlayer:
                 context.set_variable(f"!{script.name}:{export_name}", value)
 
     @staticmethod
-    def _build_test_case_result(
-        test_case_name: str,
+    def _build_tck_result(
+        tck_name: str,
         script_results: list[ScriptResult],
         started_at: datetime,
         finished_at: datetime,
-    ) -> TestCaseResult:
-        """Aggregate script results into a single TestCaseResult."""
+    ) -> TckResult:
+        """Aggregate script results into a single TckResult."""
         all_passed = all(script.status == ScriptStatus.COMPLETED for script in script_results)
-        return TestCaseResult(
-            test_case_id=test_case_name,
+        return TckResult(
+            tck_id=tck_name,
             status=ScriptStatus.COMPLETED if all_passed else ScriptStatus.FAILED,
             scripts=script_results,
             started_at=started_at,
@@ -236,7 +236,7 @@ class TestlabPlayer:
     def _finalize_job(
         self,
         job: Any,
-        result: TestCaseResult,
+        result: TckResult,
         monitor: ExecutionMonitor,
         job_logger: StructuredLogger,
     ) -> None:

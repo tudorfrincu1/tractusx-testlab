@@ -19,7 +19,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Compiling Packages
 
-This section shows how to validate your test scripts and compile them into a portable `.testpkg` package.
+This section shows how to validate your test scripts and compile them into a portable `.tckpkg` package.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ my-connector-tests/
 ├── assets/
 │   └── schemas/
 │       └── serial-part-3.0.json
-└── test-case.yaml
+└── tck.yaml
 ```
 
 ---
@@ -43,7 +43,7 @@ my-connector-tests/
 Before packaging, you can validate that your YAML scripts are correct — all `${var}` references resolve, step types exist in the registry, and the dataspace version is supported:
 
 ```bash
-testlab validate test-case.yaml
+testlab validate tck.yaml
 ```
 
 **Expected output (success):**
@@ -124,20 +124,20 @@ cp compiler_signing.pub ~/.testlab/trusted_compilers/
 
 ## Step 3 — Compile (Encrypted by Default)
 
-Compile and package the test case. Encryption is automatic — you provide the Player public keys and the Compiler signing key:
+Compile and package the TCK. Encryption is automatic — you provide the Player public keys and the Compiler signing key:
 
 ```bash
-testlab compile test-case.yaml \
+testlab compile tck.yaml \
   --authorize-player ~/.testlab/keys/player1.pub \
   --authorize-player ~/.testlab/keys/player2.pub \
   --signing-key ./compiler_signing.pem \
-  --output connector_e2e-1.0.testpkg
+  --output connector_e2e-1.0.tckpkg
 ```
 
 **Expected output:**
 
 ```
-Validating test case "connector_e2e"...
+Validating TCK "connector_e2e"...
 Validation passed (2 tests, 9 steps, 9 assertions)
 
 Encrypting package...
@@ -151,14 +151,14 @@ Packaging...
    Writing payload.enc (encrypted scripts + assets)
    Writing signature.sig (Ed25519 signature)
 
-Encrypted package created: connector_e2e-1.0.testpkg (14.1 KB)
+Encrypted package created: connector_e2e-1.0.tckpkg (14.1 KB)
    Authorized players: 2
 ```
 
 **If you forget the keys:**
 
 ```bash
-testlab compile test-case.yaml --output connector_e2e-1.0.testpkg
+testlab compile tck.yaml --output connector_e2e-1.0.tckpkg
 ```
 
 ```
@@ -173,14 +173,14 @@ To compile without encryption (development only), use --plain.
 
 ## Step 4 — Inspect the Compiled Package
 
-The compiled `.testpkg` is **not human-readable**. Tests and assets are encrypted inside `payload.enc`:
+The compiled `.tckpkg` is **not human-readable**. Tests and assets are encrypted inside `payload.enc`:
 
 ```bash
-unzip -l connector_e2e-1.0.testpkg
+unzip -l connector_e2e-1.0.tckpkg
 ```
 
 ```
-Archive:  connector_e2e-1.0.testpkg
+Archive:  connector_e2e-1.0.tckpkg
   Length      Date    Time    Name
 ---------  ---------- -----   ----
       892  2026-03-30 14:25   manifest.yaml
@@ -193,7 +193,7 @@ Archive:  connector_e2e-1.0.testpkg
 Only the `manifest.yaml` is readable — it contains metadata and the security block, but **no secrets**:
 
 ```bash
-unzip -p connector_e2e-1.0.testpkg manifest.yaml
+unzip -p connector_e2e-1.0.tckpkg manifest.yaml
 ```
 
 ```yaml
@@ -223,8 +223,8 @@ security:
 
 | Field | Value | Purpose |
 |-------|-------|---------|
-| `name` | `connector_e2e` | Test case name from `test-case.yaml` |
-| `version` | `1.0` | Test case version from `test-case.yaml` |
+| `name` | `connector_e2e` | Test case name from `tck.yaml` |
+| `version` | `1.0` | Test case version from `tck.yaml` |
 | `sdk_version` | `0.5.0` | SDK version used to compile — Player warns on mismatch |
 | `compiled_at` | ISO 8601 timestamp | Compilation timestamp |
 | `dataspace_versions` | `["saturn"]` | All dataspace versions referenced across scripts |
@@ -237,7 +237,7 @@ security:
 An authorized Player can decompile a package — extracting the original YAML scripts — using the `testlab decompile` command. This requires the Player's private key (to decrypt) and the Compiler's public key (to verify the signature):
 
 ```bash
-testlab decompile connector_e2e-1.0.testpkg \
+testlab decompile connector_e2e-1.0.tckpkg \
   --player-keys .keys/player \
   --compiler-pub .keys/compiler/signing.pub
 ```
@@ -252,7 +252,7 @@ Decompiled → connector_e2e-1.0.yaml
 You can also print the decrypted YAML to stdout without writing a file:
 
 ```bash
-testlab decompile connector_e2e-1.0.testpkg \
+testlab decompile connector_e2e-1.0.tckpkg \
   --player-keys .keys/player \
   --compiler-pub .keys/compiler/signing.pub \
   --stdout
@@ -261,7 +261,7 @@ testlab decompile connector_e2e-1.0.testpkg \
 Or specify a custom output path:
 
 ```bash
-testlab decompile connector_e2e-1.0.testpkg \
+testlab decompile connector_e2e-1.0.tckpkg \
   --player-keys .keys/player \
   --compiler-pub .keys/compiler/signing.pub \
   --output ./decompiled/connector_e2e.yaml
@@ -278,7 +278,7 @@ testlab decompile connector_e2e-1.0.testpkg \
 For local development and debugging, you can opt out of encryption with `--plain`:
 
 ```bash
-testlab compile test-case.yaml --plain --output connector_e2e-1.0.testpkg
+testlab compile tck.yaml --plain --output connector_e2e-1.0.tckpkg
 ```
 
 ```
@@ -286,7 +286,7 @@ WARNING: Package compiled in plain mode. Tests and assets are NOT encrypted.
          Do not distribute plain packages — they may contain secrets.
          Use encrypted mode (default) for any shared or production package.
 
-Validating test case "connector_e2e"...
+Validating TCK "connector_e2e"...
 Validation passed (2 tests, 9 steps, 9 assertions)
 
 Packaging...
@@ -296,17 +296,17 @@ Packaging...
    Stamping metadata (SDK v0.5.0, 2026-03-30T14:22:00Z)
    Computing SHA-256 checksum
 
-Package created: connector_e2e-1.0.testpkg (12.4 KB)
+Package created: connector_e2e-1.0.tckpkg (12.4 KB)
 ```
 
 Plain packages store tests as-is — human-readable, no encryption, no keys needed:
 
 ```bash
-unzip -l connector_e2e-1.0.testpkg
+unzip -l connector_e2e-1.0.tckpkg
 ```
 
 ```
-Archive:  connector_e2e-1.0.testpkg
+Archive:  connector_e2e-1.0.tckpkg
   Length      Date    Time    Name
 ---------  ---------- -----   ----
       487  2026-03-30 14:22   manifest.yaml
@@ -328,11 +328,11 @@ Archive:  connector_e2e-1.0.testpkg
 
 | Command | Description |
 |---------|-------------|
-| `testlab validate <test-case.yaml>` | Validate tests without packaging |
-| `testlab compile <test-case.yaml> --authorize-player <key.pub> --signing-key <key.pem>` | Compile into encrypted `.testpkg` (default) |
-| `testlab compile <test-case.yaml> --plain` | Compile without encryption (development only) |
-| `testlab compile <test-case.yaml> --output <file>` | Specify output filename |
-| `testlab compile <test-case.yaml> --library-path <dir>` | Set path for resolving imported tests |
+| `testlab validate <tck.yaml>` | Validate tests without packaging |
+| `testlab compile <tck.yaml> --authorize-player <key.pub> --signing-key <key.pem>` | Compile into encrypted `.tckpkg` (default) |
+| `testlab compile <tck.yaml> --plain` | Compile without encryption (development only) |
+| `testlab compile <tck.yaml> --output <file>` | Specify output filename |
+| `testlab compile <tck.yaml> --library-path <dir>` | Set path for resolving imported tests |
 | `testlab keygen` | Generate Player RSA key pair |
 | `testlab keygen --compiler` | Generate Compiler Ed25519 signing key pair |
 | `testlab keygen --force` | Overwrite existing keys (key rotation) |
@@ -345,7 +345,7 @@ Archive:  connector_e2e-1.0.testpkg
 
 ---
 
-You now have a compiled `.testpkg` ready to distribute and execute. Continue to [Executing Tests](executing-tests.md).
+You now have a compiled `.tckpkg` ready to distribute and execute. Continue to [Executing Tests](executing-tests.md).
 
 ---
 

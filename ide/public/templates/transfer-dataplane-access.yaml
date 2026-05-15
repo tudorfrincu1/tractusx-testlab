@@ -44,8 +44,9 @@ steps:
     store_in_memory:
       transfer_process_id: "transfer_process_id"
     expect:
-      - output: status_code
-        equals: 200
+      - type: "EQUALS"
+        output: status_code
+        value: 200
 
   - type: retry
     name: Wait for Transfer Started
@@ -73,5 +74,6 @@ steps:
       edr_token: "authorization"
       data_address: "endpoint"
     expect:
-      - output: status_code
-        equals: 200
+      - type: "EQUALS"
+        output: status_code
+        value: 200

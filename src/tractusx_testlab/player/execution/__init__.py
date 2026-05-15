@@ -33,6 +33,7 @@ from tractusx_testlab.player.execution.step_runner import (
     run_step,
     store_step_outputs,
 )
+from tractusx_testlab.player.execution.preconditions import execute_precondition_steps
 
 __all__ = [
     "StepContext",
@@ -40,6 +41,7 @@ __all__ = [
     "TestlabPlayer",
     "execute_cleanup_steps",
     "execute_main_steps",
+    "execute_precondition_steps",
     "execute_setup_steps",
     "run_script",
     "run_step",

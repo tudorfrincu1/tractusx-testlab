@@ -39,7 +39,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 On the Welcome Screen, choose one of:
 
-- **New Project** — start with a blank test case
+- **New Project** — start with a blank TCK
 - **Open File** — import an existing `.yaml`, `.yml`, or `.zip` project
 - **Example** — load a pre-built example to explore
 
@@ -76,7 +76,7 @@ The IDE uses a multi-panel layout that adapts to what you're editing.
 | Panel | Purpose |
 |-------|---------|
 | **Top Bar** | Project name, active file, import/export, examples |
-| **Project Explorer** | File tree — test case, tests, schemas |
+| **Project Explorer** | File tree — TCK, tests, schemas |
 | **Block Editor** | Blockly workspace for visual test building |
 | **YAML Preview** | Live YAML output with syntax highlighting |
 | **Graph View** | Visual dependency graph (toggle with YAML) |
@@ -91,4 +91,4 @@ Each panel is described in detail in the following pages:
 - [Graph View](graph-view.md) — Visualizing execution and data flow
 - [Services](services.md) — Configuring connectors, DTR, and discovery services
 - [Export & Import](export-import.md) — Saving and sharing projects
-- [Test Case Dashboard](test-case-dashboard.md) — Managing test pipelines
+- [TCK Dashboard](tck-dashboard.md) — Managing test pipelines

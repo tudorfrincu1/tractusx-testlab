@@ -32,7 +32,7 @@ graph TD
     COMPILER --> C_INIT["__init__.py"]
     COMPILER --> C_COMP["compiler.py<br/><i>TestlabCompiler</i>"]
     COMPILER --> C_VAL["validator.py<br/><i>Static validation</i>"]
-    COMPILER --> C_PKG["packager.py<br/><i>.testpkg ZIP builder/reader</i>"]
+    COMPILER --> C_PKG["packager.py<br/><i>.tckpkg ZIP builder/reader</i>"]
 
     ROOT --> PLAYER["player/"]
     PLAYER --> P_INIT["__init__.py"]
@@ -45,7 +45,7 @@ graph TD
     ROOT --> SCRIPTING["scripting/"]
     SCRIPTING --> S_INIT["__init__.py"]
     SCRIPTING --> S_PARSE["parser.py<br/><i>YAML parser</i>"]
-    SCRIPTING --> S_SCRIPT["script.py<br/><i>TestScript / TestCase wrappers</i>"]
+    SCRIPTING --> S_SCRIPT["script.py<br/><i>TestScript / Tck wrappers</i>"]
     SCRIPTING --> S_REG["registry.py<br/><i>StepRegistry</i>"]
 
     ROOT --> STEPS["steps/"]
@@ -231,15 +231,15 @@ graph LR
 |-----------|------|---------------|
 | **TestlabCompiler** | `compiler/compiler.py` | Orchestrates validation and compilation of YAML scripts into stamped, verified definitions |
 | **Validator** | `compiler/validator.py` | Static analysis — variable reference checks, step type existence, version compatibility |
-| **Packager** | `compiler/packager.py` | Builds `.testpkg` ZIP archives and unpacks them with checksum verification |
+| **Packager** | `compiler/packager.py` | Builds `.tckpkg` ZIP archives and unpacks them with checksum verification |
 | **TestlabPlayer** | `player/player.py` | Singleton async executor — loads packages/YAML, runs scripts, coordinates all subsystems |
 | **StepContext** | `player/context.py` | Per-script runtime state bag — holds variables, dataspace version, service references |
-| **Loader** | `player/loader.py` | Loads test content from `.testpkg` files, raw YAML, or pre-compiled dicts |
+| **Loader** | `player/loader.py` | Loads test content from `.tckpkg` files, raw YAML, or pre-compiled dicts |
 | **ExecutionMonitor** | `player/monitor.py` | In-memory state store for active/completed runs, event callbacks, query API |
 | **JobManager** | `player/jobs.py` | Manages Job lifecycle (creation, state transitions, memory persistence, event logging), coordinates wait/resume with the callback system |
 | **Parser** | `scripting/parser.py` | YAML parsing with string-based `"!include"` directive and safe loading |
 | **StepRegistry** | `scripting/registry.py` | Version-aware registry mapping `(step_type, dataspace_version)` to `BaseStep` classes |
-| **TestScript / TestCase** | `scripting/script.py` | Runtime wrappers around parsed definitions with execution helpers |
+| **TestScript / Tck** | `scripting/script.py` | Runtime wrappers around parsed definitions with execution helpers |
 | **BaseStep** | `steps/base.py` | Abstract base class for all steps, plus `@step` auto-registration decorator |
 | **AssertionEngine** | `steps/assertions.py` | Evaluates assertion blocks against step outputs (5 types, 2 severities, 3 sources) |
 | **Connector Steps** | `steps/connector/` | Predefined steps for connector operations (provision, catalog, negotiate, transfer, EDR, cleanup, dataplane) |
@@ -251,9 +251,9 @@ graph LR
 | **CallbackManager** | `server/callbacks.py` | Manages ephemeral callback routes — mounts/unmounts FastAPI routes at runtime, signals `asyncio.Event` on callback receipt |
 | **Execution Routes** | `server/routes.py` | REST API endpoints for remote execution (`/run`) and job management (`/jobs`, `/jobs/{job_id}`, `/jobs/{job_id}/cancel`, `/jobs/{job_id}/memory`, `/jobs/{job_id}/events`) |
 | **Package Routes** | `server/packages.py` | REST API endpoints for package upload, listing, metadata retrieval, and deletion (`/packages`) |
-| **PackageStorage** | `server/storage.py` | Local filesystem backend for uploaded `.testpkg` files — stores, indexes, and retrieves packages by `package_id` |
+| **PackageStorage** | `server/storage.py` | Local filesystem backend for uploaded `.tckpkg` files — stores, indexes, and retrieves packages by `package_id` |
 | **KeyGenerator** | `security/keygen.py` | Generates RSA key pairs (Player identity) and Ed25519 key pairs (Compiler signing). Implements `testlab keygen` CLI |
-| **Encryption** | `security/encryption.py` | AES-256-GCM content encryption/decryption and RSA-OAEP key wrapping/unwrapping. Used by the Packager for encrypted `.testpkg` |
+| **Encryption** | `security/encryption.py` | AES-256-GCM content encryption/decryption and RSA-OAEP key wrapping/unwrapping. Used by the Packager for encrypted `.tckpkg` |
 | **PlayerIdentity** | `security/identity.py` | Manages Player identity — loads/stores RSA key pairs from `~/.testlab/keys/`, computes fingerprints, produces `player:sha256:` identifiers |
 | **TrustStore** | `security/trust_store.py` | Manages the trusted compilers directory (`~/.testlab/trusted_compilers/`). Loads Ed25519 public keys, matches by fingerprint |
 | **PackageSigner** | `security/signing.py` | Ed25519 package signing (Compiler-side) and signature verification (Player-side). Signs manifest + payload bytes |

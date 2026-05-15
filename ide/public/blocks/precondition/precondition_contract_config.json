@@ -1,0 +1,13 @@
+{
+  "type": "precondition_contract_config",
+  "label": "Contract Config",
+  "description": "Pre-configure a contract definition linking asset and policies before test execution",
+  "params": [
+    { "name": "asset_id", "type": "variable", "required": true, "description": "Asset ID variable reference" },
+    { "name": "access_policy_id", "type": "variable", "required": true, "description": "Access policy ID variable reference" },
+    { "name": "usage_policy_id", "type": "variable", "required": true, "description": "Usage policy ID variable reference" }
+  ],
+  "outputs": [
+    { "name": "config_result", "description": "The contract configuration object" }
+  ]
+}

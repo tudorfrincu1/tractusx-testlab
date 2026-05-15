@@ -28,12 +28,12 @@
 import {
   type TestLabDocument,
   type ScriptDefinition,
-  type TestCaseDefinition,
+  type TckDefinition,
   type StepDefinition,
   ScriptKind,
   AssertionOperator,
   FailurePolicy,
-  isTestCase,
+  isTck,
   isTestRef,
   isTemplateStep,
 } from "./schema";
@@ -66,8 +66,8 @@ export function validate(doc: TestLabDocument): ValidationError[] {
     errors.push({ path: "kind", message: `Invalid kind: ${doc.kind}`, severity: "error" });
   }
 
-  if (isTestCase(doc)) {
-    validateTestCase(doc, errors);
+  if (isTck(doc)) {
+    validateTck(doc, errors);
   } else {
     validateScript(doc as ScriptDefinition, errors);
   }
@@ -155,22 +155,18 @@ function validateStep(
         severity: "error",
       });
     }
-    const operators = Object.keys(assertion).filter((k) => k !== "output");
-    if (operators.length === 0) {
+    if (!assertion.type) {
       errors.push({
         path: `${path}.expect`,
-        message: "Assertion must specify an operator",
+        message: "Assertion must specify a type",
         severity: "error",
       });
-    }
-    for (const op of operators) {
-      if (!Object.values(AssertionOperator).includes(op as AssertionOperator)) {
-        errors.push({
-          path: `${path}.expect`,
-          message: `Invalid assertion operator: ${op}`,
-          severity: "error",
-        });
-      }
+    } else if (!Object.values(AssertionOperator).includes(assertion.type as AssertionOperator)) {
+      errors.push({
+        path: `${path}.expect`,
+        message: `Invalid assertion type: ${assertion.type}`,
+        severity: "error",
+      });
     }
   }
 
@@ -200,7 +196,7 @@ function validateStep(
   }
 }
 
-function validateTestCase(tc: TestCaseDefinition, errors: ValidationError[]) {
+function validateTck(tc: TckDefinition, errors: ValidationError[]) {
   if (!tc.tests || tc.tests.length === 0) {
     errors.push({ path: "tests", message: "At least one test is required", severity: "warning" });
   }

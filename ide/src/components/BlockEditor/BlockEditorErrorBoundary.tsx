@@ -32,7 +32,7 @@ import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { theme } from "../../theme/tractusxTheme";
 import { useTestLabStore } from "../../store/useTestLabStore";
-import { createEmptyTest, createEmptyTestCase } from "../../models/schema";
+import { createEmptyTest, createEmptyTck } from "../../models/schema";
 
 interface Props {
   children: ReactNode;
@@ -74,7 +74,7 @@ export class BlockEditorErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     const kind = useTestLabStore.getState().model.kind;
-    const emptyModel = kind === "test-case" ? createEmptyTestCase() : createEmptyTest();
+    const emptyModel = kind === "tck" ? createEmptyTck() : createEmptyTest();
     useTestLabStore.getState().loadModel(emptyModel);
     this.setState({ hasError: false, errorMessage: "", errorCount: 0, lastErrorTime: 0 });
   };

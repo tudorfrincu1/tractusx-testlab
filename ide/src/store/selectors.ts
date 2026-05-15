@@ -22,19 +22,19 @@
 // It was reviewed and tested by a human committer.
 
 import type {
-  TestCaseDefinition,
+  TckDefinition,
   ScriptDefinition,
   VariableDefinition,
 } from "../models/schema";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
-/** A variable merged from all tests + test-case level */
+/** A variable merged from all tests + TCK level */
 export interface AggregatedVariable {
   name: string;
   definition: VariableDefinition;
   usedBy: string[];
-  isTestCaseLevel: boolean;
+  isTckLevel: boolean;
 }
 
 /** Summary of a test for the pipeline table */
@@ -52,18 +52,18 @@ export interface TestSummary {
 
 /* ── Selector functions ─────────────────────────────────────────────────── */
 
-/** Derive aggregated variables from test-case + all tests. */
+/** Derive aggregated variables from TCK + all tests. */
 export function getAggregatedVariables(
-  testCase: TestCaseDefinition,
+  tck: TckDefinition,
   tests: Map<string, ScriptDefinition>,
   testOrder: string[],
 ): AggregatedVariable[] {
   const merged = new Map<string, AggregatedVariable>();
 
-  // Collect from test-case level first (these are the "source of truth")
-  if (testCase.variables) {
-    for (const [name, def] of Object.entries(testCase.variables)) {
-      merged.set(name, { name, definition: def, usedBy: [], isTestCaseLevel: true });
+  // Collect from TCK level first (these are the "source of truth")
+  if (tck.variables) {
+    for (const [name, def] of Object.entries(tck.variables)) {
+      merged.set(name, { name, definition: def, usedBy: [], isTckLevel: true });
     }
   }
 
@@ -76,7 +76,7 @@ export function getAggregatedVariables(
       if (existing) {
         existing.usedBy.push(testName);
       } else {
-        merged.set(varName, { name: varName, definition: def, usedBy: [testName], isTestCaseLevel: false });
+        merged.set(varName, { name: varName, definition: def, usedBy: [testName], isTckLevel: false });
       }
     }
   }
@@ -86,13 +86,13 @@ export function getAggregatedVariables(
 
 /** Derive test summaries from the test map and order. */
 export function getTestSummaries(
-  testCase: TestCaseDefinition,
+  tck: TckDefinition,
   tests: Map<string, ScriptDefinition>,
   testOrder: string[],
 ): TestSummary[] {
   return testOrder.map((name) => {
     const script = tests.get(name);
-    const ref = testCase.tests.find(
+    const ref = tck.tests.find(
       (t) => typeof t === "object" && "test" in t && (t as { test: string }).test === name
     ) as { with?: Record<string, unknown>; prerequisite_tests?: string[]; order?: number } | undefined;
 

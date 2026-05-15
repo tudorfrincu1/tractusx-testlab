@@ -1,0 +1,11 @@
+{
+  "type": "auto_cleanup",
+  "label": "Auto Cleanup",
+  "description": "Automatically undo everything the test created (assets, policies, shells, submodels). Tracks what Setup and Steps blocks produced and reverses them.",
+  "params": [
+    { "name": "description", "type": "string", "required": false, "description": "Optional note describing cleanup scope" }
+  ],
+  "outputs": [
+    { "name": "cleanup_report", "description": "Summary of what was cleaned up" }
+  ]
+}

@@ -38,6 +38,7 @@ import {
   createArrayItemBlocks,
 } from "./helpers";
 import { populateAssertions } from "./populateAssertions";
+import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -56,126 +57,135 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
     const blocks: Block[] = [];
 
     for (const step of steps) {
-      if (isTemplateStep(step)) {
-        blocks.push(createUnsupportedStepBlock(step.description, step.template, step.params));
-        continue;
-      }
-
-      if (step.type === "import_variable" && step.params?.file) {
-        const ib = makeBlock(ws, "import_variable");
-        setDropdownValue(ib, "FILE", String(step.params.file));
-        if (step.params.export) {
-          setDropdownValue(ib, "EXPORT_VAR", String(step.params.export));
-        } else if (Array.isArray(step.params.outputs) && step.params.outputs.length > 0) {
-          setDropdownValue(ib, "EXPORT_VAR", String(step.params.outputs[0]));
+      try {
+        if (isTemplateStep(step)) {
+          blocks.push(createUnsupportedStepBlock(step.description, step.template, step.params));
+          continue;
         }
-        const varName = step.params.variable || step.params.export || "imported_var";
-        ib.setFieldValue(String(varName), "OUTPUT_VAR");
-        blocks.push(ib);
-        continue;
-      }
 
-      if (step.type === "export_variable" && step.params?.name) {
-        const eb = makeBlock(ws, "export_variable");
-        setDropdownValue(eb, "VAR_NAME", String(step.params.name));
-        blocks.push(eb);
-        continue;
-      }
-
-      if (step.type === "load_schema" && step.params?.source === "file" && step.params?.path) {
-        const sb = makeBlock(ws, "schema_import");
-        setDropdownValue(sb, "SCHEMA_PATH", String(step.params.path));
-        sb.setFieldValue(String(step.params.name || "schema_var"), "OUTPUT_SCHEMA");
-        blocks.push(sb);
-        continue;
-      }
-
-      const catalogStepType = toCatalogStepType(step.type);
-      const entry = findCatalogEntry(catalogStepType, catalog);
-      if (!entry) {
-        blocks.push(createUnsupportedStepBlock(step.description, step.type, step.params));
-        continue;
-      }
-
-      let effectiveParams = step.params ?? {};
-      if (step.type === "send_notification" && effectiveParams.notification) {
-        const notif = effectiveParams.notification as Record<string, unknown>;
-        const flat: Record<string, unknown> = { ...effectiveParams };
-        delete flat.notification;
-        if (notif.header && typeof notif.header === "object") {
-          const h = notif.header as Record<string, unknown>;
-          if (h.notificationId) flat.notification_id = h.notificationId;
-          if (h.senderBPN) flat.sender_bpn = h.senderBPN;
-          if (h.recipientBPN) flat.recipient_bpn = h.recipientBPN;
-          if (h.classification) flat.classification = h.classification;
-          if (h.severity) flat.severity = h.severity;
-          if (h.status) flat.status = h.status;
-          if (h.type) flat.type = h.type;
-        }
-        if (notif.content) flat.content = notif.content;
-        effectiveParams = flat;
-      }
-
-      const blockType = `step_${catalogStepType}`;
-      const sb = makeBlock(ws, blockType);
-      sb.setFieldValue(step.description || "", "DESCRIPTION");
-
-      for (const p of entry.params) {
-        const paramVal = effectiveParams[p.name];
-        if (paramVal === undefined || paramVal === null) continue;
-        const fieldKey = `PARAM_${p.name.toUpperCase()}`;
-
-        switch (p.type) {
-          case "dropdown":
-          case "endpoint_ref":
-          case "service_ref":
-          case "schema_path":
-            setDropdownValue(sb, fieldKey, String(paramVal));
-            break;
-          case "variable": {
-            let val = String(paramVal);
-            if (val.startsWith("@")) val = val.slice(1);
-            setDropdownValue(sb, fieldKey, val);
-            break;
+        if (step.type === "import_variable" && step.params?.file) {
+          const ib = makeBlock(ws, "import_variable");
+          setDropdownValue(ib, "FILE", String(step.params.file));
+          if (step.params.export) {
+            setDropdownValue(ib, "EXPORT_VAR", String(step.params.export));
+          } else if (Array.isArray(step.params.outputs) && step.params.outputs.length > 0) {
+            setDropdownValue(ib, "EXPORT_VAR", String(step.params.outputs[0]));
           }
-          case "number":
-            sb.setFieldValue(Number(paramVal), fieldKey);
-            break;
-          case "json":
-            if (typeof paramVal === "object") {
-              const kvBlocks: Block[] = [];
-              for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
-                const kvb = makeBlock(ws, "key_value_pair");
-                kvb.setFieldValue(key, "KEY");
-                connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
-                kvBlocks.push(kvb);
+          const varName = step.params.variable || step.params.export || "imported_var";
+          ib.setFieldValue(String(varName), "OUTPUT_VAR");
+          blocks.push(ib);
+          continue;
+        }
+
+        if (step.type === "export_variable" && step.params?.name) {
+          const eb = makeBlock(ws, "export_variable");
+          setDropdownValue(eb, "VAR_NAME", String(step.params.name));
+          blocks.push(eb);
+          continue;
+        }
+
+        if (step.type === "load_schema" && step.params?.source === "file" && step.params?.path) {
+          const sb = makeBlock(ws, "schema_import");
+          setDropdownValue(sb, "SCHEMA_PATH", String(step.params.path));
+          sb.setFieldValue(String(step.params.name || "schema_var"), "OUTPUT_SCHEMA");
+          blocks.push(sb);
+          continue;
+        }
+
+        if (step.type === "precondition_policy_config") {
+          blocks.push(deserializePreconditionPolicyBlock(ws, step));
+          continue;
+        }
+
+        const catalogStepType = toCatalogStepType(step.type);
+        const entry = findCatalogEntry(catalogStepType, catalog);
+        if (!entry) {
+          blocks.push(createUnsupportedStepBlock(step.description, step.type, step.params));
+          continue;
+        }
+
+        const effectiveParams = step.params ?? {};
+
+        const blockType = `step_${catalogStepType}`;
+        const sb = makeBlock(ws, blockType);
+        sb.setFieldValue(step.description || "", "DESCRIPTION");
+
+        for (const p of entry.params) {
+          const paramVal = effectiveParams[p.name];
+          if (paramVal === undefined || paramVal === null) continue;
+          const fieldKey = `PARAM_${p.name.toUpperCase()}`;
+
+          switch (p.type) {
+            case "dropdown":
+            case "endpoint_ref":
+            case "service_ref":
+            case "schema_path":
+              setDropdownValue(sb, fieldKey, String(paramVal));
+              break;
+            case "variable": {
+              let val = String(paramVal);
+              if (val.startsWith("@")) val = val.slice(1);
+              setDropdownValue(sb, fieldKey, val);
+              break;
+            }
+            case "number":
+              sb.setFieldValue(Number(paramVal), fieldKey);
+              break;
+            case "json":
+              if (typeof paramVal === "object") {
+                const kvBlocks: Block[] = [];
+                for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
+                  const kvb = makeBlock(ws, "key_value_pair");
+                  kvb.setFieldValue(key, "KEY");
+                  connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
+                  kvBlocks.push(kvb);
+                }
+                attachChain(sb, fieldKey, kvBlocks);
               }
-              attachChain(sb, fieldKey, kvBlocks);
-            }
-            break;
-          case "array":
-            if (Array.isArray(paramVal)) {
-              const itemBlocks = createArrayItemBlocks(ws, paramVal, p.item_type ?? "");
-              attachChain(sb, fieldKey, itemBlocks);
-            }
-            break;
-          case "steps":
-            if (Array.isArray(paramVal)) {
-              const nestedBlocks = buildStepBlocks(paramVal as StepDefinition[]);
-              attachChain(sb, fieldKey, nestedBlocks);
-            }
-            break;
-          default:
-            connectValue(sb, fieldKey, createValueBlockFromString(ws, toBlockValueString(paramVal)));
-            break;
+              break;
+            case "array":
+              if (Array.isArray(paramVal)) {
+                const itemBlocks = createArrayItemBlocks(ws, paramVal, p.item_type ?? "");
+                attachChain(sb, fieldKey, itemBlocks);
+              }
+              break;
+            case "steps":
+              if (Array.isArray(paramVal)) {
+                const nestedBlocks = buildStepBlocks(paramVal as StepDefinition[]);
+                attachChain(sb, fieldKey, nestedBlocks);
+              }
+              break;
+            default:
+              connectValue(sb, fieldKey, createValueBlockFromString(ws, toBlockValueString(paramVal)));
+              break;
+          }
+        }
+
+        if (step.expect && step.expect.length > 0) {
+          populateAssertions(ws, sb, step.expect);
+        }
+
+        blocks.push(sb);
+      } catch (err) {
+        const stepType = isTemplateStep(step) ? step.template : step.type;
+        const stepDesc = step.description ?? "";
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[populateTest] Skipping step "${stepDesc}" (type: ${stepType}):`,
+          err,
+        );
+        try {
+          blocks.push(
+            createUnsupportedStepBlock(
+              stepDesc,
+              stepType ?? "unknown",
+              isTemplateStep(step) ? step.params : step.params,
+            ),
+          );
+        } catch {
+          // Last-resort: skip the step entirely if even the fallback fails
         }
       }
-
-      if (step.expect && step.expect.length > 0) {
-        populateAssertions(ws, sb, step.expect);
-      }
-
-      blocks.push(sb);
     }
 
     return blocks;

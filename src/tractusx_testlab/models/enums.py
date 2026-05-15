@@ -50,6 +50,7 @@ class JobStatus(str, enum.Enum):
     QUEUED = "QUEUED"
     RUNNING = "RUNNING"
     WAITING = "WAITING"
+    PAUSED = "PAUSED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
@@ -63,6 +64,16 @@ class AssertionType(str, enum.Enum):
     REGEX = "REGEX"
     NOT_CONTAINS = "NOT_CONTAINS"
     STATUS_CODE = "STATUS_CODE"
+    NOT_NULL = "NOT_NULL"
+    NOT_EMPTY = "NOT_EMPTY"
+    EQUALS = "EQUALS"
+    NOT_EQUALS = "NOT_EQUALS"
+    SCHEMA_VALIDATION = "SCHEMA_VALIDATION"
+    GREATER_THAN = "GREATER_THAN"
+    LESS_THAN = "LESS_THAN"
+    GREATER_OR_EQUAL = "GREATER_OR_EQUAL"
+    LESS_OR_EQUAL = "LESS_OR_EQUAL"
+    BETWEEN = "BETWEEN"
 
 
 class AssertionSeverity(str, enum.Enum):
@@ -93,6 +104,11 @@ class ServiceType(str, enum.Enum):
     DSP_CONSUMER = "DSP_CONSUMER"
     DSP_PROVIDER = "DSP_PROVIDER"
     DTR = "DTR"
+    EDC_CONNECTOR = "EDC_CONNECTOR"
+    EDC_CONNECTOR_SATURN = "EDC_CONNECTOR_SATURN"
+    EDC_CONNECTOR_JUPITER = "EDC_CONNECTOR_JUPITER"
+    DIGITAL_TWIN_REGISTRY = "DIGITAL_TWIN_REGISTRY"
+    DISCOVERY_FINDER = "DISCOVERY_FINDER"
 
 
 class PackageFormat(str, enum.Enum):
@@ -112,6 +128,7 @@ class ServiceState(str, enum.Enum):
 
 class StepPhase(str, enum.Enum):
     """Identifies which execution phase a step belongs to."""
+    PRECONDITION = "PRECONDITION"
     SETUP = "SETUP"
     MAIN = "MAIN"
     CLEANUP = "CLEANUP"
@@ -120,4 +137,4 @@ class StepPhase(str, enum.Enum):
 class ScriptKind(str, enum.Enum):
     """Explicit type discriminator for YAML files, following the Kubernetes ``kind:`` convention."""
     TEST = "test"
-    TEST_CASE = "test-case"
+    TCK = "tck"

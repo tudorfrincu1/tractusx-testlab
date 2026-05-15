@@ -26,10 +26,14 @@
 
 from __future__ import annotations
 
-from tractusx_testlab.models import (
+from tractusx_testlab.models.definitions import (
     ScriptDefinition,
-    TestCaseDefinition,
+    TckDefinition,
 )
+
+# Backward-compat aliases
+SdkScriptDefinition = ScriptDefinition
+SdkTckDefinition = TckDefinition
 
 
 class TestScript:
@@ -51,6 +55,10 @@ class TestScript:
     @property
     def steps(self):
         return self.definition.steps
+
+    @property
+    def preconditions(self):
+        return self.definition.preconditions
 
     @property
     def setup(self):
@@ -83,16 +91,16 @@ class TestScript:
         return len(self.definition.steps)
 
 
-class TestCase:
-    """Runtime wrapper for a test case definition."""
+class Tck:
+    """Runtime wrapper for a TCK definition."""
 
     __slots__ = ("definition", "_scripts")
 
-    def __init__(self, definition: TestCaseDefinition):
+    def __init__(self, definition: TckDefinition | SdkTckDefinition):
         self.definition = definition
         self._scripts: list[TestScript] = []
         for test_definition in definition.tests:
-            if isinstance(test_definition, ScriptDefinition):
+            if isinstance(test_definition, (ScriptDefinition, SdkScriptDefinition)):
                 self._scripts.append(TestScript(test_definition))
 
     @property

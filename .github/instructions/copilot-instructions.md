@@ -15,7 +15,7 @@ applyTo: "**/*"
 - Treat certification testing as the primary use case. TestLab validates SUT behavior in both directions:
   - inbound to TestLab mocks/callbacks
   - outbound from TestLab clients to SUT APIs
-- Reuse-first model: capabilities and blocks are shared across test cases and standard versions, extended additively.
+- Reuse-first model: capabilities and blocks are shared across TCKs and standard versions, extended additively.
 - Execution semantics are prerequisite-aware and order-sensitive. Setup, execution, and teardown are first-class phases.
 - Prioritize non-technical usability: domain labels, safe defaults, minimal required inputs, and explicit error context.
 

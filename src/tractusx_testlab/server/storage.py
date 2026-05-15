@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Package storage — filesystem-backed storage for uploaded .testpkg archives."""
+"""Package storage — filesystem-backed storage for uploaded .tckpkg archives."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ class PackageStorage:
         """Persist package bytes and return metadata."""
         pkg_dir = self._base_dir / package_id
         pkg_dir.mkdir(parents=True, exist_ok=True)
-        file_path = pkg_dir / f"{name}-{version}.testpkg"
+        file_path = pkg_dir / f"{name}-{version}.tckpkg"
         file_path.write_bytes(data)
 
         return UploadedPackage(
@@ -68,7 +68,7 @@ class PackageStorage:
         if not pkg_dir.is_dir():
             return None
 
-        files = list(pkg_dir.glob("*.testpkg"))
+        files = list(pkg_dir.glob("*.tckpkg"))
         if not files:
             return None
 
@@ -91,7 +91,7 @@ class PackageStorage:
         pkg_dir = self._base_dir / package_id
         if not pkg_dir.is_dir():
             return None
-        files = list(pkg_dir.glob("*.testpkg"))
+        files = list(pkg_dir.glob("*.tckpkg"))
         return files[0] if files else None
 
     def delete(self, package_id: str) -> bool:

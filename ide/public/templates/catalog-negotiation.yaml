@@ -55,8 +55,9 @@ steps:
     store_in_memory:
       catalog_datasets: "datasets"
     expect:
-      - output: status_code
-        equals: 200
+      - type: "EQUALS"
+        output: status_code
+        value: 200
 
   - type: extract_dataset
     name: Select First Offer
@@ -77,8 +78,9 @@ steps:
     store_in_memory:
       negotiation_id: "negotiation_id"
     expect:
-      - output: status_code
-        equals: 200
+      - type: "EQUALS"
+        output: status_code
+        value: 200
 
   - type: retry
     name: Wait for Agreement

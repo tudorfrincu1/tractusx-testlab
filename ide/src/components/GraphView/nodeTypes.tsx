@@ -153,7 +153,7 @@ export const VariableNode = memo(({ data }: NodeProps) => {
   );
 });
 
-export const TestCaseNode = memo(({ data }: NodeProps) => {
+export const TckNode = memo(({ data }: NodeProps) => {
   const d = data as unknown as CustomNodeData;
   const color = theme.colors.primary;
   return (
@@ -166,7 +166,7 @@ export const TestCaseNode = memo(({ data }: NodeProps) => {
       }}
     >
       <Handle type="target" position={Position.Top} style={handleStyle(color)} />
-      <div style={labelStyle(color)}>test case</div>
+      <div style={labelStyle(color)}>TCK</div>
       <div>{d.label}</div>
       <Handle type="source" position={Position.Bottom} style={handleStyle(color)} />
     </div>
@@ -260,7 +260,7 @@ export const nodeTypes = {
   step: StepNode,
   phase: PhaseNode,
   variable: VariableNode,
-  testcase: TestCaseNode,
+  testcase: TckNode,
   include: IncludeNode,
   test: TestNode,
   service: ServiceNode,

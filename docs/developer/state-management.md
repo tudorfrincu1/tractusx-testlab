@@ -41,7 +41,7 @@ Holds the **currently open document** in the editor. Only one document is active
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `model` | `TestLabDocument` | The active test or test-case model |
+| `model` | `TestLabDocument` | The active test or tck model |
 | `yaml` | `string` | YAML text representation (generated from model) |
 | `errors` | `ValidationError[]` | Real-time validation errors and warnings |
 | `lastEditSource` | `"blocks" \| "yaml" \| "load" \| "none"` | Who changed the model last (prevents sync loops) |
@@ -98,7 +98,7 @@ Holds the **entire project** — all files, their content, and navigation state.
 | `hasProject` | `boolean` | Whether a project is loaded |
 | `projectName` | `string` | Display name |
 | `projectGeneration` | `number` | Incremented on project load (prevents stale workspace state saves) |
-| `testCase` | `TestCaseDefinition` | The root test-case document |
+| `tck` | `TckDefinition` | The root tck document |
 | `tests` | `Map<string, ScriptDefinition>` | All tests in the project, keyed by name |
 | `schemas` | `Map<string, SchemaFile>` | All JSON schemas, keyed by name |
 | `testOrder` | `string[]` | Execution order of tests |
@@ -110,7 +110,7 @@ Holds the **entire project** — all files, their content, and navigation state.
 
 **Project lifecycle:**
 
-- `createProject(name?)` — Creates a blank project with an empty test case
+- `createProject(name?)` — Creates a blank project with an empty TCK
 - `loadFromDocument(doc)` — Loads a single YAML file as a project
 - `loadFromLocalStorage()` — Restores saved project on app startup
 - `saveToLocalStorage()` — Persists project (auto-called on changes, throttled)
@@ -119,7 +119,7 @@ Holds the **entire project** — all files, their content, and navigation state.
 
 - `addTest(name?)` — Creates a new test, auto-generates name if not provided, returns the assigned name
 - `removeTest(name)` — Deletes a test from the project
-- `renameTest(oldName, newName)` — Renames a test (updates testCase.tests references too)
+- `renameTest(oldName, newName)` — Renames a test (updates tck.tests references too)
 - `duplicateTest(name)` — Deep-copies a test with a suffixed name
 - `reorderTest(name, newIndex)` — Moves a test in the execution order
 - `updateTest(name, model)` — Replaces the model for a specific test
@@ -133,7 +133,7 @@ Holds the **entire project** — all files, their content, and navigation state.
 **Navigation:**
 
 - `setActiveFile(file)` — Sets which file is being edited. `App.tsx` reacts and loads the model into TestLabStore.
-- `getActiveModel()` — Returns the current model for the active file (test, test-case, or schema).
+- `getActiveModel()` — Returns the current model for the active file (test, tck, or schema).
 
 **Aggregation queries:**
 
@@ -158,7 +158,7 @@ Stored in `localStorage` under key `"testlab-project"` as JSON:
 ```json
 {
   "projectName": "my-project",
-  "testCase": "kind: test-case\nname: ...",
+  "tck": "kind: tck\nname: ...",
   "tests": { "test_one": "kind: test\nname: ...", ... },
   "schemas": { "my-schema": { "name": "my-schema", "content": "{...}" } },
   "testOrder": ["test_one", "test_two"],
@@ -166,7 +166,7 @@ Stored in `localStorage` under key `"testlab-project"` as JSON:
 }
 ```
 
-Tests and the test case are stored as YAML strings. Schemas are stored as `{ name, content }` objects.
+Tests and the TCK are stored as YAML strings. Schemas are stored as `{ name, content }` objects.
 
 ## useServiceStore
 
@@ -214,13 +214,13 @@ Located at `src/store/projectIO.ts`, this module handles file I/O operations.
 
 ### Exports
 
-**`exportProjectZip(projectName, testCase, tests, schemas, testOrder)`**
+**`exportProjectZip(projectName, tck, tests, schemas, testOrder)`**
 
 Creates a ZIP file with the project structure:
 
 ```
 {projectName}/
-├── index.yaml              ← test case
+├── index.yaml              ← TCK
 ├── tests/*.yaml            ← individual tests
 └── schemas/*.json          ← JSON schemas
 ```
@@ -229,7 +229,7 @@ Uses JSZip. Triggers a browser download.
 
 **`importProjectZip(file: File)`**
 
-Parses an uploaded `.zip` file. Returns an `ImportedProject` struct with all parsed content. Auto-detects the root folder prefix. Preserves test order from the test case's `tests:` array.
+Parses an uploaded `.zip` file. Returns an `ImportedProject` struct with all parsed content. Auto-detects the root folder prefix. Preserves test order from the TCK's `tests:` array.
 
 **`importExampleFolder(examplePath: string)`**
 

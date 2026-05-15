@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""CLI commands for compiling and inspecting test scripts."""
+"""CLI commands for compiling, decompiling, and inspecting .tckpkg archives."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def compile(
     script: Path = typer.Argument(..., help="Path to the YAML test script to compile."),
     verbose: bool = typer.Option(False, "--verbose", help="Enable verbose output."),
 ) -> None:
-    """Compile a YAML test script and output JSON."""
+    """Parse a YAML test script and output the compiled model as JSON."""
     from tractusx_testlab.compiler.yaml_compiler import compile_yaml
     from tractusx_testlab.exceptions import CompilationError, ValidationError
 
@@ -50,18 +50,98 @@ def compile(
 
     try:
         test = compile_yaml(script)
+        if verbose:
+            typer.echo(f"Compiled: {test.name}")
         typer.echo(test.model_dump_json(indent=2))
-        raise typer.Exit(0)
     except (CompilationError, ValidationError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
 
 
 @app.command()
-def info(
-    package: Path = typer.Argument(..., help="Path to a .testpkg archive."),
+def package(
+    script: Path = typer.Argument(..., help="Path to the YAML test script to compile."),
+    compiler_keys: Path = typer.Option(
+        ..., "--compiler-keys", "-c",
+        help="Directory containing the compiler identity (signing.pem, encryption.*).",
+    ),
+    player_pub: list[Path] = typer.Option(
+        ..., "--player-pub", "-p",
+        help="Path(s) to player RSA public key(s) (encryption.pub). Can be repeated.",
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o",
+        help="Output .tckpkg path. Defaults to <script_name>.tckpkg.",
+    ),
+    version: Optional[str] = typer.Option(
+        None, "--version", "-v",
+        help="Connector version for version-specific validation.",
+    ),
 ) -> None:
-    """Display the manifest of a compiled .testpkg package."""
+    """Compile a YAML test script into an encrypted, signed .tckpkg archive."""
+    from tractusx_testlab.compiler.compiler import Compiler
+    from tractusx_testlab.security.trust.identity import PlayerIdentity
+    from tractusx_testlab.security.crypto.keygen import _fingerprint
+
+    # Load compiler identity
+    compiler_identity = PlayerIdentity.load(compiler_keys)
+
+    # Load recipient public keys
+    recipient_keys: dict[str, bytes] = {}
+    for pub_path in player_pub:
+        pub_bytes = pub_path.read_bytes()
+        fingerprint = _fingerprint(pub_bytes)
+        recipient_keys[fingerprint] = pub_bytes
+        typer.echo(f"  Authorized player: {pub_path.name} ({fingerprint[:16]}...)")
+
+    compiler = Compiler()
+    out = output or script.with_suffix(".tckpkg")
+
+    # Detect whether input is a TCK manifest or a single test
+    import yaml as _yaml
+    from tractusx_testlab.player.loading.loader import _detect_kind
+    from tractusx_testlab.models.enums import ScriptKind
+    with open(script, "r", encoding="utf-8") as script_handle:
+        raw = _yaml.safe_load(script_handle)
+    is_tck = isinstance(raw, dict) and _detect_kind(raw) == ScriptKind.TCK
+
+    try:
+        if is_tck:
+            manifest, validation = compiler.compile_tck(
+                manifest_path=script,
+                compiler_identity=compiler_identity,
+                recipient_keys=recipient_keys,
+                output_path=out,
+                version=version,
+            )
+        else:
+            manifest, validation = compiler.compile(
+                script_path=script,
+                compiler_identity=compiler_identity,
+                recipient_keys=recipient_keys,
+                output_path=out,
+                version=version,
+            )
+    except (ValueError, FileNotFoundError) as exc:
+        typer.echo(f"Compilation failed: {exc}", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"\nCompiled → {out}")
+    typer.echo(f"  Checksum : {manifest.checksum[:32]}...")
+    typer.echo(f"  Signed by: {manifest.security.compiler_id[:32]}...")
+    typer.echo(f"  Players  : {len(manifest.security.authorized_players)}")
+
+    if validation.issues:
+        for issue in validation.issues:
+            prefix = "WARN " if issue.level == "warning" else "ERROR"
+            typer.echo(f"  [{prefix}] {issue.message}")
+
+
+@app.command()
+def info(
+    package: Path = typer.Argument(..., help="Path to a .tckpkg archive."),
+) -> None:
+    """Display the manifest of a compiled .tckpkg package."""
     from tractusx_testlab.compiler.packager import Packager
 
     manifest = Packager.read_manifest(package)
@@ -70,7 +150,7 @@ def info(
 
 @app.command()
 def decompile(
-    package: Path = typer.Argument(..., help="Path to the .testpkg archive to decompile."),
+    package: Path = typer.Argument(..., help="Path to the .tckpkg archive to decompile."),
     player_keys: Path = typer.Option(
         ..., "--player-keys", "-k",
         help="Directory containing the player identity (encryption.pem).",
@@ -88,7 +168,7 @@ def decompile(
         help="Print decrypted YAML to stdout instead of writing a file.",
     ),
 ) -> None:
-    """Decrypt and verify an encrypted .testpkg, extracting the original YAML."""
+    """Decrypt and verify an encrypted .tckpkg, extracting the original YAML."""
     from tractusx_testlab.compiler.packager import Packager
     from tractusx_testlab.security.crypto.keygen import load_private_key, load_public_key
 

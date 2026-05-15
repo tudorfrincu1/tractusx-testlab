@@ -158,15 +158,15 @@ export function ProjectExplorer({ onSelectFile, onCollapse }: Readonly<ProjectEx
 
       {/* ── Tree ────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflow: "auto", padding: "4px 0" }}>
-        {/* Project root — click opens test-case dashboard */}
+        {/* Project root — click opens TCK dashboard */}
         <TreeRow
           depth={0}
           icon={<FolderOpenIcon sx={{ fontSize: 16, color: theme.colors.primary }} />}
           label={projectName}
           isBold
-          isActive={isActive("test-case", "index")}
+          isActive={isActive("tck", "index")}
           isDirty={isDirty("index")}
-          onClick={() => handleClick({ type: "test-case", name: "index" })}
+          onClick={() => handleClick({ type: "tck", name: "index" })}
           onContextMenu={(e) => handleContextMenu(e, { type: "project" })}
         />
 

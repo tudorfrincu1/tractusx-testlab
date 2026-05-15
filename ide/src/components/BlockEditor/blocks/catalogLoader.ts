@@ -43,6 +43,7 @@ export interface BlockCatalogEntry {
   description: string;
   template?: boolean;
   container?: boolean;
+  custom_registration?: boolean;
   params: BlockCatalogParam[];
   outputs?: BlockCatalogOutput[];
   depends_on?: string[];

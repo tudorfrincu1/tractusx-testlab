@@ -32,3 +32,9 @@
   height: 100%;
   background: #141414;
 }
+
+/* Phase group collapse/expand arrows — white on dark background */
+.blocklyToolboxDiv .blocklyTreeIcon {
+  color: #ffffff !important;
+  border-color: transparent transparent transparent #ffffff !important;
+}

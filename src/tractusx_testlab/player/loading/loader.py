@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Loader — resolves YAML files and .testpkg archives into TestCase objects."""
+"""Loader — resolves YAML files and .tckpkg archives into Tck objects."""
 
 from __future__ import annotations
 
@@ -32,9 +32,13 @@ from typing import Optional
 import yaml
 
 from tractusx_testlab.compiler.packager import Packager
-from tractusx_testlab.models import ScriptKind, TestCaseDefinition
+from tractusx_testlab.models import (
+    ScriptKind as _SdkScriptKind,
+    TckDefinition,
+)
+from tractusx_testlab.models.enums import ScriptKind
 from tractusx_testlab.scripting.parser import YamlParser
-from tractusx_testlab.scripting.script import TestCase
+from tractusx_testlab.scripting.script import Tck
 
 
 def _detect_kind(data: dict) -> ScriptKind:
@@ -51,21 +55,21 @@ def _detect_kind(data: dict) -> ScriptKind:
         if kind == ScriptKind.TEST and has_tests_key:
             raise ValueError(
                 "YAML declares kind: test but contains a 'tests' key. "
-                "Use kind: test-case for manifests that group multiple tests."
+                "Use kind: tck for manifests that group multiple tests."
             )
-        if kind == ScriptKind.TEST_CASE and not has_tests_key:
+        if kind == ScriptKind.TCK and not has_tests_key:
             raise ValueError(
-                "YAML declares kind: test-case but is missing the 'tests' key. "
-                "A test case must list its tests under the 'tests' key."
+                "YAML declares kind: tck but is missing the 'tests' key. "
+                "A TCK must list its tests under the 'tests' key."
             )
         return kind
 
     # Fallback: infer from structure (backward compatible)
-    return ScriptKind.TEST_CASE if has_tests_key else ScriptKind.TEST
+    return ScriptKind.TCK if has_tests_key else ScriptKind.TEST
 
 
 class Loader:
-    """Loads a test case from a YAML file or a .testpkg archive."""
+    """Loads a TCK from a YAML file or a .tckpkg archive."""
 
     __slots__ = ("_parser",)
 
@@ -77,40 +81,40 @@ class Loader:
         path: Path,
         player_private_key: Optional[bytes] = None,
         compiler_public_key: Optional[bytes] = None,
-    ) -> TestCase:
-        """Load a test case from *path*.
+    ) -> Tck:
+        """Load a TCK from *path*.
 
-        For ``.testpkg`` files the archive is decrypted and verified first.
+        For ``.tckpkg`` files the archive is decrypted and verified first.
         For ``.yaml`` / ``.yml`` files the YAML is parsed directly.
         """
-        if path.suffix == ".testpkg":
+        if path.suffix == ".tckpkg":
             if player_private_key is None or compiler_public_key is None:
                 raise ValueError(
-                    "player_private_key and compiler_public_key are required to load .testpkg files"
+                    "player_private_key and compiler_public_key are required to load .tckpkg files"
                 )
             yaml_bytes = Packager.extract_and_verify(path, player_private_key, compiler_public_key)
             # Parse from in-memory YAML
             data = yaml.safe_load(yaml_bytes)
             kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
-            if kind == ScriptKind.TEST_CASE:
-                definition = self._parser.parse_test_case_from_dict(data, base_dir=path.parent)
+            if kind == ScriptKind.TCK:
+                definition = self._parser.parse_tck_from_dict(data, base_dir=path.parent)
             else:
                 script_def = self._parser.parse_script_from_dict(data)
-                definition = TestCaseDefinition(name=script_def.name, tests=[script_def])
-            return TestCase(definition)
+                definition = TckDefinition(name=script_def.name, tests=[script_def])
+            return Tck(definition)
 
         # Plain YAML — detect type via ``kind`` field or structural heuristic
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
-        if kind == ScriptKind.TEST_CASE:
-            definition = self._parser.parse_test_case(path)
+        if kind == ScriptKind.TCK:
+            definition = self._parser.parse_tck(path)
         else:
             script_def = self._parser.parse_script(path)
             resolved = YamlParser._resolve_file_dependencies(
                 [script_def], base_dir=path.parent,
             )
-            definition = TestCaseDefinition(name=script_def.name, tests=resolved)
+            definition = TckDefinition(name=script_def.name, tests=resolved)
 
-        return TestCase(definition)
+        return Tck(definition)

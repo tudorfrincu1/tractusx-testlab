@@ -34,14 +34,48 @@ import logging
 from typing import Any, Optional
 
 from tractusx_testlab.models import (
-    ServiceDefinition,
     ServiceNotFoundError,
     ServiceState,
-    ServiceType,
 )
 from tractusx_testlab.syntax import defaults
 
+from tractusx_testlab.models.definitions import ServiceDefinition
+from tractusx_testlab.models.enums import ServiceType
+
 logger = logging.getLogger(__name__)
+
+# Extended types that are compatible with connector consumer/provider roles.
+_CONNECTOR_COMPATIBLE_TYPES: frozenset[str] = frozenset({
+    "CONNECTOR_CONSUMER", "CONNECTOR_PROVIDER",
+    "EDC_CONNECTOR", "EDC_CONNECTOR_SATURN", "EDC_CONNECTOR_JUPITER",
+})
+
+# Generic connector types that don't specify a consumer/provider role.
+_GENERIC_CONNECTOR_TYPES: frozenset[str] = frozenset({
+    "EDC_CONNECTOR", "EDC_CONNECTOR_SATURN", "EDC_CONNECTOR_JUPITER",
+})
+
+# Types that map to DTR / AAS service.
+_DTR_COMPATIBLE_TYPES: frozenset[str] = frozenset({"DTR", "DIGITAL_TWIN_REGISTRY"})
+
+# Inferred dataspace version from extended type names.
+_VERSION_FROM_TYPE: dict[str, str] = {
+    "EDC_CONNECTOR_SATURN": "saturn",
+    "EDC_CONNECTOR_JUPITER": "jupiter",
+}
+
+
+def _is_type_compatible(actual: ServiceType, expected: ServiceType) -> bool:
+    """Check if *actual* service type is compatible with *expected* role."""
+    actual_val = actual.value
+    expected_val = expected.value
+    if actual_val == expected_val:
+        return True
+    if actual_val in _CONNECTOR_COMPATIBLE_TYPES and expected_val in _CONNECTOR_COMPATIBLE_TYPES:
+        return True
+    if actual_val in _DTR_COMPATIBLE_TYPES and expected_val in _DTR_COMPATIBLE_TYPES:
+        return True
+    return False
 
 
 class ServiceManager:
@@ -81,16 +115,17 @@ class ServiceManager:
             raise ServiceNotFoundError(name)
 
         service_definition = self._definitions[name]
-        if expected_type and service_definition.type != expected_type:
+        if expected_type and not _is_type_compatible(service_definition.type, expected_type):
             raise ValueError(
                 f"Service '{name}' is {service_definition.type.value}, expected {expected_type.value}"
             )
 
-        if name in self._instances:
-            return self._instances[name]
+        cache_key = self._cache_key(name, service_definition, expected_type)
+        if cache_key in self._instances:
+            return self._instances[cache_key]
 
-        instance = self._create_instance(service_definition)
-        self._instances[name] = instance
+        instance = self._create_instance(service_definition, expected_type)
+        self._instances[cache_key] = instance
         self._states[name] = ServiceState.READY
         return instance
 
@@ -113,36 +148,56 @@ class ServiceManager:
     # Factory
     # ------------------------------------------------------------------
 
-    def _create_instance(self, service_definition: ServiceDefinition) -> Any:
+    @staticmethod
+    def _cache_key(
+        name: str, definition: ServiceDefinition, expected_type: Optional[ServiceType],
+    ) -> str:
+        """Return cache key — compound for generic connector types."""
+        if expected_type and definition.type.value in _GENERIC_CONNECTOR_TYPES:
+            return f"{name}:{expected_type.value}"
+        return name
+
+    def _create_instance(self, service_definition: ServiceDefinition, expected_type: Optional[ServiceType] = None) -> Any:
         """Create a live SDK service from a ServiceDefinition."""
         logger.info("Initialising service '%s' (%s)", service_definition.name, service_definition.type.value)
         self._states[service_definition.name] = ServiceState.INITIALIZING
 
-        if service_definition.type in (ServiceType.CONNECTOR_PROVIDER, ServiceType.CONNECTOR_CONSUMER):
-            return self._create_connector_service(service_definition)
-        elif service_definition.type == ServiceType.DTR:
+        stype_val = service_definition.type.value
+
+        if stype_val in _CONNECTOR_COMPATIBLE_TYPES:
+            return self._create_connector_service(service_definition, expected_type)
+        if stype_val in _DTR_COMPATIBLE_TYPES:
             return self._create_aas_service(service_definition)
-        elif service_definition.type == ServiceType.DSP_CONSUMER:
+        if stype_val == "DSP_CONSUMER":
             return self._create_dsp_consumer_service(service_definition)
-        elif service_definition.type == ServiceType.DSP_PROVIDER:
+        if stype_val == "DSP_PROVIDER":
             return self._create_dsp_provider_service(service_definition)
 
         raise ServiceNotFoundError(service_definition.name)
 
     @staticmethod
-    def _create_connector_service(service_definition: ServiceDefinition) -> Any:
+    def _create_connector_service(
+        service_definition: ServiceDefinition, expected_type: Optional[ServiceType] = None,
+    ) -> Any:
         from tractusx_sdk.dataspace.services.connector.service_factory import ServiceFactory
 
         auth = service_definition.auth
         params = service_definition.params or {}
-        version = params.get("version", defaults.DATASPACE_VERSION)
+        stype_val = service_definition.type.value
+        version = params.get("version") or _VERSION_FROM_TYPE.get(stype_val, defaults.DATASPACE_VERSION)
         dma_path = params.get("dma_path", defaults.DMA_PATH)
 
         headers: dict[str, str] = {}
         if auth.get("api_key"):
             headers["x-api-key"] = auth["api_key"]
 
-        if service_definition.type == ServiceType.CONNECTOR_PROVIDER:
+        # Explicit CONNECTOR_PROVIDER type or expected_type determines the role.
+        is_provider = (
+            stype_val == "CONNECTOR_PROVIDER"
+            or (expected_type is not None and expected_type.value == "CONNECTOR_PROVIDER")
+        )
+
+        if is_provider:
             return ServiceFactory.get_connector_provider_service(
                 dataspace_version=version,
                 base_url=service_definition.base_url,

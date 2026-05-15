@@ -46,17 +46,17 @@ interface ExampleEntry {
   label: string;
   description: string;
   icon: React.ReactNode;
-  category: "test" | "test-case";
+  category: "test" | "tck";
 }
 
 const EXAMPLES: ExampleEntry[] = [
-  { file: "connector-ping-v1.0/index.yaml", label: "Connector Ping", description: "Verify connector responds to catalog query", icon: <HttpIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "dtr-ping-v1.0/index.yaml", label: "DTR Ping", description: "Negotiate dataplane access to DTR", icon: <StorageIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "industry-core-validation-v1.0/index.yaml", label: "Industry Core Validation", description: "Shell descriptors + submodel schema validation", icon: <AccountTreeIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "traceability-notification-v1.0/index.yaml", label: "Traceability Notification", description: "Quality investigation + alert notification flows", icon: <NotificationsActiveIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "certificate-management-v1.0/index.yaml", label: "Certificate Management", description: "CCMAPI offer, validation, and feedback", icon: <PlaylistAddIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "special-characteristics-v1.0/index.yaml", label: "Special Characteristics", description: "Notification + data transfer validation", icon: <SwapHorizIcon sx={{ fontSize: 20 }} />, category: "test-case" },
-  { file: "product-carbon-footprint-v1.0/index.yaml", label: "Product Carbon Footprint", description: "PCF data discovery + schema validation", icon: <ScienceIcon sx={{ fontSize: 20 }} />, category: "test-case" },
+  { file: "connector-ping-v1.0/index.yaml", label: "Connector Ping", description: "Verify connector responds to catalog query", icon: <HttpIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "dtr-ping-v1.0/index.yaml", label: "DTR Ping", description: "Negotiate dataplane access to DTR", icon: <StorageIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "industry-core-validation-v1.0/index.yaml", label: "Industry Core Validation", description: "Shell descriptors + submodel schema validation", icon: <AccountTreeIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "traceability-notification-v1.0/index.yaml", label: "Traceability Notification", description: "Quality investigation + alert notification flows", icon: <NotificationsActiveIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "certificate-management-v1.0/index.yaml", label: "Certificate Management", description: "CCMAPI offer, validation, and feedback", icon: <PlaylistAddIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "special-characteristics-v1.0/index.yaml", label: "Special Characteristics", description: "Notification + data transfer validation", icon: <SwapHorizIcon sx={{ fontSize: 20 }} />, category: "tck" },
+  { file: "product-carbon-footprint-v1.0/index.yaml", label: "Product Carbon Footprint", description: "PCF data discovery + schema validation", icon: <ScienceIcon sx={{ fontSize: 20 }} />, category: "tck" },
 ];
 
 /* ── Component ──────────────────────────────────────────────────────────── */
@@ -84,7 +84,7 @@ export function WelcomeScreen() {
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
-          activeFile: { type: "test-case", name: "index" },
+          activeFile: { type: "tck", name: "index" },
           dirty: new Map(),
         });
         useProjectStore.getState().saveToLocalStorage();
@@ -107,11 +107,11 @@ export function WelcomeScreen() {
           hasProject: true,
           projectName: project.projectName,
           projectGeneration: useProjectStore.getState().projectGeneration + 1,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
-          activeFile: { type: "test-case", name: "index" },
+          activeFile: { type: "tck", name: "index" },
           dirty: new Map(),
           workspaceStates: {},
         });
@@ -158,7 +158,7 @@ export function WelcomeScreen() {
           <ActionCard
             icon={<AddIcon sx={{ fontSize: 24, color: theme.colors.primary }} />}
             title="New Project"
-            description="Start with a blank test case"
+            description="Start with a blank TCK"
             onClick={handleNewProject}
             isPrimary
           />

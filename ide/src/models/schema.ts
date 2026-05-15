@@ -28,24 +28,25 @@
 
 export const ScriptKind = {
   TEST: "test",
-  TEST_CASE: "test-case",
+  TCK: "tck",
 } as const;
 export type ScriptKind = (typeof ScriptKind)[keyof typeof ScriptKind];
 
 export const AssertionOperator = {
-  EQUALS: "equals",
-  NOT_EQUALS: "not_equals",
-  CONTAINS: "contains",
-  NOT_CONTAINS: "not_contains",
-  MATCHES: "matches",
-  SCHEMA: "schema",
-  NOT_NULL: "not_null",
-  NOT_EMPTY: "not_empty",
-  GREATER_THAN: "greater_than",
-  LESS_THAN: "less_than",
-  GREATER_OR_EQUAL: "greater_or_equal",
-  LESS_OR_EQUAL: "less_or_equal",
-  BETWEEN: "between",
+  EQUALS: "EQUALS",
+  NOT_EQUALS: "NOT_EQUALS",
+  CONTAINS: "CONTAINS",
+  NOT_CONTAINS: "NOT_CONTAINS",
+  MATCHES: "REGEX",
+  SCHEMA: "SCHEMA",
+  VALIDATES_AGAINST_SCHEMA: "SCHEMA_VALIDATION",
+  NOT_NULL: "NOT_NULL",
+  NOT_EMPTY: "NOT_EMPTY",
+  GREATER_THAN: "GREATER_THAN",
+  LESS_THAN: "LESS_THAN",
+  GREATER_OR_EQUAL: "GREATER_OR_EQUAL",
+  LESS_OR_EQUAL: "LESS_OR_EQUAL",
+  BETWEEN: "BETWEEN",
 } as const;
 export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
 
@@ -98,8 +99,12 @@ export interface VariableDefinition {
 }
 
 export interface Assertion {
+  type: AssertionOperator;
   output: string;
-  [operator: string]: unknown;
+  value?: unknown;
+  schema?: string;
+  min?: unknown;
+  max?: unknown;
 }
 
 export interface TestInputDefinition {
@@ -206,8 +211,8 @@ export interface StandardRef {
   version?: string;
 }
 
-export interface TestCaseDefinition {
-  kind: typeof ScriptKind.TEST_CASE;
+export interface TckDefinition {
+  kind: typeof ScriptKind.TCK;
   name: string;
   version?: string;
   dataspace_version?: string;
@@ -220,10 +225,10 @@ export interface TestCaseDefinition {
   tests: (ScriptDefinition | string | TestRef)[];
 }
 
-export type TestLabDocument = ScriptDefinition | TestCaseDefinition;
+export type TestLabDocument = ScriptDefinition | TckDefinition;
 
-export function isTestCase(doc: TestLabDocument): doc is TestCaseDefinition {
-  return doc.kind === ScriptKind.TEST_CASE;
+export function isTck(doc: TestLabDocument): doc is TckDefinition {
+  return doc.kind === ScriptKind.TCK;
 }
 
 export function isTest(doc: TestLabDocument): doc is ScriptDefinition {
@@ -249,10 +254,10 @@ export function createEmptyTest(): ScriptDefinition {
   };
 }
 
-export function createEmptyTestCase(): TestCaseDefinition {
+export function createEmptyTck(): TckDefinition {
   return {
-    kind: ScriptKind.TEST_CASE,
-    name: "new-test-case",
+    kind: ScriptKind.TCK,
+    name: "new-tck",
     version: "1.0",
     tests: [],
   };

@@ -24,6 +24,9 @@
 
 """extensions.testlab — automated interoperability testing for Tractus-X dataspaces."""
 
+import sys
+import types
+
 from tractusx_testlab.compiler.compiler import Compiler
 from tractusx_testlab.compiler.packager import Packager
 from tractusx_testlab.compiler.validator import ScriptValidator
@@ -34,7 +37,7 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.registry import StepRegistry, step
-from tractusx_testlab.scripting.script import TestCase, TestScript
+from tractusx_testlab.scripting.script import Tck, TestScript
 from tractusx_testlab.security.trust.identity import PlayerIdentity
 from tractusx_testlab.server.app import create_app
 from tractusx_testlab.steps.base import BaseStep, StepOutput
@@ -52,7 +55,7 @@ __all__ = [
     "YamlParser",
     "StepRegistry",
     "step",
-    "TestCase",
+    "Tck",
     "TestScript",
     # Steps
     "BaseStep",
@@ -65,3 +68,33 @@ __all__ = [
     # Server
     "create_app",
 ]
+
+# ---------------------------------------------------------------------------
+# Compatibility shim: register tractusx_testlab.* under the
+# tractusx_sdk.extensions.testlab.* namespace so that code and tests written
+# against the future SDK path work without modification.
+# ---------------------------------------------------------------------------
+_SDK_PREFIX = "tractusx_sdk.extensions.testlab"
+_LOCAL_PREFIX = "tractusx_testlab"
+
+def _register_compat_aliases() -> None:
+    """Populate sys.modules with tractusx_sdk.extensions.testlab.* aliases."""
+    import tractusx_sdk.extensions as _ext_pkg  # noqa: PLC0415
+
+    # Create a stub package for the testlab namespace if not already present
+    if _SDK_PREFIX not in sys.modules:
+        stub = types.ModuleType(_SDK_PREFIX)
+        stub.__path__ = []  # type: ignore[attr-defined]
+        stub.__package__ = _SDK_PREFIX
+        sys.modules[_SDK_PREFIX] = stub
+
+    # Also register every loaded tractusx_testlab sub-module under the SDK path
+    for key in list(sys.modules):
+        if key.startswith(_LOCAL_PREFIX):
+            sdk_key = _SDK_PREFIX + key[len(_LOCAL_PREFIX):]
+            if sdk_key not in sys.modules:
+                sys.modules[sdk_key] = sys.modules[key]
+
+_register_compat_aliases()
+del _register_compat_aliases
+

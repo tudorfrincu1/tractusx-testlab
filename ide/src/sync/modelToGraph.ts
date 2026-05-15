@@ -28,10 +28,10 @@
 
 import type { Node, Edge } from "@xyflow/react";
 import type { TestLabDocument, ScriptDefinition, Step } from "../models/schema";
-import { isTestCase, isTemplateStep } from "../models/schema";
+import { isTck, isTemplateStep } from "../models/schema";
 import { getStepColor } from "../theme/tractusxTheme";
 import type { GraphMode } from "../store/useTestLabStore";
-import { getStepService, collectVariableRefs, getServiceColor, buildTestCaseSummaryGraph } from "./graphHelpers";
+import { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./graphHelpers";
 
 export interface GraphData {
   nodes: Node[];
@@ -39,12 +39,12 @@ export interface GraphData {
 }
 
 export function modelToGraph(model: TestLabDocument, mode: GraphMode): GraphData {
-  if (isTestCase(model)) {
+  if (isTck(model)) {
     const firstInline = model.tests.find((t) => typeof t !== "string" && !isTestRef(t));
     if (firstInline && typeof firstInline !== "string" && !isTestRef(firstInline)) {
       return buildStepGraph(firstInline, mode);
     }
-    return buildTestCaseSummaryGraph(model);
+    return buildTckSummaryGraph(model);
   }
 
   return buildStepGraph(model as ScriptDefinition, mode);

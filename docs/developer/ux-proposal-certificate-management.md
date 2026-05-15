@@ -154,7 +154,7 @@ The proposal uses a **hybrid discovery model**: (1) new "Certificate Management"
 
 **Click "Use Template" → User gets:**
 
-1. Pre-configured test case with:
+1. Pre-configured TCK with:
    - Services wired (EDC consumer, EDC provider, mock CA)
    - Setup phase: mock endpoints registered
    - Execution phase: 3 blocks already connected in order
@@ -508,7 +508,7 @@ Certificate tests require specific preconditions. Instead of auto-magic, make se
 
 ---
 
-### 5.1 Setup Phase (Visible in Test Case)
+### 5.1 Setup Phase (Visible in TCK)
 
 When user creates a certificate test (via template or manual), they get a **Setup phase** with these elements **already defined**:
 

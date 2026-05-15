@@ -19,15 +19,15 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Walkthrough
 
-This walkthrough guides you through the complete Testlab lifecycle — from writing your first YAML test scripts, through compiling them into a portable `.testpkg` package, to executing tests and interpreting results.
+This walkthrough guides you through the complete Testlab lifecycle — from writing your first YAML test scripts, through compiling them into a portable `.tckpkg` package, to executing tests and interpreting results.
 
 ## What You'll Build
 
 By the end of this walkthrough, you will have:
 
 1. **Written** two YAML test scripts that validate connector data exchange end-to-end
-2. **Organized** them into a test case with shared variables and supporting assets
-3. **Compiled** the test case into a distributable `.testpkg` package
+2. **Organized** them into a TCK with shared variables and supporting assets
+3. **Compiled** the TCK into a distributable `.tckpkg` package
 4. **Executed** the tests against live connectors and reviewed the results
 
 ## Workflow Overview
@@ -35,7 +35,7 @@ By the end of this walkthrough, you will have:
 ```mermaid
 flowchart LR
     subgraph "1. Write"
-        A["YAML tests<br/>+ assets<br/>+ test case definition"]
+        A["YAML tests<br/>+ assets<br/>+ TCK definition"]
     end
 
     subgraph "2. Compile"
@@ -68,8 +68,8 @@ flowchart LR
 
 | Section | Description |
 |---------|-------------|
-| [Writing Test Scripts](writing-test-scripts.md) | Create YAML tests, declare variables, define steps and assertions, organize into a test case with assets |
-| [Compiling Packages](compiling-packages.md) | Validate and package scripts into `.testpkg`, inspect the compiled output, compile with encryption |
+| [Writing Test Scripts](writing-test-scripts.md) | Create YAML tests, declare variables, define steps and assertions, organize into a TCK with assets |
+| [Compiling Packages](compiling-packages.md) | Validate and package scripts into `.tckpkg`, inspect the compiled output, compile with encryption |
 | [Executing Tests](executing-tests.md) | Run tests via CLI, provide runtime variables, read results, use the Player API programmatically |
 
 ---

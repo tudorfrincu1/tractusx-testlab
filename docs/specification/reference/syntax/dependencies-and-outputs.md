@@ -29,12 +29,12 @@ TestLab provides three distinct ways to reference external YAML files. Each serv
 
 | Mechanism | Scope | Syntax | Purpose |
 |-----------|-------|--------|---------|
-| `"!include"` | Test case `tests:` list | `- "!include tests/file.yaml"` | **Load** a test into the test case. No dependency relationship implied. |
+| `"!include"` | Test case `tests:` list | `- "!include tests/file.yaml"` | **Load** a test into the TCK. No dependency relationship implied. |
 | `import` | Individual test | `import: "negotiate_contract.yaml"` | **Inherit** steps, services, listeners, and other fields from a base test file, with inline overrides. |
 | File-based `depends_on` | Individual test | `depends_on: [{file: "file.yaml", outputs: [...]}]` | **Load a dependency** from a file, establish execution ordering, and selectively import outputs. |
 
 !!! tip "When to use which"
-    - Use `"!include"` when you want to add a self-contained test to a test case.
+    - Use `"!include"` when you want to add a self-contained test to a TCK.
     - Use `import` when you want to reuse and customize a test template.
     - Use file-based `depends_on` when a test needs outputs from another test defined in a separate file.
 
@@ -42,10 +42,10 @@ TestLab provides three distinct ways to reference external YAML files. Each serv
 
 ## Test Dependencies (`depends_on`)
 
-Tests within a test case can declare dependencies on other tests. The Player resolves the dependency graph and executes tests in topological order. If a dependency fails, all downstream tests are automatically **skipped**.
+Tests within a TCK can declare dependencies on other tests. The Player resolves the dependency graph and executes tests in topological order. If a dependency fails, all downstream tests are automatically **skipped**.
 
 ```yaml
-kind: test-case
+kind: tck
 name: "edr_flow"
 version: "1.0"
 
@@ -99,7 +99,7 @@ If `negotiate_contract` fails, both `initiate_transfer` **and** `call_dataplane`
 Instead of using `depends_on` explicitly, you can reference another test's output directly in variable defaults or step params using the `${!test_name:output_name}` syntax. This **automatically infers** the dependency — there is no need to declare `depends_on` separately.
 
 ```yaml
-kind: test-case
+kind: tck
 name: "edr_flow"
 version: "1.0"
 
@@ -137,10 +137,10 @@ The parser scans all variable defaults and step params for `${!...}` references 
 
 ## Importing Test Content (`import`)
 
-A test entry in a test case can load its steps, services, listeners, and other content from an **external YAML file** using the `import` field. Any fields specified inline override the imported values.
+A test entry in a TCK can load its steps, services, listeners, and other content from an **external YAML file** using the `import` field. Any fields specified inline override the imported values.
 
 ```yaml
-kind: test-case
+kind: tck
 name: "edr_flow"
 version: "1.0"
 
@@ -177,10 +177,10 @@ tests:
 
 ## File-Based Dependencies (via `depends_on`)
 
-As an alternative to `import` + `${!...}`, a `depends_on` entry can reference a test defined in an **external file**. The parser loads the test from the file, adds it to the test case, and resolves the dependency by name. You can optionally select which `outputs` from the file to import.
+As an alternative to `import` + `${!...}`, a `depends_on` entry can reference a test defined in an **external file**. The parser loads the test from the file, adds it to the TCK, and resolves the dependency by name. You can optionally select which `outputs` from the file to import.
 
 ```yaml
-kind: test-case
+kind: tck
 name: "cross_file_flow"
 version: "1.0"
 
@@ -236,7 +236,7 @@ outputs:
 ### How Output Promotion Works
 
 1. During execution, `store_in_memory` saves step results into the test context (e.g. `edr_auth_token`).
-2. After successful completion, the Player reads each `outputs` entry and promotes the referenced variable into the shared test-case context under the export name.
+2. After successful completion, the Player reads each `outputs` entry and promotes the referenced variable into the shared tck context under the export name.
 3. Downstream tests reference the exported value with `${edr_token}`.
 
 !!! warning
@@ -247,7 +247,7 @@ outputs:
 ## See Also
 
 - [Tests](tests.md) — structure of a single test, including `store_in_memory` and variables
-- [Test Cases](test-cases.md) — grouping tests with shared variables
+- [TCKs](tcks.md) — grouping tests with shared variables
 - [Services](services.md) — managed service declarations
 
 ---

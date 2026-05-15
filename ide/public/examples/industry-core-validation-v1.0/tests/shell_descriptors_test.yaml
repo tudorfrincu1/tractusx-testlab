@@ -59,8 +59,9 @@ steps:
       variable: shell_descriptors
       schema_variable: shell_descriptors_schema
     expect:
-      - output: is_valid
-        equals: true
+      - type: "EQUALS"
+        output: is_valid
+        value: true
 
   - type: json_path_extract
     name: Validate Shell Descriptors Present
@@ -70,8 +71,8 @@ steps:
     store_in_memory:
       shell_list: "value"
     expect:
-      - output: value
-        not_empty: true
+      - type: "NOT_EMPTY"
+        output: value
 
 teardown:
   - type: export_variable

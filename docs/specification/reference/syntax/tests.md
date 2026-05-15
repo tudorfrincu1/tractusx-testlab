@@ -38,7 +38,7 @@ description: "Provision, consume via connector, call dataplane, validate submode
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `kind` | `string` | Recommended | auto-detected | Must be `test`. Declares this file as a single test. |
-| `name` | `string` | **Yes** | — | Unique identifier for this test within its test case. Used in dependency references and log output. |
+| `name` | `string` | **Yes** | — | Unique identifier for this test within its TCK. Used in dependency references and log output. |
 | `version` | `string` | No | `"1.0"` | Semantic version of the test script. |
 | `dataspace_version` | `string` | No | `"saturn"` | Target protocol version: `jupiter` (EDC 0.8–0.10.x) or `saturn` (EDC 0.11.x+). |
 | `description` | `string` | No | — | Human-readable description shown in logs and reports. |
@@ -80,7 +80,7 @@ params:
 ```
 
 !!! info "Resolution priority"
-    Script defaults → shared variables (from test case) → runtime `--var` flags (highest priority). During execution, `store_in_memory` values are written into the same context and can override earlier values. Cross-test references use `${!test_name:output_name}` syntax.
+    Script defaults → shared variables (from TCK) → runtime `--var` flags (highest priority). During execution, `store_in_memory` values are written into the same context and can override earlier values. Cross-test references use `${!test_name:output_name}` syntax.
 
 ---
 
@@ -285,7 +285,7 @@ cleanup:
 
 ## See Also
 
-- [Test Cases](test-cases.md) — grouping multiple tests into a manifest
+- [TCKs](tcks.md) — grouping multiple tests into a manifest
 - [Dependencies & Outputs](dependencies-and-outputs.md) — inter-test data flow
 - [Services](services.md) — managed service declarations
 - [Assertions](assertions.md) — assertion types and formats

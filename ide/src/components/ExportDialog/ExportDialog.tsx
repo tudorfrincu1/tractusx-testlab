@@ -41,7 +41,7 @@ interface ExportDialogProps {
 
 export function ExportDialog({ onClose }: ExportDialogProps) {
   const projectName = useProjectStore((s) => s.projectName);
-  const testCase = useProjectStore((s) => s.testCase);
+  const tck = useProjectStore((s) => s.tck);
   const tests = useProjectStore((s) => s.tests);
   const schemas = useProjectStore((s) => s.schemas);
   const testOrder = useProjectStore((s) => s.testOrder);
@@ -52,7 +52,7 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
 
   const fileTree = useMemo(() => {
     const items: FileNode[] = [];
-    items.push({ path: "index.yaml", type: "test-case", name: "index", size: modelToYaml(testCase).length });
+    items.push({ path: "index.yaml", type: "tck", name: "index", size: modelToYaml(tck).length });
     for (const name of testOrder) {
       const script = tests.get(name);
       items.push({
@@ -66,20 +66,20 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
       items.push({ path: `schemas/${name}.json`, type: "schema", name, size: schema.content.length });
     }
     return items;
-  }, [testCase, tests, schemas, testOrder]);
+  }, [tck, tests, schemas, testOrder]);
 
   const selectedContent = useMemo(() => {
     if (!selectedFile) return null;
     const node = fileTree.find((f) => f.path === selectedFile);
     if (!node) return null;
-    if (node.type === "test-case") return modelToYaml(testCase);
+    if (node.type === "tck") return modelToYaml(tck);
     if (node.type === "test") {
       const script = tests.get(node.name);
       return script ? modelToYaml(script) : null;
     }
     if (node.type === "schema") return schemas.get(node.name)?.content ?? null;
     return null;
-  }, [selectedFile, fileTree, testCase, tests, schemas]);
+  }, [selectedFile, fileTree, tck, tests, schemas]);
 
   const handleExportZip = () => { exportZip(); onClose(); };
 

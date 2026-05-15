@@ -29,7 +29,7 @@ import { FieldWrappedText } from "../FieldWrappedText";
 import {
   blockIcon,
   ICON_TEST,
-  ICON_TEST_CASE,
+  ICON_TCK,
   ICON_VARIABLE,
   ICON_PRECONDITION,
 } from "./icons";
@@ -56,12 +56,12 @@ export function registerRootBlocks(Blockly: typeof BlocklyType) {
     },
   };
 
-  Blockly.Blocks["test_case_root"] = {
+  Blockly.Blocks["tck_root"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_TEST_CASE))
-        .appendField("Test Case:")
-        .appendField(new Blockly.FieldTextInput("my-test-case"), "NAME");
+        .appendField(blockIcon(Blockly, ICON_TCK))
+        .appendField("TCK:")
+        .appendField(new Blockly.FieldTextInput("my-tck"), "NAME");
       this.appendDummyInput()
         .appendField("Version:")
         .appendField(new Blockly.FieldTextInput("1.0"), "VERSION");
@@ -74,7 +74,7 @@ export function registerRootBlocks(Blockly: typeof BlocklyType) {
       this.appendStatementInput("TESTS")
         .appendField("Tests")
         .setCheck("test_entry");
-      this.setColour(blockColors.rootTestCase);
+      this.setColour(blockColors.rootTck);
       this.setTooltip("Test case — groups multiple tests with shared configuration");
       this.setDeletable(false);
     },
@@ -135,7 +135,7 @@ export function registerRootBlocks(Blockly: typeof BlocklyType) {
       this.setPreviousStatement(true, "variable_def");
       this.setNextStatement(true, "variable_def");
       this.setColour(blockColors.variableDef);
-      this.setTooltip("Define a shared variable for the test case");
+      this.setTooltip("Define a shared variable for the TCK");
     },
   };
 

@@ -22,6 +22,6 @@
 
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.registry import StepRegistry
-from tractusx_testlab.scripting.script import TestScript, TestCase
+from tractusx_testlab.scripting.script import TestScript, Tck
 
-__all__ = ["YamlParser", "StepRegistry", "TestScript", "TestCase"]
+__all__ = ["YamlParser", "StepRegistry", "TestScript", "Tck"]

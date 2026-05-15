@@ -39,8 +39,7 @@ from tractusx_testlab.security.trust.identity import PlayerIdentity
 
 
 class Compiler:
-    """High-level API: parse YAML → validate → encrypt + sign → .testpkg."""
-
+    """High-level API: parse YAML → validate → encrypt + sign → .tckpkg."""
     __slots__ = ("_validator", "_parser")
 
     def __init__(self) -> None:
@@ -60,13 +59,13 @@ class Compiler:
         output_path: Optional[Path] = None,
         version: Optional[str] = None,
     ) -> tuple[PackageManifest, ValidationResult]:
-        """Validate and compile a script into a .testpkg archive.
+        """Validate and compile a script into a .tckpkg archive.
 
         Args:
             script_path: Path to the YAML test script.
             compiler_identity: The compiler's identity (for signing).
             recipient_keys: {fingerprint: RSA public PEM} for each player.
-            output_path: Destination file. Defaults to ``<script_name>.testpkg``.
+            output_path: Destination file. Defaults to ``<script_name>.tckpkg``.
             version: Optional connector version for version-specific validation.
 
         Returns:
@@ -86,7 +85,7 @@ class Compiler:
 
         script_yaml = script_path.read_bytes()
         if output_path is None:
-            output_path = script_path.with_suffix(".testpkg")
+            output_path = script_path.with_suffix(".tckpkg")
 
         manifest = Packager.build(
             script_yaml=script_yaml,
@@ -100,7 +99,7 @@ class Compiler:
 
         return manifest, validation_result
 
-    def compile_test_case(
+    def compile_tck(
         self,
         manifest_path: Path,
         compiler_identity: PlayerIdentity,
@@ -108,26 +107,26 @@ class Compiler:
         output_path: Optional[Path] = None,
         version: Optional[str] = None,
     ) -> tuple[PackageManifest, ValidationResult]:
-        """Compile a test case manifest into a self-contained .testpkg.
+        """Compile a TCK manifest into a self-contained .tckpkg.
 
         Referenced script files are inlined so the resulting package
         carries everything needed to run — no external files required.
 
         Args:
-            manifest_path: Path to the test case manifest YAML.
+            manifest_path: Path to the TCK manifest YAML.
             compiler_identity: The compiler's identity (for signing).
             recipient_keys: {fingerprint: RSA public PEM} for each player.
-            output_path: Destination .testpkg file.
+            output_path: Destination .tckpkg file.
             version: Optional connector version for validation.
 
         Returns:
             (manifest, validation_result)
         """
         with open(manifest_path, "r", encoding="utf-8") as manifest_file:
-            test_case_data = yaml.safe_load(manifest_file)
+            tck_data = yaml.safe_load(manifest_file)
 
         inlined_tests, combined_validation = self._resolve_and_validate_test_entries(
-            test_case_data.get("tests", []),
+            tck_data.get("tests", []),
             manifest_path.parent,
             version,
         )
@@ -139,14 +138,14 @@ class Compiler:
                 + "; ".join(issue.message for issue in errors)
             )
 
-        test_case_data["tests"] = inlined_tests
-        bundled_yaml = yaml.dump(test_case_data, default_flow_style=False, sort_keys=False).encode("utf-8")
+        tck_data["tests"] = inlined_tests
+        bundled_yaml = yaml.dump(tck_data, default_flow_style=False, sort_keys=False).encode("utf-8")
 
         if output_path is None:
-            output_path = manifest_path.with_suffix(".testpkg")
+            output_path = manifest_path.with_suffix(".tckpkg")
 
-        name = test_case_data.get("name", manifest_path.stem)
-        ver = test_case_data.get("version", "1.0")
+        name = tck_data.get("name", manifest_path.stem)
+        ver = tck_data.get("version", "1.0")
 
         manifest = Packager.build(
             script_yaml=bundled_yaml,

@@ -48,7 +48,7 @@ Bottom footer bar (24px fixed height).
 **Displays:**
 
 - Error count (red icon) and warning count (orange icon), or a green checkmark if no issues
-- Step count (for tests) or test count (for test cases)
+- Step count (for tests) or test count (for TCKs)
 - Current file path: `{projectName} / {fileName}` with dirty indicator
 - "Tractus-X TestLab IDE" branding text
 
@@ -63,8 +63,8 @@ Left sidebar file tree with drag-and-drop reordering.
 **Tree structure:**
 
 ```
-📁 {projectName}          ← click opens TestCaseDashboard
-├── 📄 index.yaml          ← test case file
+📁 {projectName}          ← click opens TckDashboard
+├── 📄 index.yaml          ← TCK file
 ├── 📁 tests/
 │   ├── 1. test_one.yaml   ← numbered by execution order
 │   ├── 2. test_two.yaml
@@ -265,11 +265,11 @@ Modal dialog for configuring services (connectors, registries, discovery) and au
 
 **Form rendering:** Each service type has a schema defining its fields (label, type, required, secret). The dialog iterates over the schema and renders appropriate inputs. Secret fields are masked.
 
-## TestCaseDashboard — `src/components/TestCaseDashboard/`
+## TckDashboard — `src/components/TckDashboard/`
 
-Shown when the test case file (`index.yaml`) is the active file. Provides an overview of the entire project.
+Shown when the TCK file (`index.yaml`) is the active file. Provides an overview of the entire project.
 
-### TestCaseDashboard.tsx
+### TckDashboard.tsx
 
 Main dashboard component with two tabs: **Pipeline** and **Data Flow**.
 

@@ -30,31 +30,33 @@ continues to work unchanged.
 """
 
 from tractusx_testlab.models.definitions import (
-    Assertion,
     DependencyRef,
     ImportDefinition,
     ListenerDefinition,
-    ScriptDefinition,
     ServiceDefinition,
-    TestCaseDefinition,
+    TckDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.definitions import StepDefinition  # local override — no name field
+from tractusx_testlab.models.definitions import (  # local overrides
+    Assertion,       # adds schema_ref, min, max fields
+    ScriptDefinition,  # adds preconditions field
+    StepDefinition,    # no name field
+)
 from tractusx_testlab.models.enums import (
     AssertionSeverity,
-    AssertionType,
     FailurePolicy,
     JobStatus,
     PackageFormat,
-    ScriptKind,
     ScriptStatus,
     SdkCallMode,
     ServiceState,
-    ServiceType,
-    StepPhase,
     StepStatus,
     ValueSource,
 )
+from tractusx_testlab.models.enums import AssertionType  # local override — adds typed assertion types
+from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
+from tractusx_testlab.models.enums import ServiceType  # local override — adds EDC connector types
+from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
 from tractusx_testlab.models.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
@@ -68,6 +70,12 @@ from tractusx_testlab.models.jobs import (
     JobEvent,
     JobMemory,
 )
+from tractusx_testlab.models.preconditions import (
+    PreconditionLog,
+    PreconditionLogCategory,
+    PreconditionLogType,
+)
+from tractusx_testlab.models.results import StepResult  # local override — adds precondition_logs
 from tractusx_testlab.models.results import (
     AssertionResult,
     AssertionSummary,
@@ -75,8 +83,7 @@ from tractusx_testlab.models.results import (
     HttpRequest,
     HttpResponse,
     ScriptResult,
-    StepResult,
-    TestCaseResult,
+    TckResult,
 )
 from tractusx_testlab.models.security import (
     Base64Bytes,
@@ -112,7 +119,7 @@ __all__ = [
     "ScriptDefinition",
     "ServiceDefinition",
     "StepDefinition",
-    "TestCaseDefinition",
+    "TckDefinition",
     "VariableDefinition",
     # security
     "Base64Bytes",
@@ -122,6 +129,10 @@ __all__ = [
     # server
     "UploadedPackage",
     "VaultConfig",
+    # preconditions
+    "PreconditionLog",
+    "PreconditionLogCategory",
+    "PreconditionLogType",
     # results
     "AssertionResult",
     "AssertionSummary",
@@ -130,7 +141,7 @@ __all__ = [
     "HttpResponse",
     "ScriptResult",
     "StepResult",
-    "TestCaseResult",
+    "TckResult",
     # jobs
     "Job",
     "JobEvent",

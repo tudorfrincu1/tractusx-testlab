@@ -28,10 +28,10 @@ The Welcome Screen is the first thing you see when opening the IDE. It lets you 
 ## Creating a New Project
 
 1. Click the **New Project** card
-2. A blank test case is created with a default name
+2. A blank TCK is created with a default name
 3. The IDE transitions to the editor view
 
-The new project starts with an empty `index.yaml` test case file. You can rename it in the Project Explorer.
+The new project starts with an empty `index.yaml` TCK file. You can rename it in the Project Explorer.
 
 ## Opening an Existing Project
 
@@ -43,8 +43,8 @@ The new project starts with an empty `index.yaml` test case file. You can rename
 
 | Format | Description |
 |--------|-------------|
-| `.yaml` / `.yml` | Single test or test case file |
-| `.zip` | Full project archive (test case + tests + schemas) |
+| `.yaml` / `.yml` | Single test or TCK file |
+| `.zip` | Full project archive (TCK + tests + schemas) |
 
 ## Loading an Example
 

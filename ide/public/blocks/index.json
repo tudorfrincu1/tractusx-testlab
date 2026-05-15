@@ -2,6 +2,15 @@
   "version": "3.0",
   "categories": [
     {
+      "name": "Precondition",
+      "description": "Define preconditions that must be in place before test execution",
+      "blocks": [
+        "precondition/precondition_asset_config.json",
+        "precondition/precondition_policy_config.json",
+        "precondition/precondition_contract_config.json"
+      ]
+    },
+    {
       "name": "Mock",
       "description": "Define endpoints we expose that the SUT will call",
       "blocks": [
@@ -23,11 +32,7 @@
       "blocks": [
         "function/generate_uuid.json",
         "function/generate_bpn.json",
-        "function/template_string.json",
-        "function/load_json_file.json",
-        "function/json_path_extract.json",
-        "function/load_schema.json",
-        "function/extract_dataset.json"
+        "function/json_path_extract.json"
       ]
     },
     {
@@ -62,14 +67,7 @@
         "digital-twin-registry/add_submodel.json"
       ]
     },
-    {
-      "name": "Discovery Finder",
-      "description": "Interact with BPN/EDC discovery services",
-      "service_type": "discovery_finder",
-      "blocks": [
-        "discovery-finder/configure_discovery.json"
-      ]
-    },
+
     {
       "name": "HTTP",
       "description": "Send HTTP requests directly or via EDC Dataplane",
@@ -78,19 +76,16 @@
         "http/http_call_dataplane.json"
       ]
     },
+
+
     {
-      "name": "Notification",
-      "description": "Send and receive Catena-X notifications via EDC Dataplane",
+      "name": "Cleanup",
+      "description": "Undo resources created during the test (assets, policies, shells)",
       "blocks": [
-        "notification/send_notification.json"
-      ]
-    },
-    {
-      "name": "Validation",
-      "description": "Validate data against policies and semantic schemas",
-      "blocks": [
-        "validation/validate_policy.json",
-        "validation/validate_semantic_schema.json"
+        "cleanup/auto_cleanup.json",
+        "cleanup/delete_asset.json",
+        "cleanup/delete_policy.json",
+        "cleanup/delete_shell.json"
       ]
     }
   ]

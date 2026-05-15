@@ -22,7 +22,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Node, Edge } from "@xyflow/react";
-import type { StepDefinition, TestCaseDefinition } from "../models/schema";
+import type { StepDefinition, TckDefinition } from "../models/schema";
 import { isTestRef } from "../models/schema";
 import type { GraphData } from "./modelToGraph";
 
@@ -63,7 +63,7 @@ export function getServiceColor(serviceType: string): string {
   return colors[serviceType] || "#888";
 }
 
-export function buildTestCaseSummaryGraph(model: TestCaseDefinition): GraphData {
+export function buildTckSummaryGraph(model: TckDefinition): GraphData {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const spacing = 120;
@@ -72,7 +72,7 @@ export function buildTestCaseSummaryGraph(model: TestCaseDefinition): GraphData 
   nodes.push({
     id: "tc-root",
     position: { x: 200, y },
-    data: { label: model.name, testCase: true },
+    data: { label: model.name, tck: true },
     type: "testcase",
   });
   y += spacing;

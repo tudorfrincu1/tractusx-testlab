@@ -48,6 +48,8 @@ import {
   modelErrorsToIssues,
 } from "../BlockEditor/ValidationPanel";
 import { useTestLabStore } from "../../store/useTestLabStore";
+import { useExecutionStore } from "../../store/useExecutionStore";
+import { ExecutionPanel } from "../ExecutionPanel/ExecutionPanel";
 
 export interface EditorPanelsProps {
   autoSave: boolean;
@@ -66,6 +68,10 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
   const showValidation = useTestLabStore((s) => s.showValidation);
   const setShowValidation = useTestLabStore((s) => s.setShowValidation);
   const storeErrors = useTestLabStore((s) => s.errors);
+
+  const isExecuting = useExecutionStore((s) => s.isExecuting);
+  const jobStatus = useExecutionStore((s) => s.jobStatus);
+  const showExecutionPanel = isExecuting || jobStatus !== null;
 
   useEffect(() => {
     const ws = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg | null;
@@ -223,6 +229,7 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
           onClose={() => setShowValidation(false)}
         />
       )}
+      {showExecutionPanel && <ExecutionPanel />}
     </div>
   );
 }

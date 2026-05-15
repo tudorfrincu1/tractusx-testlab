@@ -26,13 +26,14 @@ import "./App.css";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { TopBar } from "./components/Layout/TopBar";
 import { StatusBar } from "./components/Layout/StatusBar";
+import { NotificationBar } from "./components/Layout/NotificationBar";
 import { EditorPanels } from "./components/Layout/EditorPanels";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
-import { TestCaseDashboard } from "./components/TestCaseDashboard/TestCaseDashboard";
+import { TckDashboard } from "./components/TckDashboard/TckDashboard";
 import { WelcomeScreen } from "./components/WelcomeScreen/WelcomeScreen";
 import { useTestLabStore } from "./store/useTestLabStore";
 import { useProjectStore, type ActiveFile } from "./store/useProjectStore";
-import type { TestCaseDefinition, ScriptDefinition } from "./models/schema";
+import type { TckDefinition, ScriptDefinition } from "./models/schema";
 
 export default function App() {
   const loadFromLocalStorage = useProjectStore((s) => s.loadFromLocalStorage);
@@ -47,15 +48,15 @@ export default function App() {
   const [explorerWidth, setExplorerWidth] = useState(240);
   const explorerDragRef = useRef<{ startX: number; startW: number } | null>(null);
 
-  const isTestCase = activeFile?.type === "test-case";
+  const isTck = activeFile?.type === "tck";
 
   // Wire the model-change callback: editor → project store
   useEffect(() => {
     setOnModelChange((model) => {
       const file = useProjectStore.getState().activeFile;
       if (!file) return;
-      if (file.type === "test-case") {
-        useProjectStore.getState().updateTestCase(model as TestCaseDefinition);
+      if (file.type === "tck") {
+        useProjectStore.getState().updateTck(model as TckDefinition);
       } else if (file.type === "test") {
         useProjectStore.getState().updateTest(file.name, model as ScriptDefinition);
       }
@@ -67,7 +68,7 @@ export default function App() {
     const loaded = loadFromLocalStorage();
     if (!loaded) return;
     const state = useProjectStore.getState();
-    const file = state.activeFile ?? { type: "test-case" as const, name: "index" };
+    const file = state.activeFile ?? { type: "tck" as const, name: "index" };
     const m = state.getActiveModel();
     if (m) loadModel(m);
     if (!state.activeFile) setActiveFile(file);
@@ -143,9 +144,9 @@ export default function App() {
                 Explorer
               </div>
             )}
-            {isTestCase ? (
-              <div className="app__test-case-wrapper">
-                <TestCaseDashboard onSelectFile={handleSelectFile} />
+            {isTck ? (
+              <div className="app__tck-wrapper">
+                <TckDashboard onSelectFile={handleSelectFile} />
               </div>
             ) : (
               <EditorPanels autoSave={autoSave} onAutoSaveChange={setAutoSave} />
@@ -153,6 +154,7 @@ export default function App() {
           </>
         )}
       </div>
+      <NotificationBar />
       <StatusBar />
     </div>
   );

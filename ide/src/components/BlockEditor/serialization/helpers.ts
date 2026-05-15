@@ -23,8 +23,17 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Assertion } from "../../../models/schema";
+import { type Assertion, AssertionOperator } from "../../../models/schema";
 import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
+import * as deferredDropdowns from "./deferredDropdowns";
+
+/** Maps the assert_compare block dropdown values to typed YAML assertion types. */
+const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
+  greater_than: AssertionOperator.GREATER_THAN,
+  less_than: AssertionOperator.LESS_THAN,
+  greater_or_equal: AssertionOperator.GREATER_OR_EQUAL,
+  less_or_equal: AssertionOperator.LESS_OR_EQUAL,
+};
 
 /** Read a value block's content as a plain string (or @variable reference). */
 export function readValueBlockAsString(block: Block | null): string | undefined {
@@ -93,9 +102,14 @@ export function setDropdownValue(block: Block, fieldName: string, value: string)
     f.getOptions(true);
     const opts = f.getOptions(false) as Array<[string, string]>;
     const match = opts.find(([, v]: [string, string]) => v === value);
-    if (match) f.selectedOption_ = match;
+    // Blockly 12 uses `selectedOption` (no trailing underscore)
+    f.selectedOption = match ?? [value, value];
   }
+  // Queue the value for re-application after the render pass
+  deferredDropdowns.enqueue(block.id, fieldName, value);
 }
+
+export { deferredDropdowns };
 
 export function attachChain(parent: Block, inputName: string, blocks: Block[]) {
   if (blocks.length === 0) return;
@@ -153,51 +167,60 @@ export function readAssertionChain(block: Block | null): Assertion[] {
     switch (current.type) {
       case "assert_equals": {
         const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ output, equals: val });
+        assertions.push({ type: AssertionOperator.EQUALS, output, value: val });
         break;
       }
       case "assert_not_equals": {
         const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ output, not_equals: val });
+        assertions.push({ type: AssertionOperator.NOT_EQUALS, output, value: val });
         break;
       }
       case "assert_contains": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ output, contains: val });
+        assertions.push({ type: AssertionOperator.CONTAINS, output, value: val });
         break;
       }
       case "assert_not_contains": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ output, not_contains: val });
+        assertions.push({ type: AssertionOperator.NOT_CONTAINS, output, value: val });
         break;
       }
       case "assert_matches": {
         const val = readValueBlockAsString(current.getInputTargetBlock("PATTERN")) || "";
-        assertions.push({ output, matches: val });
+        assertions.push({ type: AssertionOperator.MATCHES, output, value: val });
         break;
       }
       case "assert_schema": {
         const val = readValueBlockAsString(current.getInputTargetBlock("SCHEMA")) || "";
-        assertions.push({ output, schema: val });
+        assertions.push({ type: AssertionOperator.SCHEMA, output, value: val });
+        break;
+      }
+      case "assert_validates_schema": {
+        const schemaRef = current.getFieldValue("SCHEMA_REF") || "";
+        const schema = schemaRef && schemaRef !== "__NONE__" ? `@${schemaRef}` : "";
+        assertions.push({ type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema });
         break;
       }
       case "assert_compare": {
         const operator = current.getFieldValue("OPERATOR") || "greater_than";
         const val = readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "";
-        assertions.push({ output, [operator]: val });
+        const assertType = COMPARE_OP_TO_TYPE[operator];
+        if (assertType) {
+          assertions.push({ type: assertType, output, value: val });
+        }
         break;
       }
       case "assert_between": {
         const min = readValueBlockAsString(current.getInputTargetBlock("MIN")) || "";
         const max = readValueBlockAsString(current.getInputTargetBlock("MAX")) || "";
-        assertions.push({ output, between: [min, max] });
+        assertions.push({ type: AssertionOperator.BETWEEN, output, min, max });
         break;
       }
       case "assert_not_null":
-        assertions.push({ output, not_null: true });
+        assertions.push({ type: AssertionOperator.NOT_NULL, output });
         break;
       case "assert_not_empty":
-        assertions.push({ output, not_empty: true });
+        assertions.push({ type: AssertionOperator.NOT_EMPTY, output });
         break;
     }
     current = current.getNextBlock();
@@ -213,7 +236,7 @@ export function serializeStructuralBlock(block: Block): unknown {
       operandRight: readValueBlockAsUnknown(block.getInputTargetBlock("RIGHT")),
     };
   }
-  const policyTypes = ["odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_constraint", "odrl_logical_constraint"];
+  const policyTypes = ["odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_constraint", "odrl_constraint_jupiter", "odrl_logical_constraint"];
   if (policyTypes.includes(block.type)) {
     return serializePolicyBlock(block);
   }

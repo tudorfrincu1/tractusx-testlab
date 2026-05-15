@@ -26,7 +26,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | Page | Description |
 |------|-------------|
 | [Tests](syntax/tests.md) | Structure of `kind: test` documents — variables, steps, assertions, cleanup |
-| [Test Cases](syntax/test-cases.md) | `kind: test-case` manifests — shared variables, `"!include"` directives, library imports |
+| [TCKs](syntax/tcks.md) | `kind: tck` manifests — shared variables, `"!include"` directives, library imports |
 | [Dependencies & Outputs](syntax/dependencies-and-outputs.md) | `depends_on`, `${!...}` references, `import` field, file-based dependencies |
 | [Services](syntax/services.md) | Managed services block, step binding, type validation, `init_service` / `stop_service` |
 | [Assertions](syntax/assertions.md) | Value formats, dot-path assertions, severity levels |

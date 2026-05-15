@@ -28,7 +28,7 @@ graph LR
     subgraph Testlab
         A["Authoring<br/><i>YAML Tests</i>"]
         B["Compiler<br/><i>Validate · Resolve · Stamp</i>"]
-        C["Package<br/><i>.testpkg (ZIP)</i><br/><i>manifest + scripts + assets</i>"]
+        C["Package<br/><i>.tckpkg (ZIP)</i><br/><i>manifest + scripts + assets</i>"]
         D[\"Player<br/><i>Load · Execute · Monitor · Assert · Log<br/>Job lifecycle · Wait/Resume</i>\"]
         E["Server<br/><i>Package upload · Execution API<br/>Callback endpoints<br/>Dynamic API routes</i>"]
 
@@ -85,13 +85,13 @@ flowchart TD
         B3[Check step types<br/>against registry]
         B4[Verify dataspace<br/>version compatibility]
         B5[Stamp metadata<br/>SDK version · timestamp · SHA-256]
-        B6[Package as .testpkg ZIP]
+        B6[Package as .tckpkg ZIP]
 
         B1 --> B2 --> B3 --> B4 --> B5 --> B6
     end
 
     subgraph Execute ["3. Execute"]
-        C1[Load .testpkg or raw YAML]
+        C1[Load .tckpkg or raw YAML]
         C2[Verify SHA-256 checksum]
         C1b[Create Job<br/>job_id · QUEUED → RUNNING]
         C2b[Initialize managed services<br/>from services block]
@@ -208,7 +208,7 @@ stateDiagram-v2
 
 4. **Resumption** — When the expected event arrives (callback received, poll condition met), the job automatically resumes from where it paused. Status returns to `RUNNING`. The received payload is stored in both the step context and the job memory.
 
-5. **Completion** — When all steps finish, the job transitions to `COMPLETED` (all passed) or `FAILED` (any hard failure). The full `TestCaseResult` is attached to the job.
+5. **Completion** — When all steps finish, the job transitions to `COMPLETED` (all passed) or `FAILED` (any hard failure). The full `TckResult` is attached to the job.
 
 ### Wait and Resume Flow
 
@@ -255,7 +255,7 @@ sequenceDiagram
 
 The `JobMemory` is a persistent key-value store attached to each job. Unlike step context variables (scoped to a single test), job memory persists across:
 
-- All tests within a test case
+- All tests within a TCK
 - Wait/resume cycles
 - Cleanup phases
 
@@ -419,7 +419,7 @@ graph LR
 
 ## Package Security & Encryption
 
-Compiled `.testpkg` packages can be encrypted so that only authorized Player instances can decrypt and execute them. This uses **hybrid encryption** (symmetric content encryption + asymmetric key wrapping) combined with **digital signatures** for authenticity.
+Compiled `.tckpkg` packages can be encrypted so that only authorized Player instances can decrypt and execute them. This uses **hybrid encryption** (symmetric content encryption + asymmetric key wrapping) combined with **digital signatures** for authenticity.
 
 ### Encryption Flow (Compile-time)
 
@@ -429,7 +429,7 @@ sequenceDiagram
     participant Compiler as Compiler
     participant FS as File System
 
-    Author->>Compiler: testlab compile test-case.yaml<br/>--authorize-player player1.pub<br/>--authorize-player player2.pub<br/>--signing-key compiler.pem
+    Author->>Compiler: testlab compile tck.yaml<br/>--authorize-player player1.pub<br/>--authorize-player player2.pub<br/>--signing-key compiler.pem
 
     Compiler->>Compiler: Parse & validate YAML
     Compiler->>Compiler: Generate random AES-256 key
@@ -442,7 +442,7 @@ sequenceDiagram
 
     Compiler->>Compiler: Build manifest.yaml<br/>(metadata + security block)
     Compiler->>Compiler: Sign (manifest + payload) with Ed25519<br/>→ signature.sig
-    Compiler->>FS: Write .testpkg archive<br/>(manifest.yaml + payload.enc + signature.sig)
+    Compiler->>FS: Write .tckpkg archive<br/>(manifest.yaml + payload.enc + signature.sig)
 ```
 
 ### Decryption Flow (Player-side)
@@ -452,7 +452,7 @@ sequenceDiagram
     participant P as Player
     participant KS as Key Store<br/>~/.testlab/keys/
     participant TS as Trust Store<br/>~/.testlab/trusted_compilers/
-    participant PKG as .testpkg
+    participant PKG as .tckpkg
 
     P->>PKG: Open archive, read manifest.yaml
     P->>P: Detect security.format = "encrypted-v1"
@@ -500,7 +500,7 @@ graph TD
 
     PUB -. "shared with<br/>Compiler" .-> COMPILE["testlab compile<br/>--authorize-player player.pub"]
     CPRIV --> COMPILE
-    COMPILE --> TESTPKG[".testpkg<br/>(encrypted + signed)"]
+    COMPILE --> TESTPKG[".tckpkg<br/>(encrypted + signed)"]
 
     style PRIV fill:#ffcdd2,stroke:#c62828
     style CPRIV fill:#ffcdd2,stroke:#c62828
@@ -801,14 +801,14 @@ flowchart TD
 | Term | Definition |
 |------|-----------|
 | **Test** | A YAML file defining a single test (`kind: test`): its target dataspace version, variables, an ordered sequence of steps, and cleanup steps. Identified by `kind: test` or, for backward compatibility, by the presence of a `steps:` key without a `tests:` key. |
-| **Test Case** | An ordered collection of tests (`kind: test-case`), optionally sharing variables, packaged together as one distributable unit. Identified by `kind: test-case` or by the presence of a `tests:` key. Supports importing predefined tests with optional overrides. |
-| **Kind** | The `kind:` field in a YAML header that explicitly declares the file type: `test` or `test-case`. Follows the Kubernetes `kind:` convention. Optional for backward compatibility — the Player can infer the type from the document structure. |
+| **TCK** | An ordered collection of tests (`kind: tck`), optionally sharing variables, packaged together as one distributable unit. Identified by `kind: tck` or by the presence of a `tests:` key. Supports importing predefined tests with optional overrides. |
+| **Kind** | The `kind:` field in a YAML header that explicitly declares the file type: `test` or `tck`. Follows the Kubernetes `kind:` convention. Optional for backward compatibility — the Player can infer the type from the document structure. |
 | **Step** | An atomic, named unit of work within a test (e.g., "provision an asset", "negotiate a contract"). Implemented as a Python class registered in the Step Registry. |
 | **Step Type** | The identifier that maps a step in YAML to its Python implementation (e.g., `provision_asset`, `dataplane_call`). |
 | **Variable** | A named value declared in a test's `variables` block. Can have a default value or be marked `runtime: true` (must be provided at execution time). Steps produce output variables that subsequent steps can consume via `${var_name}` syntax. |
 | **Assertion** | An expected-result check attached to a step via the `expect` block. Evaluated after step execution against the step's output. |
 | **Compiler** | The component that parses YAML tests, validates them against the Step Registry and declared variables, and stamps metadata. |
-| **Package (.testpkg)** | A ZIP archive containing a manifest, compiled tests, and bundled assets (schemas, sample data). Portable, shareable, versionable. |
+| **Package (.tckpkg)** | A ZIP archive containing a manifest, compiled tests, and bundled assets (schemas, sample data). Portable, shareable, versionable. |
 | **Player** | The singleton async executor that loads packages or raw YAML, creates Jobs, executes tests step-by-step, evaluates assertions, and reports results. |
 | **Job** | A stateful execution entity created for every test run. Tracks lifecycle (`QUEUED` → `RUNNING` → `WAITING` → `COMPLETED`), maintains persistent memory across steps and wait/resume cycles, and provides query endpoints for status, memory, and events. |
 | **Job Memory** | A persistent key-value store attached to each Job. Survives across all scripts, steps, wait/resume cycles, and cleanup phases. Accessible via `context.job.memory`. |
@@ -822,20 +822,20 @@ flowchart TD
 | **Callback Server** | A FastAPI-based HTTP server (standalone or embedded) that hosts ephemeral callback routes mounted dynamically by the Player per test execution. |
 | **Listener** | A `listen` block in YAML that declares callback endpoint configuration: the route path, expected HTTP method, and timeout. Creates an `asyncio.Event` that the `await_callback` step waits on. |
 | **Allowlist** | A curated set of SDK function paths that `sdk_call` steps may invoke by default. Scripts must opt in to `allow_sdk_calls: open` to bypass this restriction. |
-| **Encrypted Package** | A `.testpkg` archive whose payload (scripts + assets) is encrypted with AES-256-GCM. Only authorized Players holding the matching RSA private key can decrypt and execute it. |
+| **Encrypted Package** | A `.tckpkg` archive whose payload (scripts + assets) is encrypted with AES-256-GCM. Only authorized Players holding the matching RSA private key can decrypt and execute it. |
 | **Player Identity** | An RSA key pair assigned to a Player instance. The public key's SHA-256 fingerprint serves as the Player's unique identifier for package authorization. |
 | **Key Block** | An entry in the package manifest's `security.authorized_players` list. Contains a Player's fingerprint and the AES content-encryption key wrapped with that Player's RSA public key. |
 | **Trust Store** | A directory (`~/.testlab/trusted_compilers/`) containing public keys of Compilers whose package signatures the Player will accept. |
 | **Compiler Signature** | An Ed25519 digital signature created by the Compiler over the manifest and encrypted payload. Verified by the Player against the trust store before execution. |
 | **Service Binding** | The mechanism by which a step's `params.service` reference is resolved to a managed SDK service instance via the `ServiceManager`. |
 | **Resolution Priority** | The order in which the Player tries to resolve a step's service dependency: (1) managed service by name, (2) standalone from direct params, (3) error. |
-| **Package Upload** | The ability to upload `.testpkg` files (encrypted or plain) to the testlab server via `POST /api/v1/packages`. Uploaded packages are stored on the server and can be referenced by `package_id` in `/run` requests. |
+| **Package Upload** | The ability to upload `.tckpkg` files (encrypted or plain) to the testlab server via `POST /api/v1/packages`. Uploaded packages are stored on the server and can be referenced by `package_id` in `/run` requests. |
 | **Package Storage** | The server-side directory (default: `~/.testlab/packages/`) where uploaded packages are persisted and indexed by `package_id` (`name-version`). |
 | **Vault Backend** | An optional integration with HashiCorp Vault's KV v2 secrets engine for centralized key management. When configured, signing keys and Player keys are stored in and retrieved from Vault instead of the local filesystem. |
 | **Configuration** | The `TestlabConfig` settings model that resolves configuration from `testlab.config.yaml`, environment variables, and CLI flags with defined precedence (CLI > env > file > defaults). |
 | **Dependency (`depends_on`)** | A list of test names or file references that must complete successfully before this test begins execution. The Player resolves the dependency graph using topological sort. If any dependency fails, the dependent test is skipped. Circular dependencies are detected and raise an error. |
-| **File Dependency** | A `depends_on` entry that references an external YAML file (`file: "path.yaml"`) instead of a test name. The parser loads the test from the file, adds it to the test case, and resolves the reference by name. An optional `outputs` list selects which exports from the file's test to promote. |
-| **Output (`outputs`)** | A mapping from export name to context variable name on a test. After successful execution, the Player promotes the referenced variables into the shared test-case context so downstream tests can reference them via `${export_name}`. |
+| **File Dependency** | A `depends_on` entry that references an external YAML file (`file: "path.yaml"`) instead of a test name. The parser loads the test from the file, adds it to the TCK, and resolves the reference by name. An optional `outputs` list selects which exports from the file's test to promote. |
+| **Output (`outputs`)** | A mapping from export name to context variable name on a test. After successful execution, the Player promotes the referenced variables into the shared tck context so downstream tests can reference them via `${export_name}`. |
 
 ---
 

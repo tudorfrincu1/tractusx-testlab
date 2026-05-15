@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Loading sub-module — test case loading, dependency ordering, and parameter resolution."""
+"""Loading sub-module — TCK loading, dependency ordering, and parameter resolution."""
 
 from tractusx_testlab.player.loading.loader import Loader
 from tractusx_testlab.player.loading.ordering import topological_sort

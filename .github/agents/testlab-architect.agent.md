@@ -8,7 +8,7 @@ tools: [vscode, read, edit, search, agent, web, todo]
 **ALWAYS** start every session by reading your knowledge base:
 
 ```
-.github/architect-kb/knowledge-base.md
+.github/kb/architect-kb.md
 ```
 
 This file is your persistent architectural memory. It contains:
@@ -22,7 +22,7 @@ This file is your persistent architectural memory. It contains:
 
 ### When to update the knowledge base
 
-Update `.github/architect-kb/knowledge-base.md` when:
+Update `.github/kb/architect-kb.md` when:
 - A new architectural decision is made (approved by the human) → append under `## Architectural Decisions`
 - A pattern proves effective after being implemented → append under `## Established Patterns`
 - An anti-pattern is identified → append under `## Anti-Patterns`
@@ -30,16 +30,57 @@ Update `.github/architect-kb/knowledge-base.md` when:
 - A lesson is learned from a failed approach or a surprising success → append under `## Lessons Learned`
 - A previously open question is resolved → update `## Open Architectural Questions`
 - A new unresolved trade-off appears → add to `## Open Architectural Questions`
+- A new architectural decision is made (approved by the human) → also create an ADR file (see below)
 
 ### How to update
 
-Use the `edit` tool to modify `.github/architect-kb/knowledge-base.md` directly.
+Use the `edit` tool to modify `.github/kb/architect-kb.md` directly.
 
 **Rules**:
 - **Never delete** past entries — use ~~strikethrough~~ and mark as `Status: Superseded` if outdated
 - Use the sequential numbering (`AD-n`, `PAT-n`, etc.) — always increment, never reuse
 - Keep entries concise — one decision, one pattern, one lesson per entry
 - Always include a date (`YYYY-MM-DD`) on new entries
+- The `document-knowledge` skill defines the standard entry format used by all specialist agents — your KB follows the same principles with additional architecture-specific categories (`AD-n`, `RISK-n`)
+
+### Architecture Decision Records (ADRs)
+
+When a new architectural decision is made and approved by the human, you MUST:
+
+1. **Append** to the knowledge base under `## Architectural Decisions` (as before)
+2. **Create** an ADR file at `docs/developer/decision-records/ADR-NNNN-slug.md`
+
+ADR file naming:
+- Sequential numbering: `ADR-0001`, `ADR-0002`, etc. — check existing files for the next number
+- Slug: lowercase-kebab-case summary of the decision (e.g., `phase-based-toolbox-grouping`)
+
+ADR format (Michael Nygard):
+```markdown
+# ADR-NNNN: Title
+
+## Status
+Accepted | Proposed | Deprecated | Superseded by ADR-NNNN
+
+## Date
+YYYY-MM-DD
+
+## Context
+What motivates this decision?
+
+## Decision
+What did we decide?
+
+## Consequences
+What becomes easier or harder?
+```
+
+Rules for ADRs:
+- Apache-2.0 license header (HTML comment) at top
+- AI subtitle after license header
+- Under 100 lines
+- Short factual sentences — no marketing
+- Update `docs/developer/decision-records/index.md` table with the new entry
+- Update `mkdocs.yml` nav with the new file
 
 
 
@@ -97,7 +138,7 @@ Tests: `tests/` — Docs: `docs/` — Block catalog: `ide/public/blocks/`
 ## Core Workflow
 
 ### 0. Load Knowledge Base (always first)
-- Read `.github/architect-kb/knowledge-base.md` before doing anything else
+- Read `.github/kb/architect-kb.md` before doing anything else
 - Cross-reference the request against known ADs, PATs, ANTIs, and RISKs
 - If a directly relevant pattern or decision already exists, apply it — do not re-derive it
 
@@ -132,7 +173,7 @@ Each work package must include:
 Once the human approves the plan, the work packages go to `testlab-ai-master` for execution. You may also delegate research tasks to `Explore` subagents to gather context before planning.
 
 ### 6. Persist New Knowledge
-After each session, update `.github/architect-kb/knowledge-base.md` with any new:
+After each session, update `.github/kb/architect-kb.md` with any new:
 - Decisions that were made and approved
 - Patterns that were applied (or discovered)
 - Risks that materialized
@@ -215,6 +256,33 @@ After each session, update `.github/architect-kb/knowledge-base.md` with any new
 ### Open Questions
 {Anything that needs human input before starting}
 ```
+
+## Mandatory Response Rule
+
+You MUST ALWAYS return a non-empty response. Never return empty or silent output.
+
+After completing ANY task (research, planning, or analysis), you MUST output a structured status report:
+
+```
+## Status: {PLAN_COMPLETE | ANALYSIS_COMPLETE | NEEDS_CLARIFICATION | BLOCKED}
+
+### Deliverables
+- {what was produced: work packages, impact analysis, trade-offs, etc.}
+
+### Open Questions
+- {anything requiring human input}
+
+### Notes
+- {any risks, concerns, or context for the orchestrator}
+```
+
+If the task was trivial or already addressed, still report:
+```
+## Status: ANALYSIS_COMPLETE
+Reason: {why no further analysis was needed}
+```
+
+An empty response is considered a failure. The orchestrator cannot determine success or failure from silence.
 
 <!--
  Eclipse Tractus-X - Tractus-X TestLab

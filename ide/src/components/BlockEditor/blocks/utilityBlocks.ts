@@ -34,8 +34,9 @@ import {
   collectExportedVariables,
 } from "./dropdownProviders";
 import { collectWorkspaceVariables } from "./variableCollection";
+import type { BlockCatalog } from "./catalogLoader";
 
-export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
+export function registerUtilityBlocks(Blockly: typeof BlocklyType, catalog?: BlockCatalog) {
   Blockly.Blocks["depends_on_entry"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -48,20 +49,6 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
       this.setNextStatement(true, "depends_on_entry");
       this.setColour(blockColors.root);
       this.setTooltip("Declare a dependency on another test file and its outputs (comma-separated)");
-    },
-  };
-
-  Blockly.Blocks["output_entry"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_STORE))
-        .appendField(new Blockly.FieldTextInput("variable_name"), "OUTPUT_NAME")
-        .appendField(":")
-        .appendField(new Blockly.FieldTextInput("$"), "OUTPUT_EXPR");
-      this.setPreviousStatement(true, "output_entry");
-      this.setNextStatement(true, "output_entry");
-      this.setColour(blockColors.root);
-      this.setTooltip("Declare a test-level output variable exposed to dependent tests");
     },
   };
 
@@ -100,7 +87,7 @@ export function registerUtilityBlocks(Blockly: typeof BlocklyType) {
           new Blockly.FieldDropdown(
             dynamicDropdown(
               (ws) => {
-                const vars = collectWorkspaceVariables(ws);
+                const vars = collectWorkspaceVariables(ws, catalog);
                 return vars.length > 0
                   ? vars.map((v): [string, string] => [v, v])
                   : [["(no variables)", "__NONE__"]];

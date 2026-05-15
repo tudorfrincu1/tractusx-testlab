@@ -33,19 +33,19 @@ SPDX-License-Identifier: CC-BY-4.0
 
 ## Executive Summary
 
-**TestLab** is the testing framework built into the [Tractus-X SDK](https://github.com/eclipse-tractusx/tractusx-sdk). It enables you to author, compile, distribute, and execute automated test cases against dataspace connectors and industry services — without writing any Python code.
+**TestLab** is the testing framework built into the [Tractus-X SDK](https://github.com/eclipse-tractusx/tractusx-sdk). It enables you to author, compile, distribute, and execute automated TCKs against dataspace connectors and industry services — without writing any Python code.
 
 Test authors write **declarative YAML tests** describing the steps to execute, the services to connect to, the assertions to evaluate, and the cleanup to perform. TestLab takes care of the rest: validation, encryption, packaging, execution, and structured reporting.
 
 - **Tests** — YAML-defined test sequences composed of reusable, predefined steps
-- **Compiler** — Validates tests at compile time and packages them into portable, encrypted-by-default `.testpkg` artifacts
+- **Compiler** — Validates tests at compile time and packages them into portable, encrypted-by-default `.tckpkg` artifacts
 - **Player** — An async executor deployable as standalone CLI or embeddable in an existing application, with cryptographic identity for package authorization
 - **Services** — Managed SDK service lifecycle for connector, provider, and DTR instances with automatic initialization and reuse across steps
 - **Server** — FastAPI-based callback/webhook engine with dynamically mounted routes for async request/response patterns
 
 Tests can declare long-lived services that persist for the test duration (avoiding repeated initialization), configure callback endpoints to receive async responses, and leverage runtime variable resolution. These tests are compiled with strict validation, packaged into distributable artifacts, and executed by the Player — which resolves runtime variables, manages step sequencing, evaluates assertions, orchestrates managed services, and provides live execution status.
 
-Tests with steps like (e.g., `provision_asset`, `negotiate_contract`, `validate_aspect_model`) can be included inside of test cases, which enable reusability and personalized configurations for different scenarios.
+Tests with steps like (e.g., `provision_asset`, `negotiate_contract`, `validate_aspect_model`) can be included inside of TCKs, which enable reusability and personalized configurations for different scenarios.
 
 Example:
 
@@ -74,9 +74,9 @@ steps:
 
 | ID | Goal |
 |----|------|
-| G-1 | Enable test authors to define reusable, composable test cases in YAML without writing Python code |
+| G-1 | Enable test authors to define reusable, composable TCKs in YAML without writing Python code |
 | G-2 | Provide a compile step that catches errors early — undeclared variables, incompatible step types, version mismatches — before execution |
-| G-3 | Package compiled test cases into portable `.testpkg` artifacts that can be shared, uploaded, stored, and versioned |
+| G-3 | Package compiled TCKs into portable `.tckpkg` artifacts that can be shared, uploaded, stored, and versioned |
 | G-4 | Execute test packages at runtime via a singleton async Player, with support for loading from filesystem or programmatic input (dict/string) |
 | G-5 | Provide real-time, step-level execution monitoring with in-memory state queryable at any point during execution |
 | G-6 | Enforce dataspace version awareness — every script declares which dataspace version it targets, and steps are resolved accordingly |
@@ -88,7 +88,7 @@ steps:
 | G-12 | Provide managed service lifecycle — scripts declare required SDK services (connector consumer, connector provider, DTR) that are initialized once and reused across steps |
 | G-13 | Support async callback/webhook patterns — scripts can start a lightweight listener on an ephemeral endpoint, send a request, and await a response via `asyncio.Event` with configurable timeout |
 | G-14 | Support dual deployment modes for the Player — standalone CLI (`testlab serve`) and embeddable library API (`TestlabPlayer.from_app(app)`) |
-| G-15 | Secure `.testpkg` artifacts via hybrid encryption (AES-256-GCM + RSA-OAEP) and Ed25519 signing, ensuring compiled packages can only be decrypted and executed by authorized Player instances |
+| G-15 | Secure `.tckpkg` artifacts via hybrid encryption (AES-256-GCM + RSA-OAEP) and Ed25519 signing, ensuring compiled packages can only be decrypted and executed by authorized Player instances |
 | G-16 | Provide transparent service-step binding — steps reference managed services by name and the Player guarantees that the correct, pre-initialized SDK service instance is injected into each step |
 
 ## Non-Goals (Future Scope)
@@ -99,7 +99,7 @@ steps:
 | NG-2 | Persistent execution state in PostgreSQL (future — `SyncBackend` protocol) |
 | NG-3 | Parallel step execution within a single script |
 | NG-4 | Step retry policies (retry count, backoff strategy) |
-| NG-5 | Cross-package script composition (`"!include"` across `.testpkg` boundaries) |
+| NG-5 | Cross-package script composition (`"!include"` across `.tckpkg` boundaries) |
 
 ---
 
@@ -121,8 +121,8 @@ This specification is organized into the following sections:
 
 | Document | Description |
 |----------|-------------|
-| [YAML Format Reference](reference/yaml-format.md) | Test and test case authoring examples, assertion formats |
-| [Package Format](reference/package-format.md) | `.testpkg` archive structure and manifest specification |
+| [YAML Format Reference](reference/yaml-format.md) | Test and TCK authoring examples, assertion formats |
+| [Package Format](reference/package-format.md) | `.tckpkg` archive structure and manifest specification |
 | [Module Structure](reference/module-structure.md) | Source code layout and component responsibilities |
 
 ### Walkthrough
@@ -130,8 +130,8 @@ This specification is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [Overview](walkthrough/index.md) | End-to-end walkthrough introduction and prerequisites |
-| [Writing Tests](walkthrough/writing-test-scripts.md) | Step-by-step guide to authoring YAML tests and test cases |
-| [Compiling Packages](walkthrough/compiling-packages.md) | Validating, compiling, and encrypting `.testpkg` packages |
+| [Writing Tests](walkthrough/writing-test-scripts.md) | Step-by-step guide to authoring YAML tests and TCKs |
+| [Compiling Packages](walkthrough/compiling-packages.md) | Validating, compiling, and encrypting `.tckpkg` packages |
 | [Executing Tests](walkthrough/executing-tests.md) | Running packages via CLI, vars files, Python API, and server mode |
 
 !!! info "Implementation Detail Level"

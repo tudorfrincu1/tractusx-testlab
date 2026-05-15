@@ -22,7 +22,7 @@
 // It was reviewed and tested by a human committer.
 
 import type {
-  TestCaseDefinition,
+  TckDefinition,
   ScriptDefinition,
   TestLabDocument,
 } from "../models/schema";
@@ -31,7 +31,7 @@ import type { AggregatedVariable, TestSummary } from "./selectors";
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
 export interface ActiveFile {
-  type: "test-case" | "test" | "schema";
+  type: "tck" | "test" | "schema";
   name: string;
 }
 
@@ -46,7 +46,7 @@ export interface ProjectState {
   hasProject: boolean;
   projectName: string;
   projectGeneration: number;
-  testCase: TestCaseDefinition;
+  tck: TckDefinition;
   tests: Map<string, ScriptDefinition>;
   schemas: Map<string, SchemaFile>;
   testOrder: string[];
@@ -61,7 +61,7 @@ export interface ProjectState {
   duplicateTest: (name: string) => string;
   reorderTest: (name: string, newIndex: number) => void;
   updateTest: (name: string, model: ScriptDefinition) => void;
-  updateTestCase: (model: TestCaseDefinition) => void;
+  updateTck: (model: TckDefinition) => void;
   setActiveFile: (file: ActiveFile | null) => void;
   addSchema: (name: string, content: string) => void;
   removeSchema: (name: string) => void;
@@ -75,9 +75,9 @@ export interface ProjectState {
   getActiveModel: () => TestLabDocument | null;
   getAggregatedVariables: () => AggregatedVariable[];
   getTestSummaries: () => TestSummary[];
-  updateTestCaseField: <K extends keyof TestCaseDefinition>(field: K, value: TestCaseDefinition[K]) => void;
+  updateTckField: <K extends keyof TckDefinition>(field: K, value: TckDefinition[K]) => void;
   exportZip: () => Promise<void>;
-  exportFile: (name: string, type: "test" | "schema" | "test-case") => void;
+  exportFile: (name: string, type: "test" | "schema" | "tck") => void;
   saveToLocalStorage: () => void;
   loadFromLocalStorage: () => boolean;
   loadFromDocument: (doc: TestLabDocument, name?: string) => void;

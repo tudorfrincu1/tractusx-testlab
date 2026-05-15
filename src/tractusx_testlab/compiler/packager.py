@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Package builder/reader — creates encrypted, signed .testpkg ZIP archives."""
+"""Package builder/reader — creates encrypted, signed .tckpkg ZIP archives."""
 
 from __future__ import annotations
 
@@ -43,12 +43,12 @@ from tractusx_testlab.security.crypto.signing import sign_bytes, verify_signatur
 
 # Archive entry names
 _MANIFEST = "manifest.json"
-_PAYLOAD = "test-case.bin"
+_PAYLOAD = "tck.bin"
 _SIGNATURE = "signature.bin"
 
 
 class Packager:
-    """Create and read encrypted, signed .testpkg archives."""
+    """Create and read encrypted, signed .tckpkg archives."""
 
     @staticmethod
     def build(
@@ -60,14 +60,14 @@ class Packager:
         name: str = "",
         version: str = "1.0",
     ) -> PackageManifest:
-        """Build a .testpkg file.
+        """Build a .tckpkg file.
 
         Args:
             script_yaml: Raw YAML content to package.
             compiler_signing_key: Ed25519 private key PEM for signing.
             compiler_id: Fingerprint/ID of the compiler's signing key.
             recipient_public_keys: {player_id: RSA public PEM} for each recipient.
-            output_path: Destination .testpkg file.
+            output_path: Destination .tckpkg file.
             name: Package name.
             version: Package version.
 
@@ -115,7 +115,7 @@ class Packager:
 
     @staticmethod
     def read_manifest(package_path: Path) -> PackageManifest:
-        """Extract and parse the manifest from a .testpkg file."""
+        """Extract and parse the manifest from a .tckpkg file."""
         with zipfile.ZipFile(package_path, "r") as zf:
             raw = zf.read(_MANIFEST)
         return PackageManifest.model_validate_json(raw)
@@ -126,7 +126,7 @@ class Packager:
         player_private_key: bytes,
         compiler_public_key: bytes,
     ) -> bytes:
-        """Decrypt and verify a .testpkg archive.
+        """Decrypt and verify a .tckpkg archive.
 
         Returns:
             The decrypted script YAML bytes.

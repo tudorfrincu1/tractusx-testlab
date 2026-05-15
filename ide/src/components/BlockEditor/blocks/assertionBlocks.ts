@@ -26,6 +26,7 @@ import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../blockColors";
 import { findCatalogEntry, type BlockCatalog } from "./catalogLoader";
+import { collectSchemaVariables, dynamicDropdown } from "./dropdownProviders";
 
 /** Collect output names from the parent step block's catalog entry */
 function collectParentOutputs(block: Block, catalog: BlockCatalog): Array<[string, string]> {
@@ -45,8 +46,22 @@ function outputDropdown(catalog: BlockCatalog): (this: any) => Array<[string, st
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (this: any): Array<[string, string]> {
     const b = this.getSourceBlock?.();
-    if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) return [["—", "__NONE__"]];
-    return collectParentOutputs(b, catalog);
+    if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) {
+      const cur = this.getValue?.() ?? "";
+      if (cur && cur !== "__NONE__") return [[cur, cur]];
+      return [["—", "__NONE__"]];
+    }
+    const options = collectParentOutputs(b, catalog);
+    // Preserve the current value even if the parent step isn't attached yet
+    const currentVal = this.getValue?.() ?? "";
+    if (
+      currentVal &&
+      currentVal !== "__NONE__" &&
+      !options.some(([, v]: [string, string]) => v === currentVal)
+    ) {
+      options.unshift([currentVal, currentVal]);
+    }
+    return options;
   };
 }
 
@@ -132,6 +147,30 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
       this.setNextStatement(true, "assertion");
       this.setColour(blockColors.assertion);
       this.setTooltip("Assert that output conforms to a JSON Schema");
+    },
+  };
+
+  Blockly.Blocks["assert_validates_schema"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("Assert")
+        .appendField(new Blockly.FieldDropdown(outputDropdown(catalog) as () => Array<[string, string]>), "OUTPUT")
+        .appendField("validates against schema");
+      this.appendDummyInput()
+        .appendField("schema:")
+        .appendField(
+          new Blockly.FieldDropdown(
+            dynamicDropdown(
+              (ws) => collectSchemaVariables(ws),
+              "(no schemas loaded)"
+            ) as () => Array<[string, string]>
+          ),
+          "SCHEMA_REF"
+        );
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert that output validates against a schema loaded via Import Schema");
     },
   };
 

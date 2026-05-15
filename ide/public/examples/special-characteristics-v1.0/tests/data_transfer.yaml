@@ -52,5 +52,5 @@ steps:
       variable: shell_descriptors
       path: "result"
     expect:
-      - output: value
-        not_empty: true
+      - type: "NOT_EMPTY"
+        output: value
