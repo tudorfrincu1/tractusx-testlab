@@ -32,20 +32,26 @@ from typing import Any, Optional, Union
 import yaml
 
 from tractusx_sdk.extensions.testlab.syntax import defaults, keys
+from tractusx_testlab.syntax.keys import TEST as _TEST_KEY
+
+from tractusx_testlab.syntax.keys import PRECONDITIONS as _PRECONDITIONS_KEY
 
 from tractusx_sdk.extensions.testlab.models import (
     DependencyRef,
+    ScriptKind as _SdkScriptKind,
+    SdkCallMode,
+)
+from tractusx_testlab.models.definitions import (
     ImportDefinition,
     ListenerDefinition,
     ScriptDefinition,
-    ScriptKind,
-    SdkCallMode,
-    TestCaseDefinition,
+    ServiceDefinition,
+    TckDefinition,
 )
+from tractusx_testlab.models.enums import ScriptKind, ServiceType
 
 from tractusx_sdk.extensions.testlab.scripting._builders import (
     parse_depends_on,
-    parse_service,
     parse_step,
     parse_variables,
 )
@@ -57,8 +63,20 @@ from tractusx_sdk.extensions.testlab.scripting._dependencies import (
 _INCLUDE_PREFIX = "!include "
 
 
+def _parse_service(raw: dict) -> ServiceDefinition:
+    """Parse a single service dict into a local ServiceDefinition with extended ServiceType."""
+    raw_type = raw.get(keys.TYPE, defaults.SERVICE_TYPE)
+    return ServiceDefinition(
+        name=raw.get(keys.NAME, defaults.NAME),
+        type=ServiceType(raw_type.upper() if isinstance(raw_type, str) else raw_type),
+        base_url=raw.get(keys.BASE_URL, defaults.BASE_URL),
+        auth=raw.get(keys.AUTH, {}),
+        params=raw.get(keys.PARAMS),
+    )
+
+
 class YamlParser:
-    """Parses YAML test scripts and test-case manifests into definition models."""
+    """Parses YAML test scripts and TCK manifests into definition models."""
 
     @staticmethod
     def parse_script(path: Path) -> ScriptDefinition:
@@ -66,17 +84,17 @@ class YamlParser:
         return YamlParser._build_script(data)
 
     @staticmethod
-    def parse_test_case(path: Path) -> TestCaseDefinition:
+    def parse_tck(path: Path) -> TckDefinition:
         data = YamlParser._load_yaml(path)
-        return YamlParser._build_test_case(data, base_dir=path.parent)
+        return YamlParser._build_tck(data, base_dir=path.parent)
 
     @staticmethod
     def parse_script_from_dict(data: dict) -> ScriptDefinition:
         return YamlParser._build_script(data)
 
     @staticmethod
-    def parse_test_case_from_dict(data: dict, base_dir: Optional[Path] = None) -> TestCaseDefinition:
-        return YamlParser._build_test_case(data, base_dir=base_dir)
+    def parse_tck_from_dict(data: dict, base_dir: Optional[Path] = None) -> TckDefinition:
+        return YamlParser._build_tck(data, base_dir=base_dir)
 
     @staticmethod
     def _load_yaml(path: Path) -> dict:
@@ -87,7 +105,7 @@ class YamlParser:
         return data
 
     @staticmethod
-    def _build_test_case(data: dict, base_dir: Optional[Path] = None) -> TestCaseDefinition:
+    def _build_tck(data: dict, base_dir: Optional[Path] = None) -> TckDefinition:
         shared_vars = parse_variables(data.get(keys.VARIABLES, {}))
 
         tests_raw = data.get(keys.TESTS, [])
@@ -110,7 +128,16 @@ class YamlParser:
                 else:
                     tests.append(entry)
             elif isinstance(entry, dict):
-                tests.append(YamlParser._build_script(entry, base_dir=base_dir))
+                if _TEST_KEY in entry:
+                    rel_path = entry[_TEST_KEY]
+                    if base_dir:
+                        script_path = (base_dir / rel_path).resolve()
+                        if script_path.exists():
+                            tests.append(YamlParser.parse_script(script_path))
+                            continue
+                    tests.append(rel_path)
+                else:
+                    tests.append(YamlParser._build_script(entry, base_dir=base_dir))
 
         imports = [
             ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
@@ -120,8 +147,8 @@ class YamlParser:
         tests = resolve_file_dependencies(tests, base_dir, YamlParser.parse_script)
         infer_output_dependencies(tests)
 
-        return TestCaseDefinition(
-            kind=ScriptKind.TEST_CASE,
+        return TckDefinition(
+            kind=ScriptKind.TCK,
             name=data.get(keys.NAME, defaults.NAME),
             version=data.get(keys.VERSION, defaults.VERSION),
             description=data.get(keys.DESCRIPTION),
@@ -135,17 +162,18 @@ class YamlParser:
         base_def = YamlParser._resolve_import(data, base_dir)
 
         variables = parse_variables(data.get(keys.VARIABLES, {}))
-        setup = [parse_step(step_data) for step_data in data.get(keys.SETUP, [])]
-        steps = [parse_step(step_data) for step_data in data.get(keys.STEPS, [])]
-        cleanup = [parse_step(step_data) for step_data in data.get(keys.CLEANUP, [])]
-        services = [parse_service(service_data) for service_data in data.get(keys.SERVICES, [])]
+        preconditions = [parse_step(step_data).model_dump() for step_data in data.get(_PRECONDITIONS_KEY, [])]
+        setup = [parse_step(step_data).model_dump() for step_data in data.get(keys.SETUP, [])]
+        steps = [parse_step(step_data).model_dump() for step_data in data.get(keys.STEPS, [])]
+        cleanup = [parse_step(step_data).model_dump() for step_data in data.get(keys.CLEANUP, [])]
+        services = [_parse_service(service_data) for service_data in data.get(keys.SERVICES, [])]
         listeners = [
             ListenerDefinition(**listener_entry) if isinstance(listener_entry, dict) else ListenerDefinition(name=str(listener_entry), path=str(listener_entry))
             for listener_entry in data.get(keys.LISTEN, [])
         ]
 
         return YamlParser._merge_with_base(
-            data, base_def, variables, setup, steps, cleanup, services, listeners,
+            data, base_def, variables, preconditions, setup, steps, cleanup, services, listeners,
         )
 
     @staticmethod
@@ -175,6 +203,7 @@ class YamlParser:
         data: dict,
         base_def: Optional[ScriptDefinition],
         variables: dict,
+        preconditions: list,
         setup: list,
         steps: list,
         cleanup: list,
@@ -204,6 +233,7 @@ class YamlParser:
             variables=variables or get(data, "variables", base_def, {}),
             services=services or get(data, "services", base_def, []),
             listen=listeners or get(data, "listen", base_def, []),
+            preconditions=preconditions or get(data, "preconditions", base_def, []),
             setup=setup or get(data, "setup", base_def, []),
             steps=steps or get(data, "steps", base_def, []),
             cleanup=cleanup or get(data, "cleanup", base_def, []),

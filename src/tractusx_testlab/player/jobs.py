@@ -26,32 +26,39 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from tractusx_sdk.extensions.testlab.models import Job, JobEvent, JobMemory, JobStatus
+from tractusx_sdk.extensions.testlab.models import Job, JobEvent, JobMemory
+
+from tractusx_testlab.models.enums import JobStatus
 
 
 class JobManager:
     """Manages the lifecycle of Job objects."""
 
-    __slots__ = ("_jobs",)
+    __slots__ = ("_jobs", "_pause_events")
 
     def __init__(self) -> None:
         self._jobs: dict[str, Job] = {}
+        self._pause_events: dict[str, asyncio.Event] = {}
 
-    def create(self, test_case_id: str, package_name: Optional[str] = None) -> Job:
+    def create(self, tck_id: str, package_name: Optional[str] = None) -> Job:
         """Create a new job in QUEUED state."""
         job = Job(
             job_id=uuid.uuid4().hex,
-            test_case_id=test_case_id,
+            tck_id=tck_id,
             package_name=package_name,
             status=JobStatus.QUEUED,
             created_at=datetime.now(timezone.utc),
             memory=JobMemory(),
         )
         self._jobs[job.job_id] = job
+        event = asyncio.Event()
+        event.set()  # Not paused by default
+        self._pause_events[job.job_id] = event
         return job
 
     def get(self, job_id: str) -> Optional[Job]:
@@ -98,18 +105,44 @@ class JobManager:
         job.current_step = step_name
         self._event(job, "waiting", f"Waiting for callback at step {step_name}")
 
-    def resume(self, job_id: str) -> None:
+    def resume(self, job_id: str) -> Job:
+        """Resume a WAITING or PAUSED job back to RUNNING."""
         job = self._require(job_id)
-        if job.status != JobStatus.WAITING:
-            return
-        job.status = JobStatus.RUNNING
-        job.waiting_for = None
-        self._event(job, "lifecycle", "Job resumed from WAITING")
+        if job.status == JobStatus.WAITING:
+            job.status = JobStatus.RUNNING
+            job.waiting_for = None
+            self._event(job, "lifecycle", "Job resumed from WAITING")
+        elif job.status == JobStatus.PAUSED:
+            job.status = JobStatus.RUNNING
+            self._pause_events[job_id].set()
+            self._event(job, "lifecycle", "Job resumed from PAUSED")
+        return job
+
+    def get_pause_event(self, job_id: str) -> asyncio.Event:
+        """Return the pause gate for *job_id*. ``await event.wait()`` blocks while paused."""
+        event = self._pause_events.get(job_id)
+        if event is None:
+            event = asyncio.Event()
+            event.set()
+            self._pause_events[job_id] = event
+        return event
+
+    def pause(self, job_id: str) -> Job:
+        """Pause a RUNNING job. Blocks the execution loop until resumed."""
+        job = self._require(job_id)
+        if job.status != JobStatus.RUNNING:
+            raise ValueError(f"Cannot pause job '{job_id}' in state {job.status.value}")
+        job.status = JobStatus.PAUSED
+        self._pause_events[job_id].clear()
+        self._event(job, "lifecycle", "Job paused")
+        return job
 
     def cancel(self, job_id: str) -> None:
         job = self._require(job_id)
         if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             return
+        if job.status == JobStatus.PAUSED:
+            self._pause_events[job_id].set()  # Unblock execution loop
         job.status = JobStatus.CANCELLED
         job.finished_at = datetime.now(timezone.utc)
         self._event(job, "lifecycle", "Job cancelled")

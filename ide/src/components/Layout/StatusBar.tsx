@@ -25,8 +25,8 @@
 import { useTestLabStore } from "../../store/useTestLabStore";
 import { useProjectStore } from "../../store/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
-import { isTest, isTestCase } from "../../models/schema";
-import type { ScriptDefinition, TestCaseDefinition } from "../../models/schema";
+import { isTest, isTck } from "../../models/schema";
+import type { ScriptDefinition, TckDefinition } from "../../models/schema";
 import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import WarningAmber from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
@@ -49,8 +49,8 @@ export function StatusBar() {
       ((model as ScriptDefinition).teardown?.length ?? 0)
     : 0;
 
-  const testCount = isTestCase(model)
-    ? (model as TestCaseDefinition).tests.length
+  const testCount = isTck(model)
+    ? (model as TckDefinition).tests.length
     : 0;
 
   return (
@@ -98,14 +98,14 @@ export function StatusBar() {
         {isTest(model) && (
           <span>{stepCount} step{stepCount !== 1 ? "s" : ""}</span>
         )}
-        {isTestCase(model) && (
+        {isTck(model) && (
           <span>{testCount} test{testCount !== 1 ? "s" : ""}</span>
         )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {activeFile && (
           <span style={{ color: isDirty(activeFile.name) ? theme.colors.warning : theme.colors.textMuted }}>
-            {projectName} / {activeFile.type === "test-case" ? "index.yaml" : activeFile.type === "schema" ? `schemas / ${activeFile.name}.json` : `tests / ${activeFile.name}.yaml`}
+            {projectName} / {activeFile.type === "tck" ? "index.yaml" : activeFile.type === "schema" ? `schemas / ${activeFile.name}.json` : `tests / ${activeFile.name}.yaml`}
             {isDirty(activeFile.name) ? " •" : ""}
           </span>
         )}

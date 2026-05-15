@@ -49,6 +49,19 @@ export function collectServiceRefs(_workspace: Workspace, serviceType?: string):
   return refs.length > 0 ? refs : [["(no services configured)", "__NONE__"]];
 }
 
+/** Collect schema variable names from `schema_import` blocks in the workspace */
+export function collectSchemaVariables(workspace: Workspace): Array<[string, string]> {
+  const vars: Array<[string, string]> = [];
+  for (const block of workspace.getAllBlocks(false)) {
+    if (block.type === "schema_import") {
+      const varName = block.getFieldValue("OUTPUT_SCHEMA");
+      if (varName) vars.push([varName, varName]);
+    }
+  }
+  if (vars.length === 0) return [["(no schemas loaded)", "__NONE__"]];
+  return vars;
+}
+
 /** Collect schema file names from the project store as dropdown options (value = relative path). */
 export function collectSchemaPaths(): Array<[string, string]> {
   const names = useProjectStore.getState().getSchemaNames();

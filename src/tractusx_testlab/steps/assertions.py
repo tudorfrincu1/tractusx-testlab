@@ -26,24 +26,22 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any, Optional
 
-import jsonschema
-
-# Matches a path segment with a predicate filter: ``name[key=value]``
-_PREDICATE_RE = re.compile(r"^([^\[]+)\[([^=\]]+)=([^\]]*)\]$")
-
 from tractusx_sdk.extensions.testlab.models import (
-    Assertion,
     AssertionResult,
     AssertionSeverity,
     AssertionSummary,
-    AssertionType,
     StepResult,
     ValueSource,
 )
+from tractusx_testlab.models.definitions import Assertion
+from tractusx_testlab.models.enums import AssertionType
+from tractusx_testlab.steps import _checks
+
+# Matches a path segment with a predicate filter: ``name[key=value]``
+_PREDICATE_RE = re.compile(r"^([^\[]+)\[([^=\]]+)=([^\]]*)\]$")
 
 
 class AssertionEngine:
@@ -85,50 +83,15 @@ class AssertionEngine:
         )
 
     # ------------------------------------------------------------------
-    # Individual assertion checks — each returns (passed, failure_message)
+    # Individual assertion checks — delegated to _checks module
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _check_exact(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
-        passed = actual == expected
-        return passed, "" if passed else f"Expected {expected!r}, got {actual!r}"
-
-    @staticmethod
-    def _check_status_code(actual: Any, expected: Any, output: Any) -> tuple[bool, str]:
-        actual_code = actual if isinstance(actual, int) else getattr(output, "status_code", None)
-        passed = actual_code == expected
-        return passed, "" if passed else f"Expected status_code={expected}, got {actual_code}"
-
-    @staticmethod
-    def _check_contains(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
-        if isinstance(actual, str) and isinstance(expected, str):
-            passed = expected in actual
-        elif isinstance(actual, list):
-            passed = expected in actual
-        elif isinstance(actual, dict):
-            passed = expected in actual.values()
-        else:
-            passed = False
-        return passed, "" if passed else f"Expected output to contain {expected!r}"
-
-    @staticmethod
-    def _check_regex(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
-        passed = bool(re.search(expected, actual)) if isinstance(actual, str) and isinstance(expected, str) else False
-        return passed, "" if passed else f"Pattern {expected!r} not found in output"
-
-    @staticmethod
-    def _check_schema(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
-        try:
-            schema = expected if isinstance(expected, dict) else json.loads(expected)
-            jsonschema.validate(actual, schema)
-            return True, ""
-        except jsonschema.ValidationError as exc:
-            return False, f"Schema validation failed: {exc.message}"
-        except (json.JSONDecodeError, TypeError) as exc:
-            return False, f"Invalid schema: {exc}"
-
-    @staticmethod
     def _resolve_expected(assertion: Assertion, context_vars: dict) -> Any:
+        if assertion.type == AssertionType.BETWEEN:
+            return [assertion.min, assertion.max]
+        if assertion.type == AssertionType.SCHEMA_VALIDATION:
+            return assertion.schema_ref
         if assertion.source == ValueSource.VARIABLE:
             var_name = assertion.value
             return context_vars.get(var_name, assertion.value)
@@ -241,11 +204,21 @@ def _find_by_predicate(items: list, key: str, value: str) -> Any:
 
 
 # Dispatch table mapping assertion types to their check functions.
-# Defined at module level after the class so names resolve cleanly.
 _ASSERTION_CHECKS = {
-    AssertionType.EXACT: AssertionEngine._check_exact,
-    AssertionType.STATUS_CODE: AssertionEngine._check_status_code,
-    AssertionType.CONTAINS: AssertionEngine._check_contains,
-    AssertionType.REGEX: AssertionEngine._check_regex,
-    AssertionType.SCHEMA: AssertionEngine._check_schema,
+    AssertionType.EXACT: _checks.check_exact,
+    AssertionType.STATUS_CODE: _checks.check_status_code,
+    AssertionType.CONTAINS: _checks.check_contains,
+    AssertionType.REGEX: _checks.check_regex,
+    AssertionType.SCHEMA: _checks.check_schema,
+    AssertionType.NOT_NULL: _checks.check_not_null,
+    AssertionType.NOT_EMPTY: _checks.check_not_empty,
+    AssertionType.EQUALS: _checks.check_equals,
+    AssertionType.NOT_EQUALS: _checks.check_not_equals,
+    AssertionType.NOT_CONTAINS: _checks.check_not_contains,
+    AssertionType.SCHEMA_VALIDATION: _checks.check_schema_validation,
+    AssertionType.GREATER_THAN: _checks.check_greater_than,
+    AssertionType.LESS_THAN: _checks.check_less_than,
+    AssertionType.GREATER_OR_EQUAL: _checks.check_greater_or_equal,
+    AssertionType.LESS_OR_EQUAL: _checks.check_less_or_equal,
+    AssertionType.BETWEEN: _checks.check_between,
 }

@@ -26,17 +26,21 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 
 from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
 from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
 from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
-from tractusx_sdk.extensions.testlab.server.routes import router
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+
+from tractusx_testlab.server.routes import router
 
 
 def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
@@ -60,5 +64,21 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
     app.state.callbacks = CallbackManager()
 
     app.include_router(router)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/testlab/health", tags=["testlab"])
+    async def health() -> JSONResponse:
+        """Lightweight health check for IDE connectivity validation."""
+        try:
+            version = importlib.metadata.version("tractusx-testlab")
+        except importlib.metadata.PackageNotFoundError:
+            version = "unknown"
+        return JSONResponse(content={"status": "ok", "version": version})
 
     return app

@@ -35,16 +35,17 @@ import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
 import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
 import { toRuntimeStepType } from "./stepTypeAliases";
 import { parseUnsupportedParams } from "./unsupportedStepPayload";
-import { workspaceToTestCase } from "./workspaceToTestCase";
+import { workspaceToTck } from "./workspaceToTck";
+import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
   _Blockly: typeof BlocklyType,
   workspace: Workspace,
   catalog: BlockCatalog
 ): Partial<TestLabDocument> {
-  const testCaseRoot = workspace.getBlocksByType("test_case_root", false)[0];
-  if (testCaseRoot) {
-    return workspaceToTestCase(testCaseRoot);
+  const tckRoot = workspace.getBlocksByType("tck_root", false)[0];
+  if (tckRoot) {
+    return workspaceToTck(tckRoot);
   }
 
   const rootBlock = workspace.getBlocksByType("test_root", false)[0];
@@ -142,6 +143,9 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         description: stepDescription || undefined,
         params,
       } as StepDefinition);
+    } else if (current.type === "step_precondition_policy_config") {
+      const step = serializePreconditionPolicyBlock(current);
+      if (step) steps.push(step);
     } else {
       const step = blockToStep(current, catalog);
       if (step) steps.push(step);
@@ -234,34 +238,6 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
   }
 
   const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
-
-  if (stepType === "send_notification") {
-    const notification: Record<string, unknown> = {};
-    const header: Record<string, unknown> = {};
-    const headerFields = ["classification", "severity", "status", "type"];
-
-    if (params.notification_id) header.notificationId = params.notification_id;
-    if (params.sender_bpn) header.senderBPN = params.sender_bpn;
-    if (params.recipient_bpn) header.recipientBPN = params.recipient_bpn;
-    for (const hf of headerFields) {
-      if (params[hf]) {
-        header[hf] = params[hf];
-        delete params[hf];
-      }
-    }
-    delete params.notification_id;
-    delete params.sender_bpn;
-    delete params.recipient_bpn;
-
-    if (Object.keys(header).length > 0) notification.header = header;
-    if (params.content) {
-      notification.content = params.content;
-      delete params.content;
-    }
-    if (Object.keys(notification).length > 0) {
-      params.notification = notification;
-    }
-  }
 
   return {
     type: runtimeStepType,

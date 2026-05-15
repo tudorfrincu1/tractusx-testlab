@@ -36,13 +36,15 @@ TYPE = "type"
 IMPORT = "import"
 IMPORTS = "imports"
 VARIABLES = "variables"
+PRECONDITIONS = "preconditions"
 SETUP = "setup"
 STEPS = "steps"
 CLEANUP = "cleanup"
 SERVICES = "services"
 LISTEN = "listen"
 
-# -- Test case ----------------------------------------------------------------
+# -- TCK ----------------------------------------------------------------------
+TEST = "test"
 TESTS = "tests"
 DEPENDS_ON = "depends_on"
 OUTPUTS = "outputs"
@@ -65,6 +67,41 @@ VALUE = "value"
 PATH = "path"
 SOURCE = "source"
 SEVERITY = "severity"
+OUTPUT = "output"
+
+# -- Assertion type keys (compact format) ------------------------------------
+NOT_NULL = "not_null"
+NOT_EMPTY = "not_empty"
+EQUALS = "equals"
+NOT_EQUALS = "not_equals"
+CONTAINS_KEY = "contains"
+NOT_CONTAINS_KEY = "not_contains"
+MATCHES = "matches"
+SCHEMA_KEY = "schema"
+VALIDATES_AGAINST_SCHEMA = "validates_against_schema"
+GREATER_THAN = "greater_than"
+LESS_THAN = "less_than"
+GREATER_OR_EQUAL = "greater_or_equal"
+LESS_OR_EQUAL = "less_or_equal"
+BETWEEN = "between"
+
+# -- Typed assertion extra fields --------------------------------------------
+ASSERTION_SCHEMA = "schema"
+ASSERTION_MIN = "min"
+ASSERTION_MAX = "max"
+
+# -- Service config -----------------------------------------------------------
+CONFIG = "config"
+MANAGEMENT_URL = "management_url"
+
+# -- Step output definitions --------------------------------------------------
+OUTPUT_DEFINITIONS = "output_definitions"
+
+# -- Variable fields ----------------------------------------------------------
+RUNTIME = "runtime"
+
+# -- Test case entry ----------------------------------------------------------
+TEST = "test"
 
 # -- Dependency ref -----------------------------------------------------------
 FILE = "file"

@@ -99,7 +99,7 @@
 }
 
 /* ===== Test-case wrapper ===== */
-.app__test-case-wrapper {
+.app__tck-wrapper {
   flex: 1;
   height: 100%;
   overflow: hidden;

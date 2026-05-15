@@ -131,7 +131,7 @@ Called once during workspace initialization. Registers all block types with Bloc
 | `value_boolean` | Boolean literal value |
 | `variable_get` | Variable reference (`@var_name`) |
 | `test_root` | Root block for tests (undeletable) — has SETUP, STEPS, TEARDOWN inputs |
-| `test_case_root` | Root block for test cases (undeletable) — has PRECONDITIONS, TESTS inputs |
+| `tck_root` | Root block for TCKs (undeletable) — has PRECONDITIONS, TESTS inputs |
 | `test_ref` | Reference to another test (with optional `with:` overrides) |
 | `variable_def` | Variable declaration (name, type, default, runtime, description) |
 | `precondition` | Test case precondition entry |
@@ -196,7 +196,7 @@ This is the most complex provider. It aggregates variables from multiple sources
 1. **Step outputs** — Reads `store_in_memory` keys from step blocks in the workspace
 2. **Template outputs** — Looks up `TEMPLATE_OUTPUTS` static map for known step types (e.g., `catalog-negotiation` → `[contract_agreement_id, data_address, edr_token]`)
 3. **import_variable blocks** — Reads `OUTPUT_VAR` field from import blocks
-4. **Test-case variables** — Reads from `useProjectStore.getState().testCase.variables`
+4. **Test-case variables** — Reads from `useProjectStore.getState().tck.variables`
 5. **Project store scripts** — Scans the `tests` Map for `store_in_memory` keys, template outputs, and `import_variable` targets across all tests (via `collectFromSteps` helper)
 6. **variable_get blocks** — Reads referenced variable names to keep them in the dropdown even if the source isn't visible
 
@@ -227,7 +227,7 @@ The toolbox contains these categories (in order):
 11. **JSON** — JSON pair blocks
 12. **Import/Export** — `import_variable`, `export_variable`, `schema_import`
 
-### For test-case mode (`kind: "test-case"`)
+### For tck mode (`kind: "tck"`)
 
 A simplified toolbox:
 
@@ -242,7 +242,7 @@ A simplified toolbox:
 
 Traverses the Blockly workspace and produces a `TestLabDocument`:
 
-1. Finds the root block (`test_root` or `test_case_root`)
+1. Finds the root block (`test_root` or `tck_root`)
 2. Reads metadata fields (NAME, VERSION, DESCRIPTION)
 3. For each statement chain (SETUP, STEPS, TEARDOWN):
    - Walks the block chain
@@ -256,13 +256,13 @@ Traverses the Blockly workspace and produces a `TestLabDocument`:
 4. Loads services from `useServiceStore` (services are not blocks)
 
 !!! note "Variables are auto-generated"
-    Variables are **not** rendered as blocks on the root block. They are derived automatically from the `store_in_memory` mappings of step blocks and from the project’s test-case-level `variables:` section. The `variable_def` block type still exists for standalone use but is no longer attached to root blocks.
+    Variables are **not** rendered as blocks on the root block. They are derived automatically from the `store_in_memory` mappings of step blocks and from the project’s tck-level `variables:` section. The `variable_def` block type still exists for standalone use but is no longer attached to root blocks.
 
 ### Model → Workspace (`populateWorkspaceFromModel`)
 
 Rebuilds blocks from a model:
 
-1. Delegates to `populateTest()` or `populateTestCase()` based on model kind
+1. Delegates to `populateTest()` or `populateTck()` based on model kind
 2. For each step in setup/steps/teardown:
    - Creates the appropriate `step_{type}` block
    - Sets field values from params

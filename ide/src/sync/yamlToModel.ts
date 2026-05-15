@@ -26,7 +26,7 @@
  */
 
 import yaml from "js-yaml";
-import type { TestLabDocument, ScriptDefinition, TestCaseDefinition, TestRef, StandardRef } from "../models/schema";
+import type { TestLabDocument, ScriptDefinition, TckDefinition, TestRef, StandardRef } from "../models/schema";
 import { ScriptKind } from "../models/schema";
 
 export type ParseResult =
@@ -42,8 +42,8 @@ export function yamlToModel(yamlStr: string): ParseResult {
 
     const kind = (raw.kind as string) ?? detectKind(raw);
 
-    if (kind === ScriptKind.TEST_CASE) {
-      return { ok: true, model: parseTestCase(raw) };
+    if (kind === ScriptKind.TCK) {
+      return { ok: true, model: parseTck(raw) };
     }
     return { ok: true, model: parseScript(raw) };
   } catch (e) {
@@ -53,7 +53,7 @@ export function yamlToModel(yamlStr: string): ParseResult {
 }
 
 function detectKind(raw: Record<string, unknown>): ScriptKind {
-  if ("tests" in raw && !("steps" in raw)) return ScriptKind.TEST_CASE;
+  if ("tests" in raw && !("steps" in raw)) return ScriptKind.TCK;
   return ScriptKind.TEST;
 }
 
@@ -88,7 +88,7 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
   };
 }
 
-function parseTestCase(raw: Record<string, unknown>): TestCaseDefinition {
+function parseTck(raw: Record<string, unknown>): TckDefinition {
   const tests = Array.isArray(raw.tests)
     ? raw.tests.map((t: unknown) => {
         if (typeof t === "string") return t;
@@ -130,7 +130,7 @@ function parseTestCase(raw: Record<string, unknown>): TestCaseDefinition {
     : [];
 
   return {
-    kind: ScriptKind.TEST_CASE,
+    kind: ScriptKind.TCK,
     name: String(raw.name ?? ""),
     version: raw.version != null ? String(raw.version) : "1.0",
     dataspace_version: raw.dataspace_version != null ? String(raw.dataspace_version) : undefined,
@@ -138,8 +138,8 @@ function parseTestCase(raw: Record<string, unknown>): TestCaseDefinition {
     author: raw.author != null ? String(raw.author) : undefined,
     standards: parseStandards(raw.standards),
     tags: Array.isArray(raw.tags) ? raw.tags.map(String) : undefined,
-    preconditions: raw.preconditions as TestCaseDefinition["preconditions"],
-    variables: raw.variables as TestCaseDefinition["variables"],
+    preconditions: raw.preconditions as TckDefinition["preconditions"],
+    variables: raw.variables as TckDefinition["variables"],
     tests,
   };
 }

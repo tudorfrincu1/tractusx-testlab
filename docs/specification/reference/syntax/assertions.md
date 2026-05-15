@@ -30,7 +30,7 @@ Assertions validate step responses against expected values. Each step can declar
 | `type` | `string` | **Yes** | — | Assertion type: `EXACT`, `CONTAINS`, `SCHEMA`, `REGEX`, `STATUS_CODE`. |
 | `value` | `any` | Conditional | — | The expected value. Required unless `source: file`. |
 | `source` | `string` | No | — | Where the expected value comes from: `FILE` or `VARIABLE`. |
-| `path` | `string` | Conditional | — | File path (relative to `.testpkg` assets) when `source: FILE`. Dot-path to a specific field in the response when used for field-level assertions. |
+| `path` | `string` | Conditional | — | File path (relative to `.tckpkg` assets) when `source: FILE`. Dot-path to a specific field in the response when used for field-level assertions. |
 | `severity` | `string` | No | `HARD` | `HARD` (fail immediately) or `SOFT` (log and continue). |
 
 ---
@@ -58,7 +58,7 @@ expect:
       {"catenaXId": "urn:uuid:123", "status": "active"}
 ```
 
-### 3. From File (bundled in `.testpkg` assets)
+### 3. From File (bundled in `.tckpkg` assets)
 
 ```yaml
 expect:

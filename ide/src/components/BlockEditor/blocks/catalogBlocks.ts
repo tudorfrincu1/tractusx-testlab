@@ -27,8 +27,6 @@ import type * as BlocklyType from "blockly";
 import { blockColors, getCategoryColor } from "../blockColors";
 import type { BlockCatalog } from "./catalogLoader";
 import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "./icons";
-import { SERVICE_TYPE_RESOLUTION } from "../toolbox/toolboxBuilder";
-import { useServiceStore } from "../../../store/useServiceStore";
 import {
   dynamicDropdown,
   collectMockEndpointIds,
@@ -46,6 +44,7 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
       : ICON_STEP;
 
     for (const block of category.blocks) {
+      if (block.custom_registration) continue;
       const blockType = `step_${block.type}`;
 
       Blockly.Blocks[blockType] = {
@@ -199,19 +198,6 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
             if (!found) {
               warnings.push(
                 `Requires a mock endpoint block (${block.depends_on.join(" or ")}) to be present in the workspace.`
-              );
-            }
-          }
-
-          // Check service availability: category must have a matching declared service
-          const serviceType = category.service_type;
-          if (serviceType) {
-            const requiredStoreTypes = SERVICE_TYPE_RESOLUTION[serviceType] ?? [serviceType];
-            const { services } = useServiceStore.getState();
-            const hasService = services.some((s) => requiredStoreTypes.includes(s.type));
-            if (!hasService) {
-              warnings.push(
-                `No service of type "${category.name}" is configured. Add one via Add/Remove Services.`
               );
             }
           }

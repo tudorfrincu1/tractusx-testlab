@@ -40,12 +40,12 @@ SPDX-License-Identifier: CC-BY-4.0
 
 | Attribute | Requirement |
 |-----------|-------------|
-| **Portability** | `.testpkg` artifacts must be self-contained and executable on any machine with a compatible SDK version installed |
+| **Portability** | `.tckpkg` artifacts must be self-contained and executable on any machine with a compatible SDK version installed |
 | **Extensibility** | Custom step types must be registrable without modifying SDK source code |
 | **Observability** | Execution state must be queryable in real-time at step granularity; structured logs must be machine-parseable |
 | **Safety** | Scripts parsed from untrusted sources (API, filesystem) must not allow arbitrary code execution. `sdk_call` in allowlist mode prevents access to internal SDK functions |
 | **Reliability** | Cleanup steps must execute regardless of prior failures; resource leaks are unacceptable. Managed services must be torn down even on script failure |
-| **Confidentiality** | Encrypted `.testpkg` packages must be readable only by authorized Player instances. AES content keys must never be stored in plaintext. Private keys must be protected with appropriate file permissions |
+| **Confidentiality** | Encrypted `.tckpkg` packages must be readable only by authorized Player instances. AES content keys must never be stored in plaintext. Private keys must be protected with appropriate file permissions |
 
 ---
 
@@ -56,10 +56,10 @@ SPDX-License-Identifier: CC-BY-4.0
 | V-01 | YAML parsing accepts valid scripts and rejects scripts missing `dataspace_version` | Unit |
 | V-02 | Compiler fails on undeclared `${var}` references (not marked `runtime: true`) | Unit |
 | V-03 | Compiler fails when step type doesn't exist in registry for the script's dataspace version | Unit |
-| V-04 | Compile → package → unpack round-trip produces identical `CompiledTestCase` | Integration |
-| V-05 | `.testpkg` checksum is verified on load; tampered packages are rejected | Unit |
+| V-04 | Compile → package → unpack round-trip produces identical `CompiledTck` | Integration |
+| V-05 | `.tckpkg` checksum is verified on load; tampered packages are rejected | Unit |
 | V-06 | SDK version mismatch emits warning but does not block execution | Unit |
-| V-07 | Player executes a compiled test case and produces correct `TestCaseResult` with step timings | Integration |
+| V-07 | Player executes a compiled TCK and produces correct `TckResult` with step timings | Integration |
 | V-08 | Step failure with `on_failure: abort` stops execution and runs cleanup | Integration |
 | V-09 | Step failure with `on_failure: continue` proceeds to next step | Integration |
 | V-10 | Step failure with `on_failure: skip_rest` skips remaining steps and runs cleanup | Integration |
@@ -68,7 +68,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | V-13 | JSON strings embedded in YAML are auto-parsed before assertion comparison | Unit |
 | V-14 | `${var}` references are resolved correctly across steps (output of step N used by step N+1) | Integration |
 | V-15 | Runtime variables override defaults at execution time | Unit |
-| V-16 | Two test cases running concurrently have isolated contexts and no variable leakage | Integration |
+| V-16 | Two TCKs running concurrently have isolated contexts and no variable leakage | Integration |
 | V-17 | Script cancellation stops after current step and runs cleanup | Integration |
 | V-18 | Monitor returns correct current step, status, and assertion results during execution | Integration |
 | V-19 | JSON-lines log file contains correct entries with script_id, dataspace_version, step names | Integration |
@@ -84,7 +84,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | V-29 | `init_service` step replaces an existing service and `stop_service` tears it down | Integration |
 | V-30 | Callback endpoint receives a POST, signals `asyncio.Event`, and `await_callback` step receives the payload | Integration |
 | V-31 | `await_callback` step times out correctly when no callback is received within `timeout_s` | Integration |
-| V-32 | Encrypted `.testpkg` round-trip: compile with `--encrypt` → authorized Player decrypts and executes successfully | Integration |
+| V-32 | Encrypted `.tckpkg` round-trip: compile with `--encrypt` → authorized Player decrypts and executes successfully | Integration |
 | V-33 | Unauthorized Player (key not in `authorized_players`) is rejected with `PackageAuthorizationError` | Unit |
 | V-34 | Tampered encrypted package (modified `payload.enc`) fails AES-256-GCM decryption | Unit |
 | V-35 | Package signed by untrusted compiler (key not in trust store) is rejected with `PackageSignatureError` | Unit |

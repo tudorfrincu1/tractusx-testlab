@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
@@ -35,12 +36,28 @@ from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
 if TYPE_CHECKING:
     from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
 
+_logger = logging.getLogger(__name__)
+
 
 @step("send_notification")
 class SendNotificationStep(BaseStep):
-    """Send a notification through the dataspace using the SDK NotificationConsumerService."""
+    """Send a notification through the dataspace.
+
+    Supports two modes:
+    - **SDK mode** (canonical): ``notification``, ``provider_bpn``, ``provider_dsp_url``
+    - **Dataplane-direct mode** (CCM): ``dataplane_url``, ``edr_token``, ``content``
+    """
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+        # Detect mode: CCM dataplane-direct vs. canonical SDK notification
+        if "dataplane_url" in params or "endpoint_url" in params:
+            return await self._execute_dataplane_direct(params, context)
+        return await self._execute_sdk_notification(params, context)
+
+    async def _execute_sdk_notification(
+        self, params: dict, context: "StepContext",
+    ) -> StepOutput:
+        """Canonical mode: send via SDK NotificationConsumerService."""
         notif_service = context.get_notification_service()
         from tractusx_sdk.industry.models.notifications.notification import Notification
 
@@ -61,6 +78,46 @@ class SendNotificationStep(BaseStep):
             value=result,
             request=HttpRequest(method="POST", url=provider_dsp, body=notification.to_data()),
             response=HttpResponse(status_code=200 if result else 500, body=result),
+        )
+
+    async def _execute_dataplane_direct(
+        self, params: dict, context: "StepContext",
+    ) -> StepOutput:
+        """CCM mode: POST directly to dataplane URL with EDR auth token."""
+        import httpx
+
+        dataplane_url = params.get("dataplane_url") or params.get("endpoint_url", "")
+        edr_token = params.get("edr_token") or params.get("auth_token", "")
+
+        # Build notification body from CCM params
+        body: dict = {}
+        if "content" in params:
+            body = dict(params["content"])
+        elif "payload" in params:
+            body = dict(params["payload"])
+
+        # Enrich body with notification metadata when provided
+        for key in ("notification_id", "sender_bpn", "recipient_bpn", "type", "status"):
+            if key in params:
+                body.setdefault(key, params[key])
+
+        headers = {"Authorization": edr_token} if edr_token else {}
+        headers["Content-Type"] = "application/json"
+
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(dataplane_url, json=body, headers=headers, timeout=30)
+                result = resp.json() if resp.content else {}
+                status_code = resp.status_code
+        except (httpx.HTTPError, ValueError) as exc:
+            _logger.warning("Dataplane notification failed: %s", exc)
+            result = {"error": str(exc)}
+            status_code = 500
+
+        return StepOutput(
+            value={"status_code": status_code, **result},
+            request=HttpRequest(method="POST", url=dataplane_url, body=body),
+            response=HttpResponse(status_code=status_code, body=result),
         )
 
 

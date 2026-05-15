@@ -36,13 +36,19 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from tractusx_sdk.extensions.testlab.models import JobStatus
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+from tractusx_testlab.server.mock_registry import get_mock
 from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+
+from tractusx_testlab.server.compile import compile_router
+from tractusx_testlab.server.streaming import streaming_router
 
 _logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/testlab", tags=["testlab"])
+router.include_router(streaming_router)
+router.include_router(compile_router)
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -68,9 +74,9 @@ async def upload_package(
     player: TestlabPlayer = Depends(_get_player),
     storage: PackageStorage = Depends(_get_storage),
 ) -> JSONResponse:
-    """Upload a .testpkg archive."""
-    if not file.filename or not file.filename.endswith(".testpkg"):
-        raise HTTPException(400, "File must be a .testpkg archive")
+    """Upload a .tckpkg archive."""
+    if not file.filename or not file.filename.endswith(".tckpkg"):
+        raise HTTPException(400, "File must be a .tckpkg archive")
 
     data = await file.read()
     max_bytes = player._config.max_upload_bytes
@@ -106,13 +112,13 @@ async def delete_package(package_id: str, storage: PackageStorage = Depends(_get
 # ──────────────────────────────────────────────────────────────────────
 
 
-@router.post("/run", status_code=202)
+@router.post("/run/package", status_code=202)
 async def run_test(
     request: Request,
     player: TestlabPlayer = Depends(_get_player),
     storage: PackageStorage = Depends(_get_storage),
 ) -> JSONResponse:
-    """Execute a test case from an uploaded package or a YAML path.
+    """Execute a TCK from an uploaded package or a YAML path.
 
     Body: ``{"package_id": "...", "runtime_vars": {...}}``
     or    ``{"path": "...", "runtime_vars": {...}}``
@@ -153,12 +159,12 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
         _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
 
 
-@router.get("/jobs")
+@router.get("/test-execution")
 async def list_jobs(
     status: Optional[str] = None,
     player: TestlabPlayer = Depends(_get_player),
 ) -> JSONResponse:
-    """List all jobs, optionally filtered by status."""
+    """List all executions, optionally filtered by status."""
     status_filter = None
     if status:
         try:
@@ -170,16 +176,16 @@ async def list_jobs(
     return JSONResponse(content=[job.model_dump(mode="json") for job in jobs])
 
 
-@router.get("/jobs/{job_id}")
+@router.get("/test-execution/{job_id}")
 async def get_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
-    """Get details for a specific job."""
+    """Get details for a specific execution."""
     job = player.jobs.get(job_id)
     if job is None:
         raise HTTPException(404, f"Job '{job_id}' not found")
     return JSONResponse(content=job.model_dump(mode="json"))
 
 
-@router.post("/jobs/{job_id}/cancel", status_code=200)
+@router.post("/test-execution/{job_id}/cancel", status_code=200)
 async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
     """Cancel a running job."""
     job = player.jobs.get(job_id)
@@ -187,6 +193,30 @@ async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) 
         raise HTTPException(404, f"Job '{job_id}' not found")
     player.jobs.cancel(job_id)
     return JSONResponse(content={"job_id": job_id, "status": "CANCELLED"})
+
+
+@router.post("/test-execution/{job_id}/pause", status_code=200)
+async def pause_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Pause a running execution."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    if str(job.status) != "RUNNING":
+        raise HTTPException(409, f"Job '{job_id}' is not running (status: {job.status.value})")
+    player.jobs.pause(job_id)
+    return JSONResponse(content={"job_id": job_id, "status": "PAUSED"})
+
+
+@router.post("/test-execution/{job_id}/resume", status_code=200)
+async def resume_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+    """Resume a paused execution."""
+    job = player.jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job '{job_id}' not found")
+    if str(job.status) != "PAUSED":
+        raise HTTPException(409, f"Job '{job_id}' is not paused (status: {job.status.value})")
+    player.jobs.resume(job_id)
+    return JSONResponse(content={"job_id": job_id, "status": "RUNNING"})
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -210,6 +240,16 @@ async def callback_webhook(
 
     matched = callbacks.resolve(full_path, method, headers, body)
     if not matched:
+        mock = get_mock(full_path, method)
+        if mock is not None:
+            # Also resolve so wait_for_call steps receive the payload
+            callbacks.resolve(full_path, method, headers, body)
+            return JSONResponse(content=mock.body, status_code=mock.status_code)
         raise HTTPException(404, f"No listener registered for {method} {full_path}")
+
+    # Check for a canned mock response to return
+    mock = get_mock(full_path, method)
+    if mock is not None:
+        return JSONResponse(content=mock.body, status_code=mock.status_code)
 
     return JSONResponse(content={"status": "received"})

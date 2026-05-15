@@ -39,7 +39,7 @@ import { setKnownStepTypes } from "../../models/validator";
 import { createWorkspaceOptions } from "./workspaceConfig";
 import { injectBubbleStyles } from "./bubblePatch";
 import type { TestLabDocument } from "../../models/schema";
-import { isTest, isTestCase } from "../../models/schema";
+import { isTest, isTck } from "../../models/schema";
 import type { WorkspaceRefs } from "./workspaceTypes";
 
 interface WorkspaceInitResult extends WorkspaceRefs {
@@ -137,7 +137,7 @@ export function useWorkspaceInit(
           setModelFromBlocks(merged as unknown as TestLabDocument);
         }
       } else {
-        const rootType = modelKind === "test-case" ? "test_case_root" : "test_root";
+        const rootType = modelKind === "tck" ? "tck_root" : "test_root";
         const rootBlock = ws.newBlock(rootType);
         rootBlock.initSvg();
         rootBlock.render();
@@ -148,16 +148,21 @@ export function useWorkspaceInit(
           rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
           rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
           rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-        } else if (isTestCase(currentModel)) {
-          rootBlock.setFieldValue(currentModel.name || "my-test-case", "NAME");
+        } else if (isTck(currentModel)) {
+          rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
           rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
           rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
         }
-        populateWorkspaceFromModel(ws, rootBlock, currentModel, catalog);
-        cleanupOrphanBlocks(ws, rootBlock);
+        try {
+          populateWorkspaceFromModel(ws, rootBlock, currentModel, catalog);
+          cleanupOrphanBlocks(ws, rootBlock);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn("[useWorkspaceInit] Failed to populate workspace from model:", err);
+        }
       }
 
-      const initialVars = collectWorkspaceVariables(ws);
+      const initialVars = collectWorkspaceVariables(ws, catalog);
       if (initialVars.length > 0) {
         const refreshedToolbox = buildToolbox(
           catalog,

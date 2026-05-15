@@ -31,7 +31,7 @@
 
 import { create } from "zustand";
 import type { TestLabDocument } from "../models/schema";
-import { createEmptyTestCase } from "../models/schema";
+import { createEmptyTck } from "../models/schema";
 import type { ValidationError } from "../models/validator";
 import { validate } from "../models/validator";
 import { modelToYaml } from "../sync/modelToYaml";
@@ -67,7 +67,7 @@ interface TestLabState {
 }
 
 export const useTestLabStore = create<TestLabState>((set, get) => {
-  const emptyModel = createEmptyTestCase();
+  const emptyModel = createEmptyTck();
   const emptyYaml = modelToYaml(emptyModel);
 
   return {

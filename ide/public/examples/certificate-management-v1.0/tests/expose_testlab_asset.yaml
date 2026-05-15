@@ -24,6 +24,7 @@
 kind: test
 name: expose-testlab-asset
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
   data endpoint, and waits for the SUT to discover, negotiate, and pull data.
@@ -32,10 +33,9 @@ description: >
 services:
   - name: testlab_edc
     type: edc_connector_saturn
-    config:
-      management_url: "@testlab_management_url"
+    base_url: "@testlab_management_url"
 
-steps:
+setup:
   - type: create_asset
     description: Register CCMAPI asset in TestLab EDC
     params:
@@ -51,8 +51,8 @@ steps:
     store_in_memory:
       testlab_asset_id: "asset_id"
     expect:
-      - output: asset_id
-        not_null: true
+      - type: "NOT_NULL"
+        output: asset_id
 
   - type: create_policy
     description: Create BPN-restricted access policy for SUT
@@ -67,8 +67,8 @@ steps:
     store_in_memory:
       testlab_policy_id: "policy_id"
     expect:
-      - output: policy_id
-        not_null: true
+      - type: "NOT_NULL"
+        output: policy_id
 
   - type: create_contract_def
     description: Create contract definition linking asset to policy
@@ -83,8 +83,8 @@ steps:
     store_in_memory:
       testlab_contract_def_id: "contract_def_id"
     expect:
-      - output: contract_def_id
-        not_null: true
+      - type: "NOT_NULL"
+        output: contract_def_id
 
   - type: mock_endpoint
     description: Expose mock CCMAPI data endpoint for SUT
@@ -98,6 +98,7 @@ steps:
         type: "CCMAPI_DATA"
         status: "ACTIVE"
 
+steps:
   - type: wait_for_call
     description: Wait for SUT to discover, negotiate, and pull data
     params:
@@ -106,15 +107,27 @@ steps:
     store_in_memory:
       sut_request_body: "body"
     expect:
-      - output: method
-        equals: "GET"
-      - output: body
-        not_null: true
+      - type: "EQUALS"
+        output: method
+        value: "GET"
+      - type: "NOT_NULL"
+        output: body
 
-variables:
-  testlab_asset_id:
-    type: str
-  testlab_policy_id:
-    type: str
-  testlab_contract_def_id:
-    type: str
+cleanup:
+  - type: delete_asset
+    description: Remove CCMAPI asset from TestLab EDC
+    params:
+      service: testlab_edc
+      asset_id: "@testlab_asset_id"
+
+  - type: delete_policy
+    description: Remove access policy from TestLab EDC
+    params:
+      service: testlab_edc
+      policy_id: "@testlab_policy_id"
+
+  - type: delete_contract_definition
+    description: Remove contract definition from TestLab EDC
+    params:
+      service: testlab_edc
+      contract_def_id: "@testlab_contract_def_id"

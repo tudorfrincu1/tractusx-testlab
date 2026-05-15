@@ -24,6 +24,7 @@
 
 import type { Block, Workspace } from "blockly";
 import type { Assertion } from "../../../models/schema";
+import { AssertionOperator } from "../../../models/schema";
 import {
   makeBlock,
   setDropdownValue,
@@ -33,85 +34,161 @@ import {
   toBlockValueString,
 } from "./helpers";
 
+/** Raw assertion object from YAML — may be new typed format or legacy compact format. */
+type RawAssertion = Record<string, unknown>;
+
+/** Assertion input — accepts both typed Assertion objects and raw YAML objects. */
+type AssertionInput = Assertion | RawAssertion;
+
+/** Maps YAML type strings to compare-block dropdown values. */
+const TYPE_TO_COMPARE_OP: Record<string, string> = {
+  [AssertionOperator.GREATER_THAN]: "greater_than",
+  [AssertionOperator.LESS_THAN]: "less_than",
+  [AssertionOperator.GREATER_OR_EQUAL]: "greater_or_equal",
+  [AssertionOperator.LESS_OR_EQUAL]: "less_or_equal",
+};
+
+/** Maps legacy compact keys to the new typed assertion operator. */
+const LEGACY_KEY_TO_TYPE: Record<string, string> = {
+  not_null: AssertionOperator.NOT_NULL,
+  not_empty: AssertionOperator.NOT_EMPTY,
+  equals: AssertionOperator.EQUALS,
+  not_equals: AssertionOperator.NOT_EQUALS,
+  contains: AssertionOperator.CONTAINS,
+  not_contains: AssertionOperator.NOT_CONTAINS,
+  matches: AssertionOperator.MATCHES,
+  schema: AssertionOperator.SCHEMA,
+  validates_against_schema: AssertionOperator.VALIDATES_AGAINST_SCHEMA,
+  greater_than: AssertionOperator.GREATER_THAN,
+  less_than: AssertionOperator.LESS_THAN,
+  greater_or_equal: AssertionOperator.GREATER_OR_EQUAL,
+  less_or_equal: AssertionOperator.LESS_OR_EQUAL,
+  between: AssertionOperator.BETWEEN,
+};
+
+/** Normalize a legacy compact assertion to the new typed format. */
+function normalizeLegacy(raw: RawAssertion): RawAssertion {
+  const output = String(raw.output ?? "");
+  const opKey = Object.keys(raw).find((k) => k !== "output" && k in LEGACY_KEY_TO_TYPE);
+  if (!opKey) return raw;
+  const typedType = LEGACY_KEY_TO_TYPE[opKey];
+  const val = raw[opKey];
+
+  if (typedType === AssertionOperator.BETWEEN) {
+    const arr = Array.isArray(val) ? val : [];
+    return { type: typedType, output, min: arr[0], max: arr[1] };
+  }
+  if (typedType === AssertionOperator.VALIDATES_AGAINST_SCHEMA) {
+    return { type: typedType, output, schema: val };
+  }
+  if (typedType === AssertionOperator.NOT_NULL || typedType === AssertionOperator.NOT_EMPTY) {
+    return { type: typedType, output };
+  }
+  return { type: typedType, output, value: val };
+}
+
 /**
  * Reconstruct assertion blocks from a step's `expect` array and attach them
  * to the step block's EXPECT input.
+ * Supports both the new typed format ({ type, output, value/schema/min/max })
+ * and the legacy compact format ({ output, operator_key: value }).
  */
 export function populateAssertions(
   ws: Workspace,
   sb: Block,
-  assertions: Assertion[]
+  assertions: readonly AssertionInput[]
 ): void {
   const assertBlocks: Block[] = [];
-  for (const a of assertions) {
-    const output = a.output || "";
-    const operators = Object.keys(a).filter((k) => k !== "output");
-    if (operators.length === 0) continue;
+  for (const raw of assertions) {
+    try {
+      const a: RawAssertion = raw as RawAssertion;
+      const normalized = typeof a.type === "string" ? a : normalizeLegacy(a);
+      const output = String(normalized.output ?? "");
+      const assertType = String(normalized.type ?? "");
+      if (!output || !assertType) continue;
 
-    const op = operators[0];
-    const val = a[op];
-
-    let ab: Block;
-    switch (op) {
-      case "equals":
-        ab = makeBlock(ws, "assert_equals");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "not_equals":
-        ab = makeBlock(ws, "assert_not_equals");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "contains":
-        ab = makeBlock(ws, "assert_contains");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "not_contains":
-        ab = makeBlock(ws, "assert_not_contains");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "SUBSTRING", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "matches":
-        ab = makeBlock(ws, "assert_matches");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "PATTERN", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "schema":
-        ab = makeBlock(ws, "assert_schema");
-        setDropdownValue(ab, "OUTPUT", output);
-        connectValue(ab, "SCHEMA", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "greater_than":
-      case "less_than":
-      case "greater_or_equal":
-      case "less_or_equal":
-        ab = makeBlock(ws, "assert_compare");
-        setDropdownValue(ab, "OUTPUT", output);
-        setDropdownValue(ab, "OPERATOR", op);
-        connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(val)));
-        break;
-      case "between": {
-        ab = makeBlock(ws, "assert_between");
-        setDropdownValue(ab, "OUTPUT", output);
-        const arr = Array.isArray(val) ? val : [];
-        connectValue(ab, "MIN", createValueBlockFromString(ws, toBlockValueString(arr[0])));
-        connectValue(ab, "MAX", createValueBlockFromString(ws, toBlockValueString(arr[1])));
-        break;
-      }
-      case "not_null":
-        ab = makeBlock(ws, "assert_not_null");
-        setDropdownValue(ab, "OUTPUT", output);
-        break;
-      case "not_empty":
-        ab = makeBlock(ws, "assert_not_empty");
-        setDropdownValue(ab, "OUTPUT", output);
-        break;
-      default:
-        continue;
+      const ab = createAssertionBlock(ws, assertType, output, normalized);
+      if (ab) assertBlocks.push(ab);
+    } catch (err) {
+      const r = raw as RawAssertion;
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[populateAssertions] Skipping assertion (output: ${r.output ?? "?"}):`,
+        err,
+      );
     }
-    assertBlocks.push(ab);
   }
   attachChain(sb, "EXPECT", assertBlocks);
+}
+
+function createAssertionBlock(
+  ws: Workspace,
+  assertType: string,
+  output: string,
+  a: RawAssertion,
+): Block | null {
+  switch (assertType) {
+    case AssertionOperator.EQUALS:
+      return makeValueAssertion(ws, "assert_equals", output, "EXPECTED", a.value);
+    case AssertionOperator.NOT_EQUALS:
+      return makeValueAssertion(ws, "assert_not_equals", output, "EXPECTED", a.value);
+    case AssertionOperator.CONTAINS:
+      return makeValueAssertion(ws, "assert_contains", output, "SUBSTRING", a.value);
+    case AssertionOperator.NOT_CONTAINS:
+      return makeValueAssertion(ws, "assert_not_contains", output, "SUBSTRING", a.value);
+    case AssertionOperator.MATCHES:
+      return makeValueAssertion(ws, "assert_matches", output, "PATTERN", a.value);
+    case AssertionOperator.SCHEMA:
+      return makeValueAssertion(ws, "assert_schema", output, "SCHEMA", a.value);
+    case AssertionOperator.VALIDATES_AGAINST_SCHEMA: {
+      const ab = makeBlock(ws, "assert_validates_schema");
+      setDropdownValue(ab, "OUTPUT", output);
+      const rawSchema = typeof a.schema === "string" ? a.schema : "";
+      const schemaVal = rawSchema.startsWith("@") ? rawSchema.slice(1) : rawSchema;
+      if (schemaVal) setDropdownValue(ab, "SCHEMA_REF", schemaVal);
+      return ab;
+    }
+    case AssertionOperator.GREATER_THAN:
+    case AssertionOperator.LESS_THAN:
+    case AssertionOperator.GREATER_OR_EQUAL:
+    case AssertionOperator.LESS_OR_EQUAL: {
+      const ab = makeBlock(ws, "assert_compare");
+      setDropdownValue(ab, "OUTPUT", output);
+      setDropdownValue(ab, "OPERATOR", TYPE_TO_COMPARE_OP[assertType] ?? "greater_than");
+      connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(a.value)));
+      return ab;
+    }
+    case AssertionOperator.BETWEEN: {
+      const ab = makeBlock(ws, "assert_between");
+      setDropdownValue(ab, "OUTPUT", output);
+      connectValue(ab, "MIN", createValueBlockFromString(ws, toBlockValueString(a.min)));
+      connectValue(ab, "MAX", createValueBlockFromString(ws, toBlockValueString(a.max)));
+      return ab;
+    }
+    case AssertionOperator.NOT_NULL: {
+      const ab = makeBlock(ws, "assert_not_null");
+      setDropdownValue(ab, "OUTPUT", output);
+      return ab;
+    }
+    case AssertionOperator.NOT_EMPTY: {
+      const ab = makeBlock(ws, "assert_not_empty");
+      setDropdownValue(ab, "OUTPUT", output);
+      return ab;
+    }
+    default:
+      return null;
+  }
+}
+
+function makeValueAssertion(
+  ws: Workspace,
+  blockType: string,
+  output: string,
+  inputName: string,
+  value: unknown,
+): Block {
+  const ab = makeBlock(ws, blockType);
+  setDropdownValue(ab, "OUTPUT", output);
+  connectValue(ab, inputName, createValueBlockFromString(ws, toBlockValueString(value)));
+  return ab;
 }

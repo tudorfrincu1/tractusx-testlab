@@ -34,7 +34,7 @@ from tractusx_sdk.extensions.testlab.player.jobs import JobManager
 from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
 from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry, step
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase, TestScript
+from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck, TestScript  # SDK alias
 from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
 from tractusx_sdk.extensions.testlab.server.app import create_app
 from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
@@ -52,7 +52,7 @@ __all__ = [
     "YamlParser",
     "StepRegistry",
     "step",
-    "TestCase",
+    "Tck",
     "TestScript",
     # Steps
     "BaseStep",

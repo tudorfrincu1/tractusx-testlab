@@ -28,8 +28,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from tractusx_sdk.extensions.testlab.models import ServiceDefinition
 from tractusx_sdk.extensions.testlab.syntax import patterns
+
+from tractusx_testlab.models.definitions import ServiceDefinition
 
 if TYPE_CHECKING:
     from tractusx_sdk.extensions.testlab.player.execution.context import StepContext

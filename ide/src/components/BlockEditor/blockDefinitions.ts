@@ -33,6 +33,7 @@ import { registerStructuralBlocks } from "./blocks/structuralBlocks";
 import { registerValueBlocks } from "./blocks/valueBlocks";
 import { registerRootBlocks } from "./blocks/rootBlocks";
 import { registerPolicyBlocks } from "./blocks/policyBlocks";
+import { registerPreconditionBlocks } from "./blocks/preconditionBlocks";
 import { registerCatalogBlocks } from "./blocks/catalogBlocks";
 import { registerUtilityBlocks } from "./blocks/utilityBlocks";
 import { registerAssertionBlocks } from "./blocks/assertionBlocks";
@@ -51,10 +52,11 @@ export { loadBlockCatalog, buildToolbox, workspaceToModel, populateWorkspaceFrom
 export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog): void {
   patchBubbleColours();
   registerStructuralBlocks(Blockly);
-  registerValueBlocks(Blockly);
+  registerValueBlocks(Blockly, catalog);
   registerRootBlocks(Blockly);
   registerPolicyBlocks(Blockly);
-  registerUtilityBlocks(Blockly);
+  registerPreconditionBlocks(Blockly);
+  registerUtilityBlocks(Blockly, catalog);
   registerAuthBlocks(Blockly);
   registerAssertionBlocks(Blockly, catalog);
   registerCatalogBlocks(Blockly, catalog);

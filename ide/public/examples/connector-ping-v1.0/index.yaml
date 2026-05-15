@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
 
-kind: test-case
+kind: tck
 name: connector-ping
 version: "1.0"
 description: Verify that the counter-party connector is reachable and responds to catalog queries.

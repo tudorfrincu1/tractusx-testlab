@@ -28,6 +28,8 @@ import { blockColors } from "../blockColors";
 import {
   SATURN_LEFT_OPERANDS,
   SATURN_OPERATORS,
+  JUPITER_LEFT_OPERANDS,
+  JUPITER_OPERATORS,
 } from "./policyConstants";
 
 export function registerPolicyBlocks(Blockly: typeof BlocklyType) {
@@ -122,6 +124,31 @@ export function registerPolicyBlocks(Blockly: typeof BlocklyType) {
       this.setColour(blockColors.valueString);
       this.setTooltip(
         "An ODRL constraint (leftOperand operator rightOperand)"
+      );
+    },
+  };
+
+  Blockly.Blocks["odrl_constraint_jupiter"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("leftOperand:")
+        .appendField(
+          new Blockly.FieldDropdown(JUPITER_LEFT_OPERANDS),
+          "LEFT_OPERAND"
+        )
+        .appendField("operator:")
+        .appendField(
+          new Blockly.FieldDropdown(JUPITER_OPERATORS),
+          "OPERATOR"
+        );
+      this.appendValueInput("RIGHT")
+        .appendField("rightOperand:")
+        .setCheck("param_value");
+      this.setPreviousStatement(true, "odrl_constraint_item");
+      this.setNextStatement(true, "odrl_constraint_item");
+      this.setColour(blockColors.valueString);
+      this.setTooltip(
+        "An ODRL constraint for Jupiter (legacy EDC v0.8–0.10)"
       );
     },
   };

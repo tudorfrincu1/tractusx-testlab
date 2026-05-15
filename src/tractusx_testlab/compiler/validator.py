@@ -75,6 +75,10 @@ class ScriptValidator:
         for var_name in script.variables:
             declared_vars.add(var_name)
 
+        # Validate precondition steps
+        for idx, step_def in enumerate(script.preconditions):
+            self._validate_precondition(step_def, idx, declared_vars, version, result)
+
         # Validate setup steps
         for idx, step_def in enumerate(script.setup):
             self._validate_step(step_def, idx, declared_vars, version, result, phase="setup")
@@ -84,6 +88,53 @@ class ScriptValidator:
             self._validate_step(step_def, idx, declared_vars, version, result)
 
         return result
+
+    def _validate_precondition(
+        self,
+        step_def: StepDefinition,
+        idx: int,
+        declared_vars: set[str],
+        version: Optional[str],
+        result: ValidationResult,
+    ) -> None:
+        """Validate a single precondition step."""
+        # Rule 1: type must start with "precondition_"
+        if not step_def.type.startswith("precondition_"):
+            result.add_error(
+                f"Precondition step type '{step_def.type}' must start with 'precondition_'",
+                step_index=idx,
+                field="type",
+                phase="precondition",
+            )
+
+        # Rule 2: type must exist in the step registry
+        effective_version = version or defaults.DATASPACE_VERSION
+        step_cls = StepRegistry.get(step_def.type, effective_version)
+        if step_cls is None and step_def.type not in StepRegistry.list_step_types():
+            result.add_error(
+                f"Unknown precondition step type '{step_def.type}'",
+                step_index=idx,
+                field="type",
+                phase="precondition",
+            )
+
+        # Rule 3: warn if precondition references a service
+        service_param = step_def.params.get("service")
+        if service_param:
+            result.add_warning(
+                f"Precondition step '{step_def.type}' references service '{service_param}'; "
+                "preconditions should not require live connectors",
+                step_index=idx,
+                phase="precondition",
+            )
+
+        # Rule 4: declare store_in_memory variables for downstream phases
+        if step_def.store_in_memory:
+            for var_name in step_def.store_in_memory:
+                declared_vars.add(var_name)
+
+        # Check variable references in params
+        self._check_var_refs(step_def.params, idx, declared_vars, result)
 
     def _validate_step(
         self,

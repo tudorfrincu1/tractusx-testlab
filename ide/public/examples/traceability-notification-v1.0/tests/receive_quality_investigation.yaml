@@ -62,8 +62,9 @@ steps:
       content:
         listOfAffectedItems: []
     expect:
-      - output: status_code
-        equals: 204
+      - type: "EQUALS"
+        output: status_code
+        value: 204
 
 variables:
   notification_id:

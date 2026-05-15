@@ -31,7 +31,7 @@ import DataObjectIcon from "@mui/icons-material/DataObject";
 
 export interface FileNode {
   path: string;
-  type: "test-case" | "test" | "schema";
+  type: "tck" | "test" | "schema";
   name: string;
   size: number;
 }
@@ -40,7 +40,7 @@ export interface FileNode {
 
 export function nodeIcon(type: FileNode["type"]) {
   switch (type) {
-    case "test-case": return <DescriptionIcon sx={{ fontSize: 14, color: theme.colors.primary }} />;
+    case "tck": return <DescriptionIcon sx={{ fontSize: 14, color: theme.colors.primary }} />;
     case "test": return <ScienceIcon sx={{ fontSize: 14, color: "#66bb6a" }} />;
     case "schema": return <DataObjectIcon sx={{ fontSize: 14, color: "#42a5f5" }} />;
   }

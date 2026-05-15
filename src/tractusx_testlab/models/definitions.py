@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Definition models — authoring / compile-time structures for scripts and test cases."""
+"""Definition models — authoring / compile-time structures for scripts and TCKs."""
 
 from __future__ import annotations
 
@@ -32,19 +32,12 @@ from pydantic import BaseModel, Field
 
 from tractusx_sdk.extensions.testlab.models.enums import (
     AssertionSeverity,
-    AssertionType,
     FailurePolicy,
-    ScriptKind,
     SdkCallMode,
-    ServiceType,
     ValueSource,
 )
-
-
-class DependencyRef(BaseModel):
-    """Reference to an external test file used as a dependency."""
-    file: str
-    outputs: list[str] = Field(default_factory=list)
+from tractusx_sdk.extensions.testlab.models import DependencyRef
+from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):
@@ -62,6 +55,11 @@ class Assertion(BaseModel):
     value: Optional[Any] = None
     path: Optional[str] = None
     description: Optional[str] = None
+    schema_ref: Optional[str] = Field(default=None, alias="schema")
+    min: Optional[Any] = None
+    max: Optional[Any] = None
+
+    model_config = {"populate_by_name": True}
 
 
 class StepDefinition(BaseModel):
@@ -73,6 +71,7 @@ class StepDefinition(BaseModel):
     expect: list[Assertion] = Field(default_factory=list)
     store_in_memory: Optional[dict[str, str]] = None
     if_condition: Optional[str] = Field(default=None, alias="if")
+    output_definitions: list[dict[str, str]] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
@@ -105,6 +104,7 @@ class ScriptDefinition(BaseModel):
     variables: dict[str, VariableDefinition] = Field(default_factory=dict)
     services: list[ServiceDefinition] = Field(default_factory=list)
     listen: list[ListenerDefinition] = Field(default_factory=list)
+    preconditions: list[StepDefinition] = Field(default_factory=list)
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)
     cleanup: list[StepDefinition] = Field(default_factory=list)
@@ -115,8 +115,8 @@ class ImportDefinition(BaseModel):
     override: Optional[dict] = None
 
 
-class TestCaseDefinition(BaseModel):
-    kind: ScriptKind = ScriptKind.TEST_CASE
+class TckDefinition(BaseModel):
+    kind: ScriptKind = ScriptKind.TCK
     name: str
     version: str = "1.0"
     description: Optional[str] = None

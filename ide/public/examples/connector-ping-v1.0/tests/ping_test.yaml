@@ -44,10 +44,11 @@ steps:
     store_in_memory:
       catalog_datasets: "datasets"
     expect:
-      - output: status_code
-        equals: 200
-      - output: datasets
-        not_null: true
+      - type: "EQUALS"
+        output: status_code
+        value: 200
+      - type: "NOT_NULL"
+        output: datasets
 
 variables:
   catalog_datasets:

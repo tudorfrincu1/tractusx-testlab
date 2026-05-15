@@ -46,7 +46,7 @@ import { YamlPreviewModal, useRenameInput } from "./ExplorerContextMenuParts";
 
 export type ContextTarget =
   | { type: "project" }
-  | { type: "test-case"; name: string }
+  | { type: "tck"; name: string }
   | { type: "test"; name: string }
   | { type: "schema"; name: string }
   | { type: "tests-folder" }
@@ -79,7 +79,7 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
   const exportZip = useProjectStore((s) => s.exportZip);
   const testOrder = useProjectStore((s) => s.testOrder);
   const tests = useProjectStore((s) => s.tests);
-  const testCase = useProjectStore((s) => s.testCase);
+  const tck = useProjectStore((s) => s.tck);
   const createProject = useProjectStore((s) => s.createProject);
 
   useEffect(() => {
@@ -127,13 +127,13 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
         },
       },
     );
-  } else if (target.type === "test-case") {
+  } else if (target.type === "tck") {
     items.push(
-      { label: "Export YAML", icon: <FileDownloadIcon sx={{ fontSize: 15 }} />, action: () => { exportFile("index", "test-case"); onClose(); } },
+      { label: "Export YAML", icon: <FileDownloadIcon sx={{ fontSize: 15 }} />, action: () => { exportFile("index", "tck"); onClose(); } },
       {
         label: "View YAML",
         icon: <VisibilityIcon sx={{ fontSize: 15 }} />,
-        action: () => { setYamlPreview(modelToYaml(testCase)); onClose(); },
+        action: () => { setYamlPreview(modelToYaml(tck)); onClose(); },
       },
     );
   } else if (target.type === "tests-folder") {
@@ -191,8 +191,8 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
       else if (type === "schema") renameSchema(name, rename.value);
       else if (type === "project") {
         const s = useProjectStore.getState();
-        const tc = { ...s.testCase, name: rename.value.trim() };
-        s.updateTestCase(tc);
+        const tc = { ...s.tck, name: rename.value.trim() };
+        s.updateTck(tc);
         useProjectStore.setState({ projectName: rename.value.trim() });
         s.saveToLocalStorage();
       }

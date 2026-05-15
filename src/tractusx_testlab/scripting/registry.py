@@ -45,22 +45,29 @@ class StepRegistry:
     """Manages the mapping of step type names to BaseStep implementations."""
 
     @staticmethod
-    def register(step_type: str, dataspace_version: Optional[str] = None):
+    def register(
+        step_type: str,
+        dataspace_version: Optional[str] = None,
+        aliases: Optional[list[str]] = None,
+    ):
         """Decorator to register a BaseStep class.
 
         Args:
             step_type: The step type name used in YAML (e.g., ``create_asset``).
             dataspace_version: Restrict to a specific version (e.g., ``saturn``).
                 If ``None``, the step is available for all versions.
+            aliases: Optional list of alternative names that resolve to the same step.
         """
         def decorator(cls: type["BaseStep"]) -> type["BaseStep"]:
-            if dataspace_version:
-                key = (step_type, dataspace_version)
-                _REGISTRY[key] = cls
-                logger.debug("Registered step %s for %s", step_type, dataspace_version)
-            else:
-                _GLOBAL_REGISTRY[step_type] = cls
-                logger.debug("Registered global step %s", step_type)
+            all_names = [step_type] + (aliases or [])
+            for name in all_names:
+                if dataspace_version:
+                    key = (name, dataspace_version)
+                    _REGISTRY[key] = cls
+                    logger.debug("Registered step %s for %s", name, dataspace_version)
+                else:
+                    _GLOBAL_REGISTRY[name] = cls
+                    logger.debug("Registered global step %s", name)
             return cls
         return decorator
 

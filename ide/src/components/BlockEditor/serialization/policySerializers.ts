@@ -41,6 +41,7 @@ export function serializeConstraintChain(startBlock: Block | null): unknown[] {
   while (current) {
     if (
       current.type === "odrl_constraint" ||
+      current.type === "odrl_constraint_jupiter" ||
       current.type === "odrl_logical_constraint"
     ) {
       const serialized = serializePolicyBlock(current);
@@ -71,7 +72,7 @@ export function serializePolicyBlock(block: Block): unknown {
     return { [operator]: children };
   }
 
-  if (block.type === "odrl_constraint") {
+  if (block.type === "odrl_constraint" || block.type === "odrl_constraint_jupiter") {
     const left = block.getFieldValue("LEFT_OPERAND") || "";
     return {
       leftOperand: left === "__CUSTOM__" ? "" : left,

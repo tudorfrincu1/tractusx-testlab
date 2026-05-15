@@ -41,11 +41,11 @@ type ParseResult =
 
 1. Parse YAML string with `js-yaml.load()`
 2. Auto-detect `kind` if missing:
-   - If the raw object has a `tests` array → `"test-case"`
+   - If the raw object has a `tests` array → `"tck"`
    - Otherwise → `"test"`
 3. Map raw fields to typed model:
    - `ScriptDefinition`: name, version, description, variables, services, setup, steps, teardown, listen
-   - `TestCaseDefinition`: name, version, description, author, standards, tags, variables, tests
+   - `TckDefinition`: name, version, description, author, standards, tags, variables, tests
 4. Handle mixed `tests` entries:
    - Object with `test` key → `TestRef`
    - Object with `kind: "test"` → inline `ScriptDefinition`
@@ -178,7 +178,7 @@ Variables are collected from `store_in_memory` mappings in steps. Template outpu
 
 ### Test case graph
 
-When the model is a `TestCaseDefinition` without inline tests, a summary graph is built showing:
+When the model is a `TckDefinition` without inline tests, a summary graph is built showing:
 
 - `testcase` node at top
 - `test` nodes for each test reference

@@ -29,23 +29,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import (
-    AssertionResult,
-    AssertionSummary,
-    ScriptResult,
-    ScriptStatus,
-    StepPhase,
-    StepResult,
-    StepStatus,
-)
+from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
 from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
 from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params, resolve_service_def
+from tractusx_testlab.player.jobs import JobManager
+from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params
 from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
 from tractusx_sdk.extensions.testlab.scripting.script import TestScript
 from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
 from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+from tractusx_testlab.models.enums import StepPhase
+from tractusx_testlab.models.results import AssertionResult, AssertionSummary, ScriptResult, StepResult
+from tractusx_testlab.player.execution._helpers import seed_script_defaults, register_script_services
 
 
 async def run_step(
@@ -61,9 +56,10 @@ async def run_step(
 
         assertion_results: list[AssertionResult] = []
         if step_def.expect:
-            assertion_results = AssertionEngine.evaluate(
-                step_def.expect, output, context.variables,
-            )
+            assertion_results = [
+                AssertionResult.model_validate(ar.model_dump())
+                for ar in AssertionEngine.evaluate(step_def.expect, output, context.variables)
+            ]
 
         finished_at = datetime.now(timezone.utc)
         failed = AssertionEngine.has_hard_failure(assertion_results)
@@ -119,6 +115,7 @@ async def execute_setup_steps(
     setup_status = ScriptStatus.COMPLETED
 
     for step_idx, step_def in enumerate(script.definition.setup):
+        await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[setup:{step_idx}]:{step_def.type}"
         monitor.on_step_started(job_id, step_idx, f"setup:{step_def.type}")
         jobs.set_current_step(job_id, step_name)
@@ -173,6 +170,7 @@ async def execute_main_steps(
     script_status = ScriptStatus.COMPLETED
 
     for step_idx, step_def in enumerate(script.definition.steps):
+        await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[{step_idx}]:{step_def.type}"
         monitor.on_step_started(job_id, step_idx, step_def.type)
         jobs.set_current_step(job_id, step_name)
@@ -249,30 +247,38 @@ async def run_script(
     monitor: ExecutionMonitor,
     jobs: JobManager,
 ) -> ScriptResult:
-    """Execute all steps in a script sequentially (setup → main → cleanup)."""
-    _seed_script_defaults(script, context)
-    _register_script_services(script, context)
+    """Execute all steps in a script sequentially (precondition → setup → main → cleanup)."""
+    seed_script_defaults(script, context)
+    register_script_services(script, context)
 
     script_start = datetime.now(timezone.utc)
 
-    setup_results, setup_status = await execute_setup_steps(
+    from tractusx_testlab.player.execution.preconditions import execute_precondition_steps
+    precondition_results, precondition_status = await execute_precondition_steps(
         script, context, job_id, monitor, jobs,
     )
 
+    setup_results: list[StepResult] = []
     step_results: list[StepResult] = []
-    if setup_status == ScriptStatus.FAILED:
+    if precondition_status == ScriptStatus.FAILED:
         script_status = ScriptStatus.FAILED
     else:
-        step_results, script_status = await execute_main_steps(
+        setup_results, setup_status = await execute_setup_steps(
             script, context, job_id, monitor, jobs,
         )
+        if setup_status == ScriptStatus.FAILED:
+            script_status = ScriptStatus.FAILED
+        else:
+            step_results, script_status = await execute_main_steps(
+                script, context, job_id, monitor, jobs,
+            )
 
     cleanup_results = await execute_cleanup_steps(
         script, context, job_id, monitor,
     )
 
     script_end = datetime.now(timezone.utc)
-    all_step_results = setup_results + step_results + cleanup_results
+    all_step_results = precondition_results + setup_results + step_results + cleanup_results
 
     return ScriptResult(
         script_name=script.name,
@@ -284,17 +290,3 @@ async def run_script(
         total_duration_s=(script_end - script_start).total_seconds(),
         assertion_summary=AssertionEngine.build_summary(all_step_results),
     )
-
-
-def _seed_script_defaults(script: TestScript, context: StepContext) -> None:
-    """Seed script-level variable defaults (lowest priority)."""
-    for var_name, var_def in script.definition.variables.items():
-        if var_def.default is not None and not context.has_variable(var_name):
-            context.set_variable(var_name, var_def.default)
-
-
-def _register_script_services(script: TestScript, context: StepContext) -> None:
-    """Register services declared in the script, resolving ${var} references."""
-    for svc_def in script.definition.services:
-        resolved = resolve_service_def(svc_def, context)
-        context.services.register(resolved)

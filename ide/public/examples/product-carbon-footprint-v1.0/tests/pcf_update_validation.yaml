@@ -53,8 +53,9 @@ steps:
       schema_variable: pcf_v9_schema
       semantic_id: "urn:samm:io.catenax.pcf:9.0.0#Pcf"
     expect:
-      - output: is_valid
-        equals: true
+      - type: "EQUALS"
+        output: is_valid
+        value: true
 
   - type: json_path_extract
     name: Verify Scope of PCF Form
@@ -62,8 +63,8 @@ steps:
       variable: pcf_data
       path: "scopeOfPcfForm"
     expect:
-      - output: value
-        not_null: true
+      - type: "NOT_NULL"
+        output: value
 
   - type: json_path_extract
     name: Verify Company and Product Information
@@ -71,5 +72,5 @@ steps:
       variable: pcf_data
       path: "companyAndProductInformation"
     expect:
-      - output: value
-        not_null: true
+      - type: "NOT_NULL"
+        output: value

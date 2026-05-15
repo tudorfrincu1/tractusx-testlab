@@ -30,7 +30,7 @@ import typer
 
 app = typer.Typer(
     name="testlab",
-    help="Tractus-X Testlab CLI — compile, encrypt, validate, and run test cases.",
+    help="Tractus-X Testlab CLI — compile, encrypt, validate, and run TCKs.",
     add_completion=False,
 )
 
@@ -39,6 +39,7 @@ from tractusx_testlab.cli import keys as _keys  # noqa: E402, F401
 from tractusx_testlab.cli import validate as _validate  # noqa: E402, F401
 from tractusx_testlab.cli import compile as _compile  # noqa: E402, F401
 from tractusx_testlab.cli import run as _run  # noqa: E402, F401
+from tractusx_testlab.cli import serve as _serve  # noqa: E402, F401
 
 
 def main() -> None:

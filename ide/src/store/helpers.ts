@@ -29,8 +29,8 @@ export function uniqueName(base: string, existing: Set<string>): string {
   return `${base}-${i}`;
 }
 
-/** Build the `tests` array for a TestCaseDefinition from an ordered list of test names. */
-export function buildTestCaseTestsArray(
+/** Build the `tests` array for a TckDefinition from an ordered list of test names. */
+export function buildTckTestsArray(
   testOrder: string[],
 ): { test: string }[] {
   return testOrder.map((name) => ({ test: name }));

@@ -50,14 +50,28 @@ if TYPE_CHECKING:
 class QueryCatalogStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         consumer = context.get_consumer_service()
-        counter_party_address = params["counter_party_address"]
+
+        # CCM uses provider_url as alias for counter_party_address
+        counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
         counter_party_id = params.get("counter_party_id", "")
 
-        if params.get("filter_expression"):
+        # CCM nests filter_expression under a 'filter' dict
+        filter_expression = params.get("filter_expression")
+        if not filter_expression:
+            filter_dict = params.get("filter", {})
+            if isinstance(filter_dict, dict):
+                filter_expression = filter_dict.get("filter_expression")
+                # Also support flat dct_type shorthand inside filter
+                if not filter_expression and "dct_type" in filter_dict:
+                    filter_expression = consumer.get_filter_expression(
+                        dct_type=filter_dict["dct_type"],
+                    )
+
+        if filter_expression:
             result = consumer.get_catalog_with_filter(
                 counter_party_id=counter_party_id,
                 counter_party_address=counter_party_address,
-                filter_expression=params["filter_expression"],
+                filter_expression=filter_expression,
             )
         elif params.get("asset_id"):
             result = consumer.get_catalog_by_asset_id(
@@ -148,7 +162,7 @@ class QueryCatalogByBpnlStep(BaseStep):
         )
 
 
-@step("negotiate_contract")
+@step("negotiate_contract", aliases=["negotiate"])
 class NegotiateContractStep(BaseStep):
     """Start an EDR contract negotiation.
 
@@ -185,7 +199,7 @@ class NegotiateContractStep(BaseStep):
         )
 
 
-@step("transfer_data")
+@step("transfer_data", aliases=["initiate_transfer"])
 class TransferDataStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         consumer = context.get_consumer_service()

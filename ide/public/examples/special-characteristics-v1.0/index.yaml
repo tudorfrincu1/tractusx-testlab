@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
 
-kind: test-case
+kind: tck
 name: special-characteristics
 version: "1.0"
 description: Validate special characteristics notification and data transfer flows.

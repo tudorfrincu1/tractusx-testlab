@@ -34,8 +34,10 @@ import {
 } from "./blockDefinitions";
 import { createWorkspaceOptions } from "./workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "./workspaceListeners";
-import type { ScriptDefinition, TestCaseDefinition } from "../../models/schema";
-import { isTest, isTestCase } from "../../models/schema";
+import { attachServiceAutoDeclareListener } from "./serviceAutoDeclare";
+import { attachPhaseEnforcementListener } from "./phaseEnforcement";
+import type { ScriptDefinition, TckDefinition } from "../../models/schema";
+import { isTest, isTck } from "../../models/schema";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {
@@ -109,7 +111,7 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       // Suppress change events during initial block creation
       isUpdatingFromStore.current = true;
 
-      const rootType = modelKind === "test-case" ? "test_case_root" : "test_root";
+      const rootType = modelKind === "tck" ? "tck_root" : "test_root";
       const rootBlock = ws.newBlock(rootType);
       rootBlock.initSvg();
       rootBlock.render();
@@ -120,8 +122,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
         rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-      } else if (isTestCase(currentModel)) {
-        rootBlock.setFieldValue(currentModel.name || "my-test-case", "NAME");
+      } else if (isTck(currentModel)) {
+        rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
       }
@@ -148,6 +150,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       });
       attachFlyoutListener(ws);
       attachSelectionListener(ws, selectStep);
+      attachServiceAutoDeclareListener(ws, catalog);
+      attachPhaseEnforcementListener(ws, catalog);
 
       setReady(true);
     })();
@@ -193,16 +197,16 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
           rootBlock.setFieldValue(script.version || "1.0", "VERSION");
           rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
-          for (const input of ["SETUP", "STEPS", "CLEANUP"]) {
+          for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);
         }
-      } else if (isTestCase(model)) {
-        const tc = model as TestCaseDefinition;
-        const rootBlock = ws.getBlocksByType("test_case_root", false)[0];
+      } else if (isTck(model)) {
+        const tc = model as TckDefinition;
+        const rootBlock = ws.getBlocksByType("tck_root", false)[0];
         if (rootBlock) {
-          rootBlock.setFieldValue(tc.name || "my-test-case", "NAME");
+          rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
           rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
           rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
 

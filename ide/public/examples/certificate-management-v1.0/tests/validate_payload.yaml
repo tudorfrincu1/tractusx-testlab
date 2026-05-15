@@ -24,6 +24,7 @@
 kind: test
 name: validate-certificate-payload
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Fetch and validate certificate payload against CX-0135
   BusinessPartnerCertificate semantic model v3.1.0.
@@ -32,6 +33,16 @@ depends_on:
   - file: tests/request_certificate.yaml
     outputs:
       - document_id
+
+setup:
+  - type: load_schema
+    description: Load BusinessPartnerCertificate v3.1.0 schema
+    params:
+      name: bpc_schema
+      source: file
+      path: ../schemas/business_partner_certificate_schema.json
+    store_in_memory:
+      bpc_schema: "$"
 
 steps:
   - type: http_call
@@ -44,22 +55,14 @@ steps:
     store_in_memory:
       certificate_json: "response_body"
     expect:
-      - output: status_code
-        equals: 200
-      - output: response_body
-        not_empty: true
-
-  - type: validate_semantic_schema
-    description: Validate certificate against CX-0135 schema
-    params:
-      variable: "certificate_json"
-      semantic_id: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
-    store_in_memory:
-      validation_status: "is_valid"
-      validation_errors: "validation_errors"
-    expect:
-      - output: is_valid
-        equals: true
+      - type: "EQUALS"
+        output: status_code
+        value: 200
+      - type: "NOT_EMPTY"
+        output: response_body
+      - type: "SCHEMA_VALIDATION"
+        output: response_body
+        schema: "@bpc_schema"
 
   - type: json_path_extract
     description: Validate certificate type matches requested type
@@ -67,12 +70,8 @@ steps:
       variable: "certificate_json"
       path: "certificateType"
     expect:
-      - output: value
-        equals: "@certificate_type"
+      - type: "EQUALS"
+        output: value
+        value: "@certificate_type"
 
-variables:
-  validation_status:
-    type: str
-  validation_errors:
-    type: str
 

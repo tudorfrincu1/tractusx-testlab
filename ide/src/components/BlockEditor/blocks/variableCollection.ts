@@ -64,9 +64,9 @@ export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockC
     }
   };
 
-  const { testCase, tests } = useProjectStore.getState();
-  if (testCase?.variables) {
-    for (const varName of Object.keys(testCase.variables)) {
+  const { tck, tests } = useProjectStore.getState();
+  if (tck?.variables) {
+    for (const varName of Object.keys(tck.variables)) {
       vars.add(varName);
     }
   }

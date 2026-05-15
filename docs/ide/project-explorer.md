@@ -23,7 +23,7 @@
 
 # Project Explorer
 
-The Project Explorer is the left sidebar that shows the structure of your project. It displays your test case, tests, and schemas in a tree view.
+The Project Explorer is the left sidebar that shows the structure of your project. It displays your TCK, tests, and schemas in a tree view.
 
 ## Project Structure
 
@@ -31,7 +31,7 @@ Every project has three sections:
 
 | Section | Contents |
 |---------|----------|
-| **index** | The test case file (`index.yaml`) — project metadata, variables, and test pipeline |
+| **index** | The TCK file (`index.yaml`) — project metadata, variables, and test pipeline |
 | **Tests** | Individual test files — each contains steps, assertions, and service references |
 | **Schemas** | JSON schema files — used for schema validation assertions |
 
@@ -39,7 +39,7 @@ Every project has three sections:
 
 **Click** any file to open it in the editor:
 
-- Clicking the **index** file opens the [Test Case Dashboard](test-case-dashboard.md)
+- Clicking the **index** file opens the [TCK Dashboard](tck-dashboard.md)
 - Clicking a **test** file opens the [Block Editor](block-editor.md) with the YAML Preview
 - Clicking a **schema** file opens a JSON schema editor
 
@@ -64,7 +64,7 @@ Tests execute in the order shown in the explorer. To change the execution order:
 2. Click and drag the test to the desired position
 3. Release to drop — the order updates immediately
 
-The new order is reflected in the test case's `tests:` array in YAML.
+The new order is reflected in the TCK's `tests:` array in YAML.
 
 ## Managing Schemas
 

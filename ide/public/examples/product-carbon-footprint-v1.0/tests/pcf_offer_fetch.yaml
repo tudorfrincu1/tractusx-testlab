@@ -63,10 +63,11 @@ steps:
     store_in_memory:
       pcf_data: "response_body"
     expect:
-      - output: status_code
-        equals: 200
-      - output: response_body
-        not_empty: true
+      - type: "EQUALS"
+        output: status_code
+        value: 200
+      - type: "NOT_EMPTY"
+        output: response_body
 
 teardown:
   - type: export_variable

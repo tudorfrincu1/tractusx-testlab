@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.dataspace.models.connector.model_factory import ModelFactory
@@ -38,25 +39,56 @@ if TYPE_CHECKING:
     from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
 
 
+def _normalize_asset_params(params: dict) -> dict:
+    """Normalize CCM-style asset params to the canonical format.
+
+    CCM format uses ``name``, ``properties`` with ``dct:type`` and ``cx-common:version``.
+    Canonical format uses ``asset_id``, flat ``dct_type``, ``version``.
+    """
+    normalized = dict(params)
+
+    # asset_id: fall back to name-based slug or auto-generated UUID
+    if "asset_id" not in normalized:
+        name = normalized.get("name", "")
+        normalized["asset_id"] = name.lower().replace(" ", "-") if name else str(uuid.uuid4())
+
+    # Extract dct_type and version from properties if not set directly
+    properties = normalized.get("properties", {})
+    if properties and "dct_type" not in normalized:
+        dct_type_val = properties.get("dct:type")
+        if isinstance(dct_type_val, dict):
+            dct_type_val = dct_type_val.get("@id", "")
+        if dct_type_val:
+            normalized["dct_type"] = dct_type_val
+
+    if properties and "version" not in normalized:
+        version_val = properties.get("cx-common:version")
+        if version_val:
+            normalized["version"] = version_val
+
+    return normalized
+
+
 @step("create_asset")
 class CreateAssetStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
         url = f"{context.get_provider_base_url()}/v3/assets"
+        resolved = _normalize_asset_params(params)
         result = provider.create_asset(
-            asset_id=params["asset_id"],
-            base_url=params.get("base_url", ""),
-            dct_type=params.get("dct_type"),
-            version=params.get("version", "3.0"),
-            semantic_id=params.get("semantic_id"),
-            proxy_params=params.get("proxy_params"),
-            headers=params.get("headers"),
-            private_properties=params.get("private_properties"),
-            context=params.get("context"),
+            asset_id=resolved["asset_id"],
+            base_url=resolved.get("base_url", ""),
+            dct_type=resolved.get("dct_type"),
+            version=resolved.get("version", "3.0"),
+            semantic_id=resolved.get("semantic_id"),
+            proxy_params=resolved.get("proxy_params"),
+            headers=resolved.get("headers"),
+            private_properties=resolved.get("private_properties"),
+            context=resolved.get("context"),
         )
         return StepOutput(
             value=result,
-            request=HttpRequest(method="POST", url=url, body=params),
+            request=HttpRequest(method="POST", url=url, body=resolved),
             response=HttpResponse(
                 status_code=200 if result else 500,
                 body=result,
@@ -70,10 +102,13 @@ class CreatePolicyStep(BaseStep):
         provider = context.get_provider_service()
         url = f"{context.get_provider_base_url()}/v3/policydefinitions"
 
+        # CCM format may omit policy_id — auto-generate if missing
+        policy_id = params.get("policy_id") or str(uuid.uuid4())
+
         # Build the model to capture the serialized payload for debugging
         policy_model = ModelFactory.get_policy_model(
             dataspace_version=provider.dataspace_version,
-            oid=params["policy_id"],
+            oid=policy_id,
             context=params.get("context"),
             permissions=params.get("permissions", []),
             prohibitions=params.get("prohibitions", []),
@@ -82,7 +117,7 @@ class CreatePolicyStep(BaseStep):
         request_body = json.loads(policy_model.to_data())
 
         result = provider.create_policy(
-            policy_id=params["policy_id"],
+            policy_id=policy_id,
             context=params.get("context"),
             permissions=params.get("permissions", []),
             prohibitions=params.get("prohibitions", []),
@@ -95,16 +130,26 @@ class CreatePolicyStep(BaseStep):
         )
 
 
-@step("create_contract_definition")
+@step("create_contract_definition", aliases=["create_contract_def"])
 class CreateContractDefinitionStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions"
+
+        # CCM format may omit contract_id — auto-generate if missing
+        contract_id = params.get("contract_id") or str(uuid.uuid4())
+
+        # CCM uses contract_policy_id as alias for usage_policy_id
+        usage_policy_id = params.get("usage_policy_id") or params.get("contract_policy_id", "")
+
+        # CCM may use asset_selector instead of flat asset_id
+        asset_id = params.get("asset_id", "")
+
         result = provider.create_contract(
-            contract_id=params["contract_id"],
-            usage_policy_id=params["usage_policy_id"],
-            access_policy_id=params["access_policy_id"],
-            asset_id=params["asset_id"],
+            contract_id=contract_id,
+            usage_policy_id=usage_policy_id,
+            access_policy_id=params.get("access_policy_id", ""),
+            asset_id=asset_id,
         )
         return StepOutput(
             value=result,

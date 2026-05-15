@@ -24,6 +24,7 @@
 kind: test
 name: await-feedback-callback
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Listen for provider callback after certificate processing and verify
   feedback payload semantics for CX-0135 path /companycertificate/status.
@@ -33,7 +34,7 @@ depends_on:
     outputs:
       - request_id
 
-steps:
+setup:
   - type: mock_endpoint
     description: Expose callback endpoint for provider feedback
     params:
@@ -44,6 +45,7 @@ steps:
       response_body:
         accepted: true
 
+steps:
   - type: wait_for_call
     description: Block until provider callback arrives
     params:
@@ -54,10 +56,12 @@ steps:
       callback_path: "path"
       callback_payload: "body"
     expect:
-      - output: method
-        equals: "POST"
-      - output: path
-        equals: "/companycertificate/status"
+      - type: "EQUALS"
+        output: method
+        value: "POST"
+      - type: "EQUALS"
+        output: path
+        value: "/companycertificate/status"
 
   - type: json_path_extract
     description: Extract callback request ID
@@ -67,8 +71,9 @@ steps:
     store_in_memory:
       callback_request_id: "value"
     expect:
-      - output: value
-        equals: "@request_id"
+      - type: "EQUALS"
+        output: value
+        value: "@request_id"
 
   - type: json_path_extract
     description: Extract callback feedback status
@@ -78,8 +83,8 @@ steps:
     store_in_memory:
       callback_feedback_status: "value"
     expect:
-      - output: value
-        not_null: true
+      - type: "NOT_NULL"
+        output: value
 
   - type: json_path_extract
     description: Extract callback feedback message
@@ -89,13 +94,7 @@ steps:
     store_in_memory:
       callback_feedback_message: "value"
     expect:
-      - output: value
-        not_null: true
+      - type: "NOT_NULL"
+        output: value
 
-variables:
-  callback_request_id:
-    type: str
-  callback_feedback_status:
-    type: str
-  callback_feedback_message:
-    type: str
+

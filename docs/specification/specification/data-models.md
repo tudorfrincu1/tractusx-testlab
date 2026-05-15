@@ -32,14 +32,14 @@ SPDX-License-Identifier: CC-BY-4.0
 | `ValueSource` | `INLINE`, `FILE`, `VARIABLE` | Where the expected assertion value originates |
 | `SdkCallMode` | `ALLOWLIST`, `OPEN` | SDK function invocation security mode |
 | `ServiceType` | `CONNECTOR_CONSUMER`, `CONNECTOR_PROVIDER`, `DTR` | Type of managed SDK service |
-| `PackageFormat` | `PLAIN`, `ENCRYPTED` | Whether the `.testpkg` payload is unencrypted or encrypted |
+| `PackageFormat` | `PLAIN`, `ENCRYPTED` | Whether the `.tckpkg` payload is unencrypted or encrypted |
 | `ServiceState` | `DECLARED`, `INITIALIZING`, `READY`, `ACTIVE`, `STOPPING`, `STOPPED`, `FAILED` | Lifecycle state of a managed service instance |
 
 ---
 
 ## Definition Models (Authoring / Compile-time)
 
-These models represent the structure of YAML tests and test cases as parsed by the Compiler.
+These models represent the structure of YAML tests and TCKs as parsed by the Compiler.
 
 ```mermaid
 classDiagram
@@ -97,7 +97,7 @@ classDiagram
         +float timeout_s
     }
 
-    class TestCaseDefinition {
+    class TckDefinition {
         +str name
         +str version
         +str description?
@@ -153,9 +153,9 @@ classDiagram
     ScriptDefinition --> "*" ServiceDefinition : services
     ScriptDefinition --> "*" ListenerDefinition : listen
     StepDefinition --> "*" Assertion : expect
-    TestCaseDefinition --> "*" ScriptDefinition : tests
-    TestCaseDefinition --> "*" VariableDefinition : shared_variables
-    TestCaseDefinition --> "*" ImportDefinition : imports
+    TckDefinition --> "*" ScriptDefinition : tests
+    TckDefinition --> "*" VariableDefinition : shared_variables
+    TckDefinition --> "*" ImportDefinition : imports
 ```
 
 ---
@@ -208,7 +208,7 @@ classDiagram
         +str job_id
         +JobStatus status
         +str package_name?
-        +str test_case_id?
+        +str tck_id?
         +dict runtime_vars
         +JobMemory memory
         +datetime created_at
@@ -218,7 +218,7 @@ classDiagram
         +str current_script?
         +str current_step?
         +str waiting_for?
-        +TestCaseResult result?
+        +TckResult result?
         +str error?
     }
 
@@ -239,7 +239,7 @@ classDiagram
     }
 
     Job --> "1" JobMemory : memory
-    Job --> "0..1" TestCaseResult : result
+    Job --> "0..1" TckResult : result
     JobMemory --> "*" JobEvent : events
 ```
 
@@ -249,8 +249,8 @@ classDiagram
 |-------|------|-------------|
 | `job_id` | `str` | Unique identifier (e.g., `a1b2c3d4-e5f6-7890-abcd-1234567890ab`) |
 | `status` | `JobStatus` | Current lifecycle state (`QUEUED`, `RUNNING`, `WAITING`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMED_OUT`) |
-| `package_name` | `str?` | Name of the `.testpkg` being executed |
-| `test_case_id` | `str?` | Test case identifier |
+| `package_name` | `str?` | Name of the `.tckpkg` being executed |
+| `tck_id` | `str?` | Test case identifier |
 | `runtime_vars` | `dict` | Runtime variables provided at job creation |
 | `memory` | `JobMemory` | Persistent state bag — survives across steps and wait/resume cycles |
 | `created_at` | `datetime` | When the job was created (enqueued) |
@@ -259,7 +259,7 @@ classDiagram
 | `current_script` | `str?` | Name of the script currently executing (null when waiting or finished) |
 | `current_step` | `str?` | Name of the step currently executing or waiting on |
 | `waiting_for` | `str?` | Description of what the job is waiting for (e.g., `"callback: /callbacks/notif-ack"`, `"poll: transfer state=COMPLETED"`) |
-| `result` | `TestCaseResult?` | Final result — populated when job completes |
+| `result` | `TckResult?` | Final result — populated when job completes |
 | `error` | `str?` | Error message if the job failed or timed out |
 
 ### JobMemory
@@ -273,7 +273,7 @@ The `JobMemory` provides a persistent key-value store and event log that survive
 | `has` | `has(key: str) -> bool` | Check if a key exists |
 | `log_event` | `log_event(event: JobEvent)` | Append a timestamped event to the history |
 
-Steps can write to job memory via `context.job.memory.set(key, value)`. Unlike step context variables (which are scoped to a single script), job memory persists across all scripts in a test case and survives wait/resume cycles.
+Steps can write to job memory via `context.job.memory.set(key, value)`. Unlike step context variables (which are scoped to a single script), job memory persists across all scripts in a TCK and survives wait/resume cycles.
 
 ---
 
@@ -351,8 +351,8 @@ classDiagram
         +int failed_soft
     }
 
-    class TestCaseResult {
-        +str test_case_id
+    class TckResult {
+        +str tck_id
         +str package_name
         +ScriptStatus status
         +list~ScriptResult~ scripts
@@ -366,7 +366,7 @@ classDiagram
     StepResult --> "0..1" HttpRequest : request
     StepResult --> "0..1" HttpResponse : response
     StepResult --> "*" AssertionResult : assertions
-    TestCaseResult --> "*" ScriptResult : scripts
+    TckResult --> "*" ScriptResult : scripts
     AssertionResult --> "1" Assertion : assertion
 ```
 

@@ -26,5 +26,8 @@ from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
 # Import step subpackages to trigger @step registrations
 import tractusx_sdk.extensions.testlab.steps.connector  # noqa: F401
 import tractusx_sdk.extensions.testlab.steps.industry  # noqa: F401
+import tractusx_testlab.steps.precondition  # noqa: F401
+import tractusx_testlab.steps.server  # noqa: F401
+import tractusx_testlab.steps.utility  # noqa: F401
 
 __all__ = ["BaseStep", "AssertionEngine"]

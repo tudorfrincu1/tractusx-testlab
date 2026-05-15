@@ -32,7 +32,7 @@ All TypeScript types live in `src/models/schema.ts`. They mirror the Python Pyda
 Union type representing any document the editor can open:
 
 ```typescript
-type TestLabDocument = ScriptDefinition | TestCaseDefinition;
+type TestLabDocument = ScriptDefinition | TckDefinition;
 ```
 
 ### ScriptDefinition (kind: "test")
@@ -60,13 +60,13 @@ interface ScriptDefinition {
 }
 ```
 
-### TestCaseDefinition (kind: "test-case")
+### TckDefinition (kind: "tck")
 
 A container that groups multiple tests into an execution pipeline.
 
 ```typescript
-interface TestCaseDefinition {
-  kind: "test-case";
+interface TckDefinition {
+  kind: "tck";
   name: string;
   version?: string;
   dataspace_version?: string;
@@ -225,7 +225,7 @@ type SdkCallMode = "ALLOWLIST" | "OPEN";
 
 ```typescript
 isTest(doc: TestLabDocument): doc is ScriptDefinition
-isTestCase(doc: TestLabDocument): doc is TestCaseDefinition
+isTck(doc: TestLabDocument): doc is TckDefinition
 isTestRef(entry: unknown): entry is TestRef
 isTemplateStep(step: Step): boolean       // step.type === "template"
 ```
@@ -233,7 +233,7 @@ isTemplateStep(step: Step): boolean       // step.type === "template"
 ## Factory functions
 
 ```typescript
-createEmptyTestCase(): TestCaseDefinition
+createEmptyTck(): TckDefinition
 createEmptyTest(): ScriptDefinition
 ```
 
@@ -302,7 +302,7 @@ interface ValidationError {
 ### Document level
 
 - `name` is required
-- `kind` must be `"test"` or `"test-case"`
+- `kind` must be `"test"` or `"tck"`
 
 ### Script (test) level
 

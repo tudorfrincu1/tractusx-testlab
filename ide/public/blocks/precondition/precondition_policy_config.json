@@ -1,0 +1,15 @@
+{
+  "type": "precondition_policy_config",
+  "label": "Policy Config",
+  "description": "Pre-configure an ODRL policy that must exist before test execution",
+  "custom_registration": true,
+  "params": [
+    { "name": "policy_type", "type": "dropdown", "required": true, "options": ["access", "usage"], "description": "Policy type" },
+    { "name": "permissions", "type": "array", "item_type": "odrl_permission", "required": true, "description": "ODRL permission rules" },
+    { "name": "prohibitions", "type": "array", "item_type": "odrl_prohibition", "required": false, "description": "ODRL prohibition rules (Saturn only)" },
+    { "name": "obligations", "type": "array", "item_type": "odrl_obligation", "required": false, "description": "ODRL obligation rules (Saturn only)" }
+  ],
+  "outputs": [
+    { "name": "config_result", "description": "The policy configuration object" }
+  ]
+}

@@ -74,7 +74,7 @@ export interface ExampleCardProps {
   icon: React.ReactNode;
   label: string;
   description: string;
-  category: "test" | "test-case";
+  category: "test" | "tck";
   onClick: () => void;
 }
 
@@ -112,11 +112,11 @@ export function ExampleCard({ icon, label, description, category, onClick }: Exa
             fontWeight: 500,
             padding: "1px 5px",
             borderRadius: 3,
-            background: category === "test-case" ? "rgba(255, 215, 0, 0.12)" : theme.colors.bgLightest,
-            color: category === "test-case" ? theme.colors.primary : theme.colors.textMuted,
+            background: category === "tck" ? "rgba(255, 215, 0, 0.12)" : theme.colors.bgLightest,
+            color: category === "tck" ? theme.colors.primary : theme.colors.textMuted,
             textTransform: "uppercase",
           }}>
-            {category === "test-case" ? "suite" : "test"}
+            {category === "tck" ? "suite" : "test"}
           </span>
         </div>
         <div style={{ fontSize: 10, color: theme.colors.textMuted, marginTop: 2 }}>{description}</div>

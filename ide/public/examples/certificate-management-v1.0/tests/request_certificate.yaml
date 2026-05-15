@@ -24,6 +24,7 @@
 kind: test
 name: request-certificate
 version: "1.0"
+dataspace_version: "saturn"
 description: >
   Request certificate via CCMAPI endpoint.
   Query catalog for CCMAPI offers, negotiate contract,
@@ -32,8 +33,7 @@ description: >
 services:
   - name: provider_edc
     type: edc_connector_saturn
-    config:
-      management_url: "@provider_address"
+    base_url: "@provider_address"
 
 output_definitions:
   - name: request_id
@@ -61,20 +61,30 @@ steps:
       catalog: "catalog"
       datasets: "datasets"
     expect:
-      - output: datasets
-        not_null: true
+      - type: "NOT_NULL"
+        output: datasets
 
-  - type: extract_dataset
-    description: Extract CCMAPI dataset and offer details
+  - type: json_path_extract
+    description: Extract CCMAPI asset ID from catalog datasets
     params:
-      variable: "catalog"
-      dct_type: "https://w3id.org/catenax/taxonomy#CCMAPI"
+      variable: "datasets"
+      path: "[0].@id"
     store_in_memory:
-      ccmapi_asset_id: "asset_id"
-      ccmapi_offer_id: "policies"
+      ccmapi_asset_id: "value"
     expect:
-      - output: dataset
-        not_null: true
+      - type: "NOT_NULL"
+        output: value
+
+  - type: json_path_extract
+    description: Extract CCMAPI offer policies
+    params:
+      variable: "datasets"
+      path: "[0].odrl:hasPolicy"
+    store_in_memory:
+      ccmapi_offer_id: "value"
+    expect:
+      - type: "NOT_NULL"
+        output: value
 
   - type: negotiate
     description: Negotiate contract for CCMAPI asset
@@ -86,8 +96,8 @@ steps:
     store_in_memory:
       contract_agreement_id: "agreement_id"
     expect:
-      - output: agreement_id
-        not_null: true
+      - type: "NOT_NULL"
+        output: agreement_id
 
   - type: initiate_transfer
     description: Get dataplane access credentials
@@ -118,18 +128,12 @@ steps:
       request_status: "request_status"
       document_id: "document_id"
     expect:
-      - output: status_code
-        equals: 200
-      - output: request_id
-        not_null: true
-      - output: request_status
-        not_null: true
+      - type: "EQUALS"
+        output: status_code
+        value: 200
+      - type: "NOT_NULL"
+        output: request_id
+      - type: "NOT_NULL"
+        output: request_status
 
-variables:
-  request_id:
-    type: str
-  request_status:
-    type: str
-  document_id:
-    type: str
 

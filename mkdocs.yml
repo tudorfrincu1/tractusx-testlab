@@ -123,7 +123,8 @@ nav:
     - Graph View: ide/graph-view.md
     - Services: ide/services.md
     - Export & Import: ide/export-import.md
-    - Test Case Dashboard: ide/test-case-dashboard.md
+    - Live Execution: ide/live-execution.md
+    - TCK Dashboard: ide/tck-dashboard.md
   - Specification:
     - Overview: specification/index.md
     - Installation: specification/installation.md
@@ -145,7 +146,7 @@ nav:
       - Syntax:
         - Overview: specification/reference/syntax/index.md
         - Tests: specification/reference/syntax/tests.md
-        - Test Cases: specification/reference/syntax/test-cases.md
+        - TCKs: specification/reference/syntax/tcks.md
         - Services: specification/reference/syntax/services.md
         - Assertions: specification/reference/syntax/assertions.md
         - Conditions: specification/reference/syntax/conditions.md
@@ -165,6 +166,7 @@ nav:
     - Add a Component: tutorials/add-component.md
     - Development Workflow: tutorials/development-workflow.md
     - Debugging: tutorials/debugging.md
+    - CCM Conformity Testing: tutorials/ccm-conformity-testing.md
     - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
@@ -179,6 +181,17 @@ nav:
     - Data Models: developer/data-models.md
     - Sync Layer: developer/sync-layer.md
     - Block Lifecycle: developer/block-lifecycle.md
+    - Decision Records:
+      - Overview: developer/decision-records/index.md
+      - ADR-0000 Template: developer/decision-records/ADR-0000-template.md
+      - ADR-0001 Phase-Based Toolbox Grouping: developer/decision-records/ADR-0001-phase-based-toolbox-grouping.md
+      - ADR-0002 Policy Config Block: developer/decision-records/ADR-0002-single-policy-config-block-with-version-mutator.md
+      - ADR-0003 SSE for Live Execution: developer/decision-records/ADR-0003-sse-for-live-ide-execution.md
+      - ADR-0004 Precondition Phase: developer/decision-records/ADR-0004-precondition-as-distinct-step-phase.md
+      - ADR-0005 Participant Manager: developer/decision-records/ADR-0005-filesystem-participant-manager-with-protocol.md
+      - ADR-0006 Service Auto-Declaration: developer/decision-records/ADR-0006-service-auto-declaration-on-block-drop.md
+      - ADR-0007 Precondition Logs Model: developer/decision-records/ADR-0007-precondition-execution-logs-model.md
+      - ADR-0008 TCK Rename: developer/decision-records/ADR-0008-test-case-to-tck-rename.md
   - Contributing:
     - Guidelines: contributing/index.md
 

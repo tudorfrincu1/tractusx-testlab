@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
 
-kind: test-case
+kind: tck
 name: dtr-ping
 version: "1.0"
 description: Verify Digital Twin Registry is accessible via the counter-party connector dataplane.

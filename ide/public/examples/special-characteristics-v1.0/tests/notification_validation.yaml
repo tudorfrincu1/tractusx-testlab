@@ -61,8 +61,9 @@ steps:
       content:
         specialCharacteristics: []
     expect:
-      - output: status_code
-        equals: 204
+      - type: "EQUALS"
+        output: status_code
+        value: 204
 
   - type: load_schema
     name: Load Notification Schema

@@ -21,9 +21,9 @@ SPDX-License-Identifier: CC-BY-4.0
 
 ## Motivation
 
-Test scripts frequently contain sensitive material: OAuth2 client credentials, service URLs, Business Partner Numbers, and endpoint data that describe the internal topology of a dataspace deployment. If a compiled `.testpkg` is exfiltrated — through a compromised CI runner, a leaked artifact store, or accidental public upload — all embedded secrets are exposed.
+Test scripts frequently contain sensitive material: OAuth2 client credentials, service URLs, Business Partner Numbers, and endpoint data that describe the internal topology of a dataspace deployment. If a compiled `.tckpkg` is exfiltrated — through a compromised CI runner, a leaked artifact store, or accidental public upload — all embedded secrets are exposed.
 
-To mitigate this risk, **Testlab encrypts packages by default**. Every compiled `.testpkg` is a non-human-readable, encrypted artifact. Only Players that hold a valid private key and are explicitly authorized by the Compiler can decrypt and execute the package. A plain-text (unencrypted) mode is available as an explicit opt-in for local development only.
+To mitigate this risk, **Testlab encrypts packages by default**. Every compiled `.tckpkg` is a non-human-readable, encrypted artifact. Only Players that hold a valid private key and are explicitly authorized by the Compiler can decrypt and execute the package. A plain-text (unencrypted) mode is available as an explicit opt-in for local development only.
 
 ---
 
@@ -44,7 +44,7 @@ To mitigate this risk, **Testlab encrypts packages by default**. Every compiled 
 
 | Threat | Scenario | Mitigation |
 |--------|----------|------------|
-| **Package theft** | An attacker obtains a `.testpkg` file from CI artifacts, an S3 bucket, or a shared drive. | The `payload.enc` blob is encrypted with AES-256-GCM. Without an authorized Player's RSA private key, the content is indecipherable. |
+| **Package theft** | An attacker obtains a `.tckpkg` file from CI artifacts, an S3 bucket, or a shared drive. | The `payload.enc` blob is encrypted with AES-256-GCM. Without an authorized Player's RSA private key, the content is indecipherable. |
 | **Credential extraction** | An attacker attempts to read OAuth2 secrets, service URLs, or BPN values from the YAML scripts inside the package. | Scripts are never stored in plaintext inside a default-compiled package. All script and asset content is inside the encrypted `payload.enc`. |
 | **Package tampering** | An attacker modifies the manifest or payload to inject malicious steps or alter assertions. | The Ed25519 signature covers both manifest and payload. Any modification invalidates the signature. Players reject packages with invalid or missing signatures. |
 | **Unauthorized execution** | An attacker attempts to run a stolen package on their own Player instance. | The AES content key is wrapped individually for each authorized Player's RSA public key. An unauthorized Player's fingerprint will not appear in `authorized_players`, and it cannot unwrap the AES key. |
@@ -78,7 +78,7 @@ sequenceDiagram
     participant C as Compiler
     participant FS as File System
 
-    A->>C: testlab compile test-case.yaml<br/>--authorize-player player1.pub<br/>--authorize-player player2.pub<br/>--signing-key compiler.pem
+    A->>C: testlab compile tck.yaml<br/>--authorize-player player1.pub<br/>--authorize-player player2.pub<br/>--signing-key compiler.pem
 
     Note over C: Default behavior — encryption is automatic
 
@@ -93,7 +93,7 @@ sequenceDiagram
 
     C->>C: Build manifest.yaml<br/>(metadata + security block)
     C->>C: Sign (manifest + payload) with Ed25519<br/>produces signature.sig
-    C->>FS: Write .testpkg archive<br/>(manifest.yaml + payload.enc + signature.sig)
+    C->>FS: Write .tckpkg archive<br/>(manifest.yaml + payload.enc + signature.sig)
 ```
 
 ### Decryption Flow (Player-side)
@@ -103,7 +103,7 @@ sequenceDiagram
     participant P as Player
     participant KS as Key Store<br/>~/.testlab/keys/
     participant TS as Trust Store<br/>~/.testlab/trusted_compilers/
-    participant PKG as .testpkg
+    participant PKG as .tckpkg
 
     P->>PKG: Open archive, read manifest.yaml
     P->>P: Detect security.format = "encrypted-v1"
@@ -146,7 +146,7 @@ sequenceDiagram
 #### Command
 
 ```bash
-testlab decompile connector_e2e-1.0.testpkg \
+testlab decompile connector_e2e-1.0.tckpkg \
   --player-keys .keys/player \
   --compiler-pub .keys/compiler/signing.pub
 ```
@@ -171,7 +171,7 @@ If any step fails, the command aborts with an error and no output is written.
 
 ```mermaid
 flowchart TD
-    PKG[".testpkg<br/>(encrypted)"]
+    PKG[".tckpkg<br/>(encrypted)"]
     PKG --> Q1{"Has authorized<br/>Player key?"}
     Q1 -->|Yes| VERIFY["Verify Ed25519 signature<br/>with compiler public key"]
     VERIFY --> DECRYPT["RSA-OAEP unwrap AES key<br/>AES-256-GCM decrypt payload"]
@@ -328,11 +328,11 @@ Every `testlab compile` invocation produces an encrypted package by default:
 
 ```bash
 # Default behavior — encrypted output
-testlab compile test-case.yaml \
+testlab compile tck.yaml \
   --authorize-player player1.pub \
   --authorize-player player2.pub \
   --signing-key compiler.pem \
-  --output my_test_case-1.0.testpkg
+  --output my_tck-1.0.tckpkg
 ```
 
 The Compiler requires:
@@ -356,7 +356,7 @@ For local development and debugging, plain mode disables encryption:
 
 ```bash
 # Development-only — human-readable output
-testlab compile test-case.yaml --plain --output my_test_case-1.0.testpkg
+testlab compile tck.yaml --plain --output my_tck-1.0.tckpkg
 ```
 
 When `--plain` is used:
@@ -395,11 +395,11 @@ WARNING: Package compiled in plain mode. Scripts and assets are NOT encrypted.
 
 | Command | Description |
 |---------|-------------|
-| `testlab compile <test-case.yaml>` | Compile with encryption (default) — requires `--authorize-player` and `--signing-key` |
-| `testlab compile <test-case.yaml> --plain` | Compile without encryption (development only) |
-| `testlab compile <test-case.yaml> --authorize-player <key.pub>` | Authorize a Player to decrypt (repeatable) |
-| `testlab compile <test-case.yaml> --signing-key <key.pem>` | Sign with Compiler Ed25519 key |
-| `testlab compile <test-case.yaml> --output <file>` | Specify output filename |
+| `testlab compile <tck.yaml>` | Compile with encryption (default) — requires `--authorize-player` and `--signing-key` |
+| `testlab compile <tck.yaml> --plain` | Compile without encryption (development only) |
+| `testlab compile <tck.yaml> --authorize-player <key.pub>` | Authorize a Player to decrypt (repeatable) |
+| `testlab compile <tck.yaml> --signing-key <key.pem>` | Sign with Compiler Ed25519 key |
+| `testlab compile <tck.yaml> --output <file>` | Specify output filename |
 
 ### Key Management Commands
 

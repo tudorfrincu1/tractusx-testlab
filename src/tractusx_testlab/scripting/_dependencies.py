@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Dependency resolution helpers for YAML test-case file references and output inference."""
+"""Dependency resolution helpers for YAML TCK file references and output inference."""
 
 from __future__ import annotations
 
