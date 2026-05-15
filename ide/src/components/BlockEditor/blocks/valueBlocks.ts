@@ -37,22 +37,32 @@ import {
 } from "./pathBuilder";
 import type { PathSegment } from "./pathBuilder";
 import { requestOpenJsonEditor, truncateJsonPreview } from "./jsonEditor";
+import { resolveVariableSchema } from "./schemaResolver";
 
 /**
- * Walk up from a value_json_path block to its parent step block and read the
- * source variable name from the sibling `variable` input (connected variable_get block).
+ * Walk up from a value block to the nearest parent `step_*` block and read the
+ * source variable name from its `variable` input (connected variable_get block).
+ * Works for any step block that accepts a variable input, not just json_path_extract.
  * Returns `undefined` when the context cannot be resolved.
  */
 function resolveParentSourceVariable(block: Block): string | undefined {
-  const parent = block.getParent();
-  if (!parent) return undefined;
-  // The json_path_extract step has a "variable" input with a connected variable_get block
-  if (parent.type !== "step_json_path_extract") return undefined;
-  const variableInput = parent.getInput("variable");
-  const connectedBlock = variableInput?.connection?.targetBlock();
-  if (!connectedBlock || connectedBlock.type !== "variable_get") return undefined;
-  const varName = connectedBlock.getFieldValue("VAR_NAME");
-  return varName && varName !== "__NONE__" ? String(varName) : undefined;
+  let current: Block | null = block.getParent();
+  while (current) {
+    if (current.type.startsWith("step_")) {
+      // Search all inputs for a connected variable_get block
+      for (const input of current.inputList) {
+        const connected = input.connection?.targetBlock();
+        if (connected?.type === "variable_get") {
+          const varName = connected.getFieldValue("VAR_NAME");
+          if (varName && varName !== "__NONE__") return String(varName);
+        }
+      }
+      // Found a step block but no variable input — stop searching
+      return undefined;
+    }
+    current = current.getParent();
+  }
+  return undefined;
 }
 
 /** Pencil icon as SVG data URI for the edit button. */
@@ -112,11 +122,15 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
             const segments: PathSegment[] = (block as BlockWithSegments).__segments
               ?? parsePathToSegments(currentPath);
             const sourceVariable = resolveParentSourceVariable(block);
+            const sourceSchema = sourceVariable && catalog
+              ? resolveVariableSchema(sourceVariable, block.workspace, catalog)
+              : undefined;
             requestOpenPathBuilder({
               blockId: block.id,
               segments,
               position: pos,
               sourceVariable,
+              sourceSchema,
             });
           },
         ));

@@ -21,7 +21,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
 import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
@@ -30,7 +30,6 @@ import { setupPathBuilderCallback, type PathBuilderRequest } from "./blocks/path
 import type { PathSegment } from "./blocks/pathBuilder";
 import { setupJsonEditorCallback, type JsonEditorRequest } from "./blocks/jsonEditor";
 import { truncateJsonPreview } from "./blocks/jsonEditor";
-import { findOutputSchema } from "./blocks/catalogLoader";
 import { PathBuilderModal } from "./blocks/PathBuilderModal";
 import { JsonEditorModal } from "./blocks/JsonEditorModal";
 import { BlockTooltip } from "./ui/WarningTooltip";
@@ -112,11 +111,6 @@ export function BlocklyWorkspace() {
 
   const handleJsonClose = useCallback(() => setJsonReq(null), []);
 
-  const resolvedSchema = useMemo(() => {
-    if (!pathReq?.sourceVariable || !catalog) return undefined;
-    return findOutputSchema(pathReq.sourceVariable, catalog);
-  }, [pathReq?.sourceVariable, catalog]);
-
   return (
     <>
       <div ref={containerRef} className="blockly-workspace-container" />
@@ -140,7 +134,8 @@ export function BlocklyWorkspace() {
         <PathBuilderModal
           blockId={pathReq.blockId}
           initialSegments={pathReq.segments}
-          schema={resolvedSchema}
+          schema={pathReq.sourceSchema}
+          sourceVariable={pathReq.sourceVariable}
           onSave={handlePathSave}
           onClose={handlePathClose}
         />

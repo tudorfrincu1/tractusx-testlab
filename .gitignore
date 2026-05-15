@@ -4,8 +4,6 @@ __pycache__
 node_modules
 dist
 
-# MOCK asset files
-MOCK/
 
 # local env files
 .env.local

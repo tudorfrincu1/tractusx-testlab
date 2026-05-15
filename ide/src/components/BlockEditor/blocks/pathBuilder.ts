@@ -34,6 +34,7 @@ export interface PathBuilderRequest {
   segments: PathSegment[];
   position: { x: number; y: number };
   sourceVariable?: string;
+  sourceSchema?: Record<string, unknown>;
 }
 
 const DEFAULT_PATH = "items.0.id";

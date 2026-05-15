@@ -225,6 +225,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "assert_between" },
           { kind: "block", type: "assert_not_null" },
           { kind: "block", type: "assert_not_empty" },
+          { kind: "block", type: "assert_field" },
         ],
       },
       {

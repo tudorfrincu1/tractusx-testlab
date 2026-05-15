@@ -62,6 +62,18 @@ steps:
       - type: "EQUALS"
         output: path
         value: "/companycertificate/status"
+      # assert_field: assert fields directly on the callback body without
+      # a separate json_path_extract step. The schema-aware path builder
+      # in the IDE autocompletes valid paths from the response schema.
+      - type: "ASSERT_FIELD"
+        output: body
+        path: "requestId"
+        operator: "equals"
+        expected: "@request_id"
+      - type: "ASSERT_FIELD"
+        output: body
+        path: "feedbackStatus"
+        operator: "not_null"
 
   - type: json_path_extract
     description: Extract callback request ID

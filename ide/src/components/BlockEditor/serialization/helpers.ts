@@ -159,6 +159,22 @@ export function readAssertionChain(block: Block | null): Assertion[] {
   const assertions: Assertion[] = [];
   let current = block;
   while (current) {
+    // assert_field has no OUTPUT field — handle before the output guard
+    if (current.type === "assert_field") {
+      const path = current.getFieldValue("PATH") || "";
+      const operator = current.getFieldValue("OPERATOR") || "equals";
+      const expected = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+      assertions.push({
+        type: AssertionOperator.ASSERT_FIELD,
+        output: "",
+        path,
+        operator,
+        expected,
+      });
+      current = current.getNextBlock();
+      continue;
+    }
+
     const output = current.getFieldValue("OUTPUT") || "";
     if (!output || output === "__NONE__") {
       current = current.getNextBlock();

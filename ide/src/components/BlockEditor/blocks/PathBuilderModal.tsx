@@ -32,14 +32,18 @@ export interface PathBuilderModalProps {
   blockId: string;
   initialSegments: PathSegment[];
   schema?: Record<string, unknown>;
+  sourceVariable?: string;
   onSave: (blockId: string, segments: PathSegment[], path: string) => void;
   onClose: () => void;
 }
+
+type SourceTab = "schema" | "paste";
 
 export function PathBuilderModal({
   blockId,
   initialSegments,
   schema,
+  sourceVariable,
   onSave,
   onClose,
 }: PathBuilderModalProps) {
@@ -49,9 +53,11 @@ export function PathBuilderModal({
   const [pastedSchema, setPastedSchema] = useState<Record<string, unknown> | undefined>();
   const [pasteText, setPasteText] = useState("");
   const [parseError, setParseError] = useState("");
+  const [activeTab, setActiveTab] = useState<SourceTab>(schema ? "schema" : "paste");
   const listRef = useRef<HTMLDivElement>(null);
 
-  const effectiveSchema = schema ?? pastedSchema;
+  const effectiveSchema = activeTab === "schema" ? (schema ?? pastedSchema) : undefined;
+  const hasAnySchema = !!(schema ?? pastedSchema);
   const preview = segmentsToPath(segments) || "(empty)";
 
   const handleParse = useCallback(() => {
@@ -59,6 +65,7 @@ export function PathBuilderModal({
       const parsed: unknown = JSON.parse(pasteText);
       setPastedSchema(jsonToSchema(parsed));
       setParseError("");
+      setActiveTab("schema");
     } catch {
       setParseError("Invalid JSON — please check your input.");
       setPastedSchema(undefined);
@@ -118,36 +125,66 @@ export function PathBuilderModal({
   return (
     <div className="path-builder-overlay" onMouseDown={handleOverlayClick}>
       <div className="path-builder-modal">
-        <div className="path-builder-title">Build Path</div>
-        <div className="path-builder-preview">{preview}</div>
+        <div className="path-builder-header">
+          <span className="path-builder-title">Build Path</span>
+          <div className="path-builder-preview">{preview}</div>
+          <button className="path-builder-close" onClick={handleDone} title="Close">
+            &#x2715;
+          </button>
+        </div>
 
         <div className={`path-builder-body${effectiveSchema ? " path-builder-body--with-schema" : ""}`}>
-          {!schema && !pastedSchema && (
-            <div className="path-builder-paste-panel">
-              <p className="path-builder-paste-hint">
-                Paste a JSON response example to explore its structure:
-              </p>
-              <textarea
-                className="path-builder-paste-textarea"
-                value={pasteText}
-                onChange={(e) => { setPasteText(e.target.value); setParseError(""); }}
-                placeholder='{ "items": [{ "id": 1 }] }'
-                spellCheck={false}
-              />
-              {parseError && (
-                <p className="path-builder-parse-error">{parseError}</p>
-              )}
-              <button className="path-builder-btn-parse" onClick={handleParse}>
-                Parse
+          <div className="path-builder-source-panel">
+            <div className="path-builder-tabs">
+              <button
+                className={`path-builder-tab${activeTab === "schema" ? " path-builder-tab--active" : ""}`}
+                onClick={() => setActiveTab("schema")}
+                disabled={!hasAnySchema && !schema}
+              >
+                Schema Tree
+              </button>
+              <button
+                className={`path-builder-tab${activeTab === "paste" ? " path-builder-tab--active" : ""}`}
+                onClick={() => setActiveTab("paste")}
+              >
+                Paste JSON
               </button>
             </div>
-          )}
 
-          {effectiveSchema && (
-            <SchemaTree schema={effectiveSchema} onSelectPath={handleSchemaSelect} />
-          )}
+            {activeTab === "paste" && (
+              <div className="path-builder-paste-panel">
+                <p className="path-builder-paste-hint">
+                  Paste a JSON response example to explore its structure:
+                </p>
+                <textarea
+                  className="path-builder-paste-textarea"
+                  value={pasteText}
+                  onChange={(e) => { setPasteText(e.target.value); setParseError(""); }}
+                  placeholder='{ "items": [{ "id": 1 }] }'
+                  spellCheck={false}
+                />
+                {parseError && (
+                  <p className="path-builder-parse-error">{parseError}</p>
+                )}
+                <button className="path-builder-btn-parse" onClick={handleParse}>
+                  Parse &amp; Build Tree
+                </button>
+              </div>
+            )}
+
+            {activeTab === "schema" && effectiveSchema && (
+              <SchemaTree schema={effectiveSchema} onSelectPath={handleSchemaSelect} />
+            )}
+
+            {activeTab === "schema" && !effectiveSchema && (
+              <p className="path-builder-paste-hint">
+                No schema available. Switch to Paste JSON to provide a sample.
+              </p>
+            )}
+          </div>
 
           <div className="path-builder-segments-panel">
+            <div className="path-builder-panel-label">Path Segments</div>
             <div className="path-builder-segment-list" ref={listRef}>
               {segments.map((seg, idx) => (
                 <div className="path-builder-seg-row" key={idx}>
@@ -170,7 +207,7 @@ export function PathBuilderModal({
                     onClick={() => handleDelete(idx)}
                     title="Remove segment"
                   >
-                    🗑
+                    &#x2715;
                   </button>
                 </div>
               ))}
@@ -186,6 +223,12 @@ export function PathBuilderModal({
             </div>
           </div>
         </div>
+
+        {sourceVariable && (
+          <div className="path-builder-footer">
+            Source: <span className="path-builder-var-ref">@{sourceVariable}</span>
+          </div>
+        )}
       </div>
     </div>
   );

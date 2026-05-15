@@ -64,6 +64,7 @@ const LEGACY_KEY_TO_TYPE: Record<string, string> = {
   greater_or_equal: AssertionOperator.GREATER_OR_EQUAL,
   less_or_equal: AssertionOperator.LESS_OR_EQUAL,
   between: AssertionOperator.BETWEEN,
+  assert_field: AssertionOperator.ASSERT_FIELD,
 };
 
 /** Normalize a legacy compact assertion to the new typed format. */
@@ -83,6 +84,9 @@ function normalizeLegacy(raw: RawAssertion): RawAssertion {
   }
   if (typedType === AssertionOperator.NOT_NULL || typedType === AssertionOperator.NOT_EMPTY) {
     return { type: typedType, output };
+  }
+  if (typedType === AssertionOperator.ASSERT_FIELD) {
+    return { type: typedType, output, path: raw.path, operator: raw.operator, expected: raw.expected };
   }
   return { type: typedType, output, value: val };
 }
@@ -105,7 +109,8 @@ export function populateAssertions(
       const normalized = typeof a.type === "string" ? a : normalizeLegacy(a);
       const output = String(normalized.output ?? "");
       const assertType = String(normalized.type ?? "");
-      if (!output || !assertType) continue;
+      if (!assertType) continue;
+      if (!output && assertType !== AssertionOperator.ASSERT_FIELD) continue;
 
       const ab = createAssertionBlock(ws, assertType, output, normalized);
       if (ab) assertBlocks.push(ab);
@@ -173,6 +178,17 @@ function createAssertionBlock(
     case AssertionOperator.NOT_EMPTY: {
       const ab = makeBlock(ws, "assert_not_empty");
       setDropdownValue(ab, "OUTPUT", output);
+      return ab;
+    }
+    case AssertionOperator.ASSERT_FIELD: {
+      const ab = makeBlock(ws, "assert_field");
+      const path = typeof a.path === "string" ? a.path : "";
+      if (path) ab.setFieldValue(path, "PATH");
+      const operator = typeof a.operator === "string" ? a.operator : "equals";
+      setDropdownValue(ab, "OPERATOR", operator);
+      if (a.expected !== undefined && a.expected !== "") {
+        connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(a.expected)));
+      }
       return ab;
     }
     default:

@@ -43,11 +43,7 @@ interface ExampleEntry {
 const EXAMPLES: ExampleEntry[] = [
   { file: "connector-ping-v1.0/index.yaml", label: "Connector Ping", description: "Verify connector responds to catalog query", icon: <HttpIcon sx={{ fontSize: 16 }} />, section: "Base Tests" },
   { file: "dtr-ping-v1.0/index.yaml", label: "DTR Ping", description: "Negotiate dataplane access to DTR", icon: <StorageIcon sx={{ fontSize: 16 }} />, section: "Base Tests" },
-  { file: "industry-core-validation-v1.0/index.yaml", label: "Industry Core Validation", description: "Shell descriptors + submodel validation", icon: <AccountTreeIcon sx={{ fontSize: 16 }} />, section: "Industry Core" },
-  { file: "traceability-notification-v1.0/index.yaml", label: "Traceability Notification", description: "Quality investigation + alert flows", icon: <NotificationsActiveIcon sx={{ fontSize: 16 }} />, section: "Use Cases" },
   { file: "certificate-management-v1.0/index.yaml", label: "Certificate Management", description: "CCMAPI offer, validation, feedback", icon: <PlaylistAddIcon sx={{ fontSize: 16 }} />, section: "Use Cases" },
-  { file: "special-characteristics-v1.0/index.yaml", label: "Special Characteristics", description: "Notification + data transfer validation", icon: <SwapHorizIcon sx={{ fontSize: 16 }} />, section: "Use Cases" },
-  { file: "product-carbon-footprint-v1.0/index.yaml", label: "Product Carbon Footprint", description: "PCF data discovery + schema validation", icon: <ScienceIcon sx={{ fontSize: 16 }} />, section: "Use Cases" },
 ];
 
 interface TopBarExampleMenuProps {

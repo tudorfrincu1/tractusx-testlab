@@ -23,6 +23,7 @@
 
 import { useCallback, useState } from "react";
 import type { PathSegment } from "./pathBuilder";
+import { schemaTypeIcon, typeBadgeClass } from "./schemaIcons";
 import "./SchemaTree.css";
 
 export interface SchemaNode {
@@ -37,17 +38,6 @@ export interface SchemaTreeProps {
   schema: Record<string, unknown>;
   onSelectPath: (segments: PathSegment[]) => void;
 }
-
-const SCALAR_TYPES = new Set(["string", "number", "boolean", "integer"]);
-
-const TYPE_ICONS: Record<string, string> = {
-  object: "📦",
-  array: "📋",
-  string: "🔤",
-  number: "🔢",
-  integer: "🔢",
-  boolean: "✅",
-} as const;
 
 function schemaToNodes(schema: Record<string, unknown>): SchemaNode[] {
   const type = schema["type"] as string | undefined;
@@ -79,11 +69,13 @@ function SchemaTreeNode({
   node,
   path,
   onSelect,
+  selectedPath,
   depth,
 }: Readonly<{
   node: SchemaNode;
   path: PathSegment[];
   onSelect: (segments: PathSegment[]) => void;
+  selectedPath: string;
   depth: number;
 }>) {
   const [expanded, setExpanded] = useState(depth < 2);
@@ -93,22 +85,22 @@ function SchemaTreeNode({
     { type: node.isArrayItem ? "index" : "key", value: node.isArrayItem ? "0" : node.key },
   ];
 
+  const pathStr = currentPath.map((s) => s.value).join(".");
   const isLeaf = !node.children || node.children.length === 0;
   const isExpandable = !isLeaf;
-  const icon = TYPE_ICONS[node.type] || "❓";
+  const isSelected = pathStr === selectedPath;
 
   const handleClick = useCallback(() => {
-    if (isLeaf) {
-      onSelect(currentPath);
-    } else {
-      setExpanded((prev) => !prev);
-    }
-  }, [isLeaf, onSelect, currentPath]);
+    onSelect(currentPath);
+    if (isExpandable) setExpanded((prev) => !prev);
+  }, [isExpandable, onSelect, currentPath]);
+
+  const badgeLabel = node.type === "array" ? "array" : node.type;
 
   return (
     <div className="schema-tree-node">
       <div
-        className={`schema-tree-row ${isLeaf ? "schema-tree-leaf" : ""} schema-tree-depth-${Math.min(depth, 6)}`}
+        className={`schema-tree-row${isLeaf ? " schema-tree-leaf" : ""}${isSelected ? " schema-tree-selected" : ""} schema-tree-depth-${Math.min(depth, 6)}`}
         role="treeitem"
         tabIndex={0}
         onClick={handleClick}
@@ -116,15 +108,12 @@ function SchemaTreeNode({
         title={node.description || `${node.key} (${node.type})`}
       >
         {isExpandable && (
-          <span className="schema-tree-toggle">{expanded ? "▾" : "▸"}</span>
+          <span className={`schema-tree-toggle${expanded ? "" : " schema-tree-toggle-collapsed"}`}>▾</span>
         )}
         {!isExpandable && <span className="schema-tree-toggle-spacer" />}
-        <span className="schema-tree-icon">{icon}</span>
+        <span className="schema-tree-icon">{schemaTypeIcon(node.type)}</span>
         <span className="schema-tree-key">{node.key}</span>
-        {SCALAR_TYPES.has(node.type) && (
-          <span className="schema-tree-type">{node.type}</span>
-        )}
-        {node.type === "array" && <span className="schema-tree-type">[]</span>}
+        <span className={`schema-tree-badge ${typeBadgeClass(node.type)}`}>{badgeLabel}</span>
       </div>
       {isExpandable && expanded && node.children?.map((child) => (
         <SchemaTreeNode
@@ -132,6 +121,7 @@ function SchemaTreeNode({
           node={child}
           path={currentPath}
           onSelect={onSelect}
+          selectedPath={selectedPath}
           depth={depth + 1}
         />
       ))}
@@ -141,6 +131,13 @@ function SchemaTreeNode({
 
 export function SchemaTree({ schema, onSelectPath }: Readonly<SchemaTreeProps>) {
   const nodes = schemaToNodes(schema);
+  const [selectedPath, setSelectedPath] = useState("");
+
+  const handleSelect = useCallback((segments: PathSegment[]) => {
+    const pathStr = segments.map((s) => s.value).join(".");
+    setSelectedPath(pathStr);
+    onSelectPath(segments);
+  }, [onSelectPath]);
 
   if (nodes.length === 0) {
     return <div className="schema-tree-empty">No schema structure available</div>;
@@ -148,14 +145,14 @@ export function SchemaTree({ schema, onSelectPath }: Readonly<SchemaTreeProps>) 
 
   return (
     <div className="schema-tree">
-      <div className="schema-tree-header">Schema</div>
-      <div className="schema-tree-content">
+      <div className="schema-tree-content" role="tree">
         {nodes.map((node) => (
           <SchemaTreeNode
             key={node.key}
             node={node}
             path={[]}
-            onSelect={onSelectPath}
+            onSelect={handleSelect}
+            selectedPath={selectedPath}
             depth={0}
           />
         ))}
