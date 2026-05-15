@@ -22,15 +22,15 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/useTestLabStore";
 import {
   buildToolbox,
   workspaceToModel,
   collectWorkspaceVariables,
-} from "./blockDefinitions";
+} from "../config/blockDefinitions";
 import { resolveStepIdentifier } from "./blockSelection";
-import type { TestLabDocument } from "../../models/schema";
-import type { BlockCatalog } from "./blockDefinitions";
+import type { TestLabDocument } from "../../../models/schema";
+import type { BlockCatalog } from "../config/blockDefinitions";
 
 interface ListenerRefs {
   isUpdatingFromStore: { current: boolean };

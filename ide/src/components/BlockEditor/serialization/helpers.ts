@@ -24,7 +24,7 @@
 
 import type { Block, Workspace } from "blockly";
 import { type Assertion, AssertionOperator } from "../../../models/schema";
-import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
+import { serializePolicyBlock, createPolicyRuleBlocks } from "./serialize/policySerializers";
 import * as deferredDropdowns from "./deferredDropdowns";
 
 /** Maps the assert_compare block dropdown values to typed YAML assertion types. */
@@ -46,8 +46,7 @@ export function readValueBlockAsString(block: Block | null): string | undefined 
     return block.getFieldValue("VALUE") || undefined;
   }
   if (block.type === "value_json_path") {
-    const path = block.getFieldValue("VALUE") || "";
-    return path ? `$.${path}` : undefined;
+    return block.getFieldValue("VALUE") || undefined;
   }
   if (block.type === "value_number") {
     const n = block.getFieldValue("VALUE");
@@ -144,11 +143,7 @@ export function createValueBlockFromString(ws: Workspace, strVal: string): Block
     setDropdownValue(vb, "VAR_NAME", varMatch[1] || varMatch[2]);
     return vb;
   }
-  if (strVal.startsWith("$.")) {
-    const jpb = makeBlock(ws, "value_json_path");
-    jpb.setFieldValue(strVal.slice(2), "VALUE");
-    return jpb;
-  }
+
   const num = Number(strVal);
   if (!isNaN(num) && strVal.trim() !== "") {
     const nb = makeBlock(ws, "value_number");

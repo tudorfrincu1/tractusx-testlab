@@ -24,7 +24,7 @@
 
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors } from "../blockColors";
+import { blockColors } from "../config/blockColors";
 import { blockIcon, ICON_VARIABLE } from "./icons";
 import { dynamicDropdown } from "./dropdownProviders";
 import { collectWorkspaceVariables } from "./variableCollection";
@@ -46,11 +46,11 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
   Blockly.Blocks["value_json_path"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField("$.")
+        .appendField("\u2922")
         .appendField(new Blockly.FieldTextInput(""), "VALUE");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJsonPath);
-      this.setTooltip("A JSONPath expression (e.g. $.response.id)");
+      this.setTooltip("A dot-notation path (e.g. items.0.id)");
     },
   };
 

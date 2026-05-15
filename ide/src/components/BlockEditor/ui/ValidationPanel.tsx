@@ -28,7 +28,7 @@ import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import WarningAmber from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import type { ValidationError } from "../../models/validator";
+import type { ValidationError } from "../../../models/validator";
 import "./ValidationPanel.css";
 
 export interface ValidationIssue {

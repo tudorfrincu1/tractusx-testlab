@@ -8,7 +8,7 @@
  *
  * This program and the accompanying materials are made available under the
  * terms of the Apache License, Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0.
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -21,18 +21,15 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { MutableRefObject } from "react";
-import type * as Blockly from "blockly";
-import type { BlockCatalog } from "./config/blockDefinitions";
-
-/** Shared refs passed between workspace hooks. */
-export interface WorkspaceRefs {
-  workspaceRef: MutableRefObject<Blockly.WorkspaceSvg | null>;
-  catalogRef: MutableRefObject<BlockCatalog | null>;
-  isUpdatingFromStore: MutableRefObject<boolean>;
-  pendingUpdateRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
-  pendingToolboxRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
-  pendingCanvasSaveRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
-  activeFileKeyRef: MutableRefObject<string>;
-  initGenerationRef: MutableRefObject<number>;
-}
+export { createTractusXTheme, createWorkspaceOptions } from "./workspaceConfig";
+export {
+  registerBlocks,
+  loadBlockCatalog,
+  buildToolbox,
+  workspaceToModel,
+  populateWorkspaceFromModel,
+  collectWorkspaceVariables,
+  cleanupOrphanBlocks,
+} from "./blockDefinitions";
+export type { BlockCatalog } from "./blockDefinitions";
+export { blockColors, getCategoryColor } from "./blockColors";

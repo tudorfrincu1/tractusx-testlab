@@ -23,11 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Step, StepDefinition, ScriptDefinition } from "../../../models/schema";
-import { isTemplateStep } from "../../../models/schema";
-import { useServiceStore } from "../../../store/useServiceStore";
-import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
-import { toCatalogStepType } from "./stepTypeAliases";
+import type { Step, StepDefinition, ScriptDefinition } from "../../../../models/schema";
+import { isTemplateStep } from "../../../../models/schema";
+import { useServiceStore } from "../../../../store/useServiceStore";
+import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
+import { toCatalogStepType } from "../stepTypeAliases";
 import {
   makeBlock,
   setDropdownValue,
@@ -36,9 +36,9 @@ import {
   createValueBlockFromString,
   toBlockValueString,
   createArrayItemBlocks,
-} from "./helpers";
+} from "../helpers";
 import { populateAssertions } from "./populateAssertions";
-import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
+import { deserializePreconditionPolicyBlock } from "../serialize/preconditionSerializers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (

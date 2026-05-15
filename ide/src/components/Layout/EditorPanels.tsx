@@ -46,7 +46,7 @@ import {
   ValidationPanel,
   collectBlockWarnings,
   modelErrorsToIssues,
-} from "../BlockEditor/ValidationPanel";
+} from "../BlockEditor/ui/ValidationPanel";
 import { useTestLabStore } from "../../store/useTestLabStore";
 import { useExecutionStore } from "../../store/useExecutionStore";
 import { ExecutionPanel } from "../ExecutionPanel/ExecutionPanel";

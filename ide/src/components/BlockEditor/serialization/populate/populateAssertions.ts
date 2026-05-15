@@ -23,8 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Assertion } from "../../../models/schema";
-import { AssertionOperator } from "../../../models/schema";
+import type { Assertion } from "../../../../models/schema";
+import { AssertionOperator } from "../../../../models/schema";
 import {
   makeBlock,
   setDropdownValue,
@@ -32,7 +32,7 @@ import {
   connectValue,
   createValueBlockFromString,
   toBlockValueString,
-} from "./helpers";
+} from "../helpers";
 
 /** Raw assertion object from YAML — may be new typed format or legacy compact format. */
 type RawAssertion = Record<string, unknown>;

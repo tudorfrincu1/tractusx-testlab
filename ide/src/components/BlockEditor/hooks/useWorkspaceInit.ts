@@ -23,8 +23,8 @@
 
 import { useRef, useEffect, useState, type RefObject } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useProjectStore } from "../../../store/useProjectStore";
 import {
   registerBlocks,
   buildToolbox,
@@ -33,14 +33,14 @@ import {
   populateWorkspaceFromModel,
   collectWorkspaceVariables,
   cleanupOrphanBlocks,
-} from "./blockDefinitions";
-import { resolveStepIdentifier } from "./blockSelection";
-import { setKnownStepTypes } from "../../models/validator";
-import { createWorkspaceOptions } from "./workspaceConfig";
-import { injectBubbleStyles } from "./bubblePatch";
-import type { TestLabDocument } from "../../models/schema";
-import { isTest, isTck } from "../../models/schema";
-import type { WorkspaceRefs } from "./workspaceTypes";
+} from "../config/blockDefinitions";
+import { resolveStepIdentifier } from "../sync/blockSelection";
+import { setKnownStepTypes } from "../../../models/validator";
+import { createWorkspaceOptions } from "../config/workspaceConfig";
+import { injectBubbleStyles } from "../fields/bubblePatch";
+import type { TestLabDocument } from "../../../models/schema";
+import { isTest, isTck } from "../../../models/schema";
+import type { WorkspaceRefs } from "../workspaceTypes";
 
 interface WorkspaceInitResult extends WorkspaceRefs {
   containerRef: RefObject<HTMLDivElement | null>;

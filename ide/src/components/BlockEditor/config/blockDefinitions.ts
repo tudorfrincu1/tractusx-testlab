@@ -28,21 +28,21 @@
  */
 
 import type * as BlocklyType from "blockly";
-import { loadBlockCatalog, type BlockCatalog } from "./blocks/catalogLoader";
-import { registerStructuralBlocks } from "./blocks/structuralBlocks";
-import { registerValueBlocks } from "./blocks/valueBlocks";
-import { registerRootBlocks } from "./blocks/rootBlocks";
-import { registerPolicyBlocks } from "./blocks/policyBlocks";
-import { registerPreconditionBlocks } from "./blocks/preconditionBlocks";
-import { registerCatalogBlocks } from "./blocks/catalogBlocks";
-import { registerUtilityBlocks } from "./blocks/utilityBlocks";
-import { registerAssertionBlocks } from "./blocks/assertionBlocks";
-import { registerAuthBlocks } from "./blocks/authBlocks";
-import { buildToolbox } from "./toolbox/toolboxBuilder";
-import { patchBubbleColours } from "./bubblePatch";
-import { workspaceToModel } from "./serialization/workspaceToModel";
-import { populateWorkspaceFromModel, cleanupOrphanBlocks } from "./serialization/modelToWorkspace";
-import { collectWorkspaceVariables } from "./blocks/variableCollection";
+import { loadBlockCatalog, type BlockCatalog } from "../blocks/catalogLoader";
+import { registerStructuralBlocks } from "../blocks/structuralBlocks";
+import { registerValueBlocks } from "../blocks/valueBlocks";
+import { registerRootBlocks } from "../blocks/rootBlocks";
+import { registerPolicyBlocks } from "../blocks/policyBlocks";
+import { registerPreconditionBlocks } from "../blocks/preconditionBlocks";
+import { registerCatalogBlocks } from "../blocks/catalogBlocks";
+import { registerUtilityBlocks } from "../blocks/utilityBlocks";
+import { registerAssertionBlocks } from "../blocks/assertionBlocks";
+import { registerAuthBlocks } from "../blocks/authBlocks";
+import { buildToolbox } from "../toolbox/toolboxBuilder";
+import { patchBubbleColours } from "../fields/bubblePatch";
+import { workspaceToModel } from "../serialization/serialize/workspaceToModel";
+import { populateWorkspaceFromModel, cleanupOrphanBlocks } from "../serialization/populate/modelToWorkspace";
+import { collectWorkspaceVariables } from "../blocks/variableCollection";
 
 export type { BlockCatalog };
 

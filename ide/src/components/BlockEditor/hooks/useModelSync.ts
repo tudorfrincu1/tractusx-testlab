@@ -23,14 +23,14 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/useTestLabStore";
 import {
   workspaceToModel,
   populateWorkspaceFromModel,
-} from "./blockDefinitions";
-import type { TestLabDocument, ScriptDefinition, TckDefinition } from "../../models/schema";
-import { isTest, isTck } from "../../models/schema";
-import type { WorkspaceRefs } from "./workspaceTypes";
+} from "../config/blockDefinitions";
+import type { TestLabDocument, ScriptDefinition, TckDefinition } from "../../../models/schema";
+import { isTest, isTck } from "../../../models/schema";
+import type { WorkspaceRefs } from "../workspaceTypes";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {

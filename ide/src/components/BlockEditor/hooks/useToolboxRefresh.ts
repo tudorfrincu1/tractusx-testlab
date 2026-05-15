@@ -23,13 +23,13 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
-import { useServiceStore } from "../../store/useServiceStore";
+import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useServiceStore } from "../../../store/useServiceStore";
 import {
   collectWorkspaceVariables,
   buildToolbox,
-} from "./blockDefinitions";
-import type { WorkspaceRefs } from "./workspaceTypes";
+} from "../config/blockDefinitions";
+import type { WorkspaceRefs } from "../workspaceTypes";
 
 /**
  * Refreshes the Blockly toolbox when:

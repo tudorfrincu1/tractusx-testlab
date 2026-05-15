@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { StepDefinition } from "../../../models/schema";
+import type { StepDefinition } from "../../../../models/schema";
 import { serializeConstraintChain, createConstraintItemBlocks } from "./policySerializers";
 import {
   makeBlock,
@@ -32,7 +32,7 @@ import {
   connectValue,
   createValueBlockFromString,
   toBlockValueString,
-} from "./helpers";
+} from "../helpers";
 
 interface ConstraintObject {
   leftOperand?: unknown;

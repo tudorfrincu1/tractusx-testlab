@@ -25,7 +25,7 @@
 import { ScriptKind } from "../../../models/schema";
 import type { BlockCatalog, BlockCatalogCategory } from "../blocks/catalogLoader";
 import { useServiceStore } from "../../../store/useServiceStore";
-import { blockColors, getCategoryColor } from "../blockColors";
+import { blockColors, getCategoryColor } from "../config/blockColors";
 import { PHASE_DEFINITIONS } from "./phaseConfig";
 
 export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {

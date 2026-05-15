@@ -22,8 +22,8 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import type { BlockCatalog } from "./blocks/catalogLoader";
-import { PHASE_DEFINITIONS } from "./toolbox/phaseConfig";
+import type { BlockCatalog } from "../blocks/catalogLoader";
+import { PHASE_DEFINITIONS } from "../toolbox/phaseConfig";
 
 /** Phase names matching the root block statement input names. */
 type PhaseName = "SETUP" | "STEPS" | "TEARDOWN";

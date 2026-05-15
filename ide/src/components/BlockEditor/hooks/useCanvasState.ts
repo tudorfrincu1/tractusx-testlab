@@ -23,8 +23,8 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useProjectStore } from "../../store/useProjectStore";
-import type { WorkspaceRefs } from "./workspaceTypes";
+import { useProjectStore } from "../../../store/useProjectStore";
+import type { WorkspaceRefs } from "../workspaceTypes";
 
 /**
  * Saves canvas state (block positions + detached blocks) on workspace changes,

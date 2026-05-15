@@ -29,12 +29,12 @@ import type {
   Step,
   ScriptDefinition,
   TestLabDocument,
-} from "../../../models/schema";
-import { useServiceStore } from "../../../store/useServiceStore";
-import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
-import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
-import { toRuntimeStepType } from "./stepTypeAliases";
-import { parseUnsupportedParams } from "./unsupportedStepPayload";
+} from "../../../../models/schema";
+import { useServiceStore } from "../../../../store/useServiceStore";
+import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
+import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "../helpers";
+import { toRuntimeStepType } from "../stepTypeAliases";
+import { parseUnsupportedParams } from "../unsupportedStepPayload";
 import { workspaceToTck } from "./workspaceToTck";
 import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 

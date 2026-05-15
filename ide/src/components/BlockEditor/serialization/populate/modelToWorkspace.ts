@@ -26,18 +26,18 @@ import type { Block, Workspace } from "blockly";
 import type {
   TestLabDocument,
   TckDefinition,
-} from "../../../models/schema";
-import { isTck, isTest, isTestRef } from "../../../models/schema";
-import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
-import { deriveTestLabel } from "../blocks/icons";
+} from "../../../../models/schema";
+import { isTck, isTest, isTestRef } from "../../../../models/schema";
+import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
+import { deriveTestLabel } from "../../blocks/icons";
 import {
   makeBlock,
   setDropdownValue,
   attachChain,
   connectValue,
   createValueBlockFromString,
-} from "./helpers";
-import * as deferredDropdowns from "./deferredDropdowns";
+} from "../helpers";
+import * as deferredDropdowns from "../deferredDropdowns";
 import { populateTest } from "./populateTest";
 
 export function populateWorkspaceFromModel(

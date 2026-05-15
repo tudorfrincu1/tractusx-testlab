@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import { KNOWN_LEFT_OPERANDS } from "../blocks/policyConstants";
+import { KNOWN_LEFT_OPERANDS } from "../../blocks/policyConstants";
 import {
   readValueBlockAsUnknown,
   makeBlock,
@@ -32,7 +32,7 @@ import {
   createValueBlockFromString,
   toBlockValueString,
   attachChain,
-} from "./helpers";
+} from "../helpers";
 
 /** Walk a chain of constraint/logical-constraint blocks and serialize each. */
 export function serializeConstraintChain(startBlock: Block | null): unknown[] {

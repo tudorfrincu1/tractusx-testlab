@@ -22,10 +22,10 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useBlocklyWorkspace } from "./useBlocklyWorkspace";
-import { setupWarningTooltip, type WarningShowRequest } from "./bubblePatch";
+import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
+import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
 import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
-import { BlockTooltip } from "./WarningTooltip";
+import { BlockTooltip } from "./ui/WarningTooltip";
 import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {

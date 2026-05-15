@@ -24,7 +24,7 @@
 
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors } from "../blockColors";
+import { blockColors } from "../config/blockColors";
 import {
   SATURN_LEFT_OPERANDS,
   SATURN_OPERATORS,

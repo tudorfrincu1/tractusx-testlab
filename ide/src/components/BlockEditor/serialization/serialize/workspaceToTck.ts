@@ -23,8 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block } from "blockly";
-import type { TckDefinition, TestRef } from "../../../models/schema";
-import { readValueBlockAsString } from "./helpers";
+import type { TckDefinition, TestRef } from "../../../../models/schema";
+import { readValueBlockAsString } from "../helpers";
 
 export function workspaceToTck(root: Block): Partial<TckDefinition> {
   const name = root.getFieldValue("NAME") || "my-tck";

@@ -23,7 +23,7 @@
 
 import { useRef, useEffect, useState, type RefObject } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/useTestLabStore";
 import {
   registerBlocks,
   buildToolbox,
@@ -31,13 +31,13 @@ import {
   populateWorkspaceFromModel,
   collectWorkspaceVariables,
   cleanupOrphanBlocks,
-} from "./blockDefinitions";
-import { createWorkspaceOptions } from "./workspaceConfig";
-import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "./workspaceListeners";
-import { attachServiceAutoDeclareListener } from "./serviceAutoDeclare";
-import { attachPhaseEnforcementListener } from "./phaseEnforcement";
-import type { ScriptDefinition, TckDefinition } from "../../models/schema";
-import { isTest, isTck } from "../../models/schema";
+} from "../config/blockDefinitions";
+import { createWorkspaceOptions } from "../config/workspaceConfig";
+import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "../sync/workspaceListeners";
+import { attachServiceAutoDeclareListener } from "../sync/serviceAutoDeclare";
+import { attachPhaseEnforcementListener } from "../sync/phaseEnforcement";
+import type { ScriptDefinition, TckDefinition } from "../../../models/schema";
+import { isTest, isTck } from "../../../models/schema";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {

@@ -22,9 +22,9 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import type { BlockCatalog } from "./blocks/catalogLoader";
-import { SERVICE_TYPE_RESOLUTION } from "./toolbox/toolboxBuilder";
-import { useServiceStore } from "../../store/useServiceStore";
+import type { BlockCatalog } from "../blocks/catalogLoader";
+import { SERVICE_TYPE_RESOLUTION } from "../toolbox/toolboxBuilder";
+import { useServiceStore } from "../../../store/useServiceStore";
 
 /** Prefix used when registering catalog blocks. */
 const STEP_PREFIX = "step_";

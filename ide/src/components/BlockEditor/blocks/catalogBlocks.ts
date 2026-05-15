@@ -24,7 +24,7 @@
 
 import type { Block, WorkspaceSvg } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors, getCategoryColor } from "../blockColors";
+import { blockColors, getCategoryColor } from "../config/blockColors";
 import type { BlockCatalog } from "./catalogLoader";
 import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "./icons";
 import {
