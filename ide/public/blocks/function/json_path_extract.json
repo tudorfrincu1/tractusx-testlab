@@ -7,6 +7,11 @@
     { "name": "path", "type": "json_path", "required": true, "description": "Dot-notation path (e.g., items.0.id)" }
   ],
   "outputs": [
-    { "name": "value", "description": "Extracted value" }
+    {
+      "name": "value",
+      "description": "Extracted value",
+      "schema": { "type": "unknown", "description": "Type depends on the extracted value — could be string, number, object, or array" },
+      "example": "extracted-value"
+    }
   ]
 }

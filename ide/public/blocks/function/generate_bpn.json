@@ -6,6 +6,11 @@
     { "name": "prefix", "type": "dropdown", "required": false, "description": "BPN type prefix", "options": ["BPNL", "BPNS", "BPNA"] }
   ],
   "outputs": [
-    { "name": "bpn", "description": "The generated BPN string" }
+    {
+      "name": "bpn",
+      "description": "The generated BPN string",
+      "schema": { "type": "string", "description": "Business Partner Number (e.g., BPNL000000000001)" },
+      "example": "BPNL000000000001"
+    }
   ]
 }

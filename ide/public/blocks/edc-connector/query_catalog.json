@@ -10,7 +10,50 @@
     { "name": "operator", "type": "dropdown", "required": false, "description": "Comparison operator", "options": ["=", "like", "!="] }
   ],
   "outputs": [
-    { "name": "catalog", "description": "The full catalog response" },
-    { "name": "datasets", "description": "Array of datasets (offers) in the catalog" }
+    {
+      "name": "catalog",
+      "description": "The full catalog response",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "@id": { "type": "string", "description": "Catalog ID" },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "@id": { "type": "string", "description": "Dataset/offer ID" },
+                "hasPolicy": { "type": "object", "description": "ODRL policy" },
+                "distribution": { "type": "array", "description": "Data distribution formats" }
+              }
+            }
+          }
+        }
+      },
+      "example": {
+        "@id": "catalog-123",
+        "datasets": [
+          { "@id": "offer-abc", "hasPolicy": { "@id": "policy-1" }, "distribution": [] }
+        ]
+      }
+    },
+    {
+      "name": "datasets",
+      "description": "Array of datasets (offers) in the catalog",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "@id": { "type": "string", "description": "Dataset/offer ID" },
+            "hasPolicy": { "type": "object", "description": "ODRL policy" },
+            "distribution": { "type": "array", "description": "Data distribution formats" }
+          }
+        }
+      },
+      "example": [
+        { "@id": "offer-abc", "hasPolicy": { "@id": "policy-1" }, "distribution": [] }
+      ]
+    }
   ]
 }

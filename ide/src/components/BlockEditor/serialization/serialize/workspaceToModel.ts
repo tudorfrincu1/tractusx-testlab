@@ -188,17 +188,27 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           break;
         }
         case "json": {
-          const jsonObj: Record<string, unknown> = {};
-          let kvBlock = block.getInputTargetBlock(fieldKey);
-          while (kvBlock) {
-            if (kvBlock.type === "key_value_pair") {
-              const key = kvBlock.getFieldValue("KEY") || "";
-              const value = readValueBlockAsUnknown(kvBlock.getInputTargetBlock("VALUE"));
-              if (key && value !== undefined) jsonObj[key] = value;
+          let merged: Record<string, unknown> = {};
+          let current = block.getInputTargetBlock(fieldKey);
+          while (current) {
+            if (current.type === "value_json") {
+              const raw = current.getFieldValue("JSON_VALUE") || "{}";
+              try {
+                const parsed: unknown = JSON.parse(raw);
+                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                  merged = { ...(parsed as Record<string, unknown>), ...merged };
+                }
+              } catch {
+                // Invalid JSON stored — skip
+              }
+            } else if (current.type === "key_value_pair") {
+              const key = current.getFieldValue("KEY") || "";
+              const value = readValueBlockAsUnknown(current.getInputTargetBlock("VALUE"));
+              if (key && value !== undefined) merged[key] = value;
             }
-            kvBlock = kvBlock.getNextBlock();
+            current = current.getNextBlock();
           }
-          if (Object.keys(jsonObj).length > 0) params[p.name] = jsonObj;
+          if (Object.keys(merged).length > 0) params[p.name] = merged;
           break;
         }
         case "steps": {

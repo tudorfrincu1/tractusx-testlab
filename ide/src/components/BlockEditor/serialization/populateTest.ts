@@ -39,6 +39,7 @@ import {
 } from "./helpers";
 import { populateAssertions } from "./populateAssertions";
 import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
+import { truncateJsonPreview } from "../blocks/jsonEditor";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -133,14 +134,26 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               break;
             case "json":
               if (typeof paramVal === "object") {
-                const kvBlocks: Block[] = [];
-                for (const [key, value] of Object.entries(paramVal as Record<string, unknown>)) {
-                  const kvb = makeBlock(ws, "key_value_pair");
-                  kvb.setFieldValue(key, "KEY");
-                  connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
-                  kvBlocks.push(kvb);
+                const entries = Object.entries(paramVal as Record<string, unknown>);
+                const hasNested = entries.some(([, v]) =>
+                  typeof v === "object" && v !== null,
+                );
+                if (entries.length > 3 || hasNested) {
+                  const vjb = makeBlock(ws, "value_json");
+                  const jsonStr = JSON.stringify(paramVal, null, 2);
+                  vjb.setFieldValue(jsonStr, "JSON_VALUE");
+                  vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
+                  attachChain(sb, fieldKey, [vjb]);
+                } else {
+                  const kvBlocks: Block[] = [];
+                  for (const [key, value] of entries) {
+                    const kvb = makeBlock(ws, "key_value_pair");
+                    kvb.setFieldValue(key, "KEY");
+                    connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
+                    kvBlocks.push(kvb);
+                  }
+                  attachChain(sb, fieldKey, kvBlocks);
                 }
-                attachChain(sb, fieldKey, kvBlocks);
               }
               break;
             case "array":

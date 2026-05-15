@@ -238,5 +238,5 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
     return () => observer.disconnect();
   }, [ready]);
 
-  return { workspace: ready ? workspaceRef.current : null };
+  return { workspace: ready ? workspaceRef.current : null, catalog: catalogRef.current };
 }

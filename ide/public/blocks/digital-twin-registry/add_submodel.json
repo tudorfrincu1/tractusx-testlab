@@ -10,6 +10,11 @@
     { "name": "endpoint_url", "type": "string", "required": true, "description": "URL where the submodel data can be fetched" }
   ],
   "outputs": [
-    { "name": "submodel_id", "description": "ID of the attached submodel descriptor" }
+    {
+      "name": "submodel_id",
+      "description": "ID of the attached submodel descriptor",
+      "schema": { "type": "string" },
+      "example": "submodel-uuid-abc"
+    }
   ]
 }

@@ -10,6 +10,23 @@
     { "name": "obligations", "type": "array", "item_type": "odrl_obligation", "required": false, "description": "ODRL obligation rules (Saturn only)" }
   ],
   "outputs": [
-    { "name": "config_result", "description": "The policy configuration object" }
+    {
+      "name": "config_result",
+      "description": "The policy configuration object",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "resource_type": { "type": "string", "description": "Type of resource (policy)" },
+            "resource_id": { "type": "string", "description": "ID of the configured resource" },
+            "status": { "type": "string", "description": "Configuration status (created, exists, failed)" }
+          }
+        }
+      },
+      "example": [
+        { "resource_type": "policy", "resource_id": "policy-uuid-456", "status": "created" }
+      ]
+    }
   ]
 }

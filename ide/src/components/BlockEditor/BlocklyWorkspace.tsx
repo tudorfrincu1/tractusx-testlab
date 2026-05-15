@@ -21,18 +21,27 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
 import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
 import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
+import { setupPathBuilderCallback, type PathBuilderRequest } from "./blocks/pathBuilder";
+import type { PathSegment } from "./blocks/pathBuilder";
+import { setupJsonEditorCallback, type JsonEditorRequest } from "./blocks/jsonEditor";
+import { truncateJsonPreview } from "./blocks/jsonEditor";
+import { findOutputSchema } from "./blocks/catalogLoader";
+import { PathBuilderModal } from "./blocks/PathBuilderModal";
+import { JsonEditorModal } from "./blocks/JsonEditorModal";
 import { BlockTooltip } from "./ui/WarningTooltip";
 import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { workspace } = useBlocklyWorkspace(containerRef);
+  const { workspace, catalog } = useBlocklyWorkspace(containerRef);
   const [warning, setWarning] = useState<WarningShowRequest | null>(null);
   const [info, setInfo] = useState<InfoShowRequest | null>(null);
+  const [pathReq, setPathReq] = useState<PathBuilderRequest | null>(null);
+  const [jsonReq, setJsonReq] = useState<JsonEditorRequest | null>(null);
 
   const handleWarningClose = useCallback(() => setWarning(null), []);
   const handleInfoClose = useCallback(() => setInfo(null), []);
@@ -56,6 +65,45 @@ export function BlocklyWorkspace() {
     return setupInfoCallback(handleShowInfo);
   }, [handleShowInfo]);
 
+  useEffect(() => {
+    return setupPathBuilderCallback((req: PathBuilderRequest) => setPathReq(req));
+  }, []);
+
+  useEffect(() => {
+    return setupJsonEditorCallback((req: JsonEditorRequest) => setJsonReq(req));
+  }, []);
+
+  const handlePathSave = useCallback(
+    (blockId: string, segments: PathSegment[], path: string) => {
+      if (!workspace) return;
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      block.setFieldValue(path, "VALUE");
+      (block as unknown as { __segments?: PathSegment[] }).__segments = segments;
+    },
+    [workspace],
+  );
+
+  const handlePathClose = useCallback(() => setPathReq(null), []);
+
+  const handleJsonSave = useCallback(
+    (blockId: string, json: string) => {
+      if (!workspace) return;
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      block.setFieldValue(json, "JSON_VALUE");
+      block.setFieldValue(truncateJsonPreview(json), "JSON_PREVIEW");
+    },
+    [workspace],
+  );
+
+  const handleJsonClose = useCallback(() => setJsonReq(null), []);
+
+  const resolvedSchema = useMemo(() => {
+    if (!pathReq?.sourceVariable || !catalog) return undefined;
+    return findOutputSchema(pathReq.sourceVariable, catalog);
+  }, [pathReq?.sourceVariable, catalog]);
+
   return (
     <>
       <div ref={containerRef} className="blockly-workspace-container" />
@@ -73,6 +121,23 @@ export function BlocklyWorkspace() {
           position={info.position}
           variant="info"
           onClose={handleInfoClose}
+        />
+      )}
+      {pathReq && (
+        <PathBuilderModal
+          blockId={pathReq.blockId}
+          initialSegments={pathReq.segments}
+          schema={resolvedSchema}
+          onSave={handlePathSave}
+          onClose={handlePathClose}
+        />
+      )}
+      {jsonReq && (
+        <JsonEditorModal
+          blockId={jsonReq.blockId}
+          initialJson={jsonReq.jsonValue}
+          onSave={handleJsonSave}
+          onClose={handleJsonClose}
         />
       )}
     </>

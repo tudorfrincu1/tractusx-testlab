@@ -1,0 +1,119 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+.schema-tree {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  max-width: 220px;
+  border-right: 1px solid #444;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.schema-tree-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #80deea;
+  padding: 0 0 6px 0;
+  border-bottom: 1px solid #444;
+  margin-bottom: 6px;
+}
+
+.schema-tree-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.schema-tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.schema-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.schema-tree-row:hover {
+  background: #333;
+}
+
+.schema-tree-leaf:hover {
+  background: #0a5c70;
+  color: #fff;
+}
+
+.schema-tree-toggle {
+  width: 12px;
+  font-size: 0.7rem;
+  color: #999;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.schema-tree-toggle-spacer {
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.schema-tree-icon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.schema-tree-key {
+  color: #e0e0e0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schema-tree-type {
+  color: #888;
+  font-size: 0.7rem;
+  font-style: italic;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.schema-tree-empty {
+  color: #888;
+  font-size: 0.78rem;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.schema-tree-depth-0 { padding-left: 0; }
+.schema-tree-depth-1 { padding-left: 14px; }
+.schema-tree-depth-2 { padding-left: 28px; }
+.schema-tree-depth-3 { padding-left: 42px; }
+.schema-tree-depth-4 { padding-left: 56px; }
+.schema-tree-depth-5 { padding-left: 70px; }
+.schema-tree-depth-6 { padding-left: 84px; }

@@ -231,7 +231,10 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         kind: "category",
         name: "JSON",
         colour: blockColors.json,
-        contents: [{ kind: "block", type: "key_value_pair" }],
+        contents: [
+          { kind: "block", type: "key_value_pair" },
+          { kind: "block", type: "value_json" },
+        ],
       },
       {
         kind: "category",

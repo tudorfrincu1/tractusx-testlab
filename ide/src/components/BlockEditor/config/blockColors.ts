@@ -49,6 +49,7 @@ export const blockColors = {
   /** Data blocks */
   json: "#374151",
   keyValue: "#374151",
+  valueJson: "#92400E",
 
   /** Step category colors (catalog-driven) — each category gets a unique hue */
   categories: {

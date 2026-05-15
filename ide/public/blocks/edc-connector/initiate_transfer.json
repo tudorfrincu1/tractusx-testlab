@@ -9,8 +9,34 @@
     { "name": "transfer_type", "type": "dropdown", "required": false, "description": "Transfer type", "options": ["HttpData-PULL", "HttpData-PUSH", "AmazonS3-PUSH"] }
   ],
   "outputs": [
-    { "name": "transfer_id", "description": "ID of the transfer process" },
-    { "name": "state", "description": "Transfer state" },
-    { "name": "data_address", "description": "Endpoint for pulling data (PULL mode)" }
+    {
+      "name": "transfer_id",
+      "description": "ID of the transfer process",
+      "schema": { "type": "string" },
+      "example": "transfer-001"
+    },
+    {
+      "name": "state",
+      "description": "Transfer state",
+      "schema": { "type": "string" },
+      "example": "STARTED"
+    },
+    {
+      "name": "data_address",
+      "description": "Endpoint for pulling data (PULL mode)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "endpoint": { "type": "string", "description": "Data endpoint URL" },
+          "authorization": { "type": "string", "description": "EDR authorization token" },
+          "type": { "type": "string", "description": "Transfer type identifier" }
+        }
+      },
+      "example": {
+        "endpoint": "https://dataplane.example.com/api/public",
+        "authorization": "token-xyz",
+        "type": "https://w3id.org/idsa/v4.1/HTTP"
+      }
+    }
   ]
 }

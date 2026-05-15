@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>value_json_path Block — Design Options</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#121212;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif;padding:24px;display:flex;flex-direction:column;gap:32px}
+h1{text-align:center;font-size:1.4rem;color:#80deea;margin-bottom:8px}
+.subtitle{text-align:center;color:#888;font-size:.85rem;margin-bottom:16px}
+section{background:#1e1e1e;border-radius:12px;padding:24px;border:1px solid #333}
+.label{font-size:1.1rem;font-weight:700;color:#80deea;margin-bottom:12px}
+.canvas{background:#2d2d2d;border-radius:8px;padding:24px;min-height:100px;position:relative}
+/* Shared block styles */
+.block{display:inline-flex;align-items:center;background:#0E7490;border-radius:6px;padding:6px 10px;gap:4px;font-size:.85rem;color:#fff;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,.4);white-space:nowrap}
+.block .notch{width:10px;height:10px;background:#0a5c70;border-radius:2px;margin-right:4px}
+.block .arrow{margin-right:2px;font-size:1rem}
+.dot{color:#8ee8d0;font-weight:400;margin:0 2px}
+.gear{cursor:pointer;background:#0a5c70;border-radius:4px;padding:2px 5px;margin-right:6px;font-size:.8rem}
+/* Option A: mutator popup */
+.popup{position:absolute;left:320px;top:8px;background:#3a3a3a;border:1px solid #555;border-radius:8px;padding:12px;width:160px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.popup-title{font-size:.7rem;color:#999;text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px}
+.mini-block{background:#0E7490;border-radius:4px;padding:4px 10px;margin-bottom:4px;font-size:.75rem;color:#fff;cursor:grab;display:flex;align-items:center;gap:4px}
+.mini-block.idx{background:#7c3aed}
+.grip{color:#666;font-size:.7rem}
+/* Option B: inline segments */
+.seg{display:inline-flex;align-items:center;background:#0c6a82;border-radius:4px;padding:3px 8px;margin:0 1px;position:relative}
+.seg.idx{background:#7c3aed;border-radius:4px;padding:3px 6px}
+.seg .icon{font-size:.7rem;margin-right:3px}
+.seg .x-btn{position:absolute;top:-8px;right:-6px;background:#e53e3e;color:#fff;border:none;border-radius:50%;width:14px;height:14px;font-size:.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.7}
+.seg .x-btn:hover{opacity:1}
+.add-btn{background:#0a5c70;border:1px dashed #0E7490;border-radius:4px;padding:3px 8px;color:#80deea;cursor:pointer;font-size:.8rem;margin-left:2px}
+.add-btn:hover{background:#0E7490;color:#fff}
+/* Option C: modal */
+.compact-block{cursor:pointer}
+.edit-btn{background:#0a5c70;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:.75rem;margin-left:6px}
+.edit-btn:hover{background:#0E7490}
+.modal-overlay{margin-top:16px;background:#252525;border:1px solid #555;border-radius:10px;padding:20px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.modal-overlay.hidden{display:none}
+.modal-title{font-size:.95rem;font-weight:700;margin-bottom:8px;color:#80deea}
+.preview{background:#1a1a1a;border-radius:4px;padding:6px 12px;font-family:'Fira Code',monospace,monospace;font-size:.85rem;color:#8ee8d0;margin-bottom:12px;border:1px solid #444}
+.seg-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.seg-row .grip-handle{cursor:grab;color:#666;font-size:.85rem}
+.seg-row select,.seg-row input{background:#1e1e1e;border:1px solid #555;border-radius:4px;color:#e0e0e0;padding:4px 8px;font-size:.8rem}
+.seg-row select{width:80px}
+.seg-row input{width:100px}
+.seg-row .del{background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.9rem;padding:2px 6px}
+.seg-row .del:hover{color:#fc8181}
+.modal-actions{display:flex;gap:8px;margin-top:10px}
+.modal-actions button{border:none;border-radius:4px;padding:6px 14px;font-size:.8rem;cursor:pointer}
+.btn-add{background:#0a5c70;color:#80deea}.btn-add:hover{background:#0E7490;color:#fff}
+.btn-done{background:#0E7490;color:#fff;font-weight:600}.btn-done:hover{background:#0c6a82}
+/* Pros/Cons */
+.notes{margin-top:12px;font-size:.78rem;color:#aaa;line-height:1.6}
+.notes b{color:#80deea}.notes .con{color:#f6ad55}
+</style>
+</head>
+<body>
+<h1>value_json_path Block — Design Comparison</h1>
+<p class="subtitle">Path: items.0.id (object key → array index → object key)</p>
+
+<!-- OPTION A -->
+<section>
+  <div class="label">A: Mutator (gear popup)</div>
+  <div class="canvas">
+    <div class="block"><span class="gear">⚙</span><span class="arrow">⟹</span> items <span class="dot">.</span> 0 <span class="dot">.</span> id</div>
+    <div class="popup">
+      <div class="popup-title">Path Segments</div>
+      <div class="mini-block"><span class="grip">⠿</span> 🔑 Key: items</div>
+      <div class="mini-block idx"><span class="grip">⠿</span> #  Index: 0</div>
+      <div class="mini-block"><span class="grip">⠿</span> 🔑 Key: id</div>
+    </div>
+  </div>
+  <div class="notes"><b>✓</b> Standard Blockly pattern — users familiar with Scratch/Blockly expect it &nbsp;|&nbsp; <b>✓</b> Clean block surface<br><span class="con">✗ Gear popup is clunky — extra click to edit &nbsp;|&nbsp; ✗ Hard to see path structure at a glance</span></div>
+</section>
+
+<!-- OPTION B -->
+<section>
+  <div class="label">B: Inline Segments with +/−</div>
+  <div class="canvas">
+    <div class="block" id="optB">
+      <span class="arrow">⟹</span>
+      <span class="seg"><span class="icon">🔑</span>items<span class="x-btn" onclick="this.parentElement.remove()">✕</span></span>
+      <span class="dot">.</span>
+      <span class="seg idx">[# 0]<span class="x-btn" onclick="this.parentElement.remove()">✕</span></span>
+      <span class="dot">.</span>
+      <span class="seg"><span class="icon">🔑</span>id<span class="x-btn" onclick="this.parentElement.remove()">✕</span></span>
+      <span class="add-btn" onclick="addSeg()">+</span>
+    </div>
+  </div>
+  <div class="notes"><b>✓</b> Everything visible inline — no popup needed &nbsp;|&nbsp; <b>✓</b> Quick add/remove<br><span class="con">✗ Block gets wide with long paths &nbsp;|&nbsp; ✗ Visual clutter with many segments</span></div>
+</section>
+
+<!-- OPTION C -->
+<section>
+  <div class="label">C: Path Builder Modal</div>
+  <div class="canvas">
+    <div class="block compact-block" onclick="toggleModal()"><span class="arrow">⟹</span> items.0.id <span class="edit-btn">✏</span></div>
+    <div class="modal-overlay" id="modal">
+      <div class="modal-title">Build Path</div>
+      <div class="preview" id="pathPreview">items[0].id</div>
+      <div id="segList">
+        <div class="seg-row"><span class="grip-handle">⠿</span><select><option selected>Key</option><option>Index</option></select><input value="items"><button class="del" onclick="this.parentElement.remove();updatePreview()">🗑</button></div>
+        <div class="seg-row"><span class="grip-handle">⠿</span><select><option>Key</option><option selected>Index</option></select><input type="number" value="0"><button class="del" onclick="this.parentElement.remove();updatePreview()">🗑</button></div>
+        <div class="seg-row"><span class="grip-handle">⠿</span><select><option selected>Key</option><option>Index</option></select><input value="id"><button class="del" onclick="this.parentElement.remove();updatePreview()">🗑</button></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-add" onclick="addSegC()">+ Add Segment</button>
+        <button class="btn-done" onclick="toggleModal()">Done</button>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>✓</b> Compact block — doesn't grow with path length &nbsp;|&nbsp; <b>✓</b> Full control in modal: reorder, type toggle, preview<br><span class="con">✗ Requires a modal — extra interaction layer &nbsp;|&nbsp; ✗ More complex implementation</span></div>
+</section>
+
+<script>
+function addSeg(){
+  const b=document.getElementById('optB'), btn=b.querySelector('.add-btn');
+  const d=document.createElement('span');d.className='dot';d.textContent='.';
+  const s=document.createElement('span');s.className='seg';
+  s.innerHTML='<span class="icon">🔑</span>new<span class="x-btn" onclick="this.parentElement.previousElementSibling.remove();this.parentElement.remove()">✕</span>';
+  b.insertBefore(d,btn);b.insertBefore(s,btn);
+}
+function toggleModal(){document.getElementById('modal').classList.toggle('hidden')}
+function addSegC(){
+  const list=document.getElementById('segList'),row=document.createElement('div');row.className='seg-row';
+  row.innerHTML='<span class="grip-handle">⠿</span><select><option selected>Key</option><option>Index</option></select><input value=""><button class="del" onclick="this.parentElement.remove();updatePreview()">🗑</button>';
+  list.appendChild(row);row.querySelector('input').focus();
+}
+function updatePreview(){
+  const rows=document.querySelectorAll('#segList .seg-row');let p='';
+  rows.forEach((r,i)=>{const t=r.querySelector('select').value,v=r.querySelector('input').value;
+    if(t==='Index')p+='['+v+']';else p+=(i>0?'.':'')+v;});
+  document.getElementById('pathPreview').textContent=p||'(empty)';
+}
+document.querySelectorAll('#segList select, #segList input').forEach(el=>el.addEventListener('input',updatePreview));
+</script>
+</body>
+</html>
