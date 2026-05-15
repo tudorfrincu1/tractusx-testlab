@@ -43,6 +43,17 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     },
   };
 
+  Blockly.Blocks["value_json_path"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("$.")
+        .appendField(new Blockly.FieldTextInput(""), "VALUE");
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueJsonPath);
+      this.setTooltip("A JSONPath expression (e.g. $.response.id)");
+    },
+  };
+
   Blockly.Blocks["value_number"] = {
     init(this: Block) {
       this.appendDummyInput()

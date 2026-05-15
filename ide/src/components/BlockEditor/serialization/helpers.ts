@@ -45,6 +45,10 @@ export function readValueBlockAsString(block: Block | null): string | undefined 
   if (block.type === "value_string") {
     return block.getFieldValue("VALUE") || undefined;
   }
+  if (block.type === "value_json_path") {
+    const path = block.getFieldValue("VALUE") || "";
+    return path ? `$.${path}` : undefined;
+  }
   if (block.type === "value_number") {
     const n = block.getFieldValue("VALUE");
     return n !== undefined ? String(n) : undefined;
@@ -141,7 +145,9 @@ export function createValueBlockFromString(ws: Workspace, strVal: string): Block
     return vb;
   }
   if (strVal.startsWith("$.")) {
-    strVal = strVal.slice(2);
+    const jpb = makeBlock(ws, "value_json_path");
+    jpb.setFieldValue(strVal.slice(2), "VALUE");
+    return jpb;
   }
   const num = Number(strVal);
   if (!isNaN(num) && strVal.trim() !== "") {
