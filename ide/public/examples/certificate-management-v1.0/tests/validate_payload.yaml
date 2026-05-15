@@ -29,11 +29,6 @@ description: >
   Fetch and validate certificate payload against CX-0135
   BusinessPartnerCertificate semantic model v3.1.0.
 
-depends_on:
-  - file: tests/request_certificate.yaml
-    outputs:
-      - document_id
-
 setup:
   - type: load_schema
     description: Load BusinessPartnerCertificate v3.1.0 schema

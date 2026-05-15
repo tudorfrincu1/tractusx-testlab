@@ -92,6 +92,8 @@ class AssertionEngine:
             return [assertion.min, assertion.max]
         if assertion.type == AssertionType.SCHEMA_VALIDATION:
             return assertion.schema_ref
+        if assertion.type == AssertionType.ASSERT_FIELD:
+            return {"operator": assertion.operator or "equals", "value": assertion.expected}
         if assertion.source == ValueSource.VARIABLE:
             var_name = assertion.value
             return context_vars.get(var_name, assertion.value)
@@ -221,4 +223,5 @@ _ASSERTION_CHECKS = {
     AssertionType.GREATER_OR_EQUAL: _checks.check_greater_or_equal,
     AssertionType.LESS_OR_EQUAL: _checks.check_less_or_equal,
     AssertionType.BETWEEN: _checks.check_between,
+    AssertionType.ASSERT_FIELD: _checks.check_assert_field,
 }

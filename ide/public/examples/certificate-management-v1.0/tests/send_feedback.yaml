@@ -29,16 +29,9 @@ description: >
   Send a CCMAPI feedback notification to the provider via EDC dataplane (SEND direction)
   and await the provider's RECEIVE acknowledgment on a TestLab mock endpoint.
 
-depends_on:
-  - file: tests/request_certificate.yaml
-    outputs:
-      - request_id
-  - "tests/validate_payload.yaml"
-  - "tests/await_feedback_callback.yaml"
-
 services:
   - name: provider_edc
-    type: edc_connector_saturn
+    type: connector_consumer
     base_url: "@provider_address"
 
 setup:

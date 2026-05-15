@@ -155,3 +155,34 @@ def check_between(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
         return passed, "" if passed else f"Expected {lo} <= {actual} <= {hi}"
     except (TypeError, ValueError) as exc:
         return False, f"Cannot compare: {exc}"
+
+
+def check_assert_field(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+    """Check a field value using an operator + expected pair.
+
+    *expected* must be a dict with ``operator`` and optionally ``value`` keys.
+    Supported operators: equals, not_null, not_empty, contains, not_contains.
+    """
+    if not isinstance(expected, dict):
+        return False, f"ASSERT_FIELD expects {{operator, value}} dict, got {type(expected).__name__}"
+
+    operator = expected.get("operator", "equals")
+    exp_value = expected.get("value")
+
+    if operator == "equals":
+        passed = actual == exp_value
+        return passed, "" if passed else f"Expected {exp_value!r}, got {actual!r}"
+    if operator == "not_null":
+        passed = actual is not None
+        return passed, "" if passed else "Expected non-null value, got None"
+    if operator == "not_empty":
+        passed = actual is not None and actual != "" and actual != [] and actual != {}
+        return passed, "" if passed else f"Expected non-empty value, got {actual!r}"
+    if operator == "contains":
+        passed = exp_value in actual if isinstance(actual, (str, list, dict)) else False
+        return passed, "" if passed else f"Expected {actual!r} to contain {exp_value!r}"
+    if operator == "not_contains":
+        passed = exp_value not in actual if isinstance(actual, (str, list, dict)) else True
+        return passed, "" if passed else f"Expected {actual!r} to NOT contain {exp_value!r}"
+
+    return False, f"Unknown ASSERT_FIELD operator: {operator}"

@@ -58,12 +58,15 @@ class Assertion(BaseModel):
     schema_ref: Optional[str] = Field(default=None, alias="schema")
     min: Optional[Any] = None
     max: Optional[Any] = None
+    operator: Optional[str] = None
+    expected: Optional[Any] = None
 
     model_config = {"populate_by_name": True}
 
 
 class StepDefinition(BaseModel):
     type: str
+    name: Optional[str] = None
     description: Optional[str] = None
     params: dict = Field(default_factory=dict)
     on_failure: FailurePolicy = FailurePolicy.ABORT

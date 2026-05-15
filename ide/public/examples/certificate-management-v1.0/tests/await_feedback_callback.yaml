@@ -29,11 +29,6 @@ description: >
   Listen for provider callback after certificate processing and verify
   feedback payload semantics for CX-0135 path /companycertificate/status.
 
-depends_on:
-  - file: tests/request_certificate.yaml
-    outputs:
-      - request_id
-
 setup:
   - type: mock_endpoint
     description: Expose callback endpoint for provider feedback

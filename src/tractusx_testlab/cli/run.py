@@ -64,6 +64,9 @@ def run(
     from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
     from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
 
+    # Register all local step executors (triggers @step() decorators)
+    import tractusx_testlab.steps  # noqa: F401
+
     runtime_vars = _build_runtime_vars(config_file, var)
 
     if target.suffix == ".tckpkg" and (player_keys is None or compiler_pub is None):
@@ -125,7 +128,7 @@ def _load_tck(
     compiler_pub: Optional[Path],
 ):
     """Load a TCK from YAML or encrypted .tckpkg."""
-    from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
+    from tractusx_testlab.player.loading.loader import Loader
 
     loader = Loader()
 
@@ -197,7 +200,7 @@ def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_step
 
         player.monitor.add_callback(_on_progress)
         return asyncio.run(
-            player.run_tck(tck, runtime_vars=runtime_vars or None)
+            player.run_test_case(tck, runtime_vars=runtime_vars or None)
         )
 
 

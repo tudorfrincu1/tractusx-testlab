@@ -1,0 +1,294 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
+
+"""Local YAML parser that creates testlab model instances with extended types.
+
+The SDK parser rejects testlab-extended enum values (e.g. ``NOT_NULL``,
+``EDC_CONNECTOR_SATURN``) because its Pydantic models validate against the
+SDK's narrower enums.  This parser reads YAML and builds our local model
+instances directly, then wraps them in SDK-compatible runtime objects using
+``model_construct()`` to bypass Pydantic validation where needed.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Optional, Union
+
+import yaml
+
+from tractusx_sdk.extensions.testlab.models import (
+    TestCaseDefinition as SdkTckDefinition,
+)
+
+try:
+    from tractusx_sdk.extensions.testlab.models import (
+        DependencyRef, FailurePolicy, ImportDefinition, SdkCallMode,
+    )
+except ImportError:
+    from enum import Enum as _Enum
+    from pydantic import BaseModel as _FB
+    class FailurePolicy(str, _Enum):  # type: ignore[no-redef]
+        ABORT = "ABORT"; CONTINUE = "CONTINUE"; SKIP = "SKIP"  # noqa: E702
+    class SdkCallMode(str, _Enum):  # type: ignore[no-redef]
+        ALLOWLIST = "ALLOWLIST"; BLOCKLIST = "BLOCKLIST"; NONE = "NONE"  # noqa: E702
+    class DependencyRef(_FB):  # type: ignore[no-redef]
+        file: str; outputs: list[str] = []  # noqa: E702
+    class ImportDefinition(_FB):  # type: ignore[no-redef]
+        import_ref: str; override: dict | None = None  # noqa: E702
+
+try:
+    from tractusx_sdk.extensions.testlab.models.definitions import (
+        ScriptDefinition as SdkScriptDefinition,
+    )
+except ImportError:
+    from pydantic import BaseModel as _SFB
+    class SdkScriptDefinition(_SFB, extra="allow"): pass  # type: ignore[no-redef,call-arg]
+
+try:
+    from tractusx_sdk.extensions.testlab.scripting._dependencies import (
+        infer_output_dependencies, resolve_file_dependencies,
+    )
+except ImportError:
+
+    def resolve_file_dependencies(tests, base_dir, parse_fn):  # type: ignore[misc]
+        return tests
+
+    def infer_output_dependencies(tests):  # type: ignore[misc]
+        pass
+
+from tractusx_testlab.models.definitions import (
+    Assertion,
+    ListenerDefinition,
+    ScriptDefinition,
+    ServiceDefinition,
+    StepDefinition,
+    VariableDefinition,
+)
+from tractusx_testlab.models.enums import (
+    AssertionSeverity,
+    AssertionType,
+    ScriptKind,
+    ServiceType,
+    ValueSource,
+)
+from tractusx_testlab.player.loading import _constants as C
+
+logger = logging.getLogger(__name__)
+
+def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
+    """Parse a variables mapping into VariableDefinition instances."""
+    result: dict[str, VariableDefinition] = {}
+    for name, spec in raw.items():
+        if isinstance(spec, dict):
+            result[name] = VariableDefinition(name=name, **spec)
+        else:
+            result[name] = VariableDefinition(name=name, default=spec)
+    return result
+
+
+def parse_assertion(raw: dict) -> Assertion:
+    """Parse a single assertion dict into a local Assertion model."""
+    return Assertion(
+        type=AssertionType(raw.get(C.K_TYPE, C.DEFAULT_ASSERTION_TYPE)),
+        severity=AssertionSeverity(raw.get(C.K_SEVERITY, C.DEFAULT_ASSERTION_SEVERITY)),
+        source=ValueSource(raw.get(C.K_SOURCE, C.DEFAULT_ASSERTION_SOURCE)),
+        value=raw.get(C.K_VALUE),
+        path=raw.get(C.K_PATH),
+        description=raw.get(C.K_DESCRIPTION),
+        schema_ref=raw.get("schema"),
+        min=raw.get("min"),
+        max=raw.get("max"),
+        operator=raw.get("operator"),
+        expected=raw.get("expected"),
+    )
+
+
+def parse_step(raw: dict) -> StepDefinition:
+    """Parse a single step dict into a local StepDefinition."""
+    expectations = [parse_assertion(a) for a in raw.get(C.K_EXPECT, [])]
+    return StepDefinition(
+        type=raw.get(C.K_TYPE, C.DEFAULT_NAME),
+        name=raw.get(C.K_NAME, raw.get(C.K_TYPE, C.DEFAULT_NAME)),
+        description=raw.get(C.K_DESCRIPTION),
+        params=raw.get(C.K_PARAMS, {}),
+        on_failure=FailurePolicy(raw[C.K_ON_FAILURE]) if C.K_ON_FAILURE in raw else FailurePolicy.ABORT,
+        timeout_s=raw.get(C.K_TIMEOUT_S),
+        expect=expectations,
+        store_in_memory=raw.get(C.K_STORE_IN_MEMORY),
+        if_condition=raw.get(C.K_IF),
+    )
+
+
+def _resolve_service_type(raw_type: str) -> ServiceType:
+    """Map a YAML service type string to an SDK ServiceType enum value."""
+    normalised = raw_type.upper() if isinstance(raw_type, str) else raw_type
+    resolved = C.SERVICE_TYPE_ALIASES.get(normalised, normalised)
+    if resolved != normalised:
+        logger.warning(
+            "Deprecated service type '%s' mapped to '%s'. "
+            "Use one of: %s",
+            raw_type, resolved,
+            ", ".join(e.value for e in ServiceType),
+        )
+    return ServiceType(resolved)
+
+
+def parse_service(raw: dict) -> ServiceDefinition:
+    """Parse a single service dict into a local ServiceDefinition."""
+    raw_type = raw.get(C.K_TYPE, C.DEFAULT_SERVICE_TYPE)
+    return ServiceDefinition(
+        name=raw.get(C.K_NAME, C.DEFAULT_NAME),
+        type=_resolve_service_type(raw_type),
+        base_url=raw.get(C.K_BASE_URL, C.DEFAULT_BASE_URL),
+        auth=raw.get(C.K_AUTH, {}),
+        params=raw.get(C.K_PARAMS),
+    )
+
+
+def parse_listener(raw: dict) -> ListenerDefinition:
+    """Parse a listener dict."""
+    return ListenerDefinition(
+        name=raw.get(C.K_NAME, ""),
+        path=raw.get(C.K_PATH, "/"),
+        method=raw.get("method", "POST"),
+        timeout_s=raw.get(C.K_TIMEOUT_S, 60.0),
+    )
+
+
+def parse_depends_on(raw: list) -> list[Union[str, DependencyRef]]:
+    """Parse depends_on entries."""
+    result: list[Union[str, DependencyRef]] = []
+    for entry in raw:
+        if isinstance(entry, str):
+            result.append(entry)
+        elif isinstance(entry, dict):
+            result.append(DependencyRef(**entry))
+    return result
+
+
+def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:
+    """Build a ScriptDefinition from a YAML dict using local extended models.
+
+    Returns an SDK ScriptDefinition created via ``model_construct()`` to
+    bypass Pydantic validation of extended enum values.
+    """
+    variables = parse_variables(data.get(C.K_VARIABLES, {}))
+    services = [parse_service(s) for s in data.get(C.K_SERVICES, [])]
+    listeners = [parse_listener(l) for l in data.get(C.K_LISTEN, [])]
+    setup = [parse_step(s) for s in data.get(C.K_SETUP, [])]
+    steps = [parse_step(s) for s in data.get(C.K_STEPS, [])]
+    cleanup = [parse_step(s) for s in data.get(C.K_CLEANUP, [])]
+    depends_on = parse_depends_on(data.get(C.K_DEPENDS_ON, []))
+    outputs = data.get(C.K_OUTPUTS, {})
+
+    raw_kind = data.get(C.K_KIND, "test")
+    sdk_kind = _to_sdk_script_kind(raw_kind)
+
+    return SdkScriptDefinition.model_construct(
+        kind=sdk_kind,
+        name=data.get(C.K_NAME, C.DEFAULT_NAME),
+        version=data.get(C.K_VERSION, C.DEFAULT_VERSION),
+        dataspace_version=data.get(C.K_DATASPACE_VERSION, "saturn"),
+        description=data.get(C.K_DESCRIPTION),
+        import_from=data.get(C.K_IMPORT),
+        allow_sdk_calls=SdkCallMode(data.get(C.K_ALLOW_SDK_CALLS, "ALLOWLIST")),
+        depends_on=depends_on,
+        outputs=outputs,
+        variables=variables,
+        services=services,
+        listen=listeners,
+        setup=setup,
+        steps=steps,
+        cleanup=cleanup,
+    )
+
+
+def parse_script_file(path: Path) -> SdkScriptDefinition:
+    """Load and parse a single script YAML file."""
+    with open(path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected a YAML dict in {path}, got {type(data).__name__}")
+    return build_script(data, base_dir=path.parent)
+
+
+def build_test_case(
+    data: dict,
+    base_dir: Optional[Path] = None,
+) -> SdkTckDefinition:
+    """Build a TestCaseDefinition from a YAML dict.
+
+    Handles the IDE's ``{test: path, description: str}`` test entry format
+    as well as the SDK's plain path strings and inline script dicts.
+    """
+    shared_vars = parse_variables(data.get(C.K_VARIABLES, {}))
+
+    tests_raw = data.get(C.K_TESTS, [])
+    tests: list[Union[SdkScriptDefinition, str]] = []
+    for entry in tests_raw:
+        if isinstance(entry, str):
+            if base_dir:
+                script_path = (base_dir / entry).resolve()
+                if script_path.exists():
+                    tests.append(parse_script_file(script_path))
+                    continue
+            tests.append(entry)
+        elif isinstance(entry, dict) and "test" in entry:
+            # IDE format: {test: "tests/foo.yaml", description: "..."}
+            rel_path = entry["test"]
+            if base_dir:
+                script_path = (base_dir / rel_path).resolve()
+                tests.append(parse_script_file(script_path))
+            else:
+                tests.append(rel_path)
+        elif isinstance(entry, dict):
+            tests.append(build_script(entry, base_dir=base_dir))
+
+    imports = [
+        ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
+        for imp in data.get(C.K_IMPORTS, [])
+    ]
+
+    tests = resolve_file_dependencies(tests, base_dir, parse_script_file)
+    infer_output_dependencies(tests)
+
+    return SdkTckDefinition.model_construct(
+        kind=_to_sdk_script_kind("tck"),
+        name=data.get(C.K_NAME, C.DEFAULT_NAME),
+        version=data.get(C.K_VERSION, C.DEFAULT_VERSION),
+        description=data.get(C.K_DESCRIPTION),
+        shared_variables=shared_vars or None,
+        tests=tests,
+        imports=imports,
+    )
+
+def _to_sdk_script_kind(raw: str):
+    """Convert a raw kind string to the SDK ScriptKind enum."""
+    try:
+        from tractusx_sdk.extensions.testlab.models.enums import ScriptKind as SdkScriptKind
+        return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TEST_CASE}.get(raw, SdkScriptKind.TEST)
+    except ImportError:
+        return raw

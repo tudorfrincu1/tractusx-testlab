@@ -26,7 +26,7 @@ description: Simple catalog query to verify connector is alive and responding.
 
 services:
   - name: testbed
-    type: edc_connector_saturn
+    type: connector_consumer
     config:
       management_url: "@counter_party_address"
 

@@ -32,19 +32,8 @@ description: >
 
 services:
   - name: provider_edc
-    type: edc_connector_saturn
+    type: connector_consumer
     base_url: "@provider_address"
-
-output_definitions:
-  - name: request_id
-    type: str
-    description: Unique certificate request ID from provider
-  - name: request_status
-    type: str
-    description: Current status of the certificate request
-  - name: document_id
-    type: str
-    description: Document ID for the requested certificate
 
 steps:
   - type: query_catalog

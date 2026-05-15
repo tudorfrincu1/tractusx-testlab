@@ -1,4 +1,4 @@
-#################################################################################
+# ##############################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
 # Copyright (c) 2026 Contributors to the Eclipse Foundation
@@ -18,10 +18,16 @@
 # under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-#################################################################################
+# ##############################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
 
-"""Utility steps: UUID generation, JSON extraction, and other helpers."""
-
-import tractusx_testlab.steps.utility.json_extract  # noqa: F401
-import tractusx_testlab.steps.utility.load_schema  # noqa: F401
-import tractusx_testlab.steps.utility.uuid_gen  # noqa: F401
+variables:
+  provider_address: "http://localhost:8090/api/v1/dsp"
+  provider_bpn: "BPNL000000000001"
+  consumer_bpn: "BPNL000000000002"
+  certificate_type: "iso9001"
+  location_bpns: "BPNS000000000001"
+  testlab_management_url: "http://localhost:8080/management"
+  testlab_dsp_url: "http://localhost:8080/api/v1/dsp"
+  sut_response_timeout: 60

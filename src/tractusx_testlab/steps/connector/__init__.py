@@ -20,11 +20,25 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-# Import all connector step modules to trigger @step registrations
-from tractusx_sdk.extensions.testlab.steps.connector.provision import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.consume import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.dataplane import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.cleanup import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.utils import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.dsp import *  # noqa: F401, F403
-from tractusx_sdk.extensions.testlab.steps.connector.extract import *  # noqa: F401, F403
+# Import SDK connector step modules to trigger @step registrations.
+# Each import is guarded so a missing SDK module does not break the chain.
+import logging as _logging
+
+_logger = _logging.getLogger(__name__)
+
+_SDK_CONNECTOR = "tractusx_sdk.extensions.testlab.steps.connector"
+
+for _mod in ("provision", "consume", "dataplane", "cleanup", "utils", "dsp"):
+    try:
+        __import__(f"{_SDK_CONNECTOR}.{_mod}")
+    except ImportError:
+        _logger.debug("SDK connector module '%s' not available, skipping.", _mod)
+
+# Local connector steps — always import to register testlab-specific steps.
+import tractusx_testlab.steps.connector.provision  # noqa: F401
+import tractusx_testlab.steps.connector.consume  # noqa: F401
+import tractusx_testlab.steps.connector.dataplane  # noqa: F401
+import tractusx_testlab.steps.connector.cleanup  # noqa: F401
+import tractusx_testlab.steps.connector.utils  # noqa: F401
+import tractusx_testlab.steps.connector.dsp  # noqa: F401
+import tractusx_testlab.steps.connector.extract  # noqa: F401

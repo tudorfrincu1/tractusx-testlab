@@ -74,6 +74,7 @@ class AssertionType(str, enum.Enum):
     GREATER_OR_EQUAL = "GREATER_OR_EQUAL"
     LESS_OR_EQUAL = "LESS_OR_EQUAL"
     BETWEEN = "BETWEEN"
+    ASSERT_FIELD = "ASSERT_FIELD"
 
 
 class AssertionSeverity(str, enum.Enum):

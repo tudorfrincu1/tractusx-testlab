@@ -32,7 +32,7 @@ description: >
 
 services:
   - name: testlab_edc
-    type: edc_connector_saturn
+    type: connector_provider
     base_url: "@testlab_management_url"
 
 setup:
