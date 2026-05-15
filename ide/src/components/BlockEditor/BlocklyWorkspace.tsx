@@ -37,6 +37,10 @@ import {
   truncateJsonPreview,
   PathBuilderModal,
   JsonEditorModal,
+  ApiPathBuilderModal,
+  type ApiPathBuilderRequest,
+  setupApiPathBuilderCallback,
+  type ApiPathSegment,
 } from "./blocks";
 import { BlockTooltip } from "./ui/WarningTooltip";
 import "./BlocklyWorkspace.css";
@@ -48,6 +52,7 @@ export function BlocklyWorkspace() {
   const [info, setInfo] = useState<InfoShowRequest | null>(null);
   const [pathReq, setPathReq] = useState<PathBuilderRequest | null>(null);
   const [jsonReq, setJsonReq] = useState<JsonEditorRequest | null>(null);
+  const [apiPathReq, setApiPathReq] = useState<ApiPathBuilderRequest | null>(null);
 
   const handleWarningClose = useCallback(() => setWarning(null), []);
   const handleInfoClose = useCallback(() => setInfo(null), []);
@@ -79,17 +84,22 @@ export function BlocklyWorkspace() {
     return setupJsonEditorCallback((req: JsonEditorRequest) => setJsonReq(req));
   }, []);
 
+  useEffect(() => {
+    return setupApiPathBuilderCallback((req: ApiPathBuilderRequest) => setApiPathReq(req));
+  }, []);
+
   const handlePathSave = useCallback(
     (blockId: string, segments: PathSegment[], path: string) => {
       if (!workspace) return;
       const block = workspace.getBlockById(blockId);
       if (!block) return;
-      const oldValue = block.getFieldValue("VALUE") ?? "";
-      block.setFieldValue(path, "VALUE");
+      const fieldName = block.getField("PATH") ? "PATH" : "VALUE";
+      const oldValue = block.getFieldValue(fieldName) ?? "";
+      block.setFieldValue(path, fieldName);
       (block as unknown as { __segments?: PathSegment[] }).__segments = segments;
       Blockly.Events.fire(
         new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
-          block, "field", "VALUE", oldValue, path,
+          block, "field", fieldName, oldValue, path,
         ),
       );
     },
@@ -97,6 +107,25 @@ export function BlocklyWorkspace() {
   );
 
   const handlePathClose = useCallback(() => setPathReq(null), []);
+
+  const handleApiPathSave = useCallback(
+    (blockId: string, segments: ApiPathSegment[], path: string) => {
+      if (!workspace) return;
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      block.setFieldValue(path, "PATH");
+      (block as unknown as { __segments?: ApiPathSegment[] }).__segments = segments;
+      Blockly.Events.fire(
+        new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
+          block, "field", "PATH", "", path,
+        ),
+      );
+      setApiPathReq(null);
+    },
+    [workspace],
+  );
+
+  const handleApiPathClose = useCallback(() => setApiPathReq(null), []);
 
   const handleJsonSave = useCallback(
     (blockId: string, json: string) => {
@@ -138,6 +167,7 @@ export function BlocklyWorkspace() {
       )}
       {pathReq && (
         <PathBuilderModal
+          key={pathReq.blockId}
           blockId={pathReq.blockId}
           initialSegments={pathReq.segments}
           schema={pathReq.sourceSchema}
@@ -152,6 +182,16 @@ export function BlocklyWorkspace() {
           initialJson={jsonReq.jsonValue}
           onSave={handleJsonSave}
           onClose={handleJsonClose}
+        />
+      )}
+      {apiPathReq && (
+        <ApiPathBuilderModal
+          key={apiPathReq.blockId}
+          blockId={apiPathReq.blockId}
+          initialSegments={apiPathReq.segments}
+          variables={apiPathReq.variables}
+          onSave={handleApiPathSave}
+          onClose={handleApiPathClose}
         />
       )}
     </>

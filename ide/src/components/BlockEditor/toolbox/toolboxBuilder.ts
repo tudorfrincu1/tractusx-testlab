@@ -171,6 +171,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "value_number" },
           { kind: "block", type: "value_boolean" },
           { kind: "block", type: "value_json_path" },
+          { kind: "block", type: "value_api_path" },
         ],
       },
       {

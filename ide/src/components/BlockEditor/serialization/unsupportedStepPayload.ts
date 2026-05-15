@@ -23,12 +23,14 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: GPT-5.3-Codex).
 // It was reviewed and tested by a human committer.
 
+import { parseJsonWithVarRefs } from "../blocks/json/modal/jsonVarRefs";
+
 export function parseUnsupportedParams(paramsJsonRaw: string): Record<string, unknown> {
   const trimmed = paramsJsonRaw.trim();
   if (!trimmed) return {};
 
   try {
-    const parsed = JSON.parse(trimmed) as unknown;
+    const parsed = parseJsonWithVarRefs(trimmed) as unknown;
     return (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed))
       ? parsed as Record<string, unknown>
       : { __raw_payload: trimmed };

@@ -22,8 +22,10 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import "./JsonEditorModal.css";
+import { HighlightedEditor } from "./HighlightedEditor";
+import { useJsonEditor } from "./useJsonEditor";
 
 export interface JsonEditorModalProps {
   blockId: string;
@@ -32,15 +34,7 @@ export interface JsonEditorModalProps {
   onClose: () => void;
 }
 
-function validateJson(text: string): { isValid: boolean; error?: string } {
-  try {
-    JSON.parse(text);
-    return { isValid: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return { isValid: false, error: message };
-  }
-}
+
 
 export function JsonEditorModal({
   blockId,
@@ -48,74 +42,107 @@ export function JsonEditorModal({
   onSave,
   onClose,
 }: JsonEditorModalProps) {
-  const [text, setText] = useState(initialJson);
-  const validation = validateJson(text);
-
-  const handleFormat = useCallback(() => {
-    try {
-      const parsed: unknown = JSON.parse(text);
-      setText(JSON.stringify(parsed, null, 2));
-    } catch {
-      // Cannot format invalid JSON — ignore
-    }
-  }, [text]);
+  const editor = useJsonEditor(initialJson);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const handleDone = useCallback(() => {
-    if (!validation.isValid) return;
-    onSave(blockId, text);
+    if (!editor.isValid) return;
+    onSave(blockId, editor.text);
     onClose();
-  }, [validation.isValid, blockId, text, onSave, onClose]);
+  }, [editor.isValid, blockId, editor.text, onSave, onClose]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === e.currentTarget) {
-        if (validation.isValid) handleDone();
+        if (editor.isValid) handleDone();
       }
     },
-    [validation.isValid, handleDone],
+    [editor.isValid, handleDone],
   );
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (validation.isValid) handleDone();
+        if (editor.isPickerOpen) {
+          editor.closePicker();
+        } else if (editor.isValid) {
+          handleDone();
+        }
       }
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [validation.isValid, handleDone]);
+  }, [editor.isValid, editor.isPickerOpen, editor.closePicker, handleDone]);
+
+  /* Close picker on outside click */
+  useEffect(() => {
+    if (!editor.isPickerOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        editor.closePicker();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [editor.isPickerOpen, editor.closePicker]);
+
+  const hasVariables = editor.availableVariables.length > 0;
 
   return (
     <div className="json-editor-overlay" onMouseDown={handleOverlayClick}>
       <div className="json-editor-modal">
         <div className="json-editor-title">{"{}"} Edit JSON</div>
-        <textarea
-          className="json-editor-textarea"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          spellCheck={false}
-          placeholder='{ "key": "value" }'
+        <HighlightedEditor
+          value={editor.text}
+          onChange={editor.setText}
+          textareaRef={editor.textareaRef}
         />
         <p
           className={`json-editor-status ${
-            validation.isValid
+            editor.isValid
               ? "json-editor-status--valid"
               : "json-editor-status--invalid"
           }`}
         >
-          {validation.isValid ? "Valid JSON \u2713" : `Invalid JSON: ${validation.error}`}
+          {editor.statusMessage}
         </p>
         <div className="json-editor-actions">
-          <button className="json-editor-btn-format" onClick={handleFormat}>
-            Format
-          </button>
-          <button
-            className="json-editor-btn-done"
-            onClick={handleDone}
-            disabled={!validation.isValid}
-          >
-            Done
-          </button>
+          <div className="json-editor-var-picker-anchor" ref={pickerRef}>
+            <button
+              className="json-editor-btn-var"
+              onClick={editor.togglePicker}
+              disabled={!hasVariables}
+              title={hasVariables ? "Insert a variable reference" : "No variables available"}
+            >
+              + Variable
+            </button>
+            {editor.isPickerOpen && hasVariables && (
+              <ul className="json-editor-var-dropdown">
+                {editor.availableVariables.map((name) => (
+                  <li key={name}>
+                    <button
+                      className="json-editor-var-option"
+                      onClick={() => editor.insertVariable(name)}
+                    >
+                      @{name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="json-editor-actions-right">
+            <button className="json-editor-btn-format" onClick={editor.handleFormat}>
+              Format
+            </button>
+            <button
+              className="json-editor-btn-done"
+              onClick={handleDone}
+              disabled={!editor.isValid}
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>

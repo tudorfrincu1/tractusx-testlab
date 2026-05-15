@@ -135,26 +135,11 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               break;
             case "json":
               if (typeof paramVal === "object") {
-                const entries = Object.entries(paramVal as Record<string, unknown>);
-                const hasNested = entries.some(([, v]) =>
-                  typeof v === "object" && v !== null,
-                );
-                if (entries.length > 3 || hasNested) {
-                  const vjb = makeBlock(ws, "value_json");
-                  const jsonStr = JSON.stringify(paramVal, null, 2);
-                  vjb.setFieldValue(jsonStr, "JSON_VALUE");
-                  vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
-                  attachChain(sb, fieldKey, [vjb]);
-                } else {
-                  const kvBlocks: Block[] = [];
-                  for (const [key, value] of entries) {
-                    const kvb = makeBlock(ws, "key_value_pair");
-                    kvb.setFieldValue(key, "KEY");
-                    connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
-                    kvBlocks.push(kvb);
-                  }
-                  attachChain(sb, fieldKey, kvBlocks);
-                }
+                const vjb = makeBlock(ws, "value_json");
+                const jsonStr = JSON.stringify(paramVal, null, 2);
+                vjb.setFieldValue(jsonStr, "JSON_VALUE");
+                vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
+                connectValue(sb, fieldKey, vjb);
               }
               break;
             case "array":

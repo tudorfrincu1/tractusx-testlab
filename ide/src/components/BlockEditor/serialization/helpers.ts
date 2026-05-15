@@ -27,6 +27,7 @@ import type { Block, Workspace } from "blockly";
 import { type Assertion, AssertionOperator } from "../../../models/schema";
 import { serializePolicyBlock, createPolicyRuleBlocks } from "./serialize/policySerializers";
 import * as deferredDropdowns from "./deferredDropdowns";
+import { parseJsonWithVarRefs } from "../blocks/json/modal/jsonVarRefs";
 
 /** Maps the assert_compare block dropdown values to typed YAML assertion types. */
 const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
@@ -48,6 +49,9 @@ export function readValueBlockAsString(block: Block | null): string | undefined 
   }
   if (block.type === "value_json_path") {
     return block.getFieldValue("VALUE") || undefined;
+  }
+  if (block.type === "value_api_path") {
+    return block.getFieldValue("PATH") || undefined;
   }
   if (block.type === "value_number") {
     const n = block.getFieldValue("VALUE");
@@ -75,7 +79,7 @@ export function readValueBlockAsUnknown(block: Block | null): unknown {
   const trimmed = rawValue.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
-      return JSON.parse(trimmed);
+      return parseJsonWithVarRefs(trimmed);
     } catch {
       return rawValue;
     }

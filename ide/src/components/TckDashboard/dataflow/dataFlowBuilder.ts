@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { ScriptDefinition } from "../../../models/schema";
+import type { ScriptDefinition, Step, DependencyRef } from "../../../models/schema";
 import { isTemplateStep } from "../../../models/schema";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
@@ -34,12 +34,16 @@ export interface FlowNode {
   outputs: string[];
   services: string[];
   stepCount: number;
+  stepNames: string[];
 }
+
+export type FlowEdgeType = "sequential" | "variable";
 
 export interface FlowEdge {
   from: string;
   to: string;
   variables: string[];
+  type: FlowEdgeType;
 }
 
 export interface FlowData {
@@ -76,6 +80,23 @@ export function buildDataFlow(
       sourceEdges.get(key)?.add(input.name);
     }
 
+    for (const dep of script.depends_on ?? []) {
+      if (typeof dep === "string" || !isDependencyRef(dep)) continue;
+      const producer = dep.file;
+      if (!producer || producer === name) continue;
+      const key = `${producer}→${name}`;
+      if (!sourceEdges.has(key)) sourceEdges.set(key, new Set());
+      for (const out of dep.outputs) sourceEdges.get(key)?.add(out);
+    }
+
+    for (const prereq of script.prerequisites ?? []) {
+      const producer = prereq.test;
+      if (!producer || producer === name) continue;
+      const key = `${producer}→${name}`;
+      if (!sourceEdges.has(key)) sourceEdges.set(key, new Set());
+      for (const exp of prereq.exports_required ?? []) sourceEdges.get(key)?.add(exp);
+    }
+
     // Collect exported variables from teardown export_variable steps
     const exportedVars: string[] = [];
     for (const step of script.teardown ?? []) {
@@ -102,9 +123,10 @@ export function buildDataFlow(
     }
 
     const services = script.services?.map((s) => s.name) ?? [];
-    const stepCount = (script.setup?.length ?? 0) + (script.steps?.length ?? 0) + (script.teardown?.length ?? 0);
+    const stepNames = collectStepNames(script);
+    const stepCount = stepNames.length;
 
-    nodes.push({ id: name, name, variables: vars, outputs: allOutputs, services, stepCount });
+    nodes.push({ id: name, name, variables: vars, outputs: allOutputs, services, stepCount, stepNames });
   }
 
   const edges: FlowEdge[] = [];
@@ -119,6 +141,20 @@ export function buildDataFlow(
         edgeMap.get(key)!.add(varName);
       }
     }
+
+    /* Also scan step params for implicit @variable references */
+    const script = tests.get(node.id);
+    if (script) {
+      const consumed = collectConsumedVarRefs(script);
+      for (const varName of consumed) {
+        const producer = producerMap.get(varName);
+        if (producer && producer !== node.id) {
+          const key = `${producer}→${node.id}`;
+          if (!edgeMap.has(key)) edgeMap.set(key, new Set());
+          edgeMap.get(key)!.add(varName);
+        }
+      }
+    }
   }
 
   for (const [key, vars] of sourceEdges) {
@@ -128,12 +164,72 @@ export function buildDataFlow(
     }
   }
 
+  // Track sequential edge keys
+  const sequentialKeys = new Set<string>();
+  for (let i = 0; i < testOrder.length - 1; i++) {
+    const from = testOrder[i];
+    const to = testOrder[i + 1];
+    if (!tests.has(from) || !tests.has(to)) continue;
+    sequentialKeys.add(`${from}→${to}`);
+  }
+
   for (const [key, vars] of edgeMap) {
     const [from, to] = key.split("→");
-    edges.push({ from, to, variables: [...vars] });
+    const isSequential = sequentialKeys.has(key);
+    edges.push({ from, to, variables: [...vars], type: isSequential ? "sequential" : "variable" });
+  }
+
+  // Add sequential edges that have no variable data yet
+  for (const key of sequentialKeys) {
+    if (!edgeMap.has(key)) {
+      const [from, to] = key.split("→");
+      edges.push({ from, to, variables: [], type: "sequential" });
+    }
   }
 
   const sharedVariables = tckVariables ? Object.keys(tckVariables) : [];
 
   return { nodes, edges, sharedVariables };
+}
+
+function isDependencyRef(dep: string | DependencyRef): dep is DependencyRef {
+  return typeof dep === "object" && "file" in dep && "outputs" in dep;
+}
+
+function stepDisplayName(step: Step): string {
+  if (isTemplateStep(step)) return step.description ?? step.template;
+  return step.description ?? step.type;
+}
+
+function collectStepNames(script: ScriptDefinition): string[] {
+  const names: string[] = [];
+  for (const step of script.setup ?? []) names.push(stepDisplayName(step));
+  for (const step of script.steps ?? []) names.push(stepDisplayName(step));
+  for (const step of script.teardown ?? []) names.push(stepDisplayName(step));
+  return names;
+}
+
+const VAR_REF_PATTERN = /@([a-zA-Z_][a-zA-Z0-9_]*)/g;
+
+/** Recursively scan a value for `@variable_name` references. */
+function extractVarRefs(value: unknown, out: Set<string>): void {
+  if (typeof value === "string") {
+    for (const match of value.matchAll(VAR_REF_PATTERN)) out.add(match[1]);
+  } else if (Array.isArray(value)) {
+    for (const item of value) extractVarRefs(item, out);
+  } else if (value !== null && typeof value === "object") {
+    for (const v of Object.values(value as Record<string, unknown>)) extractVarRefs(v, out);
+  }
+}
+
+/** Collect all `@variable` references from all step params in a script. */
+function collectConsumedVarRefs(script: ScriptDefinition): Set<string> {
+  const refs = new Set<string>();
+  for (const phase of [script.setup, script.steps, script.teardown]) {
+    for (const step of phase ?? []) {
+      const params = isTemplateStep(step) ? step.params : step.params;
+      if (params) extractVarRefs(params, refs);
+    }
+  }
+  return refs;
 }

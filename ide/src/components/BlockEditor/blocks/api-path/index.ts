@@ -23,8 +23,13 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export * from "./common";
-export * from "./registration";
-export * from "./path";
-export * from "./api-path";
-export * from "./json";
+export { ApiPathBuilderModal } from "./modal/ApiPathBuilderModal";
+export type { ApiPathBuilderModalProps } from "./modal/ApiPathBuilderModal";
+export {
+  setupApiPathBuilderCallback,
+  requestOpenApiPathBuilder,
+  parseApiPath,
+  segmentsToApiPath,
+  defaultApiSegments,
+} from "./core/apiPathBuilder";
+export type { ApiPathSegment, ApiSegmentType, ApiPathBuilderRequest } from "./core/apiPathBuilder";

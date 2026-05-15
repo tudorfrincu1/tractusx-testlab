@@ -28,7 +28,7 @@ import { theme } from "../../theme/tractusxTheme";
 import { MetadataSection } from "./forms/MetadataSection";
 import { VariablesOverview } from "./dataflow/VariablesOverview";
 import { TestPipelineTable } from "./pipeline/TestPipelineTable";
-import { DataFlowView } from "./dataflow/DataFlowView";
+import { PipelineGraphView } from "./dataflow/PipelineGraphView";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import TimelineIcon from "@mui/icons-material/Timeline";
@@ -81,25 +81,25 @@ export function TckDashboard({ onSelectFile }: TckDashboardProps) {
       </div>
 
       {/* ── Content ────────────────────────────────────────── */}
-      <div style={{
-        flex: 1,
-        overflow: "auto",
-        padding: "20px 24px 40px",
-      }}>
-        {activeTab === "pipeline" && (
+      {activeTab === "pipeline" && (
+        <div style={{
+          flex: 1,
+          overflow: "auto",
+          padding: "20px 24px 40px",
+        }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 960 }}>
             <MetadataSection />
             <VariablesOverview />
             <TestPipelineTable onSelectFile={onSelectFile} />
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === "dataflow" && (
-          <div style={{ maxWidth: 960 }}>
-            <DataFlowView />
-          </div>
-        )}
-      </div>
+      {activeTab === "dataflow" && (
+        <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+          <PipelineGraphView />
+        </div>
+      )}
     </div>
   );
 }

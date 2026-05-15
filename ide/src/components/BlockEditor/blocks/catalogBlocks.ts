@@ -25,17 +25,17 @@
 
 import type { Block, WorkspaceSvg } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors, getCategoryColor } from "../../../config/blockColors";
-import type { BlockCatalog } from "../../common/catalog/catalogLoader";
-import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "../../common/fields/icons";
+import { blockColors, getCategoryColor } from "../config/blockColors";
+import type { BlockCatalog } from "./catalogLoader";
+import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "./icons";
 import {
   dynamicDropdown,
   collectMockEndpointIds,
   collectServiceRefs,
   collectSchemaPaths,
-} from "../../common/fields/dropdownProviders";
-import { collectWorkspaceVariables } from "../../common/catalog/variableCollection";
-import { createInfoIconField } from "../../common/fields/infoIconField";
+} from "./dropdownProviders";
+import { collectWorkspaceVariables } from "./variableCollection";
+import { createInfoIconField } from "./infoIconField";
 
 export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   for (const category of catalog) {

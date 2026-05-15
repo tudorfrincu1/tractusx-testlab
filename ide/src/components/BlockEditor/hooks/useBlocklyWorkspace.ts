@@ -85,6 +85,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       );
 
       workspaceRef.current = ws;
+      // DEBUG: expose workspace for connection testing
+      (window as unknown as Record<string, unknown>).__debugWs = ws;
 
       // Register "Empty Trash" context menu item
       const EMPTY_TRASH_ID = "emptyTrash";

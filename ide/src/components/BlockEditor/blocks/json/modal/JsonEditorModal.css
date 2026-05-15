@@ -54,7 +54,7 @@
 }
 
 .json-editor-textarea {
-  background: #1a1a1a;
+  background: transparent;
   border: 1px solid #555;
   border-radius: 4px;
   color: #e0e0e0;
@@ -89,7 +89,13 @@
 .json-editor-actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.json-editor-actions-right {
+  display: flex;
+  gap: 8px;
 }
 
 .json-editor-actions button {
@@ -124,4 +130,112 @@
   background: #555;
   color: #888;
   cursor: not-allowed;
+}
+
+/* ── Highlighted editor overlay ─────────────────────────────────────────── */
+
+.json-highlight-container {
+  position: relative;
+  min-height: 240px;
+}
+
+.json-highlight-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  pointer-events: none;
+  background: #1a1a1a;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.json-highlight-pre {
+  margin: 0;
+  font-family: "Fira Code", monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  tab-size: 2;
+  color: #e0e0e0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.json-highlight-textarea {
+  position: relative;
+  width: 100%;
+  caret-color: #fbbf24;
+  color: transparent;
+  background: transparent;
+  z-index: 1;
+}
+
+.json-highlight-textarea::selection {
+  background: rgba(251, 191, 36, 0.25);
+}
+
+.json-highlight-var {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* ── Variable picker ────────────────────────────────────────────────────── */
+
+.json-editor-var-picker-anchor {
+  position: relative;
+}
+
+.json-editor-btn-var {
+  background: #374151;
+  color: #fbbf24;
+}
+
+.json-editor-btn-var:hover:not(:disabled) {
+  background: #4b5563;
+  color: #fff;
+}
+
+.json-editor-btn-var:disabled {
+  background: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.json-editor-var-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  background: #1f1f1f;
+  border: 1px solid #555;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  max-height: 180px;
+  overflow-y: auto;
+  min-width: 160px;
+  z-index: 2;
+}
+
+.json-editor-var-dropdown li {
+  margin: 0;
+}
+
+.json-editor-var-option {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #fbbf24;
+  font-family: "Fira Code", monospace, monospace;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.json-editor-var-option:hover {
+  background: #374151;
+  color: #fff;
 }

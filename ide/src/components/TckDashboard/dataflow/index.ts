@@ -23,6 +23,21 @@
 // It was reviewed and tested by a human committer.
 
 export { DataFlowView } from "./DataFlowView";
+export { PipelineGraphView } from "./PipelineGraphView";
+export { PipelineGraphCanvas } from "./PipelineGraphCanvas";
+export { StageListSidebar } from "./StageListSidebar";
+export { NodeDetailPanel } from "./NodeDetailPanel";
+export { AnnotationsBar } from "./AnnotationsBar";
 export { VariablesOverview } from "./VariablesOverview";
 export { buildDataFlow } from "./dataFlowBuilder";
 export type { FlowNode, FlowEdge, FlowData } from "./dataFlowBuilder";
+export { flowDataToReactFlow } from "./flowDataToReactFlow";
+export type { StageStatusMap, ReactFlowPipelineData } from "./flowDataToReactFlow";
+export { layoutPipelineGraph } from "./pipelineLayout";
+export { pipelineNodeTypes, PipelineNode } from "./PipelineNode";
+export { pipelineEdgeTypes, PipelineEdge } from "./PipelineEdge";
+export type {
+  PipelineStageStatus,
+  PipelineNodeData,
+  PipelineEdgeData,
+} from "./types";
