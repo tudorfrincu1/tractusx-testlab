@@ -27,11 +27,8 @@ export {
   setupJsonEditorCallback,
   requestOpenJsonEditor,
   truncateJsonPreview,
-  formatJsonPreview,
   JSON_PREVIEW_MAX_LENGTH,
   type JsonEditorRequest,
 } from "./core/jsonEditor";
-
-export { FieldJsonPreview } from "./core/FieldJsonPreview";
 
 export { JsonEditorModal, type JsonEditorModalProps } from "./modal/JsonEditorModal";

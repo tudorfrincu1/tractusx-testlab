@@ -75,7 +75,7 @@ function DashboardHeader({ name, version, dataspaceVersion }: {
       <span style={{ fontSize: 15, fontWeight: 700, color: theme.colors.textBright }}>
         {name}
       </span>
-      {version && <Badge label={`v${version}`} color={theme.colors.textMuted} bg={theme.colors.bgLighter} />}
+      {version && <Badge label={`v${version.replace(/^v/i, "")}`} color={theme.colors.textMuted} bg={theme.colors.bgLighter} />}
       {dataspaceVersion && <Badge label={dataspaceVersion} color={theme.colors.primary} bg="rgba(255, 215, 0, 0.12)" />}
     </div>
   );

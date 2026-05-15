@@ -23,7 +23,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useProjectStore } from "../../../store/slices/useProjectStore";
 import { buildDataFlow } from "./dataFlowBuilder";
@@ -35,6 +35,10 @@ import type { LayoutDirection } from "../../../hooks/usePipelineLayout";
 import type { PipelineNodeData } from "./types";
 import { theme } from "../../../theme/tractusxTheme";
 import "./PipelineGraphView.css";
+
+const SIDEBAR_MIN = 200;
+const SIDEBAR_MAX = 500;
+const SIDEBAR_DEFAULT = 260;
 
 export function PipelineGraphView() {
   const tck = useProjectStore((s) => s.tck);
@@ -48,6 +52,35 @@ export function PipelineGraphView() {
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [direction, setDirection] = useState<LayoutDirection>("TB");
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
+  const isDragging = useRef(false);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = ev.clientX - startX;
+      const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + delta));
+      setSidebarWidth(next);
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, [sidebarWidth]);
 
   const selectedNodeData = useMemo((): PipelineNodeData | null => {
     if (!selectedNodeId) return null;
@@ -85,11 +118,19 @@ export function PipelineGraphView() {
 
   return (
     <ReactFlowProvider>
-      <div className="pipeline-graph-view">
+      <div
+        className="pipeline-graph-view"
+        style={{ gridTemplateColumns: `${sidebarWidth}px 4px 1fr` }}
+      >
         <StageListSidebar
           nodes={flowData.nodes}
           selectedNodeId={selectedNodeId}
           onSelectNode={setSelectedNodeId}
+        />
+
+        <div
+          className="pipeline-graph-view__resize-handle"
+          onMouseDown={handleMouseDown}
         />
 
         <PipelineGraphCanvas

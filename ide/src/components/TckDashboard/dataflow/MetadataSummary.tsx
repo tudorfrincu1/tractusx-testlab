@@ -25,15 +25,27 @@
 
 import { memo, useState, useCallback, useMemo } from "react";
 import { useProjectStore } from "../../../store/slices/useProjectStore";
+import { MetadataEditor } from "./MetadataEditor";
 import "./MetadataSummary.css";
 
+const DATASPACE_COLORS: Record<string, string> = {
+  saturn: "#fbbf24",
+  jupiter: "#fbbf24",
+} as const;
+
+export interface MetadataSummaryProps {
+  onEditingChange?: (isEditing: boolean) => void;
+}
+
 /**
- * Compact, collapsible TCK metadata summary for the sidebar.
- * Shows name, version, variable count. Collapsed by default.
+ * Prominent TCK metadata display with inline expandable editor.
+ * Collapsed: shows TCK identity prominently. Expanded: full edit form.
  */
-export const MetadataSummary = memo(function MetadataSummary() {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const toggleExpanded = useCallback(() => setIsExpanded((v) => !v), []);
+export const MetadataSummary = memo(function MetadataSummary({
+  onEditingChange,
+}: MetadataSummaryProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDescCollapsed, setIsDescCollapsed] = useState(false);
 
   const tck = useProjectStore((s) => s.tck);
   const tests = useProjectStore((s) => s.tests);
@@ -47,75 +59,106 @@ export const MetadataSummary = memo(function MetadataSummary() {
     return tckVars + testVars;
   }, [tck.variables, tests]);
 
-  const tagCount = (tck.tags ?? []).length;
-  const standardCount = (tck.standards ?? []).length;
+  const standards = tck.standards ?? [];
+  const dataspaceColor = DATASPACE_COLORS[tck.dataspace_version ?? ""] ?? "#999";
+
+  const handleEditClick = useCallback(() => {
+    setIsEditing(true);
+    onEditingChange?.(true);
+  }, [onEditingChange]);
+
+  const handleClose = useCallback(() => {
+    setIsEditing(false);
+    onEditingChange?.(false);
+  }, [onEditingChange]);
+
+  if (isEditing) {
+    return (
+      <section className="metadata-summary metadata-summary--editing">
+        <MetadataEditor onClose={handleClose} />
+      </section>
+    );
+  }
 
   return (
     <section className="metadata-summary">
-      <button
-        className="metadata-summary__toggle"
-        onClick={toggleExpanded}
-        aria-expanded={isExpanded}
-      >
-        <span className="metadata-summary__chevron" data-expanded={isExpanded}>
-          ▶
-        </span>
-        <span className="metadata-summary__title">TCK Metadata</span>
-      </button>
-
-      {/* Collapsed: compact info row */}
-      {!isExpanded && (
-        <div className="metadata-summary__compact">
-          <span className="metadata-summary__chip" title="TCK name">
+      <div className="metadata-summary__display">
+        {/* Row 1: Name + version + dataspace badges */}
+        <div className="metadata-summary__header-row">
+          <span className="metadata-summary__name">
             {tck.name || "untitled"}
           </span>
           {tck.version && (
-            <span className="metadata-summary__chip" title="Version">
-              v{tck.version}
+            <span className="metadata-summary__badge metadata-summary__badge--version">
+              v{tck.version.replace(/^v/i, "")}
             </span>
           )}
-          {variableCount > 0 && (
-            <span className="metadata-summary__chip" title="Variables">
-              {variableCount} var{variableCount !== 1 ? "s" : ""}
+          {tck.dataspace_version && (
+            <span
+              className="metadata-summary__badge metadata-summary__badge--dataspace"
+              style={{ color: dataspaceColor, borderColor: dataspaceColor }}
+            >
+              {tck.dataspace_version}
             </span>
           )}
         </div>
-      )}
 
-      {/* Expanded: full detail list */}
-      {isExpanded && (
-        <div className="metadata-summary__details">
-          <DetailRow label="Name" value={tck.name || "—"} />
-          <DetailRow label="Version" value={tck.version || "—"} />
-          <DetailRow label="Dataspace" value={tck.dataspace_version || "—"} />
-          <DetailRow label="Author" value={tck.author || "—"} />
-          {tck.description && (
-            <DetailRow label="Description" value={tck.description} />
+        {/* Row 2: Description */}
+        {tck.description && (
+          <div className="metadata-summary__desc-wrap">
+            <span
+              className={
+                isDescCollapsed
+                  ? "metadata-summary__description metadata-summary__description--clamped"
+                  : "metadata-summary__description"
+              }
+            >
+              {tck.description}
+            </span>
+            {tck.description.length > 100 && (
+              <button
+                className="metadata-summary__desc-toggle"
+                onClick={() => setIsDescCollapsed((prev) => !prev)}
+              >
+                {isDescCollapsed ? "Show more" : "Show less"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Row 3: Standard chips */}
+        {standards.length > 0 && (
+          <div className="metadata-summary__standards">
+            {standards.map((std) => (
+              <span key={std.id} className="metadata-summary__standard-chip">
+                {std.id}
+                {std.version && (
+                  <span className="metadata-summary__standard-version">
+                    {std.version}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Row 4: Author + variables + edit button */}
+        <div className="metadata-summary__footer-row">
+          {tck.author && (
+            <span className="metadata-summary__author">{tck.author}</span>
           )}
-          <DetailRow label="Variables" value={String(variableCount)} />
-          {standardCount > 0 && (
-            <DetailRow label="Standards" value={String(standardCount)} />
-          )}
-          {tagCount > 0 && (
-            <div className="metadata-summary__tags">
-              {(tck.tags ?? []).map((tag) => (
-                <span key={tag} className="metadata-summary__tag">{tag}</span>
-              ))}
-            </div>
-          )}
+          <span className="metadata-summary__var-count">
+            {variableCount} variable{variableCount !== 1 ? "s" : ""}
+          </span>
+          <button
+            className="metadata-summary__edit-btn"
+            onClick={handleEditClick}
+            title="Edit metadata"
+          >
+            ✎ Edit
+          </button>
         </div>
-      )}
+      </div>
     </section>
   );
 });
-
-/* ── Detail row ─────────────────────────────────────────────────────────── */
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metadata-summary__row">
-      <span className="metadata-summary__label">{label}</span>
-      <span className="metadata-summary__value">{value}</span>
-    </div>
-  );
-}

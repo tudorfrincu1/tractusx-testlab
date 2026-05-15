@@ -220,7 +220,7 @@ export function VersionField({ label, value, onChange, compact }: {
     const cleaned = raw.replace(/[^\d.]/g, "");
     setDraft(cleaned);
     if (isValidVersion(cleaned)) {
-      onChange(`v${cleaned}`);
+      onChange(cleaned);
     }
   };
 
@@ -229,7 +229,7 @@ export function VersionField({ label, value, onChange, compact }: {
     if (draft === "") {
       onChange("");
     } else if (isValidVersion(draft)) {
-      onChange(`v${draft}`);
+      onChange(draft);
     }
   };
 

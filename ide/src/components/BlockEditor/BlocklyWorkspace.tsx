@@ -35,7 +35,7 @@ import {
   type PathSegment,
   setupJsonEditorCallback,
   type JsonEditorRequest,
-  formatJsonPreview,
+  truncateJsonPreview,
   PathBuilderModal,
   JsonEditorModal,
   ApiPathBuilderModal,
@@ -135,7 +135,7 @@ export function BlocklyWorkspace() {
       if (!block) return;
       const oldValue = block.getFieldValue("JSON_VALUE") ?? "";
       block.setFieldValue(json, "JSON_VALUE");
-      block.setFieldValue(formatJsonPreview(json), "JSON_PREVIEW");
+      block.setFieldValue(truncateJsonPreview(json), "JSON_PREVIEW");
       Blockly.Events.fire(
         new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
           block, "field", "JSON_VALUE", oldValue, json,

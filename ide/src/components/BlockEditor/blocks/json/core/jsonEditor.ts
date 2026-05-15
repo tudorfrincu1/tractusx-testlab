@@ -46,14 +46,12 @@ export function requestOpenJsonEditor(req: JsonEditorRequest): void {
   _onOpenJsonEditor?.(req);
 }
 
-import { formatJsonPreview } from "./FieldJsonPreview";
-
-/** @deprecated Use formatJsonPreview from FieldJsonPreview instead. */
+/** Maximum characters shown in the block preview label. */
 export const JSON_PREVIEW_MAX_LENGTH = 30;
 
-export { formatJsonPreview };
-
-/** @deprecated Use formatJsonPreview instead. */
+/** Truncate a JSON string for display in the block label. */
 export function truncateJsonPreview(json: string): string {
-  return formatJsonPreview(json);
+  const compact = json.replace(/\s+/g, " ").trim();
+  if (compact.length <= JSON_PREVIEW_MAX_LENGTH) return compact;
+  return compact.slice(0, JSON_PREVIEW_MAX_LENGTH) + "\u2026";
 }

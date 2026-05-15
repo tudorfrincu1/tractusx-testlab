@@ -29,7 +29,8 @@
 
 .pipeline-graph-view {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  /* grid-template-columns set inline via style for resizable sidebar */
+  grid-template-columns: 260px 4px 1fr;
   grid-template-rows: 1fr auto;
   height: 100%;
   background: #1a1a1a;
@@ -49,9 +50,28 @@
 
 /* ── Pipeline Graph Canvas ──────────────────────────────────────────────── */
 
+/* ── Resize handle ───────────────────────────────────────────────────────── */
+
+.pipeline-graph-view__resize-handle {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 5;
+}
+
+.pipeline-graph-view__resize-handle:hover,
+.pipeline-graph-view__resize-handle:active {
+  background: #3b82f6;
+}
+
+/* ── Pipeline Graph Canvas ──────────────────────────────────────────────── */
+
 .pipeline-graph-canvas {
   position: relative;
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   min-height: 0;
 }
