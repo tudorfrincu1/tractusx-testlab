@@ -65,6 +65,10 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
   const [trashHasItems, setTrashHasItems] = useState(false);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
 
+  const handleRefreshYaml = () => {
+    window.dispatchEvent(new Event("testlab:force-sync"));
+  };
+
   const showValidation = useTestLabStore((s) => s.showValidation);
   const setShowValidation = useTestLabStore((s) => s.setShowValidation);
   const storeErrors = useTestLabStore((s) => s.errors);
@@ -211,6 +215,7 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
                     onTabChange={setRightPanel}
                     isReadOnly={yamlReadOnly}
                     onToggleReadOnly={() => setYamlReadOnly((v) => !v)}
+                    onRefresh={handleRefreshYaml}
                   />
                 )}
                 <div className="panel-container__content">

@@ -107,6 +107,28 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
     return () => ws.removeChangeListener(listener);
   }, [ready, workspaceRef, catalogRef, isUpdatingFromStore, pendingUpdateRef, setModelFromBlocks]);
 
+  // Listen for manual "Refresh YAML" button
+  useEffect(() => {
+    if (!ready) return;
+    const handler = () => {
+      const ws = workspaceRef.current;
+      const catalog = catalogRef.current;
+      if (!ws || !catalog) return;
+      try {
+        const partial = workspaceToModel(Blockly, ws, catalog);
+        if (partial && Object.keys(partial).length > 0) {
+          const current = useTestLabStore.getState().model;
+          const merged = { ...current, ...partial } as unknown as TestLabDocument;
+          setModelFromBlocks(merged);
+        }
+      } catch {
+        // workspace may be in transient state
+      }
+    };
+    window.addEventListener("testlab:force-sync", handler);
+    return () => window.removeEventListener("testlab:force-sync", handler);
+  }, [ready, workspaceRef, catalogRef, setModelFromBlocks]);
+
   // Model → workspace sync (when YAML or load changes model)
   useEffect(() => {
     if (!ready) return;

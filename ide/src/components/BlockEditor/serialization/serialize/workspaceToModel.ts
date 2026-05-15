@@ -135,6 +135,16 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
           const key = kvBlock.getFieldValue("KEY") || "";
           const value = readValueBlockAsString(kvBlock.getInputTargetBlock("VALUE")) || "";
           if (key) params[key] = value;
+        } else if (kvBlock.type === "value_json") {
+          const raw = kvBlock.getFieldValue("JSON_VALUE") || "{}";
+          try {
+            const parsed: unknown = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              Object.assign(params, parsed as Record<string, unknown>);
+            }
+          } catch {
+            // Invalid JSON stored — skip
+          }
         }
         kvBlock = kvBlock.getNextBlock();
       }
@@ -190,24 +200,32 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
         case "json": {
           let merged: Record<string, unknown> = {};
           let current = block.getInputTargetBlock(fieldKey);
+          console.log(`[DEBUG json] step=${stepType} param=${p.name} fieldKey=${fieldKey} firstBlock=${current?.type ?? "null"}`);
           while (current) {
+            console.log(`[DEBUG json] walking block type=${current.type} id=${current.id}`);
             if (current.type === "value_json") {
-              const raw = current.getFieldValue("JSON_VALUE") || "{}";
+              const raw = current.getFieldValue("JSON_VALUE");
+              console.log(`[DEBUG json] value_json raw=`, JSON.stringify(raw), `typeof=${typeof raw}`);
+              const jsonStr = raw || "{}";
               try {
-                const parsed: unknown = JSON.parse(raw);
+                const parsed: unknown = JSON.parse(jsonStr);
+                console.log(`[DEBUG json] parsed=`, parsed);
                 if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
                   merged = { ...(parsed as Record<string, unknown>), ...merged };
                 }
-              } catch {
-                // Invalid JSON stored — skip
+              } catch (e) {
+                console.log(`[DEBUG json] parse error:`, e);
               }
             } else if (current.type === "key_value_pair") {
               const key = current.getFieldValue("KEY") || "";
               const value = readValueBlockAsUnknown(current.getInputTargetBlock("VALUE"));
               if (key && value !== undefined) merged[key] = value;
+            } else {
+              console.log(`[DEBUG json] UNKNOWN block type in chain: ${current.type}`);
             }
             current = current.getNextBlock();
           }
+          console.log(`[DEBUG json] merged=`, merged);
           if (Object.keys(merged).length > 0) params[p.name] = merged;
           break;
         }

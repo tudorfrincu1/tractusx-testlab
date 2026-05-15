@@ -22,6 +22,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import * as Blockly from "blockly";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
 import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
 import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
@@ -78,8 +79,14 @@ export function BlocklyWorkspace() {
       if (!workspace) return;
       const block = workspace.getBlockById(blockId);
       if (!block) return;
+      const oldValue = block.getFieldValue("VALUE") ?? "";
       block.setFieldValue(path, "VALUE");
       (block as unknown as { __segments?: PathSegment[] }).__segments = segments;
+      Blockly.Events.fire(
+        new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
+          block, "field", "VALUE", oldValue, path,
+        ),
+      );
     },
     [workspace],
   );
@@ -91,8 +98,14 @@ export function BlocklyWorkspace() {
       if (!workspace) return;
       const block = workspace.getBlockById(blockId);
       if (!block) return;
+      const oldValue = block.getFieldValue("JSON_VALUE") ?? "";
       block.setFieldValue(json, "JSON_VALUE");
       block.setFieldValue(truncateJsonPreview(json), "JSON_PREVIEW");
+      Blockly.Events.fire(
+        new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
+          block, "field", "JSON_VALUE", oldValue, json,
+        ),
+      );
     },
     [workspace],
   );
