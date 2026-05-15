@@ -40,8 +40,14 @@
 .topbar__logo {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 8px 4px 0;
+}
+
+.topbar__logo-img {
+  height: 28px;
+  width: auto;
+  border-radius: 4px;
 }
 
 .topbar__logo-text {

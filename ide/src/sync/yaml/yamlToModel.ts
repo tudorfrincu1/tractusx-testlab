@@ -140,7 +140,7 @@ function parseTck(raw: Record<string, unknown>): TckDefinition {
     standards: parseStandards(raw.standards),
     tags: Array.isArray(raw.tags) ? raw.tags.map(String) : undefined,
     preconditions: raw.preconditions as TckDefinition["preconditions"],
-    variables: raw.variables as TckDefinition["variables"],
+    variables: (raw.shared_variables ?? raw.variables) as TckDefinition["variables"],
     tests,
   };
 }

@@ -140,17 +140,13 @@ export function WelcomeScreen() {
       <div style={{ maxWidth: 720, width: "100%", padding: "40px 24px" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h1 style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: theme.colors.primary,
-            margin: 0,
-            letterSpacing: "-0.02em",
-          }}>
-            Tractus-X TestLab
-          </h1>
+          <img
+            src="/test-lab-app-logo-white-claim.png"
+            alt="Tractus-X TestLab"
+            style={{ width: 260, marginBottom: 12 }}
+          />
           <p style={{ fontSize: 13, color: theme.colors.textMuted, marginTop: 8 }}>
-            Visual test authoring for Eclipse Tractus-X dataspaces
+            Design, validate, and execute TCK certification tests
           </p>
         </div>
 

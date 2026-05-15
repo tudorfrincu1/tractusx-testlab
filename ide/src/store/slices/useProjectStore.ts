@@ -257,7 +257,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   },
   updateTckField: (field, value) => {
     const tck = { ...get().tck, [field]: value };
-    set({ tck });
+    const patch: Partial<ProjectState> = { tck };
+    if (field === "name" && typeof value === "string") {
+      patch.projectName = value;
+    }
+    set(patch);
     syncTckArray();
     get().markDirty(INDEX_FILE);
     get().saveToLocalStorage();

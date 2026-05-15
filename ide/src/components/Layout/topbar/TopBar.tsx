@@ -37,11 +37,14 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import TuneIcon from "@mui/icons-material/Tune";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { ToolbarButton } from "./TopBarButtons";
 import { TopBarExampleMenu } from "./TopBarExampleMenu";
 import { ExecuteButton } from "../../ExecutionControls/ExecuteButton";
 import { CompileButton } from "../../ExecutionControls/CompileButton";
 import { BackendSettings } from "../../ExecutionControls/BackendSettings";
+import { VariableEditorDialog } from "../../VariableEditorDialog";
 import { useAutoCompile } from "../../../hooks/useAutoCompile";
 import "../../ExecutionControls/ExecutionControls.css";
 import "./TopBar.css";
@@ -56,6 +59,7 @@ export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showNewProjectConfirm, setShowNewProjectConfirm] = useState(false);
+  const [showVarDialog, setShowVarDialog] = useState(false);
 
   useAutoCompile();
 
@@ -75,6 +79,12 @@ export function TopBar() {
 
   const handleImport = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleProjectInfo = () => {
+    useProjectStore.setState({
+      activeFile: { type: "tck", name: "index" },
+    });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,12 +146,16 @@ export function TopBar() {
       {/* Left: logo + project name */}
       <div className="topbar__left">
         <div className="topbar__logo">
-          <ScienceIcon sx={{ fontSize: 22, color: theme.colors.primary }} />
+          <img
+            src={`${import.meta.env.BASE_URL}just-logo-app-white.png`}
+            alt="Test Lab"
+            className="topbar__logo-img"
+          />
           <span
             className="topbar__logo-text"
             style={{ color: theme.colors.primary }}
           >
-            TestLab IDE
+            Test Lab TCK Creator IDE
           </span>
         </div>
         {hasProject && (
@@ -195,6 +209,18 @@ export function TopBar() {
         <BackendSettings />
         <div className="execution-divider" />
         <ToolbarButton
+          label="Project Info"
+          icon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />}
+          onClick={handleProjectInfo}
+          active={activeFile?.type === "tck" && activeFile?.name === "index"}
+        />
+        <ToolbarButton
+          label="Variables"
+          icon={<TuneIcon sx={{ fontSize: 14 }} />}
+          onClick={() => setShowVarDialog(true)}
+        />
+        <div className="execution-divider" />
+        <ToolbarButton
           label="New Project"
           icon={<NoteAddIcon sx={{ fontSize: 14 }} />}
           onClick={handleNewProject}
@@ -229,6 +255,7 @@ export function TopBar() {
       </div>
       )}
       {showExportDialog && <ExportDialog onClose={() => setShowExportDialog(false)} />}
+      {showVarDialog && <VariableEditorDialog onClose={() => setShowVarDialog(false)} />}
       {showNewProjectConfirm && (
         <ConfirmDialog
           title="Create New Project"

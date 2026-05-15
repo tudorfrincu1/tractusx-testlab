@@ -35,6 +35,11 @@ export function modelToYaml(model: TestLabDocument): string {
 
   if (isTck(model)) {
     const tc = clean as Record<string, unknown>;
+    // Canonical YAML field is shared_variables, not variables
+    if (tc.variables !== undefined) {
+      tc.shared_variables = tc.variables;
+      delete tc.variables;
+    }
     if (Array.isArray(tc.tests)) {
       tc.tests = tc.tests.map((t: unknown) => {
         if (typeof t === "string") return t;

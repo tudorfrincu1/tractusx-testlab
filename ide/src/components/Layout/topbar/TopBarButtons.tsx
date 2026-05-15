@@ -28,11 +28,17 @@ export function ToolbarButton({
   label,
   icon,
   onClick,
+  active = false,
 }: {
   label: string;
   icon?: React.ReactNode;
   onClick: () => void;
+  active?: boolean;
 }) {
+  const activeBackground = `rgba(255, 215, 0, 0.15)`;
+  const activeBorder = theme.colors.primary;
+  const activeColor = theme.colors.primary;
+
   return (
     <button
       onClick={onClick}
@@ -40,23 +46,27 @@ export function ToolbarButton({
         padding: "4px 12px",
         fontSize: 12,
         fontWeight: 500,
-        color: theme.colors.text,
-        background: theme.colors.bgLighter,
-        border: `1px solid ${theme.colors.border}`,
+        color: active ? activeColor : theme.colors.text,
+        background: active ? activeBackground : theme.colors.bgLighter,
+        border: `1px solid ${active ? activeBorder : theme.colors.border}`,
         borderRadius: 4,
         cursor: "pointer",
-        transition: "background 0.15s, border-color 0.15s",
+        transition: "background 0.15s, border-color 0.15s, color 0.15s",
         display: "flex",
         alignItems: "center",
         gap: 5,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = theme.colors.bgLightest;
-        e.currentTarget.style.borderColor = theme.colors.primary;
+        if (!active) {
+          e.currentTarget.style.background = theme.colors.bgLightest;
+          e.currentTarget.style.borderColor = theme.colors.primary;
+        }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = theme.colors.bgLighter;
-        e.currentTarget.style.borderColor = theme.colors.border;
+        if (!active) {
+          e.currentTarget.style.background = theme.colors.bgLighter;
+          e.currentTarget.style.borderColor = theme.colors.border;
+        }
       }}
     >
       {icon}

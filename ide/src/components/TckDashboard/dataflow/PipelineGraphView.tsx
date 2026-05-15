@@ -147,14 +147,16 @@ export function PipelineGraphView() {
           />
         )}
 
-        <AnnotationsBar
-          annotations={failedNodes.map((n) => ({
-            nodeId: n.id,
-            stageName: n.name,
-            message: "Stage failed",
-          }))}
-          onSelectAnnotation={setSelectedNodeId}
-        />
+        {failedNodes.length > 0 && (
+          <AnnotationsBar
+            annotations={failedNodes.map((n) => ({
+              nodeId: n.id,
+              stageName: n.name,
+              message: "Stage failed",
+            }))}
+            onSelectAnnotation={setSelectedNodeId}
+          />
+        )}
       </div>
     </ReactFlowProvider>
   );
