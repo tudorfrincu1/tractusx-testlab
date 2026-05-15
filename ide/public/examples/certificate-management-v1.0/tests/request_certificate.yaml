@@ -125,4 +125,20 @@ steps:
       - type: "NOT_NULL"
         output: request_status
 
+teardown:
+  - type: export_variable
+    description: Export request ID for downstream tests
+    params:
+      name: request_id
+
+  - type: export_variable
+    description: Export document ID for payload validation
+    params:
+      name: document_id
+
+  - type: export_variable
+    description: Export data address for payload fetch
+    params:
+      name: data_address
+
 

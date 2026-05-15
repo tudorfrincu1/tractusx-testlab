@@ -30,6 +30,13 @@ description: >
   feedback payload semantics for CX-0135 path /companycertificate/status.
 
 setup:
+  - type: import_variable
+    description: Import request ID from request test
+    params:
+      file: tests/request_certificate.yaml
+      export: request_id
+      variable: request_id
+
   - type: mock_endpoint
     description: Expose callback endpoint for provider feedback
     params:

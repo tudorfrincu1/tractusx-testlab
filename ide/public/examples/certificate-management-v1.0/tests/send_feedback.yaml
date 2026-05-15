@@ -35,6 +35,13 @@ services:
     base_url: "@provider_address"
 
 setup:
+  - type: import_variable
+    description: Import request ID from request test
+    params:
+      file: tests/request_certificate.yaml
+      export: request_id
+      variable: request_id
+
   - type: mock_endpoint
     description: Expose mock endpoint for provider RECEIVE acknowledgment
     params:
