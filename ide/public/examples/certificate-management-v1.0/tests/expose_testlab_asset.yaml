@@ -113,7 +113,7 @@ steps:
       - type: "NOT_NULL"
         output: body
 
-cleanup:
+teardown:
   - type: delete_asset
     description: Remove CCMAPI asset from TestLab EDC
     params:

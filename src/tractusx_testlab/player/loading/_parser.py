@@ -200,7 +200,7 @@ def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefini
     listeners = [parse_listener(l) for l in data.get(C.K_LISTEN, [])]
     setup = [parse_step(s) for s in data.get(C.K_SETUP, [])]
     steps = [parse_step(s) for s in data.get(C.K_STEPS, [])]
-    cleanup = [parse_step(s) for s in data.get(C.K_CLEANUP, [])]
+    teardown = [parse_step(s) for s in data.get(C.K_TEARDOWN, [])]
     depends_on = parse_depends_on(data.get(C.K_DEPENDS_ON, []))
     outputs = data.get(C.K_OUTPUTS, {})
 
@@ -222,7 +222,7 @@ def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefini
         listen=listeners,
         setup=setup,
         steps=steps,
-        cleanup=cleanup,
+        teardown=teardown,
     )
 
 

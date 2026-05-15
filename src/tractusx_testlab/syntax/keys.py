@@ -39,7 +39,7 @@ VARIABLES = "variables"
 PRECONDITIONS = "preconditions"
 SETUP = "setup"
 STEPS = "steps"
-CLEANUP = "cleanup"
+TEARDOWN = "teardown"
 SERVICES = "services"
 LISTEN = "listen"
 

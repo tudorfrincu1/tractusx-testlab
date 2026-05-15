@@ -165,7 +165,7 @@ class YamlParser:
         preconditions = [parse_step(step_data).model_dump() for step_data in data.get(_PRECONDITIONS_KEY, [])]
         setup = [parse_step(step_data).model_dump() for step_data in data.get(keys.SETUP, [])]
         steps = [parse_step(step_data).model_dump() for step_data in data.get(keys.STEPS, [])]
-        cleanup = [parse_step(step_data).model_dump() for step_data in data.get(keys.CLEANUP, [])]
+        teardown = [parse_step(step_data).model_dump() for step_data in data.get(keys.TEARDOWN, [])]
         services = [_parse_service(service_data) for service_data in data.get(keys.SERVICES, [])]
         listeners = [
             ListenerDefinition(**listener_entry) if isinstance(listener_entry, dict) else ListenerDefinition(name=str(listener_entry), path=str(listener_entry))
@@ -173,7 +173,7 @@ class YamlParser:
         ]
 
         return YamlParser._merge_with_base(
-            data, base_def, variables, preconditions, setup, steps, cleanup, services, listeners,
+            data, base_def, variables, preconditions, setup, steps, teardown, services, listeners,
         )
 
     @staticmethod
@@ -206,7 +206,7 @@ class YamlParser:
         preconditions: list,
         setup: list,
         steps: list,
-        cleanup: list,
+        teardown: list,
         services: list,
         listeners: list,
     ) -> ScriptDefinition:
@@ -236,5 +236,5 @@ class YamlParser:
             preconditions=preconditions or get(data, "preconditions", base_def, []),
             setup=setup or get(data, "setup", base_def, []),
             steps=steps or get(data, "steps", base_def, []),
-            cleanup=cleanup or get(data, "cleanup", base_def, []),
+            teardown=teardown or get(data, "teardown", base_def, []),
         )

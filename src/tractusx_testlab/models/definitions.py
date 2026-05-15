@@ -110,7 +110,7 @@ class ScriptDefinition(BaseModel):
     preconditions: list[StepDefinition] = Field(default_factory=list)
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)
-    cleanup: list[StepDefinition] = Field(default_factory=list)
+    teardown: list[StepDefinition] = Field(default_factory=list)
 
 
 class ImportDefinition(BaseModel):
