@@ -24,7 +24,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { theme } from "../../theme/tractusxTheme";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import {
   overlayStyle, dialogStyle, headerStyle, closeButtonStyle,
   searchInputStyle, listContainerStyle, listItemStyle,

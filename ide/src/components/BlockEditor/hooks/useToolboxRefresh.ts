@@ -24,8 +24,8 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
-import { useServiceStore } from "../../../store/useServiceStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
 import {
   collectWorkspaceVariables,
   buildToolbox,

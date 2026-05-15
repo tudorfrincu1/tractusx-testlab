@@ -31,7 +31,7 @@ import type {
   ScriptDefinition,
   TestLabDocument,
 } from "../../../models/schema";
-import { useServiceStore } from "../../../store/useServiceStore";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
 import { findCatalogEntry, type BlockCatalog } from "../blocks";
 import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
 import { toRuntimeStepType } from "./stepTypeAliases";

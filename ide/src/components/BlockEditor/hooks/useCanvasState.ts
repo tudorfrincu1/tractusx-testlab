@@ -24,7 +24,7 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useProjectStore } from "../../../store/useProjectStore";
+import { useProjectStore } from "../../../store/slices/useProjectStore";
 import type { WorkspaceRefs } from "../workspaceTypes";
 
 /**

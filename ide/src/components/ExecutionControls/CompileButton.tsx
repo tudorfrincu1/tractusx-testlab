@@ -27,11 +27,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/Warning";
 import BuildIcon from "@mui/icons-material/Build";
-import { useCompileStore } from "../../store/useCompileStore";
-import { useExecutionStore } from "../../store/useExecutionStore";
-import { useProjectStore } from "../../store/useProjectStore";
-import { modelToYaml } from "../../sync/modelToYaml";
-import type { CompileStatus } from "../../store/useCompileStore";
+import { useCompileStore } from "../../store/slices/useCompileStore";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { modelToYaml } from "../../sync";
+import type { CompileStatus } from "../../store/slices/useCompileStore";
 import "./ExecutionControls.css";
 
 /** Map compile status to the appropriate icon. */

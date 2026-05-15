@@ -25,7 +25,7 @@
 
 import { ScriptKind } from "../../../models/schema";
 import type { BlockCatalog, BlockCatalogCategory } from "../blocks";
-import { useServiceStore } from "../../../store/useServiceStore";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
 import { blockColors, getCategoryColor } from "../config/blockColors";
 import { PHASE_DEFINITIONS } from "./phaseConfig";
 

@@ -26,9 +26,9 @@
 import { useRef, useCallback, useEffect } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
 import { theme } from "../../theme/tractusxTheme";
-import { findStepLineRange } from "../../sync/yamlLineMap";
+import { findStepLineRange } from "../../sync";
 import { defineTractusDarkTheme, registerYamlCompletions } from "./monacoSetup";
 
 export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {

@@ -27,7 +27,7 @@ import type {
   ScriptDefinition,
   TestLabDocument,
 } from "../models/schema";
-import type { AggregatedVariable, TestSummary } from "./selectors";
+import type { AggregatedVariable, TestSummary } from "./selectors/selectors";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 

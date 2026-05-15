@@ -25,15 +25,12 @@
 
 import "./App.css";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { TopBar } from "./components/Layout/TopBar";
-import { StatusBar } from "./components/Layout/StatusBar";
-import { NotificationBar } from "./components/Layout/NotificationBar";
-import { EditorPanels } from "./components/Layout/EditorPanels";
+import { TopBar, StatusBar, NotificationBar, EditorPanels } from "./components/Layout";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
-import { TckDashboard } from "./components/TckDashboard/TckDashboard";
+import { TckDashboard } from "./components/TckDashboard";
 import { WelcomeScreen } from "./components/WelcomeScreen/WelcomeScreen";
-import { useTestLabStore } from "./store/useTestLabStore";
-import { useProjectStore, type ActiveFile } from "./store/useProjectStore";
+import { useTestLabStore } from "./store/slices/useTestLabStore";
+import { useProjectStore, type ActiveFile } from "./store/slices/useProjectStore";
 import type { TckDefinition, ScriptDefinition } from "./models/schema";
 
 export default function App() {

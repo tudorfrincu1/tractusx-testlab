@@ -24,9 +24,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { theme } from "../../theme/tractusxTheme";
-import { useProjectStore } from "../../store/useProjectStore";
-import { modelToYaml } from "../../sync/modelToYaml";
-import { yamlToModel } from "../../sync/yamlToModel";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { modelToYaml, yamlToModel } from "../../sync";
 
 import EditIcon from "@mui/icons-material/Edit";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";

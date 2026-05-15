@@ -24,8 +24,8 @@
 // It was reviewed and tested by a human committer.
 
 import type { Workspace } from "blockly";
-import { useServiceStore } from "../../../../../store/useServiceStore";
-import { useProjectStore } from "../../../../../store/useProjectStore";
+import { useServiceStore } from "../../../../../store/slices/useServiceStore";
+import { useProjectStore } from "../../../../../store/slices/useProjectStore";
 
 /** Collect all mock endpoint IDs defined in the workspace (for Wait block dropdown) */
 export function collectMockEndpointIds(workspace: Workspace): Array<[string, string]> {

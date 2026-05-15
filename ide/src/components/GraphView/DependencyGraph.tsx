@@ -37,12 +37,12 @@ import {
   type NodeMouseHandler,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
 import { theme } from "../../theme/tractusxTheme";
-import { modelToGraph } from "../../sync/modelToGraph";
+import { modelToGraph } from "../../sync";
 import { applyDagreLayout } from "./layoutEngine";
 import { nodeTypes } from "./nodeTypes";
-import type { GraphMode } from "../../store/useTestLabStore";
+import type { GraphMode } from "../../store/slices/useTestLabStore";
 
 const MODE_LABELS: { mode: GraphMode; label: string }[] = [
   { mode: "execution", label: "Execution Flow" },

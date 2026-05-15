@@ -24,7 +24,7 @@
 
 import { useRef, useEffect, useState, type RefObject } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
 import {
   registerBlocks,
   buildToolbox,

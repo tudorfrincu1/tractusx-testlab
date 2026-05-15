@@ -24,7 +24,7 @@
 
 import { useState, useCallback } from "react";
 import { theme } from "../../theme/tractusxTheme";
-import { useProjectStore, type ActiveFile } from "../../store/useProjectStore";
+import { useProjectStore, type ActiveFile } from "../../store/slices/useProjectStore";
 import { ExplorerContextMenu, type ContextTarget } from "./ExplorerContextMenu";
 import { ExplorerActions } from "./ExplorerActions";
 import { TreeRow } from "./TreeRow";

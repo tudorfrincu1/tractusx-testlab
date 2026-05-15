@@ -24,8 +24,8 @@
 
 import { useRef, useState } from "react";
 import { theme } from "../../theme/tractusxTheme";
-import { useProjectStore } from "../../store/useProjectStore";
-import { yamlToModel } from "../../sync/yamlToModel";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { yamlToModel } from "../../sync";
 import type { ScriptDefinition } from "../../models/schema";
 import { SchemaDownloadDialog } from "../SchemaDownloadDialog/SchemaDownloadDialog";
 

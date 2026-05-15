@@ -23,10 +23,10 @@
 // It was reviewed and tested by a human committer.
 
 import { useRef } from "react";
-import { useProjectStore } from "../../store/useProjectStore";
-import { useTestLabStore } from "../../store/useTestLabStore";
-import { yamlToModel } from "../../sync/yamlToModel";
-import { importProjectZip, importExampleFolder } from "../../store/projectIO";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
+import { yamlToModel } from "../../sync";
+import { importProjectZip, importExampleFolder } from "../../store/project/projectIO";
 import { theme } from "../../theme/tractusxTheme";
 
 import AddIcon from "@mui/icons-material/Add";

@@ -23,12 +23,12 @@
 // It was reviewed and tested by a human committer.
 
 import { useState } from "react";
-import { useProjectStore, type ActiveFile } from "../../store/useProjectStore";
+import { useProjectStore, type ActiveFile } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
-import { MetadataSection } from "./MetadataSection";
-import { VariablesOverview } from "./VariablesOverview";
-import { TestPipelineTable } from "./TestPipelineTable";
-import { DataFlowView } from "./DataFlowView";
+import { MetadataSection } from "./forms/MetadataSection";
+import { VariablesOverview } from "./dataflow/VariablesOverview";
+import { TestPipelineTable } from "./pipeline/TestPipelineTable";
+import { DataFlowView } from "./dataflow/DataFlowView";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import TimelineIcon from "@mui/icons-material/Timeline";

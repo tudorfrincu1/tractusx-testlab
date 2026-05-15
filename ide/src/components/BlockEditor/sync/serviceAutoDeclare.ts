@@ -25,7 +25,7 @@
 import * as Blockly from "blockly";
 import type { BlockCatalog } from "../blocks";
 import { SERVICE_TYPE_RESOLUTION } from "../toolbox/toolboxBuilder";
-import { useServiceStore } from "../../../store/useServiceStore";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
 
 /** Prefix used when registering catalog blocks. */
 const STEP_PREFIX = "step_";
