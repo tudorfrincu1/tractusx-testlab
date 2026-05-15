@@ -115,8 +115,8 @@ export function InlineField({ label, value, onChange, placeholder, isMultiline }
             onBlur={commit}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            rows={2}
-            style={fieldStyle}
+            rows={4}
+            style={{ ...fieldStyle, minHeight: 88 }}
           />
         ) : (
           <input
@@ -201,11 +201,13 @@ function isValidVersion(input: string): boolean {
   return VERSION_RE.test(input);
 }
 
-export function VersionField({ label, value, onChange, compact }: {
+export function VersionField({ label, value, onChange, compact, className, inputClassName }: {
   label?: string;
   value: string;
   onChange: (value: string) => void;
   compact?: boolean;
+  className?: string;
+  inputClassName?: string;
 }) {
   const [draft, setDraft] = useState(() => stripPrefix(value));
   const [touched, setTouched] = useState(false);
@@ -247,7 +249,7 @@ export function VersionField({ label, value, onChange, compact }: {
   const inputWidth = compact ? 64 : 90;
 
   return (
-    <div>
+    <div className={className}>
       {label && (
         <label style={{ fontSize: 10, color: theme.colors.textMuted, fontWeight: 500, marginBottom: 2, display: "block" }}>
           {label}
@@ -262,6 +264,7 @@ export function VersionField({ label, value, onChange, compact }: {
           v
         </span>
         <input
+          className={inputClassName}
           type="text"
           value={draft}
           placeholder="0.0.0"

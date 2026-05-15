@@ -23,10 +23,9 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback } from "react";
 import type { FlowNode } from "./dataFlowBuilder";
 import type { PipelineStageStatus } from "./types";
-import { MetadataSummary } from "./MetadataSummary";
 import "./PipelineGraphView.css";
 
 export interface StageListSidebarProps {
@@ -51,11 +50,8 @@ export const StageListSidebar = memo(function StageListSidebar({
   onSelectNode,
   statusMap = {},
 }: StageListSidebarProps) {
-  const [, setIsEditingMetadata] = useState(false);
-
   return (
     <aside className="stage-list-sidebar">
-      <MetadataSummary onEditingChange={setIsEditingMetadata} />
       <div className="stage-list-sidebar__header">Stages</div>
       <ul className="stage-list-sidebar__list">
         {nodes.map((node, index) => (

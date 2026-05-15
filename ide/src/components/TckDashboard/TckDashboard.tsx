@@ -22,14 +22,19 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
+import { useState, useCallback } from "react";
 import { useProjectStore } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { PipelineGraphView } from "./dataflow/PipelineGraphView";
+import { GraphInfoDisplay } from "./dataflow/GraphInfoDisplay";
+import { GraphInfoEditForm } from "./dataflow/GraphInfoEditForm";
+import { DATASPACE_OPTIONS } from "./dataflow/constants";
+import { VersionField } from "./forms/FormFields";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import "./TckDashboard.css";
 
 export function TckDashboard() {
-  const tck = useProjectStore((s) => s.tck);
 
   return (
     <div style={{
@@ -39,12 +44,8 @@ export function TckDashboard() {
       overflow: "hidden",
       background: theme.colors.bg,
     }}>
-      {/* ── Header ─────────────────────────────────────────── */}
-      <DashboardHeader
-        name={tck.name}
-        version={tck.version}
-        dataspaceVersion={tck.dataspace_version}
-      />
+      {/* ── Header with expandable info ────────────────────── */}
+      <DashboardHeader />
 
       {/* ── Pipeline Graph (unified view) ──────────────────── */}
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -56,27 +57,105 @@ export function TckDashboard() {
 
 /* ── Sub-components ──────────────────────────────────────────────────────── */
 
-function DashboardHeader({ name, version, dataspaceVersion }: {
-  name: string;
-  version?: string;
-  dataspaceVersion?: string;
-}) {
+function DashboardHeader() {
+  const tck = useProjectStore((s) => s.tck);
+  const updateField = useProjectStore((s) => s.updateTckField);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+    if (isExpanded) setIsEditing(false);
+  }, [isExpanded]);
+
+  const handleEditClick = useCallback(() => {
+    setIsEditing(true);
+    setIsExpanded(true);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
   return (
-    <div style={{
-      padding: "16px 24px",
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      background: theme.colors.bgLight,
-      borderBottom: `1px solid ${theme.colors.border}`,
-      flexShrink: 0,
-    }}>
-      <PlaylistAddIcon sx={{ fontSize: 20, color: theme.colors.primary }} />
-      <span style={{ fontSize: 15, fontWeight: 700, color: theme.colors.textBright }}>
-        {name}
-      </span>
-      {version && <Badge label={`v${version.replace(/^v/i, "")}`} color={theme.colors.textMuted} bg={theme.colors.bgLighter} />}
-      {dataspaceVersion && <Badge label={dataspaceVersion} color={theme.colors.primary} bg="rgba(255, 215, 0, 0.12)" />}
+    <div className="dashboard-header" style={{ flexShrink: 0 }}>
+      {/* ── Bar row ──────────────────────────────────────── */}
+      <div className="dashboard-header__bar">
+        <PlaylistAddIcon sx={{ fontSize: 20, color: theme.colors.primary }} />
+
+        {isEditing ? (
+          <input
+            className="dashboard-header__inline-input dashboard-header__inline-input--name"
+            value={tck.name}
+            onChange={(e) => updateField("name", e.target.value)}
+            placeholder="Project name"
+            autoFocus
+          />
+        ) : (
+          <span className="dashboard-header__name">{tck.name}</span>
+        )}
+
+        {isEditing ? (
+          <VersionField
+            value={tck.version ?? ""}
+            onChange={(v) => updateField("version", v || undefined)}
+            compact
+            className="dashboard-header__version-field"
+            inputClassName="dashboard-header__inline-input dashboard-header__inline-input--version"
+          />
+        ) : (
+          tck.version && (
+            <Badge
+              label={`v${tck.version.replace(/^v/i, "")}`}
+              color={theme.colors.textMuted}
+              bg={theme.colors.bgLighter}
+            />
+          )
+        )}
+
+        {isEditing ? (
+          <select
+            className="dashboard-header__inline-select"
+            value={tck.dataspace_version ?? ""}
+            onChange={(e) => updateField("dataspace_version", e.target.value || undefined)}
+          >
+            <option value="">— version —</option>
+            {DATASPACE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        ) : (
+          tck.dataspace_version && (
+            <Badge
+              label={tck.dataspace_version}
+              color={theme.colors.primary}
+              bg="rgba(255, 215, 0, 0.12)"
+            />
+          )
+        )}
+
+        <button
+          className="dashboard-header__info-toggle"
+          onClick={handleToggleExpand}
+          title={isExpanded ? "Hide project info" : "Show project info"}
+        >
+          <span className={`dashboard-header__toggle-icon${isExpanded ? " dashboard-header__toggle-icon--expanded" : ""}`}>
+            ▶
+          </span>
+          {isExpanded ? "Hide project info" : "Show project info"}
+        </button>
+      </div>
+
+      {/* ── Expandable metadata ──────────────────────────── */}
+      <div className={`dashboard-header__body${isExpanded ? " dashboard-header__body--expanded" : ""}`}>
+        <div className="dashboard-header__body-inner">
+          {isEditing ? (
+            <GraphInfoEditForm onClose={handleCancelEdit} />
+          ) : (
+            <GraphInfoDisplay onEdit={handleEditClick} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

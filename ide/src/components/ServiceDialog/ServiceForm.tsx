@@ -57,7 +57,6 @@ export function ServiceForm({ service, isCreating, onChange, onSave, onCancel }:
           value={service.name}
           onChange={(e) => onChange({ ...service, name: e.target.value })}
           placeholder="e.g., saturn-connector"
-          disabled={!isCreating}
           style={inputStyle}
         />
       </FieldRow>

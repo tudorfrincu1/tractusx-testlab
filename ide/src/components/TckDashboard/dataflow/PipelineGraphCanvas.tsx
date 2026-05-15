@@ -61,6 +61,10 @@ export function PipelineGraphCanvas({
   const { fitView } = useReactFlow();
   const { nodes, edges, onNodesChange, onEdgesChange } = usePipelineLayout(flowData, direction);
 
+  const handleToggleDirection = useCallback(() => {
+    onDirectionChange(direction === "TB" ? "LR" : "TB");
+  }, [direction, onDirectionChange]);
+
   useEffect(() => {
     requestAnimationFrame(() => fitView({ padding: 0.2, duration: 200 }));
   }, [nodes.length, direction, fitView]);
@@ -71,10 +75,6 @@ export function PipelineGraphCanvas({
     },
     [onNodeSelect],
   );
-
-  const handleToggleDirection = useCallback(() => {
-    onDirectionChange(direction === "TB" ? "LR" : "TB");
-  }, [direction, onDirectionChange]);
 
   const miniMapNodeColor = useCallback((node: { data: Record<string, unknown> }) => {
     const data = node.data as unknown as PipelineNodeData;
@@ -93,7 +93,6 @@ export function PipelineGraphCanvas({
       >
         {direction === "TB" ? "↔ LR" : "↕ TB"}
       </button>
-
       <ReactFlow
         nodes={nodes}
         edges={edges}

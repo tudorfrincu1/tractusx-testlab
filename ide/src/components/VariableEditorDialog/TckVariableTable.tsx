@@ -25,6 +25,7 @@
 import { useState, useCallback, useMemo } from "react";
 import type { VariableDefinition } from "../../models/schema";
 import { useProjectStore } from "../../store/slices/useProjectStore";
+import { getAggregatedVariables as computeAggregatedVariables } from "../../store/selectors/selectors";
 import { VariableRow } from "./VariableRow";
 import "./TckVariableTable.css";
 
@@ -38,7 +39,7 @@ export function TckVariableTable() {
   const [newName, setNewName] = useState("");
 
   const variables = useMemo(
-    () => useProjectStore.getState().getAggregatedVariables(),
+    () => computeAggregatedVariables(tck, tests, testOrder),
     [tck, tests, testOrder],
   );
 

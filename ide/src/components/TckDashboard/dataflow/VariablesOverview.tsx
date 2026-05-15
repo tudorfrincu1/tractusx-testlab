@@ -23,7 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore, type AggregatedVariable } from "../../../store/slices/useProjectStore";
+import { useProjectStore } from "../../../store/slices/useProjectStore";
+import type { AggregatedVariable } from "../../../store/slices/useProjectStore";
+import { getAggregatedVariables as computeAggregatedVariables } from "../../../store/selectors/selectors";
 import { theme } from "../../../theme/tractusxTheme";
 import { SectionCard } from "../forms/MetadataSection";
 
@@ -38,7 +40,7 @@ export function VariablesOverview() {
   const updateField = useProjectStore((s) => s.updateTckField);
 
   const variables = useMemo(
-    () => useProjectStore.getState().getAggregatedVariables(),
+    () => computeAggregatedVariables(tck, tests, testOrder),
     [tck, tests, testOrder],
   );
 
