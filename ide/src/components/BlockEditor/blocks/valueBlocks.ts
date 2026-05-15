@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Tractus-X TestLab
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -97,6 +98,9 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         .appendField("\"");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
+      this.setHelpUrl();
+      this.setShadow(true);
+      this.setCommentText("This is a string")
       this.setTooltip("A literal string value");
     },
   };
@@ -136,6 +140,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         ));
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJsonPath);
+      this.setCommentText("This is json path variable, with editable path tool")
       this.setTooltip("A dot-notation path (e.g. items.0.id) — click ✏ to edit");
       (this as unknown as BlockWithSegments).__segments = segs;
     },
@@ -148,6 +153,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         .appendField(new Blockly.FieldNumber(0), "VALUE");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
+      this.setCommentText("This is a numberic value variable")
       this.setTooltip("A numeric value");
     },
   };
@@ -203,6 +209,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
       this.setTooltip("A boolean value (true/false)");
+      this.setCommentText("This is a boolean variable")
     },
   };
 
