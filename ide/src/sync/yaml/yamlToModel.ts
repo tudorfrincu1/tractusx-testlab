@@ -59,17 +59,6 @@ function detectKind(raw: Record<string, unknown>): ScriptKind {
 }
 
 function parseScript(raw: Record<string, unknown>): ScriptDefinition {
-  const parsedOutputs = Array.isArray(raw.outputs)
-    ? raw.outputs
-        .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-        .map((item) => ({
-          name: String(item.name ?? ""),
-          type: item.type != null ? String(item.type) : undefined,
-          description: item.description != null ? String(item.description) : undefined,
-          values: Array.isArray(item.values) ? item.values : undefined,
-        }))
-    : undefined;
-
   return {
     kind: ScriptKind.TEST,
     name: String(raw.name ?? ""),
@@ -77,12 +66,8 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
     dataspace_version: raw.dataspace_version != null ? String(raw.dataspace_version) : undefined,
     description: raw.description != null ? String(raw.description) : undefined,
     preconditions: raw.preconditions as ScriptDefinition["preconditions"],
-    inputs: raw.inputs as ScriptDefinition["inputs"],
-    prerequisites: raw.prerequisites as ScriptDefinition["prerequisites"],
-    output_definitions: parsedOutputs,
     variables: raw.variables as ScriptDefinition["variables"],
     services: raw.services as ScriptDefinition["services"],
-    listen: raw.listen as ScriptDefinition["listen"],
     setup: (raw.setup as ScriptDefinition["setup"]) ?? [],
     steps: (raw.steps as ScriptDefinition["steps"]) ?? [],
     teardown: (raw.teardown as ScriptDefinition["teardown"]) ?? [],

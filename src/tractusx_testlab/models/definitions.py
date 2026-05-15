@@ -26,7 +26,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -36,7 +36,6 @@ from tractusx_sdk.extensions.testlab.models.enums import (
     SdkCallMode,
     ValueSource,
 )
-from tractusx_sdk.extensions.testlab.models import DependencyRef
 from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
 
 
@@ -79,13 +78,6 @@ class StepDefinition(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class ListenerDefinition(BaseModel):
-    name: str
-    path: str
-    method: str = "POST"
-    timeout_s: float = 60.0
-
-
 class ServiceDefinition(BaseModel):
     name: str
     type: ServiceType
@@ -102,11 +94,9 @@ class ScriptDefinition(BaseModel):
     description: Optional[str] = None
     import_from: Optional[str] = None
     allow_sdk_calls: SdkCallMode = SdkCallMode.ALLOWLIST
-    depends_on: list[Union[str, DependencyRef]] = Field(default_factory=list)
     outputs: dict[str, str] = Field(default_factory=dict)
     variables: dict[str, VariableDefinition] = Field(default_factory=dict)
     services: list[ServiceDefinition] = Field(default_factory=list)
-    listen: list[ListenerDefinition] = Field(default_factory=list)
     preconditions: list[StepDefinition] = Field(default_factory=list)
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)

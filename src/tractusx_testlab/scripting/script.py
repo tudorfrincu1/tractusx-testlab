@@ -65,8 +65,8 @@ class TestScript:
         return self.definition.setup
 
     @property
-    def cleanup(self):
-        return self.definition.cleanup
+    def teardown(self):
+        return self.definition.teardown
 
     @property
     def services(self):

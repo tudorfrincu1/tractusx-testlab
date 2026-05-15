@@ -210,34 +210,34 @@ async def execute_main_steps(
     return step_results, script_status
 
 
-async def execute_cleanup_steps(
+async def execute_teardown_steps(
     script: TestScript,
     context: StepContext,
     job_id: str,
     monitor: ExecutionMonitor,
 ) -> list[StepResult]:
-    """Run cleanup steps unconditionally (even after failure)."""
-    cleanup_results: list[StepResult] = []
-    for step_idx, step_def in enumerate(script.definition.cleanup):
-        cleanup_name = f"{script.name}[cleanup:{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, f"cleanup:{step_def.type}")
+    """Run teardown steps unconditionally (even after failure)."""
+    teardown_results: list[StepResult] = []
+    for step_idx, step_def in enumerate(script.definition.teardown):
+        teardown_name = f"{script.name}[teardown:{step_idx}]:{step_def.type}"
+        monitor.on_step_started(job_id, step_idx, f"teardown:{step_def.type}")
 
         step_cls = StepRegistry.get(step_def.type, script.definition.version)
         if step_cls:
-            result = await run_step(step_cls, step_def, cleanup_name, context)
+            result = await run_step(step_cls, step_def, teardown_name, context)
         else:
             result = StepResult(
-                step_name=cleanup_name,
+                step_name=teardown_name,
                 step_type=step_def.type,
                 phase=StepPhase.CLEANUP,
                 status=StepStatus.FAILED,
-                error=f"No implementation found for cleanup step '{step_def.type}'",
+                error=f"No implementation found for teardown step '{step_def.type}'",
             )
         result.phase = StepPhase.CLEANUP
-        cleanup_results.append(result)
+        teardown_results.append(result)
         monitor.on_step_completed(job_id, result)
 
-    return cleanup_results
+    return teardown_results
 
 
 async def run_script(
@@ -247,7 +247,7 @@ async def run_script(
     monitor: ExecutionMonitor,
     jobs: JobManager,
 ) -> ScriptResult:
-    """Execute all steps in a script sequentially (precondition → setup → main → cleanup)."""
+    """Execute all steps in a script sequentially (precondition → setup → main → teardown)."""
     seed_script_defaults(script, context)
     register_script_services(script, context)
 
@@ -273,12 +273,12 @@ async def run_script(
                 script, context, job_id, monitor, jobs,
             )
 
-    cleanup_results = await execute_cleanup_steps(
+    teardown_results = await execute_teardown_steps(
         script, context, job_id, monitor,
     )
 
     script_end = datetime.now(timezone.utc)
-    all_step_results = precondition_results + setup_results + step_results + cleanup_results
+    all_step_results = precondition_results + setup_results + step_results + teardown_results
 
     return ScriptResult(
         script_name=script.name,

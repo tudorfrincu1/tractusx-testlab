@@ -41,12 +41,10 @@ SETUP = "setup"
 STEPS = "steps"
 TEARDOWN = "teardown"
 SERVICES = "services"
-LISTEN = "listen"
 
 # -- TCK ----------------------------------------------------------------------
 TEST = "test"
 TESTS = "tests"
-DEPENDS_ON = "depends_on"
 OUTPUTS = "outputs"
 
 # -- Step fields --------------------------------------------------------------

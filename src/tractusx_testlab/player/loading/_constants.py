@@ -28,7 +28,7 @@
 K_TYPE, K_NAME, K_VERSION, K_DESCRIPTION = "type", "name", "version", "description"
 K_KIND, K_PARAMS, K_EXPECT, K_SERVICES = "kind", "params", "expect", "services"
 K_VARIABLES, K_SETUP, K_STEPS, K_TEARDOWN = "variables", "setup", "steps", "teardown"
-K_LISTEN, K_DEPENDS_ON, K_OUTPUTS = "listen", "depends_on", "outputs"
+K_OUTPUTS = "outputs"
 K_IMPORT, K_IMPORTS, K_TESTS = "import", "imports", "tests"
 K_DATASPACE_VERSION, K_ALLOW_SDK_CALLS = "dataspace_version", "allow_sdk_calls"
 K_BASE_URL, K_AUTH, K_ON_FAILURE = "base_url", "auth", "on_failure"

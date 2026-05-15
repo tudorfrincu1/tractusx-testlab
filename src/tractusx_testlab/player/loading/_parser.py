@@ -45,7 +45,7 @@ from tractusx_sdk.extensions.testlab.models import (
 
 try:
     from tractusx_sdk.extensions.testlab.models import (
-        DependencyRef, FailurePolicy, ImportDefinition, SdkCallMode,
+        FailurePolicy, ImportDefinition, SdkCallMode,
     )
 except ImportError:
     from enum import Enum as _Enum
@@ -54,8 +54,6 @@ except ImportError:
         ABORT = "ABORT"; CONTINUE = "CONTINUE"; SKIP = "SKIP"  # noqa: E702
     class SdkCallMode(str, _Enum):  # type: ignore[no-redef]
         ALLOWLIST = "ALLOWLIST"; BLOCKLIST = "BLOCKLIST"; NONE = "NONE"  # noqa: E702
-    class DependencyRef(_FB):  # type: ignore[no-redef]
-        file: str; outputs: list[str] = []  # noqa: E702
     class ImportDefinition(_FB):  # type: ignore[no-redef]
         import_ref: str; override: dict | None = None  # noqa: E702
 
@@ -67,21 +65,8 @@ except ImportError:
     from pydantic import BaseModel as _SFB
     class SdkScriptDefinition(_SFB, extra="allow"): pass  # type: ignore[no-redef,call-arg]
 
-try:
-    from tractusx_sdk.extensions.testlab.scripting._dependencies import (
-        infer_output_dependencies, resolve_file_dependencies,
-    )
-except ImportError:
-
-    def resolve_file_dependencies(tests, base_dir, parse_fn):  # type: ignore[misc]
-        return tests
-
-    def infer_output_dependencies(tests):  # type: ignore[misc]
-        pass
-
 from tractusx_testlab.models.definitions import (
     Assertion,
-    ListenerDefinition,
     ScriptDefinition,
     ServiceDefinition,
     StepDefinition,
@@ -168,27 +153,6 @@ def parse_service(raw: dict) -> ServiceDefinition:
     )
 
 
-def parse_listener(raw: dict) -> ListenerDefinition:
-    """Parse a listener dict."""
-    return ListenerDefinition(
-        name=raw.get(C.K_NAME, ""),
-        path=raw.get(C.K_PATH, "/"),
-        method=raw.get("method", "POST"),
-        timeout_s=raw.get(C.K_TIMEOUT_S, 60.0),
-    )
-
-
-def parse_depends_on(raw: list) -> list[Union[str, DependencyRef]]:
-    """Parse depends_on entries."""
-    result: list[Union[str, DependencyRef]] = []
-    for entry in raw:
-        if isinstance(entry, str):
-            result.append(entry)
-        elif isinstance(entry, dict):
-            result.append(DependencyRef(**entry))
-    return result
-
-
 def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:
     """Build a ScriptDefinition from a YAML dict using local extended models.
 
@@ -197,11 +161,9 @@ def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefini
     """
     variables = parse_variables(data.get(C.K_VARIABLES, {}))
     services = [parse_service(s) for s in data.get(C.K_SERVICES, [])]
-    listeners = [parse_listener(l) for l in data.get(C.K_LISTEN, [])]
     setup = [parse_step(s) for s in data.get(C.K_SETUP, [])]
     steps = [parse_step(s) for s in data.get(C.K_STEPS, [])]
     teardown = [parse_step(s) for s in data.get(C.K_TEARDOWN, [])]
-    depends_on = parse_depends_on(data.get(C.K_DEPENDS_ON, []))
     outputs = data.get(C.K_OUTPUTS, {})
 
     raw_kind = data.get(C.K_KIND, "test")
@@ -215,11 +177,9 @@ def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefini
         description=data.get(C.K_DESCRIPTION),
         import_from=data.get(C.K_IMPORT),
         allow_sdk_calls=SdkCallMode(data.get(C.K_ALLOW_SDK_CALLS, "ALLOWLIST")),
-        depends_on=depends_on,
         outputs=outputs,
         variables=variables,
         services=services,
-        listen=listeners,
         setup=setup,
         steps=steps,
         teardown=teardown,
@@ -271,9 +231,6 @@ def build_test_case(
         ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
         for imp in data.get(C.K_IMPORTS, [])
     ]
-
-    tests = resolve_file_dependencies(tests, base_dir, parse_script_file)
-    infer_output_dependencies(tests)
 
     return SdkTckDefinition.model_construct(
         kind=_to_sdk_script_kind("tck"),
