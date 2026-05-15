@@ -30,6 +30,7 @@ import { useJsonEditor } from "./useJsonEditor";
 export interface JsonEditorModalProps {
   blockId: string;
   initialJson: string;
+  variables: string[];
   onSave: (blockId: string, json: string) => void;
   onClose: () => void;
 }
@@ -39,10 +40,11 @@ export interface JsonEditorModalProps {
 export function JsonEditorModal({
   blockId,
   initialJson,
+  variables,
   onSave,
   onClose,
 }: JsonEditorModalProps) {
-  const editor = useJsonEditor(initialJson);
+  const editor = useJsonEditor(initialJson, variables);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const handleDone = useCallback(() => {

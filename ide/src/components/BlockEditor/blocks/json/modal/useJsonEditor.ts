@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useProjectStore } from "../../../../../store/slices/useProjectStore";
 import {
   countVarRefsOutsideStrings,
   formatJsonWithVarRefs,
@@ -46,7 +45,10 @@ export interface UseJsonEditorResult {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
-export function useJsonEditor(initialJson: string): UseJsonEditorResult {
+export function useJsonEditor(
+  initialJson: string,
+  variables: string[],
+): UseJsonEditorResult {
   const [text, setText] = useState(initialJson);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -63,11 +65,7 @@ export function useJsonEditor(initialJson: string): UseJsonEditorResult {
       : "Valid JSON ✓"
     : `Invalid JSON: ${validation.error}`;
 
-  // Read available variables once on mount — modal remounts each open,
-  // so we always get a fresh snapshot without subscribing to the store.
-  const [availableVariables] = useState(() =>
-    useProjectStore.getState().getAggregatedVariables().map((v) => v.name),
-  );
+  const availableVariables = variables;
 
   const handleFormat = useCallback(() => {
     const formatted = formatJsonWithVarRefs(text);

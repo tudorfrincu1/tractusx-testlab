@@ -25,6 +25,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
+import { collectWorkspaceVariables } from "./blocks/common/catalog/variableCollection";
 import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
 import {
   setupInfoCallback,
@@ -34,7 +35,7 @@ import {
   type PathSegment,
   setupJsonEditorCallback,
   type JsonEditorRequest,
-  truncateJsonPreview,
+  formatJsonPreview,
   PathBuilderModal,
   JsonEditorModal,
   ApiPathBuilderModal,
@@ -134,7 +135,7 @@ export function BlocklyWorkspace() {
       if (!block) return;
       const oldValue = block.getFieldValue("JSON_VALUE") ?? "";
       block.setFieldValue(json, "JSON_VALUE");
-      block.setFieldValue(truncateJsonPreview(json), "JSON_PREVIEW");
+      block.setFieldValue(formatJsonPreview(json), "JSON_PREVIEW");
       Blockly.Events.fire(
         new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
           block, "field", "JSON_VALUE", oldValue, json,
@@ -180,6 +181,7 @@ export function BlocklyWorkspace() {
         <JsonEditorModal
           blockId={jsonReq.blockId}
           initialJson={jsonReq.jsonValue}
+          variables={workspace ? collectWorkspaceVariables(workspace) : []}
           onSave={handleJsonSave}
           onClose={handleJsonClose}
         />

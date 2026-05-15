@@ -80,7 +80,11 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
   const testOrder = useProjectStore((s) => s.testOrder);
   const tests = useProjectStore((s) => s.tests);
   const tck = useProjectStore((s) => s.tck);
-  const createProject = useProjectStore((s) => s.createProject);
+
+  const handleNewProject = () => {
+    useProjectStore.setState({ hasProject: false, activeFile: null });
+    onClose();
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -156,7 +160,7 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
     items.push(
       { label: "Rename Project", icon: <EditIcon sx={{ fontSize: 15 }} />, action: () => { rename.startRename("project", useProjectStore.getState().projectName); onClose(); } },
       { label: "Export ZIP", icon: <FolderZipIcon sx={{ fontSize: 15 }} />, action: () => { exportZip(); onClose(); } },
-      { label: "New Project", icon: <NoteAddIcon sx={{ fontSize: 15 }} />, action: () => { createProject(); onClose(); } },
+      { label: "New Project", icon: <NoteAddIcon sx={{ fontSize: 15 }} />, action: handleNewProject },
     );
   }
 

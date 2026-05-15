@@ -28,6 +28,7 @@ import { useProjectStore } from "../../../store/slices/useProjectStore";
 import { yamlToModel } from "../../../sync";
 import { importProjectZip, importExampleFolder } from "../../../store/project/projectIO";
 import { ExportDialog } from "../../ExportDialog/ExportDialog";
+import { ConfirmDialog } from "../../ConfirmDialog";
 import { theme } from "../../../theme/tractusxTheme";
 import ScienceIcon from "@mui/icons-material/Science";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
@@ -43,20 +44,32 @@ import { CompileButton } from "../../ExecutionControls/CompileButton";
 import { BackendSettings } from "../../ExecutionControls/BackendSettings";
 import { useAutoCompile } from "../../../hooks/useAutoCompile";
 import "../../ExecutionControls/ExecutionControls.css";
+import "./TopBar.css";
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName);
   const hasProject = useProjectStore((s) => s.hasProject);
   const isAnyDirty = useProjectStore((s) => s.isAnyDirty);
   const activeFile = useProjectStore((s) => s.activeFile);
-  const createProject = useProjectStore((s) => s.createProject);
+  const tests = useProjectStore((s) => s.tests);
   const loadFromDocument = useProjectStore((s) => s.loadFromDocument);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showNewProjectConfirm, setShowNewProjectConfirm] = useState(false);
 
   useAutoCompile();
 
-  const handleGoHome = () => {
+  const handleNewProject = () => {
+    const hasContent = tests.size > 0;
+    if (hasContent) {
+      setShowNewProjectConfirm(true);
+    } else {
+      useProjectStore.setState({ hasProject: false, activeFile: null });
+    }
+  };
+
+  const handleConfirmNewProject = () => {
+    setShowNewProjectConfirm(false);
     useProjectStore.setState({ hasProject: false, activeFile: null });
   };
 
@@ -119,89 +132,45 @@ export function TopBar() {
   };
 
   return (
-    <div
-      style={{
-        height: 44,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 16px",
-        background: "linear-gradient(135deg, #000000 0%, #1a1a1a 100%)",
-        borderBottom: `1px solid ${theme.colors.border}`,
-        flexShrink: 0,
-      }}
-    >
+    <div className="topbar">
       {/* Left: logo + project name */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button
-          onClick={handleGoHome}
-          title="Back to Welcome Screen"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "4px 8px 4px 0",
-            borderRadius: 4,
-            transition: "opacity 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-        >
+      <div className="topbar__left">
+        <div className="topbar__logo">
           <ScienceIcon sx={{ fontSize: 22, color: theme.colors.primary }} />
           <span
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: theme.colors.primary,
-              letterSpacing: "0.05em",
-            }}
+            className="topbar__logo-text"
+            style={{ color: theme.colors.primary }}
           >
             TestLab IDE
           </span>
-        </button>
+        </div>
         {hasProject && (
         <>
         <span
-          style={{
-            fontSize: 13,
-            color: theme.colors.textMuted,
-            marginLeft: 8,
-          }}
+          className="topbar__project-name"
+          style={{ color: theme.colors.textMuted }}
         >
           {projectName}
           {isAnyDirty() ? " •" : ""}
         </span>
         {activeFile && (
           <span
+            className={`topbar__active-file topbar__active-file--${
+              activeFile.type === "tck" ? "tck" : activeFile.type === "schema" ? "schema" : "other"
+            }`}
             style={{
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 4,
               background:
                 activeFile.type === "tck"
-                  ? "rgba(255, 215, 0, 0.15)"
+                  ? undefined
                   : activeFile.type === "schema"
-                    ? "rgba(66, 165, 245, 0.15)"
+                    ? undefined
                     : theme.colors.bgLighter,
               color:
                 activeFile.type === "tck"
                   ? theme.colors.primary
                   : activeFile.type === "schema"
-                    ? "#42a5f5"
+                    ? undefined
                     : theme.colors.textMuted,
-              border: `1px solid ${
-                activeFile.type === "tck"
-                  ? theme.colors.primary
-                  : activeFile.type === "schema"
-                    ? "#42a5f5"
-                    : theme.colors.border
-              }`,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
             }}
           >
             {activeFile.type === "tck" ? (
@@ -220,7 +189,7 @@ export function TopBar() {
 
       {/* Right: actions */}
       {hasProject && (
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="topbar__right">
         <CompileButton />
         <ExecuteButton />
         <BackendSettings />
@@ -228,7 +197,7 @@ export function TopBar() {
         <ToolbarButton
           label="New Project"
           icon={<NoteAddIcon sx={{ fontSize: 14 }} />}
-          onClick={() => createProject()}
+          onClick={handleNewProject}
         />
         <ToolbarButton
           label="Import"
@@ -240,7 +209,7 @@ export function TopBar() {
           icon={<FileDownloadIcon sx={{ fontSize: 14 }} />}
           onClick={() => setShowExportDialog(true)}
         />
-        <div style={{ position: "relative" }}>
+        <div className="topbar__example-wrapper">
           <ToolbarButton
             label="Example"
             icon={<FolderOpenIcon sx={{ fontSize: 14 }} />}
@@ -260,6 +229,15 @@ export function TopBar() {
       </div>
       )}
       {showExportDialog && <ExportDialog onClose={() => setShowExportDialog(false)} />}
+      {showNewProjectConfirm && (
+        <ConfirmDialog
+          title="Create New Project"
+          message="Are you sure you want to create a new project? Your project will be lost if you didn't export it."
+          confirmLabel="Create New Project"
+          onConfirm={handleConfirmNewProject}
+          onCancel={() => setShowNewProjectConfirm(false)}
+        />
+      )}
     </div>
   );
 }

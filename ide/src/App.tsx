@@ -144,7 +144,7 @@ export default function App() {
             )}
             {isTck ? (
               <div className="app__tck-wrapper">
-                <TckDashboard onSelectFile={handleSelectFile} />
+                <TckDashboard />
               </div>
             ) : (
               <EditorPanels autoSave={autoSave} onAutoSaveChange={setAutoSave} />

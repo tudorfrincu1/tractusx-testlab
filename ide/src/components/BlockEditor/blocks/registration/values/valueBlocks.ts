@@ -44,7 +44,8 @@ import {
   segmentsToApiPath,
 } from "../../api-path/core/apiPathBuilder";
 import type { ApiPathSegment } from "../../api-path/core/apiPathBuilder";
-import { requestOpenJsonEditor, truncateJsonPreview } from "../../json/core/jsonEditor";
+import { requestOpenJsonEditor, formatJsonPreview } from "../../json/core/jsonEditor";
+import { FieldJsonPreview } from "../../json/core/FieldJsonPreview";
 import { resolveVariableSchema } from "../../path/schema/schemaResolver";
 
 /**
@@ -267,7 +268,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.appendDummyInput()
         .appendField("{}")
         .appendField(
-          new Blockly.FieldLabelSerializable(truncateJsonPreview(DEFAULT_JSON)),
+          new FieldJsonPreview(formatJsonPreview(DEFAULT_JSON)),
           "JSON_PREVIEW",
         )
         .appendField(new Blockly.FieldImage(

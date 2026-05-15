@@ -40,7 +40,7 @@ import {
 } from "./helpers";
 import { populateAssertions } from "./populateAssertions";
 import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
-import { truncateJsonPreview } from "../blocks";
+import { formatJsonPreview } from "../blocks";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -138,7 +138,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
                 const vjb = makeBlock(ws, "value_json");
                 const jsonStr = JSON.stringify(paramVal, null, 2);
                 vjb.setFieldValue(jsonStr, "JSON_VALUE");
-                vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
+                vjb.setFieldValue(formatJsonPreview(jsonStr), "JSON_PREVIEW");
                 connectValue(sb, fieldKey, vjb);
               }
               break;

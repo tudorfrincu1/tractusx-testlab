@@ -1,0 +1,135 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+/* ── Metadata Summary (sidebar collapsible) ─────────────────────────────── */
+
+.metadata-summary {
+  border-bottom: 1px solid #404040;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.metadata-summary__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  text-align: left;
+}
+
+.metadata-summary__toggle:hover {
+  color: #ccc;
+}
+
+.metadata-summary__chevron {
+  display: inline-block;
+  font-size: 8px;
+  transition: transform 0.15s ease;
+}
+
+.metadata-summary__chevron[data-expanded="true"] {
+  transform: rotate(90deg);
+}
+
+.metadata-summary__title {
+  flex: 1;
+}
+
+/* ── Compact chips (collapsed state) ────────────────────────────────────── */
+
+.metadata-summary__compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 14px 10px;
+}
+
+.metadata-summary__chip {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #bbb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Detail rows (expanded state) ───────────────────────────────────────── */
+
+.metadata-summary__details {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadata-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.metadata-summary__label {
+  color: #777;
+  flex-shrink: 0;
+}
+
+.metadata-summary__value {
+  color: #ccc;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── Tags ───────────────────────────────────────────────────────────────── */
+
+.metadata-summary__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.metadata-summary__tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(15, 118, 110, 0.25);
+  color: #5eead4;
+}

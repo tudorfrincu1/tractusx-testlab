@@ -22,26 +22,14 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState } from "react";
-import { useProjectStore, type ActiveFile } from "../../store/slices/useProjectStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
-import { MetadataSection } from "./forms/MetadataSection";
-import { VariablesOverview } from "./dataflow/VariablesOverview";
-import { TestPipelineTable } from "./pipeline/TestPipelineTable";
 import { PipelineGraphView } from "./dataflow/PipelineGraphView";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import TimelineIcon from "@mui/icons-material/Timeline";
 
-type DashboardTab = "pipeline" | "dataflow";
-
-interface TckDashboardProps {
-  onSelectFile: (file: ActiveFile) => void;
-}
-
-export function TckDashboard({ onSelectFile }: TckDashboardProps) {
+export function TckDashboard() {
   const tck = useProjectStore((s) => s.tck);
-  const [activeTab, setActiveTab] = useState<DashboardTab>("pipeline");
 
   return (
     <div style={{
@@ -58,48 +46,10 @@ export function TckDashboard({ onSelectFile }: TckDashboardProps) {
         dataspaceVersion={tck.dataspace_version}
       />
 
-      {/* ── Tab bar ────────────────────────────────────────── */}
-      <div style={{
-        display: "flex",
-        gap: 0,
-        borderBottom: `1px solid ${theme.colors.border}`,
-        background: theme.colors.bgLight,
-        paddingLeft: 24,
-      }}>
-        <TabButton
-          label="Pipeline"
-          icon={<PlaylistAddIcon sx={{ fontSize: 14 }} />}
-          isActive={activeTab === "pipeline"}
-          onClick={() => setActiveTab("pipeline")}
-        />
-        <TabButton
-          label="Data Flow"
-          icon={<TimelineIcon sx={{ fontSize: 14 }} />}
-          isActive={activeTab === "dataflow"}
-          onClick={() => setActiveTab("dataflow")}
-        />
+      {/* ── Pipeline Graph (unified view) ──────────────────── */}
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <PipelineGraphView />
       </div>
-
-      {/* ── Content ────────────────────────────────────────── */}
-      {activeTab === "pipeline" && (
-        <div style={{
-          flex: 1,
-          overflow: "auto",
-          padding: "20px 24px 40px",
-        }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 960 }}>
-            <MetadataSection />
-            <VariablesOverview />
-            <TestPipelineTable onSelectFile={onSelectFile} />
-          </div>
-        </div>
-      )}
-
-      {activeTab === "dataflow" && (
-        <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-          <PipelineGraphView />
-        </div>
-      )}
     </div>
   );
 }
@@ -145,48 +95,5 @@ function Badge({ label, color, bg }: { label: string; color: string; bg: string 
     }}>
       {label}
     </span>
-  );
-}
-
-function TabButton({ label, icon, isActive, onClick, isDisabled }: {
-  label: string;
-  icon: React.ReactNode;
-  isActive: boolean;
-  onClick: () => void;
-  isDisabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={isDisabled ? undefined : onClick}
-      disabled={isDisabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 16px",
-        fontSize: 12,
-        fontWeight: isActive ? 600 : 400,
-        color: isDisabled
-          ? theme.colors.textMuted
-          : isActive
-            ? theme.colors.primary
-            : theme.colors.text,
-        background: "transparent",
-        border: "none",
-        borderBottom: isActive ? `2px solid ${theme.colors.primary}` : "2px solid transparent",
-        cursor: isDisabled ? "default" : "pointer",
-        opacity: isDisabled ? 0.4 : 1,
-        transition: "color 0.15s, border-color 0.15s",
-        marginBottom: -1,
-      }}
-    >
-      {icon}
-      {label}
-      {isDisabled && (
-        <span style={{ fontSize: 9, color: theme.colors.textMuted, fontStyle: "italic" }}>
-          soon
-        </span>
-      )}
-    </button>
   );
 }
