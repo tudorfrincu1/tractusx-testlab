@@ -24,46 +24,22 @@
 
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors } from "../blockColors";
-import { findCatalogEntry, type BlockCatalog } from "./catalogLoader";
+import { blockColors } from "../config/blockColors";
+import type { BlockCatalog } from "./catalogLoader";
 import { collectSchemaVariables, dynamicDropdown } from "./dropdownProviders";
-
-/** Collect output names from the parent step block's catalog entry */
-function collectParentOutputs(block: Block, catalog: BlockCatalog): Array<[string, string]> {
-  let parent = block.getSurroundParent();
-  while (parent && !parent.type.startsWith("step_")) {
-    parent = parent.getSurroundParent();
-  }
-  if (!parent) return [["(no outputs)", "__NONE__"]];
-  const stepType = parent.type.replace(/^step_/, "");
-  const entry = findCatalogEntry(stepType, catalog);
-  if (!entry?.outputs || entry.outputs.length === 0) return [["(no outputs)", "__NONE__"]];
-  return entry.outputs.map((o) => [o.name, o.name] as [string, string]);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function outputDropdown(catalog: BlockCatalog): (this: any) => Array<[string, string]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return function (this: any): Array<[string, string]> {
-    const b = this.getSourceBlock?.();
-    if (!b || !b.workspace || b.workspace.isClearing || b.workspace.disposed) {
-      const cur = this.getValue?.() ?? "";
-      if (cur && cur !== "__NONE__") return [[cur, cur]];
-      return [["—", "__NONE__"]];
-    }
-    const options = collectParentOutputs(b, catalog);
-    // Preserve the current value even if the parent step isn't attached yet
-    const currentVal = this.getValue?.() ?? "";
-    if (
-      currentVal &&
-      currentVal !== "__NONE__" &&
-      !options.some(([, v]: [string, string]) => v === currentVal)
-    ) {
-      options.unshift([currentVal, currentVal]);
-    }
-    return options;
-  };
-}
+import {
+  defaultSegments,
+  parsePathToSegments,
+  requestOpenPathBuilder,
+  segmentsToPath,
+} from "./pathBuilder";
+import type { PathSegment } from "./pathBuilder";
+import {
+  ICON_EDIT_PENCIL,
+  type BlockWithSegments,
+  resolveParentStepSchema,
+  outputDropdown,
+} from "./assertionHelpers";
 
 export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   Blockly.Blocks["assert_equals"] = {
@@ -234,6 +210,60 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
       this.setNextStatement(true, "assertion");
       this.setColour(blockColors.assertion);
       this.setTooltip("Assert that output is not empty");
+    },
+  };
+
+  Blockly.Blocks["assert_field"] = {
+    init(this: Block) {
+      const segs = defaultSegments();
+      const path = segmentsToPath(segs);
+      this.appendDummyInput()
+        .appendField("Assert field")
+        .appendField(new Blockly.FieldLabelSerializable(path), "PATH")
+        .appendField(new Blockly.FieldImage(
+          ICON_EDIT_PENCIL, 16, 16, "✏ Edit path",
+          (field: InstanceType<typeof BlocklyType.FieldImage>) => {
+            const block = field.getSourceBlock();
+            if (!block) return;
+            const svgRoot = field.getSvgRoot();
+            const rect = svgRoot?.getBoundingClientRect();
+            const pos = rect
+              ? { x: rect.right + 8, y: rect.top }
+              : { x: 400, y: 300 };
+            const currentPath = block.getFieldValue("PATH") || "";
+            const segments: PathSegment[] = (block as unknown as BlockWithSegments).__segments
+              ?? parsePathToSegments(currentPath);
+            const sourceSchema = resolveParentStepSchema(block, catalog);
+            requestOpenPathBuilder({
+              blockId: block.id,
+              segments,
+              position: pos,
+              sourceVariable: undefined,
+              sourceSchema,
+            });
+          },
+        ));
+      this.appendDummyInput()
+        .appendField(
+          new Blockly.FieldDropdown([
+            ["equals", "equals"],
+            ["not equals", "not_equals"],
+            ["contains", "contains"],
+            ["not contains", "not_contains"],
+            ["greater than", "greater_than"],
+            ["less than", "less_than"],
+            ["matches", "matches"],
+            ["is empty", "is_empty"],
+            ["is not empty", "is_not_empty"],
+          ]),
+          "OPERATOR"
+        );
+      this.appendValueInput("EXPECTED").appendField("expected:").setCheck("param_value");
+      this.setPreviousStatement(true, "assertion");
+      this.setNextStatement(true, "assertion");
+      this.setColour(blockColors.assertion);
+      this.setTooltip("Assert a field value within the step output using a JSON path");
+      (this as unknown as BlockWithSegments).__segments = segs;
     },
   };
 }

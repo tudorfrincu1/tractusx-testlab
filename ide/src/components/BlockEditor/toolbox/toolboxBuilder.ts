@@ -25,7 +25,7 @@
 import { ScriptKind } from "../../../models/schema";
 import type { BlockCatalog, BlockCatalogCategory } from "../blocks/catalogLoader";
 import { useServiceStore } from "../../../store/useServiceStore";
-import { blockColors, getCategoryColor } from "../blockColors";
+import { blockColors, getCategoryColor } from "../config/blockColors";
 import { PHASE_DEFINITIONS } from "./phaseConfig";
 
 export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
@@ -206,6 +206,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "value_string" },
           { kind: "block", type: "value_number" },
           { kind: "block", type: "value_boolean" },
+          { kind: "block", type: "value_json_path" },
         ],
       },
       {
@@ -224,13 +225,17 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "assert_between" },
           { kind: "block", type: "assert_not_null" },
           { kind: "block", type: "assert_not_empty" },
+          { kind: "block", type: "assert_field" },
         ],
       },
       {
         kind: "category",
         name: "JSON",
         colour: blockColors.json,
-        contents: [{ kind: "block", type: "key_value_pair" }],
+        contents: [
+          { kind: "block", type: "key_value_pair" },
+          { kind: "block", type: "value_json" },
+        ],
       },
       {
         kind: "category",

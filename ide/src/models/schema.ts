@@ -47,6 +47,7 @@ export const AssertionOperator = {
   GREATER_OR_EQUAL: "GREATER_OR_EQUAL",
   LESS_OR_EQUAL: "LESS_OR_EQUAL",
   BETWEEN: "BETWEEN",
+  ASSERT_FIELD: "ASSERT_FIELD",
 } as const;
 export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
 
@@ -105,6 +106,9 @@ export interface Assertion {
   schema?: string;
   min?: unknown;
   max?: unknown;
+  path?: string;
+  operator?: string;
+  expected?: unknown;
 }
 
 export interface TestInputDefinition {

@@ -24,7 +24,7 @@
 
 import type { Block, Workspace } from "blockly";
 import { type Assertion, AssertionOperator } from "../../../models/schema";
-import { serializePolicyBlock, createPolicyRuleBlocks } from "./policySerializers";
+import { serializePolicyBlock, createPolicyRuleBlocks } from "./serialize/policySerializers";
 import * as deferredDropdowns from "./deferredDropdowns";
 
 /** Maps the assert_compare block dropdown values to typed YAML assertion types. */
@@ -43,6 +43,9 @@ export function readValueBlockAsString(block: Block | null): string | undefined 
     return v && v !== "__NONE__" ? `@${v}` : undefined;
   }
   if (block.type === "value_string") {
+    return block.getFieldValue("VALUE") || undefined;
+  }
+  if (block.type === "value_json_path") {
     return block.getFieldValue("VALUE") || undefined;
   }
   if (block.type === "value_number") {
@@ -140,9 +143,7 @@ export function createValueBlockFromString(ws: Workspace, strVal: string): Block
     setDropdownValue(vb, "VAR_NAME", varMatch[1] || varMatch[2]);
     return vb;
   }
-  if (strVal.startsWith("$.")) {
-    strVal = strVal.slice(2);
-  }
+
   const num = Number(strVal);
   if (!isNaN(num) && strVal.trim() !== "") {
     const nb = makeBlock(ws, "value_number");
@@ -158,6 +159,22 @@ export function readAssertionChain(block: Block | null): Assertion[] {
   const assertions: Assertion[] = [];
   let current = block;
   while (current) {
+    // assert_field has no OUTPUT field — handle before the output guard
+    if (current.type === "assert_field") {
+      const path = current.getFieldValue("PATH") || "";
+      const operator = current.getFieldValue("OPERATOR") || "equals";
+      const expected = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+      assertions.push({
+        type: AssertionOperator.ASSERT_FIELD,
+        output: "",
+        path,
+        operator,
+        expected,
+      });
+      current = current.getNextBlock();
+      continue;
+    }
+
     const output = current.getFieldValue("OUTPUT") || "";
     if (!output || output === "__NONE__") {
       current = current.getNextBlock();

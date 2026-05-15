@@ -33,7 +33,7 @@ import {
   workspaceToModel,
   populateWorkspaceFromModel,
   collectWorkspaceVariables,
-} from "../BlockEditor/blockDefinitions";
+} from "../BlockEditor/config/blockDefinitions";
 import type { ScriptDefinition, TestLabDocument, TckDefinition } from "../../models/schema";
 import { isTest, isTck } from "../../models/schema";
 

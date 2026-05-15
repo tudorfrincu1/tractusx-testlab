@@ -63,6 +63,14 @@ steps:
       - type: "SCHEMA_VALIDATION"
         output: response_body
         schema: "@bpc_schema"
+      # assert_field: validate a nested field directly on the step output,
+      # combining path extraction + assertion in one block.
+      # Uses the schema-aware path builder to autocomplete field paths.
+      - type: "ASSERT_FIELD"
+        output: response_body
+        path: "certificateType"
+        operator: "equals"
+        expected: "@certificate_type"
 
   - type: json_path_extract
     description: Validate certificate type matches requested type

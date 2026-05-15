@@ -12,6 +12,11 @@
     { "name": "properties", "type": "json", "required": false, "description": "Additional asset properties" }
   ],
   "outputs": [
-    { "name": "asset_id", "description": "ID of the created asset" }
+    {
+      "name": "asset_id",
+      "description": "ID of the created asset",
+      "schema": { "type": "string" },
+      "example": "asset-uuid-123"
+    }
   ]
 }

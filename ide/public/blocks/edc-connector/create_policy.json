@@ -10,6 +10,11 @@
     { "name": "obligations", "type": "array", "item_type": "odrl_obligation", "required": false, "description": "ODRL obligation rules" }
   ],
   "outputs": [
-    { "name": "policy_id", "description": "ID of the created policy" }
+    {
+      "name": "policy_id",
+      "description": "ID of the created policy",
+      "schema": { "type": "string" },
+      "example": "policy-uuid-456"
+    }
   ]
 }

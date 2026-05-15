@@ -35,6 +35,8 @@ export interface BlockCatalogParam {
 export interface BlockCatalogOutput {
   name: string;
   description: string;
+  schema?: Record<string, unknown>;
+  example?: unknown;
 }
 
 export interface BlockCatalogEntry {
@@ -116,4 +118,24 @@ export function findCatalogEntry(stepType: string, catalog: BlockCatalog): Block
     }
   }
   return null;
+}
+
+/**
+ * Search the catalog for an output whose name matches `variableName`
+ * and return its schema definition (or `undefined`).
+ */
+export function findOutputSchema(
+  variableName: string,
+  catalog: BlockCatalog,
+): Record<string, unknown> | undefined {
+  for (const cat of catalog) {
+    for (const block of cat.blocks) {
+      for (const output of block.outputs ?? []) {
+        if (output.name === variableName && output.schema) {
+          return output.schema;
+        }
+      }
+    }
+  }
+  return undefined;
 }

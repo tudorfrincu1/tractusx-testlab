@@ -10,8 +10,30 @@
     { "name": "query_params", "type": "json", "required": false, "description": "URL query parameters" }
   ],
   "outputs": [
-    { "name": "status_code", "description": "HTTP status code of the response" },
-    { "name": "response_body", "description": "Response body" },
-    { "name": "response_headers", "description": "Response headers" }
+    {
+      "name": "status_code",
+      "description": "HTTP status code of the response",
+      "schema": { "type": "number" },
+      "example": 200
+    },
+    {
+      "name": "response_body",
+      "description": "Response body",
+      "schema": { "type": "object", "description": "Parsed JSON response body" },
+      "example": { "result": "ok" }
+    },
+    {
+      "name": "response_headers",
+      "description": "Response headers",
+      "schema": {
+        "type": "object",
+        "description": "Response headers as key-value pairs",
+        "properties": {
+          "content-type": { "type": "string" },
+          "x-request-id": { "type": "string" }
+        }
+      },
+      "example": { "content-type": "application/json", "x-request-id": "req-123" }
+    }
   ]
 }

@@ -23,7 +23,7 @@
 
 import type { MutableRefObject } from "react";
 import type * as Blockly from "blockly";
-import type { BlockCatalog } from "./blockDefinitions";
+import type { BlockCatalog } from "./config/blockDefinitions";
 
 /** Shared refs passed between workspace hooks. */
 export interface WorkspaceRefs {

@@ -22,17 +22,26 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useBlocklyWorkspace } from "./useBlocklyWorkspace";
-import { setupWarningTooltip, type WarningShowRequest } from "./bubblePatch";
+import * as Blockly from "blockly";
+import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
+import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
 import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
-import { BlockTooltip } from "./WarningTooltip";
+import { setupPathBuilderCallback, type PathBuilderRequest } from "./blocks/pathBuilder";
+import type { PathSegment } from "./blocks/pathBuilder";
+import { setupJsonEditorCallback, type JsonEditorRequest } from "./blocks/jsonEditor";
+import { truncateJsonPreview } from "./blocks/jsonEditor";
+import { PathBuilderModal } from "./blocks/PathBuilderModal";
+import { JsonEditorModal } from "./blocks/JsonEditorModal";
+import { BlockTooltip } from "./ui/WarningTooltip";
 import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { workspace } = useBlocklyWorkspace(containerRef);
+  const { workspace, catalog } = useBlocklyWorkspace(containerRef);
   const [warning, setWarning] = useState<WarningShowRequest | null>(null);
   const [info, setInfo] = useState<InfoShowRequest | null>(null);
+  const [pathReq, setPathReq] = useState<PathBuilderRequest | null>(null);
+  const [jsonReq, setJsonReq] = useState<JsonEditorRequest | null>(null);
 
   const handleWarningClose = useCallback(() => setWarning(null), []);
   const handleInfoClose = useCallback(() => setInfo(null), []);
@@ -56,6 +65,52 @@ export function BlocklyWorkspace() {
     return setupInfoCallback(handleShowInfo);
   }, [handleShowInfo]);
 
+  useEffect(() => {
+    return setupPathBuilderCallback((req: PathBuilderRequest) => setPathReq(req));
+  }, []);
+
+  useEffect(() => {
+    return setupJsonEditorCallback((req: JsonEditorRequest) => setJsonReq(req));
+  }, []);
+
+  const handlePathSave = useCallback(
+    (blockId: string, segments: PathSegment[], path: string) => {
+      if (!workspace) return;
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      const oldValue = block.getFieldValue("VALUE") ?? "";
+      block.setFieldValue(path, "VALUE");
+      (block as unknown as { __segments?: PathSegment[] }).__segments = segments;
+      Blockly.Events.fire(
+        new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
+          block, "field", "VALUE", oldValue, path,
+        ),
+      );
+    },
+    [workspace],
+  );
+
+  const handlePathClose = useCallback(() => setPathReq(null), []);
+
+  const handleJsonSave = useCallback(
+    (blockId: string, json: string) => {
+      if (!workspace) return;
+      const block = workspace.getBlockById(blockId);
+      if (!block) return;
+      const oldValue = block.getFieldValue("JSON_VALUE") ?? "";
+      block.setFieldValue(json, "JSON_VALUE");
+      block.setFieldValue(truncateJsonPreview(json), "JSON_PREVIEW");
+      Blockly.Events.fire(
+        new (Blockly.Events.get(Blockly.Events.BLOCK_CHANGE))(
+          block, "field", "JSON_VALUE", oldValue, json,
+        ),
+      );
+    },
+    [workspace],
+  );
+
+  const handleJsonClose = useCallback(() => setJsonReq(null), []);
+
   return (
     <>
       <div ref={containerRef} className="blockly-workspace-container" />
@@ -73,6 +128,24 @@ export function BlocklyWorkspace() {
           position={info.position}
           variant="info"
           onClose={handleInfoClose}
+        />
+      )}
+      {pathReq && (
+        <PathBuilderModal
+          blockId={pathReq.blockId}
+          initialSegments={pathReq.segments}
+          schema={pathReq.sourceSchema}
+          sourceVariable={pathReq.sourceVariable}
+          onSave={handlePathSave}
+          onClose={handlePathClose}
+        />
+      )}
+      {jsonReq && (
+        <JsonEditorModal
+          blockId={jsonReq.blockId}
+          initialJson={jsonReq.jsonValue}
+          onSave={handleJsonSave}
+          onClose={handleJsonClose}
         />
       )}
     </>

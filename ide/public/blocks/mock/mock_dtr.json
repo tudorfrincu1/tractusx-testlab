@@ -1,0 +1,10 @@
+{
+  "type": "mock_dtr",
+  "label": "Mock Digital Twin Registry",
+  "description": "Expose a protocol-aware DTR mock that responds to AAS shell lookup/registration requests.",
+  "template": true,
+  "params": [
+    { "name": "id", "type": "string", "required": true, "description": "Unique mock identifier" },
+    { "name": "shells", "type": "json", "required": false, "description": "Pre-configured shell descriptors to return on lookup" }
+  ]
+}

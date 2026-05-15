@@ -75,9 +75,10 @@ export interface PanelTabBarProps {
   onTabChange: (tab: "yaml" | "graph" | "none") => void;
   isReadOnly: boolean;
   onToggleReadOnly: () => void;
+  onRefresh?: () => void;
 }
 
-export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOnly }: PanelTabBarProps) {
+export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOnly, onRefresh }: PanelTabBarProps) {
   return (
     <div className="panel-tab-bar">
       {PANEL_TABS.map((tab) => {
@@ -96,6 +97,15 @@ export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOn
       {activeTab === "yaml" && (
         <>
           <div className="panel-tab-bar__spacer" />
+          {onRefresh && (
+            <button
+              className="icon-btn"
+              title="Refresh YAML"
+              onClick={onRefresh}
+            >
+              ↻
+            </button>
+          )}
           <div
             className="readonly-toggle"
             title={isReadOnly ? "Click to enable editing" : "Click to lock"}

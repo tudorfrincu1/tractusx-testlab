@@ -24,7 +24,7 @@
 
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors } from "../blockColors";
+import { blockColors } from "../config/blockColors";
 import { blockIcon, ICON_PRECONDITION } from "./icons";
 import { createInfoIconField } from "./infoIconField";
 

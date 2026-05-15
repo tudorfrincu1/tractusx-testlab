@@ -46,7 +46,7 @@ import {
   ValidationPanel,
   collectBlockWarnings,
   modelErrorsToIssues,
-} from "../BlockEditor/ValidationPanel";
+} from "../BlockEditor/ui/ValidationPanel";
 import { useTestLabStore } from "../../store/useTestLabStore";
 import { useExecutionStore } from "../../store/useExecutionStore";
 import { ExecutionPanel } from "../ExecutionPanel/ExecutionPanel";
@@ -64,6 +64,10 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
   const [yamlReadOnly, setYamlReadOnly] = useState(true);
   const [trashHasItems, setTrashHasItems] = useState(false);
   const [showServiceDialog, setShowServiceDialog] = useState(false);
+
+  const handleRefreshYaml = () => {
+    window.dispatchEvent(new Event("testlab:force-sync"));
+  };
 
   const showValidation = useTestLabStore((s) => s.showValidation);
   const setShowValidation = useTestLabStore((s) => s.setShowValidation);
@@ -211,6 +215,7 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
                     onTabChange={setRightPanel}
                     isReadOnly={yamlReadOnly}
                     onToggleReadOnly={() => setYamlReadOnly((v) => !v)}
+                    onRefresh={handleRefreshYaml}
                   />
                 )}
                 <div className="panel-container__content">

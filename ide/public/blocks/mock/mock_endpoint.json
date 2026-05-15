@@ -1,0 +1,13 @@
+{
+  "type": "mock_endpoint",
+  "label": "Mock Endpoint",
+  "description": "Expose an HTTP endpoint that the SUT can call. Define path, method, and response.",
+  "params": [
+    { "name": "id", "type": "string", "required": true, "description": "Unique endpoint identifier (for referencing in Wait blocks)" },
+    { "name": "method", "type": "dropdown", "required": true, "description": "HTTP method to listen for", "options": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+    { "name": "path", "type": "string", "required": true, "description": "URL path pattern (e.g., /api/v1/shells)" },
+    { "name": "response_status", "type": "number", "required": false, "description": "HTTP status code to return", "default": 200 },
+    { "name": "response_body", "type": "json", "required": false, "description": "Response body to return" },
+    { "name": "response_headers", "type": "json", "required": false, "description": "Response headers to return" }
+  ]
+}

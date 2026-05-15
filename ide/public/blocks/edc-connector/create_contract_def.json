@@ -10,6 +10,11 @@
     { "name": "asset_selector", "type": "array", "item_type": "asset_criterion", "required": true, "description": "Criteria selecting which assets this contract covers" }
   ],
   "outputs": [
-    { "name": "contract_def_id", "description": "ID of the created contract definition" }
+    {
+      "name": "contract_def_id",
+      "description": "ID of the created contract definition",
+      "schema": { "type": "string" },
+      "example": "contractdef-uuid-789"
+    }
   ]
 }
