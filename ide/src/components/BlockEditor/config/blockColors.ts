@@ -30,7 +30,6 @@
 export const blockColors = {
   /** Root / structural blocks */
   root: "#1E293B",
-  rootTck: "#1E293B",
 
   /** Variable system */
   variableDef: "#5B21B6",
@@ -42,7 +41,6 @@ export const blockColors = {
   /** Core block types */
   assertion: "#BE123C",
   precondition: "#B45309",
-  testRef: "#1D4ED8",
 
   /** Authentication blocks */
   authentication: "#7C3AED",

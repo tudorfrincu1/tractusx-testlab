@@ -23,36 +23,21 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { Block } from "blockly";
-import type * as BlocklyType from "blockly";
-import { blockColors } from "../config/blockColors";
+export {
+  setupPathBuilderCallback,
+  requestOpenPathBuilder,
+  parsePathToSegments,
+  segmentsToPath,
+  defaultSegments,
+  type SegmentType,
+  type PathSegment,
+  type PathBuilderRequest,
+} from "./core/pathBuilder";
 
-export function registerStructuralBlocks(Blockly: typeof BlocklyType) {
-  Blockly.Blocks["asset_criterion"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField("operandLeft:")
-        .appendField(
-          new Blockly.FieldTextInput("https://w3id.org/edc/v0.0.1/ns/id"),
-          "LEFT"
-        )
-        .appendField("operator:")
-        .appendField(
-          new Blockly.FieldDropdown([
-            ["=", "="],
-            ["like", "like"],
-            ["!=", "!="],
-            ["in", "in"],
-          ]),
-          "OPERATOR"
-        );
-      this.appendValueInput("RIGHT")
-        .appendField("operandRight:")
-        .setCheck("param_value");
-      this.setPreviousStatement(true, "asset_criterion");
-      this.setNextStatement(true, "asset_criterion");
-      this.setColour(blockColors.keyValue);
-      this.setTooltip("An EDC asset selector criterion");
-    },
-  };
-}
+export { jsonToSchema } from "./core/jsonToSchema";
+
+export { resolveVariableSchema, resolveVariableExample } from "./schema/schemaResolver";
+export { schemaTypeIcon, typeBadgeClass } from "./schema/schemaIcons";
+export { SchemaTree, type SchemaTreeProps, type SchemaNode } from "./schema/SchemaTree";
+
+export { PathBuilderModal, type PathBuilderModalProps } from "./modal/PathBuilderModal";

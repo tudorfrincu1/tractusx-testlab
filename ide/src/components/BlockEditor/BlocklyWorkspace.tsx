@@ -26,13 +26,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
 import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
-import { setupInfoCallback, type InfoShowRequest } from "./blocks/infoIconField";
-import { setupPathBuilderCallback, type PathBuilderRequest } from "./blocks/pathBuilder";
-import type { PathSegment } from "./blocks/pathBuilder";
-import { setupJsonEditorCallback, type JsonEditorRequest } from "./blocks/jsonEditor";
-import { truncateJsonPreview } from "./blocks/jsonEditor";
-import { PathBuilderModal } from "./blocks/PathBuilderModal";
-import { JsonEditorModal } from "./blocks/JsonEditorModal";
+import {
+  setupInfoCallback,
+  type InfoShowRequest,
+  setupPathBuilderCallback,
+  type PathBuilderRequest,
+  type PathSegment,
+  setupJsonEditorCallback,
+  type JsonEditorRequest,
+  truncateJsonPreview,
+  PathBuilderModal,
+  JsonEditorModal,
+} from "./blocks";
 import { BlockTooltip } from "./ui/WarningTooltip";
 import "./BlocklyWorkspace.css";
 

@@ -23,10 +23,10 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PathSegment, SegmentType } from "./pathBuilder";
-import { segmentsToPath } from "./pathBuilder";
-import { jsonToSchema } from "./jsonToSchema";
-import { SchemaTree } from "./SchemaTree";
+import type { PathSegment, SegmentType } from "../core/pathBuilder";
+import { segmentsToPath } from "../core/pathBuilder";
+import { jsonToSchema } from "../core/jsonToSchema";
+import { SchemaTree } from "../schema/SchemaTree";
 import "./PathBuilderModal.css";
 
 export interface PathBuilderModalProps {

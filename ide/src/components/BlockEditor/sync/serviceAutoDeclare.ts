@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import type { BlockCatalog } from "../blocks/catalogLoader";
+import type { BlockCatalog } from "../blocks";
 import { SERVICE_TYPE_RESOLUTION } from "../toolbox/toolboxBuilder";
 import { useServiceStore } from "../../../store/useServiceStore";
 
