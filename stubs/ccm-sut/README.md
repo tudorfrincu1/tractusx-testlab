@@ -1,22 +1,81 @@
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ See the NOTICE file(s) distributed with this work for additional
+ information regarding copyright ownership.
+
+ This program and the accompanying materials are made available under the
+ terms of the Apache License, Version 2.0 which is available at
+ https://www.apache.org/licenses/LICENSE-2.0.
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations
+ under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- This documentation was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
+
 # CCM SUT Stub
 
-Disposable stub that simulates an EDC connector for Certificate Management (CCM) TCK tests.
+Disposable FastAPI application that simulates an EDC connector and CCMAPI-compliant service for Certificate Management (CX-0135) TCK tests. Run the full test suite locally without real infrastructure.
 
-**This is a temporary test helper — delete when no longer needed.**
+## How It Works
+
+The stub replaces two real components in a single process on port 8090:
+
+- **EDC Connector** — DSP catalog discovery, contract negotiation, transfer initiation, and EDR issuance. All negotiations auto-finalize and EDRs point back to `localhost:8090`.
+- **CCMAPI Service** — Certificate request, push, available, and notification endpoints. Responses follow the CX-0135 v3.1.0 `{header, content}` envelope format.
+
+### DSP protocol flow
+
+Every request follows the standard EDC sequence, with all steps auto-succeeding:
+
+1. **Catalog** → returns 2 datasets: `CCMAPI` (offer `ccm-offer-001`) and `Submodel` (BusinessPartnerCertificate v3.1.0)
+2. **Negotiate** → auto-finalizes, returns agreement ID
+3. **Transfer** → returns transfer ID
+4. **EDR** → returns `{endpoint: localhost:8090, authCode: edr-token-xxx}`
+
+### Callback behavior
+
+After certain requests, the stub sends async HTTP callbacks to the TestLab mock server (`http://localhost:8100`):
+
+| Trigger Endpoint | Callback Target | Delay | Payload Summary |
+|-----------------|----------------|-------|-----------------|
+| `POST /companycertificate/request` | `/companycertificate/status` | 10s | `{certificateStatus: RECEIVED, documentId: doc-xxx}` |
+| `POST /companycertificate/push` | `/companycertificate/status` | 1s | `{certificateStatus: RECEIVED}` |
+| `POST /companycertificate/notification/receive` | `/companycertificate/notification/receive` | 1s | Notification acknowledgment |
+| `POST /` (dataplane root) | `/companycertificate/notification/receive` | 1s | Notification acknowledgment |
+
+### Startup consumer simulation
+
+On startup, the stub waits 20 seconds then sends `GET {TESTLAB_CALLBACK_URL}/api/v1/companycertificate` to simulate a real SUT discovering and pulling TestLab's exposed asset.
 
 ## Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/v1/dsp/catalog/request` | DSP catalog with CCMAPI offer |
-| POST | `/api/v1/dsp/negotiations/request` | Contract negotiation → agreement |
-| GET | `/api/v1/dsp/negotiations/{id}` | Negotiation status (FINALIZED) |
-| POST | `/management/v3/transferprocesses` | Initiate transfer |
-| GET | `/management/v3/edrs/{id}/dataaddress` | EDR token + data endpoint |
-| GET | `/companycertificate/{document_id}` | Certificate payload |
-| POST | `/companycertificate/request` | Certificate request + delayed callback |
-| POST | `/companycertificate/notification/receive` | Accept notifications |
-| GET | `/health` | Health check |
+| Method | Path | Response |
+|--------|------|----------|
+| POST | `/api/v1/dsp/catalog/request` | DSP catalog with CCMAPI + Submodel datasets |
+| POST | `/api/v1/dsp/negotiations/initial` | Auto-finalized agreement |
+| POST | `/api/v1/dsp/negotiations/request` | Auto-finalized agreement (alias) |
+| GET | `/api/v1/dsp/negotiations/{id}` | FINALIZED status |
+| POST | `/management/v3/transferprocesses` | Transfer ID |
+| GET | `/management/v3/edrs/{id}/dataaddress` | EDR with bearer token |
+| POST | `/companycertificate/request` | `{requestStatus: COMPLETED}` + 10s callback |
+| POST | `/companycertificate/request?reject=true` | `{requestStatus: REJECTED}` (no callback) |
+| POST | `/companycertificate/push` | OK + 1s feedback callback |
+| POST | `/companycertificate/available` | OK |
+| POST | `/companycertificate/notification/receive` | OK + 1s ack callback |
+| GET | `/companycertificate/{document_id}` | BusinessPartnerCertificate v3.1.0 payload |
+| POST | `/` | OK + 1s notification ack (dataplane root) |
+| GET | `/health` | `{status: healthy}` |
+
+Management API routes are also available under `/api/v1/dsp/management/v3/` for SDK compatibility (see `management.py`).
 
 ## Run
 
@@ -26,21 +85,77 @@ pip install fastapi uvicorn httpx
 python app.py
 ```
 
-Or with uvicorn directly:
+Or with hot-reload:
 
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8090 --reload
 ```
 
-The stub runs on **port 8090**.
+## Configuration
 
-## Callback Behavior
+The `run-config.yaml` file supplies runtime variables to the test suite:
 
-When `/companycertificate/request` is called, the stub schedules a 2-second delayed POST to `{TESTLAB_CALLBACK_URL}/companycertificate/status` with:
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `provider_address` | `http://localhost:8090/api/v1/dsp` | Stub's DSP endpoint |
+| `provider_bpn` | `BPNL000000000001` | Stub's Business Partner Number |
+| `consumer_bpn` | `BPNL000000000002` | TestLab's Business Partner Number |
+| `certificate_type` | `iso9001` | Certificate type to request |
+| `location_bpns` | `BPNS000000000001` | Site needing the certificate |
+| `testlab_mock_base_url` | `http://localhost:8100` | TestLab mock server (callback target) |
+| `testlab_management_url` | `http://localhost:8090/api/v1/dsp` | TestLab EDC management API |
+| `testlab_dsp_url` | `http://localhost:8090/api/v1/dsp` | TestLab DSP endpoint |
+| `sut_response_timeout` | `60` | Max seconds to wait for callbacks |
 
-```json
-{"requestId": "<the_request_id>", "feedbackStatus": "APPROVED"}
+Run the test suite with:
+
+```bash
+testlab run ide/public/examples/certificate-management-v1.0/index.yaml \
+  --config stubs/ccm-sut/run-config.yaml
 ```
+
+## Adapting for Your Tests
+
+### Change callback timing
+
+Edit the delay constants in `app.py`:
+
+```python
+CALLBACK_DELAY_SECONDS = 10  # change to your preferred delay
+```
+
+Async callback helpers (`_send_callback`, `_send_notification_ack`, `_send_push_feedback`) each have their own `asyncio.sleep()` call.
+
+### Add new endpoints
+
+1. Add a route handler in `app.py`
+2. Create the response builder in `responses.py`
+3. For callbacks, follow the `asyncio.create_task(_send_*)` pattern
+
+### Modify response payloads
+
+Edit `responses.py` to change certificate data, status codes, or header values. The `CERTIFICATE_PAYLOAD` dict contains the BusinessPartnerCertificate v3.1.0 response template.
+
+### Switch to a real SUT
+
+Replace `run-config.yaml` values with your real EDC and BPN details:
+
+```yaml
+variables:
+  provider_address: "https://your-edc:8282/api/v1/dsp"
+  provider_bpn: "BPNL00000003AZQP"
+  consumer_bpn: "BPNL00000001SQRN"
+  # ... remaining variables for your environment
+```
+
+## File Structure
+
+| File | Purpose |
+|------|---------|
+| `app.py` | FastAPI application with DSP, CCMAPI, and callback logic |
+| `responses.py` | CX-0135 compliant response builders and payload templates |
+| `management.py` | Management API routes under `/api/v1/dsp/management/v3/` |
+| `run-config.yaml` | Runtime variable overrides for the test suite |
 
 Edit `TESTLAB_CALLBACK_URL` in `app.py` if your TestLab server runs on a different address.
 
