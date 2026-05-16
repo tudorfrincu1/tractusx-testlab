@@ -1,0 +1,27 @@
+meta {
+  name: Initiate Transfer
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/management/v3/transferprocesses
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "assetId": "ccm-offer-001",
+    "connectorAddress": "{{base_url}}",
+    "contractId": "{{agreement_id}}"
+  }
+}
+
+script:post-response {
+  bru.setVar("transfer_id", res.body["@id"]);
+}

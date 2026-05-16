@@ -21,6 +21,7 @@
 
 """Management API routes at DSP base path for SDK compatibility."""
 
+import os
 import uuid
 from datetime import datetime
 
@@ -28,6 +29,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from responses import PROVIDER_BPN, build_catalog
+
+STUB_BASE_URL = os.environ.get("STUB_BASE_URL", "http://localhost:8090")
 
 OFFER_ID = "ccm-offer-001"
 AGREEMENT_ID = f"agreement-{uuid.uuid4()}"
@@ -99,7 +102,7 @@ async def mgmt_edr(transfer_id: str) -> JSONResponse:
     return JSONResponse({
         "@type": "DataAddress",
         "type": "HttpData",
-        "endpoint": "http://localhost:8090",
+        "endpoint": STUB_BASE_URL,
         "authType": "bearer",
         "authCode": EDR_TOKEN,
         "authorization": EDR_TOKEN,

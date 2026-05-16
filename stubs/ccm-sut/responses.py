@@ -21,17 +21,19 @@
 
 """CX-0135 compliant response builders for the CCM SUT stub."""
 
+import os
 import uuid
 from datetime import datetime, timezone
 
 
-PROVIDER_BPN = "BPNL000000000001"
-DSP_FEEDBACK_URL = "http://localhost:8090/api/v1/dsp"
+PROVIDER_BPN = os.environ.get("PROVIDER_BPN", "BPNL000000000001")
+CONSUMER_BPN = os.environ.get("CONSUMER_BPN", "BPNL000000000002")
+DSP_FEEDBACK_URL = os.environ.get("DSP_FEEDBACK_URL", "http://localhost:8090/api/v1/dsp")
 
 
 def build_header(
     context: str,
-    receiver_bpn: str = "BPNL000000000002",
+    receiver_bpn: str = "",
     related_message_id: str = "",
 ) -> dict:
     """Build a CX-0135 message header."""
@@ -40,7 +42,7 @@ def build_header(
         "context": context,
         "sentDateTime": datetime.now(timezone.utc).isoformat(),
         "senderBpn": PROVIDER_BPN,
-        "receiverBpn": receiver_bpn,
+        "receiverBpn": receiver_bpn or CONSUMER_BPN,
         "relatedMessageId": related_message_id,
         "version": "3.1.0",
         "senderFeedbackUrl": DSP_FEEDBACK_URL,

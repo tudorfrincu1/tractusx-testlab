@@ -1,0 +1,397 @@
+{
+  "info": {
+    "name": "CCM SUT Stub",
+    "description": "API collection for the CCM SUT stub simulating an EDC connector for CX-0135 Certificate Management TCK tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8090" },
+    { "key": "callback_url", "value": "http://localhost:8100" },
+    { "key": "provider_bpn", "value": "BPNL000000000001" },
+    { "key": "consumer_bpn", "value": "BPNL000000000002" },
+    { "key": "negotiation_id", "value": "" },
+    { "key": "agreement_id", "value": "" },
+    { "key": "transfer_id", "value": "" },
+    { "key": "document_id", "value": "" },
+    { "key": "asset_id", "value": "" },
+    { "key": "policy_id", "value": "" },
+    { "key": "contract_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DSP Protocol",
+      "item": [
+        {
+          "name": "Catalog Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData['dcat:dataset'] && jsonData['dcat:dataset'].length > 0) {",
+                  "    pm.collectionVariables.set('dataset_id', jsonData['dcat:dataset'][0]['@id']);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/catalog/request", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "catalog", "request"] }
+          }
+        },
+        {
+          "name": "Negotiate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('negotiation_id', jsonData['@id']);",
+                  "if (jsonData['dspace:agreement']) {",
+                  "    pm.collectionVariables.set('agreement_id', jsonData['dspace:agreement']['@id']);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerId\": \"ccm-offer-001\",\n  \"assetId\": \"ccm-offer-001\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/negotiations/initial", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "negotiations", "initial"] }
+          }
+        },
+        {
+          "name": "Get Negotiation Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/dsp/negotiations/{{negotiation_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "negotiations", "{{negotiation_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfer & EDR",
+      "item": [
+        {
+          "name": "Initiate Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('transfer_id', jsonData['@id']);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"ccm-offer-001\",\n  \"connectorAddress\": \"{{base_url}}\",\n  \"contractId\": \"{{agreement_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/management/v3/transferprocesses", "host": ["{{base_url}}"], "path": ["management", "v3", "transferprocesses"] }
+          }
+        },
+        {
+          "name": "Get EDR Data Address",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/management/v3/edrs/{{transfer_id}}/dataaddress", "host": ["{{base_url}}"], "path": ["management", "v3", "edrs", "{{transfer_id}}", "dataaddress"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CCMAPI - Certificate Request",
+      "item": [
+        {
+          "name": "Request Certificate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.content && jsonData.content.documentId) {",
+                  "    pm.collectionVariables.set('document_id', jsonData.content.documentId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"messageId\": \"urn:uuid:{{$guid}}\",\n    \"context\": \"CompanyCertificateManagement-CCMAPI-Request:1.0.0\",\n    \"sentDateTime\": \"{{$isoTimestamp}}\",\n    \"senderBpn\": \"{{consumer_bpn}}\",\n    \"receiverBpn\": \"{{provider_bpn}}\",\n    \"version\": \"3.1.0\",\n    \"senderFeedbackUrl\": \"{{callback_url}}/api/v1/dsp\"\n  },\n  \"content\": {\n    \"certifiedBpn\": \"{{provider_bpn}}\",\n    \"certificateType\": \"iso9001\",\n    \"locationBpns\": [\"BPNS000000000001\"]\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/companycertificate/request", "host": ["{{base_url}}"], "path": ["companycertificate", "request"] }
+          }
+        },
+        {
+          "name": "Request Certificate (Rejected)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"messageId\": \"urn:uuid:{{$guid}}\",\n    \"context\": \"CompanyCertificateManagement-CCMAPI-Request:1.0.0\",\n    \"sentDateTime\": \"{{$isoTimestamp}}\",\n    \"senderBpn\": \"{{consumer_bpn}}\",\n    \"receiverBpn\": \"{{provider_bpn}}\",\n    \"version\": \"3.1.0\",\n    \"senderFeedbackUrl\": \"{{callback_url}}/api/v1/dsp\"\n  },\n  \"content\": {\n    \"certifiedBpn\": \"{{provider_bpn}}\",\n    \"certificateType\": \"iso9001\",\n    \"locationBpns\": [\"BPNS000000000001\"]\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/companycertificate/request?reject=true", "host": ["{{base_url}}"], "path": ["companycertificate", "request"], "query": [{ "key": "reject", "value": "true" }] }
+          }
+        },
+        {
+          "name": "Get Certificate",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/companycertificate/{{document_id}}", "host": ["{{base_url}}"], "path": ["companycertificate", "{{document_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CCMAPI - Notifications",
+      "item": [
+        {
+          "name": "Push Certificate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"messageId\": \"urn:uuid:{{$guid}}\",\n    \"context\": \"CompanyCertificateManagement-CCMAPI-Push:1.0.0\",\n    \"sentDateTime\": \"{{$isoTimestamp}}\",\n    \"senderBpn\": \"{{consumer_bpn}}\",\n    \"receiverBpn\": \"{{provider_bpn}}\",\n    \"version\": \"3.1.0\",\n    \"senderFeedbackUrl\": \"{{callback_url}}/api/v1/dsp\"\n  },\n  \"content\": {\n    \"certificateType\": \"iso9001\",\n    \"documentId\": \"doc-12345678\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/companycertificate/push", "host": ["{{base_url}}"], "path": ["companycertificate", "push"] }
+          }
+        },
+        {
+          "name": "Available Notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"messageId\": \"urn:uuid:{{$guid}}\",\n    \"context\": \"CompanyCertificateManagement-CCMAPI-Available:1.0.0\",\n    \"sentDateTime\": \"{{$isoTimestamp}}\",\n    \"senderBpn\": \"{{consumer_bpn}}\",\n    \"receiverBpn\": \"{{provider_bpn}}\",\n    \"version\": \"3.1.0\",\n    \"senderFeedbackUrl\": \"{{callback_url}}/api/v1/dsp\"\n  },\n  \"content\": {\n    \"certificateType\": \"iso9001\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/companycertificate/available", "host": ["{{base_url}}"], "path": ["companycertificate", "available"] }
+          }
+        },
+        {
+          "name": "Receive Notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"header\": {\n    \"messageId\": \"urn:uuid:{{$guid}}\",\n    \"context\": \"CompanyCertificateManagement-CCMAPI-Status:1.0.0\",\n    \"sentDateTime\": \"{{$isoTimestamp}}\",\n    \"senderBpn\": \"{{consumer_bpn}}\",\n    \"receiverBpn\": \"{{provider_bpn}}\",\n    \"version\": \"3.1.0\",\n    \"senderFeedbackUrl\": \"{{callback_url}}/api/v1/dsp\"\n  },\n  \"content\": {\n    \"certificateStatus\": \"RECEIVED\",\n    \"documentId\": \"doc-12345678\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/companycertificate/notification/receive", "host": ["{{base_url}}"], "path": ["companycertificate", "notification", "receive"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Management API",
+      "item": [
+        {
+          "name": "Catalog Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/catalog/request", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "catalog", "request"] }
+          }
+        },
+        {
+          "name": "Contract Negotiation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('negotiation_id', jsonData['@id']);",
+                  "if (jsonData['dspace:agreement']) {",
+                  "    pm.collectionVariables.set('agreement_id', jsonData['dspace:agreement']['@id']);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"offerId\": \"ccm-offer-001\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/contractnegotiations", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "contractnegotiations"] }
+          }
+        },
+        {
+          "name": "Transfer Process",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('transfer_id', jsonData['@id']);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"assetId\": \"ccm-offer-001\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/transferprocesses", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "transferprocesses"] }
+          }
+        },
+        {
+          "name": "Create EDR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/edrs", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "edrs"] }
+          }
+        },
+        {
+          "name": "EDR Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/edrs/request", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "edrs", "request"] }
+          }
+        },
+        {
+          "name": "Get EDR Data Address",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/edrs/{{transfer_id}}/dataaddress", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "edrs", "{{transfer_id}}", "dataaddress"] }
+          }
+        },
+        {
+          "name": "Create Asset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('asset_id', jsonData['@id']);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"@id\": \"test-asset-001\",\n  \"properties\": {\n    \"name\": \"Test Asset\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/assets", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "assets"] }
+          }
+        },
+        {
+          "name": "Create Policy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('policy_id', jsonData['@id']);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"@id\": \"test-policy-001\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/policydefinitions", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "policydefinitions"] }
+          }
+        },
+        {
+          "name": "Create Contract Definition",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('contract_id', jsonData['@id']);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"@id\": \"test-contract-001\",\n  \"accessPolicyId\": \"test-policy-001\",\n  \"contractPolicyId\": \"test-policy-001\",\n  \"assetsSelector\": []\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/contractdefinitions", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "contractdefinitions"] }
+          }
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/assets/{{asset_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "assets", "{{asset_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Policy",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/policydefinitions/{{policy_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "policydefinitions", "{{policy_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Contract Definition",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/v1/dsp/management/v3/contractdefinitions/{{contract_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "dsp", "management", "v3", "contractdefinitions", "{{contract_id}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Delete Policy
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{base_url}}/api/v1/dsp/management/v3/policydefinitions/{{policy_id}}
+  body: none
+  auth: none
+}

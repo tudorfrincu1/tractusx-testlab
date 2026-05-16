@@ -1,0 +1,28 @@
+meta {
+  name: Contract Negotiation
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/dsp/management/v3/contractnegotiations
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "offerId": "ccm-offer-001"
+  }
+}
+
+script:post-response {
+  bru.setVar("negotiation_id", res.body["@id"]);
+  if (res.body["dspace:agreement"]) {
+    bru.setVar("agreement_id", res.body["dspace:agreement"]["@id"]);
+  }
+}

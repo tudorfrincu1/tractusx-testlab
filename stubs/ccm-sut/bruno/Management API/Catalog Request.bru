@@ -1,0 +1,19 @@
+meta {
+  name: Catalog Request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/dsp/management/v3/catalog/request
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}

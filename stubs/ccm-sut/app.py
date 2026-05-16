@@ -22,6 +22,7 @@
 """Disposable stub SUT simulating an EDC connector for CCM TCK tests."""
 
 import asyncio
+import os
 import uuid
 from datetime import datetime
 
@@ -43,8 +44,11 @@ from management import router as management_router
 app = FastAPI(title="CCM SUT Stub", version="0.1.0")
 app.include_router(management_router)
 
-TESTLAB_CALLBACK_URL = "http://localhost:8100"
-CALLBACK_DELAY_SECONDS = 10
+TESTLAB_CALLBACK_URL = os.environ.get("TESTLAB_CALLBACK_URL", "http://localhost:8100")
+CALLBACK_DELAY_SECONDS = int(os.environ.get("CALLBACK_DELAY_SECONDS", "10"))
+STUB_PORT = int(os.environ.get("STUB_PORT", "8090"))
+
+STUB_BASE_URL = os.environ.get("STUB_BASE_URL", "http://localhost:8090")
 
 OFFER_ID = "ccm-offer-001"
 AGREEMENT_ID = f"agreement-{uuid.uuid4()}"
@@ -116,7 +120,7 @@ async def edr_data_address(transfer_id: str) -> JSONResponse:
     return JSONResponse({
         "@type": "DataAddress",
         "type": "HttpData",
-        "endpoint": "http://localhost:8090",
+        "endpoint": STUB_BASE_URL,
         "authType": "bearer",
         "authCode": EDR_TOKEN,
         "authorization": EDR_TOKEN,
@@ -264,4 +268,4 @@ async def health() -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8090)
+    uvicorn.run(app, host="0.0.0.0", port=STUB_PORT)

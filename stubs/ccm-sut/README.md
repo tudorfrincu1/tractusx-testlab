@@ -91,6 +91,56 @@ Or with hot-reload:
 uvicorn app:app --host 0.0.0.0 --port 8090 --reload
 ```
 
+## Docker
+
+Build the image:
+
+```bash
+docker build -t ccm-sut-stub stubs/ccm-sut/
+```
+
+Run the container:
+
+```bash
+docker run -p 8090:8090 \
+  -e TESTLAB_CALLBACK_URL=http://host.docker.internal:8100 \
+  -e PROVIDER_BPN=BPNL000000000001 \
+  -e CONSUMER_BPN=BPNL000000000002 \
+  -e CALLBACK_DELAY_SECONDS=10 \
+  ccm-sut-stub
+```
+
+## Helm
+
+Install with Helm:
+
+```bash
+helm install ccm-sut stubs/ccm-sut/charts/ccm-sut-stub/
+```
+
+Override values:
+
+```bash
+helm install ccm-sut stubs/ccm-sut/charts/ccm-sut-stub/ \
+  --set config.testlabMockBaseUrl=http://testlab:8100 \
+  --set config.providerBpn=BPNL000000000001 \
+  --set config.callbackDelaySeconds=5
+```
+
+See [values.yaml](charts/ccm-sut-stub/values.yaml) for all configurable parameters.
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TESTLAB_CALLBACK_URL` | `http://localhost:8100` | TestLab mock server URL for callbacks |
+| `PROVIDER_BPN` | `BPNL000000000001` | Stub's Business Partner Number |
+| `CONSUMER_BPN` | `BPNL000000000002` | TestLab's Business Partner Number |
+| `CALLBACK_DELAY_SECONDS` | `10` | Delay before sending async callbacks |
+| `STUB_PORT` | `8090` | Port the stub listens on |
+| `STUB_BASE_URL` | `http://localhost:8090` | Base URL returned in EDR data addresses |
+| `DSP_FEEDBACK_URL` | `http://localhost:8090/api/v1/dsp` | DSP feedback URL in response headers |
+
 ## Configuration
 
 The `run-config.yaml` file supplies runtime variables to the test suite:

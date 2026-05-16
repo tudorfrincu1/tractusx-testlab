@@ -1,0 +1,20 @@
+CCM SUT Stub has been deployed!
+
+1. Get the application URL:
+{{- if .Values.ingress.enabled }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ (index .Values.ingress.hosts 0).host }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "ccm-sut-stub.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "ClusterIP" .Values.service.type }}
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "ccm-sut-stub.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+  echo "Visit http://localhost:{{ .Values.service.port }}"
+{{- end }}
+
+2. Check health:
+  curl http://localhost:{{ .Values.service.port }}/health
+
+3. Run TestLab tests against it:
+  - Set provider_address to the stub's URL
+  - Set testlab_mock_base_url to TestLab's mock server URL
