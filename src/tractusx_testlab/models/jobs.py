@@ -31,8 +31,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from tractusx_sdk.extensions.testlab.models.enums import JobStatus
-from tractusx_sdk.extensions.testlab.models.results import TestCaseResult as TckResult  # SDK alias
+from tractusx_testlab.models.enums import JobStatus
+from tractusx_testlab.models.results import TckResult as TckResult  # SDK alias
 
 
 class JobEvent(BaseModel):

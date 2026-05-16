@@ -32,8 +32,8 @@ from typing import Optional
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.models import VaultConfig
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.models import VaultConfig
 
 _CONFIG_FILENAME = "testlab.config.yaml"
 _ENV_PREFIX = "TESTLAB_"

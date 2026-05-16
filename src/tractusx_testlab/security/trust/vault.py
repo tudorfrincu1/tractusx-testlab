@@ -30,7 +30,7 @@ from typing import Optional
 
 import requests
 
-from tractusx_sdk.extensions.testlab.models import VaultConfig
+from tractusx_testlab.models import VaultConfig
 
 
 class VaultClient:

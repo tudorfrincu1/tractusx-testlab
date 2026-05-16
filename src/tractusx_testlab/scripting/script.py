@@ -26,9 +26,9 @@
 
 from __future__ import annotations
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     ScriptDefinition as SdkScriptDefinition,
-    TestCaseDefinition as SdkTckDefinition,
+    TckDefinition as SdkTckDefinition,
 )
 from tractusx_testlab.models.definitions import (
     ScriptDefinition,

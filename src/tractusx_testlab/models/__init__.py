@@ -25,16 +25,14 @@
 """
 Testlab data models package.
 
-Re-exports all public symbols so that ``from tractusx_sdk.extensions.testlab.models import X``
+Re-exports all public symbols so that ``from tractusx_testlab.models import X``
 continues to work unchanged.
 """
 
-from tractusx_sdk.extensions.testlab.models.definitions import (
-    DependencyRef,
+from tractusx_testlab.models.definitions import (
     ImportDefinition,
-    ListenerDefinition,
     ServiceDefinition,
-    TestCaseDefinition as TckDefinition,  # SDK alias
+    TckDefinition,
     VariableDefinition,
 )
 from tractusx_testlab.models.definitions import (  # local overrides
@@ -42,7 +40,7 @@ from tractusx_testlab.models.definitions import (  # local overrides
     ScriptDefinition,  # adds preconditions field
     StepDefinition,    # no name field
 )
-from tractusx_sdk.extensions.testlab.models.enums import (
+from tractusx_testlab.models.enums import (
     AssertionSeverity,
     FailurePolicy,
     JobStatus,
@@ -57,7 +55,7 @@ from tractusx_testlab.models.enums import AssertionType  # local override — ad
 from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.enums import ServiceType  # local override — adds EDC connector types
 from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
-from tractusx_sdk.extensions.testlab.models.exceptions import (
+from tractusx_testlab.models.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
     ServiceNotFoundError,
@@ -65,7 +63,7 @@ from tractusx_sdk.extensions.testlab.models.exceptions import (
     ServiceTypeMismatchError,
     StepConfigError,
 )
-from tractusx_sdk.extensions.testlab.models.jobs import (
+from tractusx_testlab.models.jobs import (
     Job,
     JobEvent,
     JobMemory,
@@ -76,22 +74,22 @@ from tractusx_testlab.models.preconditions import (
     PreconditionLogType,
 )
 from tractusx_testlab.models.results import StepResult  # local override — adds precondition_logs
-from tractusx_sdk.extensions.testlab.models.results import (
+from tractusx_testlab.models.results import (
     AssertionResult,
     AssertionSummary,
     CallbackResult,
     HttpRequest,
     HttpResponse,
     ScriptResult,
-    TestCaseResult as TckResult,  # SDK alias
+    TckResult
 )
-from tractusx_sdk.extensions.testlab.models.security import (
+from tractusx_testlab.models.security import (
     Base64Bytes,
     EncryptedKeyBlock,
     PackageManifest,
     SecurityBlock,
 )
-from tractusx_sdk.extensions.testlab.models.server import (
+from tractusx_testlab.models.server import (
     UploadedPackage,
     VaultConfig,
 )
@@ -113,9 +111,7 @@ __all__ = [
     "ValueSource",
     # definitions
     "Assertion",
-    "DependencyRef",
     "ImportDefinition",
-    "ListenerDefinition",
     "ScriptDefinition",
     "ServiceDefinition",
     "StepDefinition",

@@ -39,12 +39,12 @@ from typing import Optional, Union
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.models import (
-    TestCaseDefinition as SdkTckDefinition,
+from tractusx_testlab.models import (
+    TckDefinition as SdkTckDefinition,
 )
 
 try:
-    from tractusx_sdk.extensions.testlab.models import (
+    from tractusx_testlab.models import (
         FailurePolicy, ImportDefinition, SdkCallMode,
     )
 except ImportError:
@@ -58,7 +58,7 @@ except ImportError:
         import_ref: str; override: dict | None = None  # noqa: E702
 
 try:
-    from tractusx_sdk.extensions.testlab.models.definitions import (
+    from tractusx_testlab.models.definitions import (
         ScriptDefinition as SdkScriptDefinition,
     )
 except ImportError:
@@ -114,15 +114,24 @@ def parse_assertion(raw: dict) -> Assertion:
 def parse_step(raw: dict) -> StepDefinition:
     """Parse a single step dict into a local StepDefinition."""
     expectations = [parse_assertion(a) for a in raw.get(C.K_EXPECT, [])]
+    params = dict(raw.get(C.K_PARAMS, {}))
+
+    store_in_var = raw.get("store_in_variable") or params.pop("store_in_variable", None)
+    if store_in_var:
+        store_in_memory = {store_in_var: "."}
+    else:
+        store_in_memory = raw.get(C.K_STORE_IN_MEMORY)
+
     return StepDefinition(
         type=raw.get(C.K_TYPE, C.DEFAULT_NAME),
         name=raw.get(C.K_NAME, raw.get(C.K_TYPE, C.DEFAULT_NAME)),
         description=raw.get(C.K_DESCRIPTION),
-        params=raw.get(C.K_PARAMS, {}),
+        params=params,
         on_failure=FailurePolicy(raw[C.K_ON_FAILURE]) if C.K_ON_FAILURE in raw else FailurePolicy.ABORT,
         timeout_s=raw.get(C.K_TIMEOUT_S),
         expect=expectations,
-        store_in_memory=raw.get(C.K_STORE_IN_MEMORY),
+        store_in_memory=store_in_memory,
+        store_in_variable=store_in_var,
         if_condition=raw.get(C.K_IF),
     )
 
@@ -199,7 +208,7 @@ def build_test_case(
     data: dict,
     base_dir: Optional[Path] = None,
 ) -> SdkTckDefinition:
-    """Build a TestCaseDefinition from a YAML dict.
+    """Build a TckDefinition from a YAML dict.
 
     Handles the IDE's ``{test: path, description: str}`` test entry format
     as well as the SDK's plain path strings and inline script dicts.
@@ -245,7 +254,7 @@ def build_test_case(
 def _to_sdk_script_kind(raw: str):
     """Convert a raw kind string to the SDK ScriptKind enum."""
     try:
-        from tractusx_sdk.extensions.testlab.models.enums import ScriptKind as SdkScriptKind
+        from tractusx_testlab.models.enums import ScriptKind as SdkScriptKind
         return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TEST_CASE}.get(raw, SdkScriptKind.TEST)
     except ImportError:
         return raw

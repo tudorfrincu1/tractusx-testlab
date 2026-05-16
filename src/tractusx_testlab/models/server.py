@@ -31,7 +31,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from tractusx_sdk.extensions.testlab.models.enums import PackageFormat
+from tractusx_testlab.models.enums import PackageFormat
 
 
 class UploadedPackage(BaseModel):

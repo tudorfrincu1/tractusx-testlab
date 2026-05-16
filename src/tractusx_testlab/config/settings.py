@@ -29,7 +29,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from tractusx_sdk.extensions.testlab.models import VaultConfig
+from tractusx_testlab.models import VaultConfig
 
 _DEFAULT_BASE = Path.home() / ".testlab"
 

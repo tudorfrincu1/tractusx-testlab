@@ -26,7 +26,7 @@ import logging as _logging
 
 _logger = _logging.getLogger(__name__)
 
-_SDK_CONNECTOR = "tractusx_sdk.extensions.testlab.steps.connector"
+_SDK_CONNECTOR = "tractusx_testlab.steps.connector"
 
 for _mod in ("provision", "consume", "dataplane", "cleanup", "utils", "dsp"):
     try:

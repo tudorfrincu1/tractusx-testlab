@@ -22,13 +22,13 @@
 
 """Crypto sub-module — key generation, encryption, and signing."""
 
-from tractusx_sdk.extensions.testlab.security.crypto.encryption import encrypt_package, decrypt_package
-from tractusx_sdk.extensions.testlab.security.crypto.keygen import (
+from tractusx_testlab.security.crypto.encryption import encrypt_package, decrypt_package
+from tractusx_testlab.security.crypto.keygen import (
     KeyPair,
     generate_ed25519_keypair,
     generate_rsa_keypair,
 )
-from tractusx_sdk.extensions.testlab.security.crypto.signing import sign_bytes, verify_signature
+from tractusx_testlab.security.crypto.signing import sign_bytes, verify_signature
 
 __all__ = [
     "KeyPair",

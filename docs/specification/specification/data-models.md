@@ -74,10 +74,8 @@ classDiagram
         +str version
         +str dataspace_version
         +str description?
-        +SdkCallMode allow_sdk_calls = ALLOWLIST
         +dict~str, VariableDefinition~ variables
         +list~ServiceDefinition~ services?
-        +list~ListenerDefinition~ listen?
         +list~StepDefinition~ steps
         +list~StepDefinition~ cleanup?
     }
@@ -88,13 +86,6 @@ classDiagram
         +str base_url
         +dict auth
         +dict params?
-    }
-
-    class ListenerDefinition {
-        +str name
-        +str path
-        +str method = POST
-        +float timeout_s
     }
 
     class TckDefinition {
@@ -151,7 +142,6 @@ classDiagram
     ScriptDefinition --> "*" StepDefinition : steps
     ScriptDefinition --> "*" StepDefinition : cleanup
     ScriptDefinition --> "*" ServiceDefinition : services
-    ScriptDefinition --> "*" ListenerDefinition : listen
     StepDefinition --> "*" Assertion : expect
     TckDefinition --> "*" ScriptDefinition : tests
     TckDefinition --> "*" VariableDefinition : shared_variables

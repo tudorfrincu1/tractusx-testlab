@@ -38,9 +38,9 @@ setup:
   - type: import_variable
     description: Import request ID from request test
     params:
-      file: tests/request_certificate.yaml
-      export: request_id
-      variable: request_id
+      test: request-certificate
+      select: request_id
+      store_in_variable: request_id
 
   - type: mock_endpoint
     description: Expose mock endpoint for provider RECEIVE acknowledgment
@@ -75,8 +75,7 @@ steps:
     params:
       variable: "notification_datasets"
       path: "[0].@id"
-    store_in_memory:
-      notification_asset_id: "value"
+      store_in_variable: notification_asset_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -86,8 +85,7 @@ steps:
     params:
       variable: "notification_datasets"
       path: "[0].odrl:hasPolicy"
-    store_in_memory:
-      notification_offer_id: "value"
+      store_in_variable: notification_offer_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -99,8 +97,7 @@ steps:
       counter_party_address: "@provider_address"
       offer_id: "@notification_offer_id"
       asset_id: "@notification_asset_id"
-    store_in_memory:
-      notification_agreement_id: "agreement_id"
+      store_in_variable: notification_agreement_id
     expect:
       - type: "NOT_NULL"
         output: agreement_id
@@ -118,8 +115,8 @@ steps:
 
   - type: generate_uuid
     description: Generate notification ID
-    store_in_memory:
-      notification_id: "uuid"
+    params:
+      store_in_variable: notification_id
 
   - type: http_call_dataplane
     description: Send CCMAPI feedback notification to provider via dataplane

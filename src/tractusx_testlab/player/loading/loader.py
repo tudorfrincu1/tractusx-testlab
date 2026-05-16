@@ -32,11 +32,11 @@ from typing import Optional
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.models import (
-    TestCaseDefinition as TckDefinition,
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.models import (
+    TckDefinition as TckDefinition,
 )
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck
+from tractusx_testlab.scripting.script import Tck as Tck
 from tractusx_testlab.models.enums import ScriptKind
 from tractusx_testlab.player.loading._parser import (
     build_script,

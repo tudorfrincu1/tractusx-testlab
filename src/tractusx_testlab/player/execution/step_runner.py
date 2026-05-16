@@ -29,15 +29,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.models import ScriptStatus, StepStatus
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript
-from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
-from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+from tractusx_testlab.player.loading.resolver import resolve_params
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.scripting.script import TestScript
+from tractusx_testlab.steps.assertions import AssertionEngine
+from tractusx_testlab.steps.conditions import ConditionEvaluator
 from tractusx_testlab.models.enums import StepPhase
 from tractusx_testlab.models.results import AssertionResult, AssertionSummary, ScriptResult, StepResult
 from tractusx_testlab.player.execution._helpers import seed_script_defaults, register_script_services
@@ -93,7 +93,15 @@ def store_step_outputs(
     step_def: Any, step_result: StepResult, context: StepContext,
 ) -> None:
     """Persist step outputs into context variables when store_in_memory is configured."""
-    if not step_def.store_in_memory or step_result.output is None:
+    if step_result.output is None:
+        return
+
+    store_in_var = getattr(step_def, "store_in_variable", None)
+    if store_in_var and not step_def.store_in_memory:
+        context.set_variable(store_in_var, step_result.output)
+        return
+
+    if not step_def.store_in_memory:
         return
     for var_name, output_path in step_def.store_in_memory.items():
         if output_path == ".":

@@ -43,7 +43,7 @@ def validate(
     ),
 ) -> None:
     """Validate a YAML test script without compiling."""
-    from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+    from tractusx_testlab.compiler.compiler import Compiler
 
     compiler = Compiler()
     result = compiler.validate(script, version=version)

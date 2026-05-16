@@ -33,9 +33,9 @@ setup:
   - type: import_variable
     description: Import request ID from request test
     params:
-      file: tests/request_certificate.yaml
-      export: request_id
-      variable: request_id
+      test: request-certificate
+      select: request_id
+      store_in_variable: request_id
 
   - type: mock_endpoint
     description: Expose callback endpoint for provider feedback
@@ -82,8 +82,7 @@ steps:
     params:
       variable: "callback_payload"
       path: "requestId"
-    store_in_memory:
-      callback_request_id: "value"
+      store_in_variable: callback_request_id
     expect:
       - type: "EQUALS"
         output: value
@@ -94,8 +93,7 @@ steps:
     params:
       variable: "callback_payload"
       path: "feedbackStatus"
-    store_in_memory:
-      callback_feedback_status: "value"
+      store_in_variable: callback_feedback_status
     expect:
       - type: "NOT_NULL"
         output: value
@@ -105,8 +103,7 @@ steps:
     params:
       variable: "callback_payload"
       path: "feedbackMessage"
-    store_in_memory:
-      callback_feedback_message: "value"
+      store_in_variable: callback_feedback_message
     expect:
       - type: "NOT_NULL"
         output: value

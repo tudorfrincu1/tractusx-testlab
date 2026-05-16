@@ -81,7 +81,7 @@ export function WelcomeScreen() {
         useProjectStore.setState({
           hasProject: true,
           projectName: project.projectName,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,

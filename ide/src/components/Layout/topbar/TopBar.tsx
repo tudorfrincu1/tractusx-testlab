@@ -97,7 +97,7 @@ export function TopBar() {
         useProjectStore.setState({
           hasProject: true,
           projectName: project.projectName,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
@@ -126,7 +126,7 @@ export function TopBar() {
           hasProject: true,
           projectName: project.projectName,
           projectGeneration: useProjectStore.getState().projectGeneration + 1,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,

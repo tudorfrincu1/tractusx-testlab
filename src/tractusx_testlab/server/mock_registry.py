@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+    from tractusx_testlab.server.callbacks import CallbackManager
 
 
 @dataclass(frozen=True)

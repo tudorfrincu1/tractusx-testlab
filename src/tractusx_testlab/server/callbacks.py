@@ -30,7 +30,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import CallbackResult, ListenerDefinition
+from tractusx_testlab.models import CallbackResult
 
 
 class CallbackManager:
@@ -45,33 +45,33 @@ class CallbackManager:
     def __init__(self) -> None:
         self._listeners: dict[str, asyncio.Future[CallbackResult]] = {}
 
-    def register(self, listener: ListenerDefinition) -> None:
+    def register(self, path: str, method: str) -> None:
         """Prepare a listener slot. The future will be resolved when a request arrives."""
-        key = self._key(listener.path, listener.method)
+        key = self._key(path, method)
         if key not in self._listeners:
             loop = asyncio.get_event_loop()
             self._listeners[key] = loop.create_future()
 
-    async def wait(self, listener: ListenerDefinition) -> CallbackResult:
-        """Block until the listener receives a callback or times out."""
-        key = self._key(listener.path, listener.method)
+    async def wait(self, path: str, method: str, timeout_s: float) -> CallbackResult:
+        """Block until a callback arrives at *path*/*method* or *timeout_s* elapses."""
+        key = self._key(path, method)
         future = self._listeners.get(key)
         if future is None:
             return CallbackResult(
-                listener_name=listener.name,
-                path=listener.path,
-                method=listener.method,
+                listener_name=key,
+                path=path,
+                method=method,
                 timed_out=True,
             )
 
         try:
-            result = await asyncio.wait_for(future, timeout=listener.timeout_s)
+            result = await asyncio.wait_for(future, timeout=timeout_s)
             return result
         except asyncio.TimeoutError:
             return CallbackResult(
-                listener_name=listener.name,
-                path=listener.path,
-                method=listener.method,
+                listener_name=key,
+                path=path,
+                method=method,
                 timed_out=True,
             )
         finally:

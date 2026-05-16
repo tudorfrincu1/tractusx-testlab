@@ -31,12 +31,12 @@ from typing import Any, Optional, Union
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.syntax import defaults, keys
+from tractusx_testlab.syntax import defaults, keys
 from tractusx_testlab.syntax.keys import TEST as _TEST_KEY
 
 from tractusx_testlab.syntax.keys import PRECONDITIONS as _PRECONDITIONS_KEY
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     SdkCallMode,
 )
 from tractusx_testlab.models.definitions import (
@@ -47,7 +47,7 @@ from tractusx_testlab.models.definitions import (
 )
 from tractusx_testlab.models.enums import ScriptKind, ServiceType
 
-from tractusx_sdk.extensions.testlab.scripting._builders import (
+from tractusx_testlab.scripting._builders import (
     parse_step,
     parse_variables,
 )

@@ -29,14 +29,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Optional
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     HttpRequest,
     HttpResponse,
     StepDefinition,
 )
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 class StepOutput:

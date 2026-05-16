@@ -33,16 +33,16 @@ setup:
   - type: import_variable
     description: Import data address from request test
     params:
-      file: tests/request_certificate.yaml
-      export: data_address
-      variable: data_address
+      test: request-certificate
+      select: data_address
+      store_in_variable: data_address
 
   - type: import_variable
     description: Import document ID from request test
     params:
-      file: tests/request_certificate.yaml
-      export: document_id
-      variable: document_id
+      test: request-certificate
+      select: document_id
+      store_in_variable: document_id
 
   - type: load_schema
     description: Load BusinessPartnerCertificate v3.1.0 schema
@@ -50,8 +50,7 @@ setup:
       name: bpc_schema
       source: file
       path: ../schemas/business_partner_certificate_schema.json
-    store_in_memory:
-      bpc_schema: "$"
+      store_in_variable: bpc_schema 
 
 steps:
   - type: http_call

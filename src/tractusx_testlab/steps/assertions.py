@@ -29,7 +29,7 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     AssertionResult,
     AssertionSeverity,
     AssertionSummary,

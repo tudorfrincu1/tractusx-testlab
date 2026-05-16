@@ -22,8 +22,8 @@
 
 """Trust sub-module — player identity, trust store, and vault client."""
 
-from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
-from tractusx_sdk.extensions.testlab.security.trust.trust_store import TrustStore
-from tractusx_sdk.extensions.testlab.security.trust.vault import VaultClient
+from tractusx_testlab.security.trust.identity import PlayerIdentity
+from tractusx_testlab.security.trust.trust_store import TrustStore
+from tractusx_testlab.security.trust.vault import VaultClient
 
 __all__ = ["PlayerIdentity", "TrustStore", "VaultClient"]

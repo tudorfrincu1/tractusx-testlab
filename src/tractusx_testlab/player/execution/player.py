@@ -30,19 +30,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.logging.structured import StructuredLogger
+from tractusx_testlab.models import (
     AssertionSummary,
     JobStatus,
     ScriptResult,
     ScriptStatus,
     StepResult,
-    TestCaseResult as TckResult,  # SDK alias
+    TckResult as TckResult,  # SDK alias
 )
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.execution.step_runner import (
     execute_teardown_steps,
     execute_main_steps,
@@ -50,13 +50,13 @@ from tractusx_testlab.player.execution.step_runner import (
     run_script,
 )
 from tractusx_testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
-from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck, TestScript
-from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
+from tractusx_testlab.player.loading.loader import Loader
+from tractusx_testlab.player.loading.ordering import topological_sort
+from tractusx_testlab.scripting.script import Tck as Tck, TestScript
+from tractusx_testlab.services.manager import ServiceManager
 
 # Ensure built-in steps are registered
-import tractusx_sdk.extensions.testlab.steps  # noqa: F401
+import tractusx_testlab.steps  # noqa: F401
 
 
 class TestlabPlayer:

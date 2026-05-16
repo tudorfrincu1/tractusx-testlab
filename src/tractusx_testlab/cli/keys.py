@@ -52,7 +52,7 @@ def keygen(
     ),
 ) -> None:
     """Generate RSA (encryption) + Ed25519 (signing) key pairs for a player identity."""
-    from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
+    from tractusx_testlab.security.trust.identity import PlayerIdentity
 
     key_dir = out_dir / label
     if not override_keys and key_dir.is_dir() and any(key_dir.iterdir()):

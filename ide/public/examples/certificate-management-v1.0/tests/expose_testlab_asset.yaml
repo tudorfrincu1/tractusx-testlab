@@ -48,8 +48,7 @@ setup:
         dct:type:
           "@id": "https://w3id.org/catenax/taxonomy#CCMAPI"
         cx-common:version: "2.4.0"
-    store_in_memory:
-      testlab_asset_id: "asset_id"
+      store_in_variable: testlab_asset_id
     expect:
       - type: "NOT_NULL"
         output: asset_id
@@ -64,8 +63,7 @@ setup:
             - leftOperand: "BusinessPartnerNumber"
               operator: "eq"
               rightOperand: "@provider_bpn"
-    store_in_memory:
-      testlab_policy_id: "policy_id"
+      store_in_variable: testlab_policy_id
     expect:
       - type: "NOT_NULL"
         output: policy_id
@@ -80,8 +78,7 @@ setup:
         - operandLeft: "https://w3id.org/edc/v0.0.1/ns/id"
           operator: "="
           operandRight: "@testlab_asset_id"
-    store_in_memory:
-      testlab_contract_def_id: "contract_def_id"
+      store_in_variable: testlab_contract_def_id
     expect:
       - type: "NOT_NULL"
         output: contract_def_id
@@ -104,8 +101,7 @@ steps:
     params:
       endpoint_id: "ccmapi_data_source"
       timeout_s: "@sut_response_timeout"
-    store_in_memory:
-      sut_request_body: "body"
+      store_in_variable: sut_request_body
     expect:
       - type: "EQUALS"
         output: method

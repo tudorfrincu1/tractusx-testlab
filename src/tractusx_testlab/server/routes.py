@@ -35,11 +35,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
-from tractusx_sdk.extensions.testlab.models import JobStatus
+from tractusx_testlab.models import JobStatus
 from tractusx_testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
+from tractusx_testlab.server.callbacks import CallbackManager
 from tractusx_testlab.server.mock_registry import get_mock
-from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+from tractusx_testlab.server.storage import PackageStorage
 
 from tractusx_testlab.server.compile import compile_router
 from tractusx_testlab.server.streaming import streaming_router

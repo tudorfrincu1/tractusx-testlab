@@ -35,7 +35,7 @@ You are working on the **TestLab IDE** — a block-based visual test authoring t
 ```
 ide/src/
 ├── components/           # BlockEditor (blocks/, toolbox/, serialization/),
-│                         # YamlEditor, GraphView, ProjectExplorer, TestCaseDashboard, Layout
+│                         # YamlEditor, GraphView, ProjectExplorer, TckDashboard, Layout
 ├── models/               # TypeScript schema types + validator
 ├── store/                # Zustand stores
 ├── sync/                 # model ↔ YAML sync utilities
@@ -146,7 +146,7 @@ When a file exceeds 300 lines, apply these patterns:
 - **Extract slices**: group related actions (CRUD for one entity) into a slice file → `store/slices/xxxSlice.ts`
 - **Extract selectors**: derived data (`getAggregatedVariables`, `getTestSummaries`) → `store/selectors.ts`
 - **Extract serialization**: `saveToLocalStorage`, `loadFromLocalStorage`, `loadSerializedProject` → `store/persistence.ts`
-- **Extract helpers**: pure functions (`uniqueName`, `buildTestCaseTestsArray`) → `store/helpers.ts`
+- **Extract helpers**: pure functions (`uniqueName`, `buildTckTestsArray`) → `store/helpers.ts`
 
 ### Sync / Transform modules
 - **One transform per file**: `workspaceToModel.ts`, `modelToYaml.ts` — if either grows, split by entity type (steps, variables, services)

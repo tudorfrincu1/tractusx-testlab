@@ -26,11 +26,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from tractusx_sdk.extensions.testlab.models.enums import (
+from tractusx_testlab.models.enums import (
     AssertionSeverity,
     FailurePolicy,
     SdkCallMode,
@@ -72,6 +72,7 @@ class StepDefinition(BaseModel):
     timeout_s: Optional[float] = None
     expect: list[Assertion] = Field(default_factory=list)
     store_in_memory: Optional[dict[str, str]] = None
+    store_in_variable: Optional[str] = None
     if_condition: Optional[str] = Field(default=None, alias="if")
     output_definitions: list[dict[str, str]] = Field(default_factory=list)
 

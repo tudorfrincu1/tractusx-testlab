@@ -22,8 +22,8 @@
 
 """Compiler module — validate, compile, and package test scripts."""
 
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
+from tractusx_testlab.compiler.validator import ScriptValidator
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.compiler.compiler import Compiler
 
 __all__ = ["ScriptValidator", "Packager", "Compiler"]

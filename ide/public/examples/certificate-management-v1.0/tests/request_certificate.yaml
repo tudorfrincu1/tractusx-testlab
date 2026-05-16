@@ -46,9 +46,6 @@ steps:
           - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
             operator: "like"
             operand_right: "%https://w3id.org/catenax/taxonomy#CCMAPI%"
-    store_in_memory:
-      catalog: "catalog"
-      datasets: "datasets"
     expect:
       - type: "NOT_NULL"
         output: datasets
@@ -58,8 +55,7 @@ steps:
     params:
       variable: "datasets"
       path: "[0].@id"
-    store_in_memory:
-      ccmapi_asset_id: "value"
+      store_in_variable: ccmapi_asset_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -69,8 +65,7 @@ steps:
     params:
       variable: "datasets"
       path: "[0].odrl:hasPolicy"
-    store_in_memory:
-      ccmapi_offer_id: "value"
+      store_in_variable: ccmapi_offer_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -82,8 +77,7 @@ steps:
       counter_party_address: "@provider_address"
       offer_id: "@ccmapi_offer_id"
       asset_id: "@ccmapi_asset_id"
-    store_in_memory:
-      contract_agreement_id: "agreement_id"
+      store_in_variable: contract_agreement_id
     expect:
       - type: "NOT_NULL"
         output: agreement_id
@@ -95,9 +89,6 @@ steps:
       agreement_id: "@contract_agreement_id"
       asset_id: "@ccmapi_asset_id"
       transfer_type: "HttpData-PULL"
-    store_in_memory:
-      data_address: "data_address"
-      edr_token: "edr_token"
 
   - type: http_call
     description: POST certificate request to CCMAPI endpoint
@@ -112,10 +103,6 @@ steps:
         certificateType: "@certificate_type"
         locationBpns: "@location_bpns"
         requestedByDate: "2026-12-31"
-    store_in_memory:
-      request_id: "request_id"
-      request_status: "request_status"
-      document_id: "document_id"
     expect:
       - type: "EQUALS"
         output: status_code
