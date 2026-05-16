@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useProjectStore, type ActiveFile, type TestSummary } from "../../store/useProjectStore";
+import { useProjectStore, type ActiveFile, type TestSummary } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { SectionCard } from "./MetadataSection";
 import { IconButton, OrderBadge } from "./TestPipelineWidgets";

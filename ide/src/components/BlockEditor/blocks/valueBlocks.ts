@@ -242,8 +242,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.appendDummyInput("JSON_STORE")
         .appendField(new Blockly.FieldLabelSerializable(DEFAULT_JSON), "JSON_VALUE");
       this.getInput("JSON_STORE")!.setVisible(false);
-      this.setPreviousStatement(true, "key_value");
-      this.setNextStatement(true, "key_value");
+      this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJson);
       this.setTooltip("A raw JSON object — click ✏ to edit");
     },

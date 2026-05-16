@@ -1,0 +1,19 @@
+meta {
+  name: EDR Request
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/api/v1/dsp/management/v3/edrs/request
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}

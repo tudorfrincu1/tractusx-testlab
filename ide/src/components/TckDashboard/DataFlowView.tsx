@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { buildDataFlow, type FlowNode, type FlowEdge } from "./dataFlowBuilder";
 

@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useMemo } from "react";
-import { useExecutionStore } from "../../store/useExecutionStore";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
 import { useResizablePanel } from "../../hooks/useResizablePanel";
 import { StepCard } from "./StepCard";
 import { StepFlowView } from "./StepFlowView";

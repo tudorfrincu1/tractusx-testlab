@@ -31,7 +31,7 @@ import type { Node, Edge } from "@xyflow/react";
 import type { TestLabDocument, ScriptDefinition, Step } from "../models/schema";
 import { isTck, isTemplateStep } from "../models/schema";
 import { getStepColor } from "../theme/tractusxTheme";
-import type { GraphMode } from "../store/useTestLabStore";
+import type { GraphMode } from "../store/slices/useTestLabStore";
 import { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./graphHelpers";
 
 export interface GraphData {

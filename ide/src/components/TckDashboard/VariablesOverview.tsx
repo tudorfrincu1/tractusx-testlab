@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore, type AggregatedVariable } from "../../store/useProjectStore";
+import { useProjectStore, type AggregatedVariable } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { SectionCard } from "./MetadataSection";
 

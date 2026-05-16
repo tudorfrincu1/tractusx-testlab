@@ -26,14 +26,33 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
+
+logger = logging.getLogger(__name__)
+
+
+def _safe_delete(service: object, method_name: str, **kwargs: object) -> object:
+    """Attempt to call a delete method on the service, returning None on failure."""
+    method = getattr(service, method_name, None)
+    if method is None:
+        logger.warning(
+            "Service %s has no '%s' method — skipping cleanup",
+            type(service).__name__, method_name,
+        )
+        return None
+    try:
+        return method(**kwargs)
+    except AttributeError as exc:
+        logger.warning("Cleanup method %s failed: %s", method_name, exc)
+        return None
 
 
 @step("delete_asset")
@@ -43,7 +62,7 @@ class DeleteAssetStep(BaseStep):
         asset_id = params.get("asset_id") or context.get_variable("asset_id")
         url = f"{context.get_provider_base_url()}/v3/assets/{asset_id}"
 
-        result = provider.delete_asset(asset_id=asset_id)
+        result = _safe_delete(provider, "delete_asset", asset_id=asset_id)
 
         return StepOutput(
             value=result,
@@ -59,7 +78,7 @@ class DeletePolicyStep(BaseStep):
         policy_id = params.get("policy_id") or context.get_variable("policy_id")
         url = f"{context.get_provider_base_url()}/v3/policydefinitions/{policy_id}"
 
-        result = provider.delete_policy(policy_id=policy_id)
+        result = _safe_delete(provider, "delete_policy", policy_id=policy_id)
 
         return StepOutput(
             value=result,
@@ -75,7 +94,7 @@ class DeleteContractDefinitionStep(BaseStep):
         contract_id = params.get("contract_definition_id") or context.get_variable("contract_definition_id")
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions/{contract_id}"
 
-        result = provider.delete_contract(contract_id=contract_id)
+        result = _safe_delete(provider, "delete_contract", contract_id=contract_id)
 
         return StepOutput(
             value=result,

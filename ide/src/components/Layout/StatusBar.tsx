@@ -23,8 +23,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useTestLabStore } from "../../store/useTestLabStore";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
 import { isTest, isTck } from "../../models/schema";
 import type { ScriptDefinition, TckDefinition } from "../../models/schema";

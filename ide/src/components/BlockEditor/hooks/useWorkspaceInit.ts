@@ -24,8 +24,8 @@
 
 import { useRef, useEffect, useState, type RefObject } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
-import { useProjectStore } from "../../../store/useProjectStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
+import { useProjectStore } from "../../../store/slices/useProjectStore";
 import {
   registerBlocks,
   buildToolbox,
@@ -40,7 +40,7 @@ import { setKnownStepTypes } from "../../../models/validator";
 import { createWorkspaceOptions } from "../config/workspaceConfig";
 import { injectBubbleStyles } from "../fields/bubblePatch";
 import type { TestLabDocument } from "../../../models/schema";
-import { isTest, isTck } from "../../../models/schema";
+import { isTest } from "../../../models/schema";
 import type { WorkspaceRefs } from "../workspaceTypes";
 
 interface WorkspaceInitResult extends WorkspaceRefs {
@@ -138,8 +138,7 @@ export function useWorkspaceInit(
           setModelFromBlocks(merged as unknown as TestLabDocument);
         }
       } else {
-        const rootType = modelKind === "tck" ? "tck_root" : "test_root";
-        const rootBlock = ws.newBlock(rootType);
+        const rootBlock = ws.newBlock("test_root");
         rootBlock.initSvg();
         rootBlock.render();
         rootBlock.moveBy(30, 30);
@@ -147,10 +146,6 @@ export function useWorkspaceInit(
         const currentModel = useTestLabStore.getState().model;
         if (isTest(currentModel)) {
           rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
-          rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
-          rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-        } else if (isTck(currentModel)) {
-          rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
           rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
           rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
         }

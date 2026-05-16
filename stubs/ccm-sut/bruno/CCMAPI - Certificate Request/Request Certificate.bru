@@ -1,0 +1,40 @@
+meta {
+  name: Request Certificate
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/companycertificate/request
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "header": {
+      "messageId": "urn:uuid:{{$guid}}",
+      "context": "CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+      "sentDateTime": "{{$isoTimestamp}}",
+      "senderBpn": "{{consumer_bpn}}",
+      "receiverBpn": "{{provider_bpn}}",
+      "version": "3.1.0",
+      "senderFeedbackUrl": "{{callback_url}}/api/v1/dsp"
+    },
+    "content": {
+      "certifiedBpn": "{{provider_bpn}}",
+      "certificateType": "iso9001",
+      "locationBpns": ["BPNS000000000001"]
+    }
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.content && res.body.content.documentId) {
+    bru.setVar("document_id", res.body.content.documentId);
+  }
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Get EDR Data Address
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/v1/dsp/management/v3/edrs/{{transfer_id}}/dataaddress
+  body: none
+  auth: none
+}

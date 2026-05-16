@@ -24,7 +24,7 @@
 
 import { useRef, useEffect, useState, type RefObject } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
 import {
   registerBlocks,
   buildToolbox,
@@ -37,8 +37,8 @@ import { createWorkspaceOptions } from "../config/workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "../sync/workspaceListeners";
 import { attachServiceAutoDeclareListener } from "../sync/serviceAutoDeclare";
 import { attachPhaseEnforcementListener } from "../sync/phaseEnforcement";
-import type { ScriptDefinition, TckDefinition } from "../../../models/schema";
-import { isTest, isTck } from "../../../models/schema";
+import type { ScriptDefinition } from "../../../models/schema";
+import { isTest } from "../../../models/schema";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {
@@ -85,6 +85,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       );
 
       workspaceRef.current = ws;
+      // DEBUG: expose workspace for connection testing
+      (window as unknown as Record<string, unknown>).__debugWs = ws;
 
       // Register "Empty Trash" context menu item
       const EMPTY_TRASH_ID = "emptyTrash";
@@ -112,7 +114,7 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       // Suppress change events during initial block creation
       isUpdatingFromStore.current = true;
 
-      const rootType = modelKind === "tck" ? "tck_root" : "test_root";
+      const rootType = "test_root";
       const rootBlock = ws.newBlock(rootType);
       rootBlock.initSvg();
       rootBlock.render();
@@ -121,10 +123,6 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       const currentModel = useTestLabStore.getState().model;
       if (isTest(currentModel)) {
         rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
-        rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
-        rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-      } else if (isTck(currentModel)) {
-        rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
       }
@@ -199,19 +197,6 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
           rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
           for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
-            disposeStatementChain(rootBlock, input);
-          }
-          populateWorkspaceFromModel(ws, rootBlock, model, catalog);
-        }
-      } else if (isTck(model)) {
-        const tc = model as TckDefinition;
-        const rootBlock = ws.getBlocksByType("tck_root", false)[0];
-        if (rootBlock) {
-          rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
-          rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
-          rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
-
-          for (const input of ["VARIABLES", "PRECONDITIONS", "TESTS"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);

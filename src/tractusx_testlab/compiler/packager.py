@@ -33,13 +33,13 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     EncryptedKeyBlock,
     PackageManifest,
     SecurityBlock,
 )
-from tractusx_sdk.extensions.testlab.security.crypto.encryption import decrypt_package, encrypt_package
-from tractusx_sdk.extensions.testlab.security.crypto.signing import sign_bytes, verify_signature
+from tractusx_testlab.security.crypto.encryption import decrypt_package, encrypt_package
+from tractusx_testlab.security.crypto.signing import sign_bytes, verify_signature
 
 # Archive entry names
 _MANIFEST = "manifest.json"

@@ -20,8 +20,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript, TestCase as Tck  # SDK alias
+from tractusx_testlab.scripting.parser import YamlParser
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.scripting.script import TestScript, Tck as Tck  # SDK alias
 
 __all__ = ["YamlParser", "StepRegistry", "TestScript", "Tck"]

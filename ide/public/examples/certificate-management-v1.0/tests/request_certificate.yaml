@@ -26,25 +26,14 @@ name: request-certificate
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Request certificate via CCMAPI endpoint.
-  Query catalog for CCMAPI offers, negotiate contract,
-  and POST certificate request to provider.
+  Request certificate via CCMAPI endpoint per CX-0135 v3.1.0.
+  Query catalog for CCMAPI offers (dct:type + dct:subject + cx-common:version),
+  negotiate contract, and POST certificate request with header+content envelope.
 
 services:
   - name: provider_edc
-    type: edc_connector_saturn
+    type: connector_consumer
     base_url: "@provider_address"
-
-output_definitions:
-  - name: request_id
-    type: str
-    description: Unique certificate request ID from provider
-  - name: request_status
-    type: str
-    description: Current status of the certificate request
-  - name: document_id
-    type: str
-    description: Document ID for the requested certificate
 
 steps:
   - type: query_catalog
@@ -55,11 +44,14 @@ steps:
       filter:
         filter_expression:
           - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "like"
-            operand_right: "%https://w3id.org/catenax/taxonomy#CCMAPI%"
-    store_in_memory:
-      catalog: "catalog"
-      datasets: "datasets"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
+          - operand_left: "http://purl.org/dc/terms/subject"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          - operand_left: "https://w3id.org/catenax/ontology/common#version"
+            operator: "="
+            operand_right: "3.0"
     expect:
       - type: "NOT_NULL"
         output: datasets
@@ -69,8 +61,7 @@ steps:
     params:
       variable: "datasets"
       path: "[0].@id"
-    store_in_memory:
-      ccmapi_asset_id: "value"
+      store_in_variable: ccmapi_asset_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -80,8 +71,7 @@ steps:
     params:
       variable: "datasets"
       path: "[0].odrl:hasPolicy"
-    store_in_memory:
-      ccmapi_offer_id: "value"
+      store_in_variable: ccmapi_offer_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -93,8 +83,7 @@ steps:
       counter_party_address: "@provider_address"
       offer_id: "@ccmapi_offer_id"
       asset_id: "@ccmapi_asset_id"
-    store_in_memory:
-      contract_agreement_id: "agreement_id"
+      store_in_variable: contract_agreement_id
     expect:
       - type: "NOT_NULL"
         output: agreement_id
@@ -106,34 +95,71 @@ steps:
       agreement_id: "@contract_agreement_id"
       asset_id: "@ccmapi_asset_id"
       transfer_type: "HttpData-PULL"
-    store_in_memory:
-      data_address: "data_address"
-      edr_token: "edr_token"
 
-  - type: http_call
-    description: POST certificate request to CCMAPI endpoint
+  - type: generate_uuid
+    description: Generate request message ID
+    params:
+      store_in_variable: request_uuid
+
+  - type: http_call_dataplane
+    description: POST certificate request to CCMAPI endpoint via data plane
     params:
       method: POST
       url: "@data_address/companycertificate/request"
+      edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"
       body:
-        consumerBpn: "@consumer_bpn"
-        providerBpn: "@provider_bpn"
-        certificateType: "@certificate_type"
-        locationBpns: "@location_bpns"
-        requestedByDate: "2026-12-31"
+        header:
+          messageId: "urn:uuid:@request_uuid"
+          context: "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
+          sentDateTime: "2026-01-01T00:00:00Z"
+          senderBpn: "@consumer_bpn"
+          receiverBpn: "@provider_bpn"
+          relatedMessageId: "urn:uuid:@request_uuid"
+          version: "3.1.0"
+          senderFeedbackUrl: "@testlab_dsp_url"
+        content:
+          certifiedBpn: "@provider_bpn"
+          certificateType: "@certificate_type"
+          locationBpns:
+            - "@location_bpns"
     store_in_memory:
-      request_id: "request_id"
-      request_status: "request_status"
-      document_id: "document_id"
+      request_status: "response_body.content.requestStatus"
+      document_id: "response_body.content.documentId"
+      request_id: "response_body.header.relatedMessageId"
     expect:
       - type: "EQUALS"
         output: status_code
         value: 200
-      - type: "NOT_NULL"
-        output: request_id
-      - type: "NOT_NULL"
-        output: request_status
+      - type: "ASSERT_FIELD"
+        output: response_body
+        path: "content.requestStatus"
+        operator: "not_null"
+      - type: "ASSERT_FIELD"
+        output: response_body
+        path: "content.documentId"
+        operator: "not_null"
+
+teardown:
+  - type: export_variable
+    description: Export request ID for downstream tests
+    params:
+      name: request_id
+
+  - type: export_variable
+    description: Export document ID for payload validation
+    params:
+      name: document_id
+
+  - type: export_variable
+    description: Export data address for payload fetch
+    params:
+      name: data_address
+
+  - type: export_variable
+    description: Export EDR token for downstream tests
+    params:
+      name: edr_token
 
 

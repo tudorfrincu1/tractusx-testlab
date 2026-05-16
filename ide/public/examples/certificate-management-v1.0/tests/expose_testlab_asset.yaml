@@ -27,12 +27,12 @@ version: "1.0"
 dataspace_version: "saturn"
 description: >
   TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
-  data endpoint, and waits for the SUT to discover, negotiate, and pull data.
-  Verifies the SUT's consumer-side behavior per CX-0135.
+  data endpoint with CX-0135 compliant certificate payload, and waits for the SUT
+  to discover, negotiate, and pull data.
 
 services:
   - name: testlab_edc
-    type: edc_connector_saturn
+    type: connector_provider
     base_url: "@testlab_management_url"
 
 setup:
@@ -47,15 +47,16 @@ setup:
       properties:
         dct:type:
           "@id": "https://w3id.org/catenax/taxonomy#CCMAPI"
-        cx-common:version: "2.4.0"
-    store_in_memory:
-      testlab_asset_id: "asset_id"
+        dct:subject:
+          "@id": "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+        cx-common:version: "3.0"
+      store_in_variable: testlab_asset_id
     expect:
       - type: "NOT_NULL"
         output: asset_id
 
   - type: create_policy
-    description: Create BPN-restricted access policy for SUT
+    description: Create usage policy with CX-0135 constraints
     params:
       service: testlab_edc
       permissions:
@@ -64,8 +65,13 @@ setup:
             - leftOperand: "BusinessPartnerNumber"
               operator: "eq"
               rightOperand: "@provider_bpn"
-    store_in_memory:
-      testlab_policy_id: "policy_id"
+            - leftOperand: "FrameworkAgreement"
+              operator: "eq"
+              rightOperand: "DataExchangeGovernance:1.0"
+            - leftOperand: "UsagePurpose"
+              operator: "isAnyOf"
+              rightOperand: "cx.ccm.base:1"
+      store_in_variable: testlab_policy_id
     expect:
       - type: "NOT_NULL"
         output: policy_id
@@ -80,14 +86,13 @@ setup:
         - operandLeft: "https://w3id.org/edc/v0.0.1/ns/id"
           operator: "="
           operandRight: "@testlab_asset_id"
-    store_in_memory:
-      testlab_contract_def_id: "contract_def_id"
+      store_in_variable: testlab_contract_def_id
     expect:
       - type: "NOT_NULL"
         output: contract_def_id
 
   - type: mock_endpoint
-    description: Expose mock CCMAPI data endpoint for SUT
+    description: Expose mock CCMAPI data endpoint with CX-0135 certificate payload
     params:
       id: "ccmapi_data_source"
       method: GET
@@ -95,17 +100,22 @@ setup:
       response_status: 200
       response_body:
         businessPartnerNumber: "@provider_bpn"
-        type: "CCMAPI_DATA"
-        status: "ACTIVE"
+        certificateType: "iso9001"
+        registrationNumber: "CERT-2024-001"
+        enclosedSites:
+          - enclosedSiteBpn: "BPNS000000000001"
+        validFrom: "2024-01-01"
+        validTo: "2027-01-01"
+        trustLevel: "none"
 
 steps:
   - type: wait_for_call
     description: Wait for SUT to discover, negotiate, and pull data
     params:
       endpoint_id: "ccmapi_data_source"
+      method: GET
       timeout_s: "@sut_response_timeout"
-    store_in_memory:
-      sut_request_body: "body"
+      store_in_variable: sut_request_body
     expect:
       - type: "EQUALS"
         output: method
@@ -113,7 +123,7 @@ steps:
       - type: "NOT_NULL"
         output: body
 
-cleanup:
+teardown:
   - type: delete_asset
     description: Remove CCMAPI asset from TestLab EDC
     params:

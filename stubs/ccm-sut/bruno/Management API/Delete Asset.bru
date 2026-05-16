@@ -1,0 +1,11 @@
+meta {
+  name: Delete Asset
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{base_url}}/api/v1/dsp/management/v3/assets/{{asset_id}}
+  body: none
+  auth: none
+}

@@ -24,8 +24,8 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
-import { useExecutionStore } from "../../store/useExecutionStore";
-import { isValidBackendUrl } from "../../store/executionApi";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
+import { isValidBackendUrl } from "../../store/api/executionApi";
 import "./ExecutionControls.css";
 
 /**

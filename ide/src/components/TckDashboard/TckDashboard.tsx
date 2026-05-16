@@ -22,26 +22,19 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState } from "react";
-import { useProjectStore, type ActiveFile } from "../../store/useProjectStore";
+import { useState, useCallback } from "react";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import { theme } from "../../theme/tractusxTheme";
-import { MetadataSection } from "./MetadataSection";
-import { VariablesOverview } from "./VariablesOverview";
-import { TestPipelineTable } from "./TestPipelineTable";
-import { DataFlowView } from "./DataFlowView";
+import { PipelineGraphView } from "./dataflow/PipelineGraphView";
+import { GraphInfoDisplay } from "./dataflow/GraphInfoDisplay";
+import { GraphInfoEditForm } from "./dataflow/GraphInfoEditForm";
+import { DATASPACE_OPTIONS } from "./dataflow/constants";
+import { VersionField } from "./forms/FormFields";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import TimelineIcon from "@mui/icons-material/Timeline";
+import "./TckDashboard.css";
 
-type DashboardTab = "pipeline" | "dataflow";
-
-interface TckDashboardProps {
-  onSelectFile: (file: ActiveFile) => void;
-}
-
-export function TckDashboard({ onSelectFile }: TckDashboardProps) {
-  const tck = useProjectStore((s) => s.tck);
-  const [activeTab, setActiveTab] = useState<DashboardTab>("pipeline");
+export function TckDashboard() {
 
   return (
     <div style={{
@@ -51,54 +44,12 @@ export function TckDashboard({ onSelectFile }: TckDashboardProps) {
       overflow: "hidden",
       background: theme.colors.bg,
     }}>
-      {/* ── Header ─────────────────────────────────────────── */}
-      <DashboardHeader
-        name={tck.name}
-        version={tck.version}
-        dataspaceVersion={tck.dataspace_version}
-      />
+      {/* ── Header with expandable info ────────────────────── */}
+      <DashboardHeader />
 
-      {/* ── Tab bar ────────────────────────────────────────── */}
-      <div style={{
-        display: "flex",
-        gap: 0,
-        borderBottom: `1px solid ${theme.colors.border}`,
-        background: theme.colors.bgLight,
-        paddingLeft: 24,
-      }}>
-        <TabButton
-          label="Pipeline"
-          icon={<PlaylistAddIcon sx={{ fontSize: 14 }} />}
-          isActive={activeTab === "pipeline"}
-          onClick={() => setActiveTab("pipeline")}
-        />
-        <TabButton
-          label="Data Flow"
-          icon={<TimelineIcon sx={{ fontSize: 14 }} />}
-          isActive={activeTab === "dataflow"}
-          onClick={() => setActiveTab("dataflow")}
-        />
-      </div>
-
-      {/* ── Content ────────────────────────────────────────── */}
-      <div style={{
-        flex: 1,
-        overflow: "auto",
-        padding: "20px 24px 40px",
-      }}>
-        {activeTab === "pipeline" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 960 }}>
-            <MetadataSection />
-            <VariablesOverview />
-            <TestPipelineTable onSelectFile={onSelectFile} />
-          </div>
-        )}
-
-        {activeTab === "dataflow" && (
-          <div style={{ maxWidth: 960 }}>
-            <DataFlowView />
-          </div>
-        )}
+      {/* ── Pipeline Graph (unified view) ──────────────────── */}
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <PipelineGraphView />
       </div>
     </div>
   );
@@ -106,27 +57,105 @@ export function TckDashboard({ onSelectFile }: TckDashboardProps) {
 
 /* ── Sub-components ──────────────────────────────────────────────────────── */
 
-function DashboardHeader({ name, version, dataspaceVersion }: {
-  name: string;
-  version?: string;
-  dataspaceVersion?: string;
-}) {
+function DashboardHeader() {
+  const tck = useProjectStore((s) => s.tck);
+  const updateField = useProjectStore((s) => s.updateTckField);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+    if (isExpanded) setIsEditing(false);
+  }, [isExpanded]);
+
+  const handleEditClick = useCallback(() => {
+    setIsEditing(true);
+    setIsExpanded(true);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
   return (
-    <div style={{
-      padding: "16px 24px",
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      background: theme.colors.bgLight,
-      borderBottom: `1px solid ${theme.colors.border}`,
-      flexShrink: 0,
-    }}>
-      <PlaylistAddIcon sx={{ fontSize: 20, color: theme.colors.primary }} />
-      <span style={{ fontSize: 15, fontWeight: 700, color: theme.colors.textBright }}>
-        {name}
-      </span>
-      {version && <Badge label={`v${version}`} color={theme.colors.textMuted} bg={theme.colors.bgLighter} />}
-      {dataspaceVersion && <Badge label={dataspaceVersion} color={theme.colors.primary} bg="rgba(255, 215, 0, 0.12)" />}
+    <div className="dashboard-header" style={{ flexShrink: 0 }}>
+      {/* ── Bar row ──────────────────────────────────────── */}
+      <div className="dashboard-header__bar">
+        <PlaylistAddIcon sx={{ fontSize: 20, color: theme.colors.primary }} />
+
+        {isEditing ? (
+          <input
+            className="dashboard-header__inline-input dashboard-header__inline-input--name"
+            value={tck.name}
+            onChange={(e) => updateField("name", e.target.value)}
+            placeholder="Project name"
+            autoFocus
+          />
+        ) : (
+          <span className="dashboard-header__name">{tck.name}</span>
+        )}
+
+        {isEditing ? (
+          <VersionField
+            value={tck.version ?? ""}
+            onChange={(v) => updateField("version", v || undefined)}
+            compact
+            className="dashboard-header__version-field"
+            inputClassName="dashboard-header__inline-input dashboard-header__inline-input--version"
+          />
+        ) : (
+          tck.version && (
+            <Badge
+              label={`v${tck.version.replace(/^v/i, "")}`}
+              color={theme.colors.textMuted}
+              bg={theme.colors.bgLighter}
+            />
+          )
+        )}
+
+        {isEditing ? (
+          <select
+            className="dashboard-header__inline-select"
+            value={tck.dataspace_version ?? ""}
+            onChange={(e) => updateField("dataspace_version", e.target.value || undefined)}
+          >
+            <option value="">— version —</option>
+            {DATASPACE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        ) : (
+          tck.dataspace_version && (
+            <Badge
+              label={tck.dataspace_version}
+              color={theme.colors.primary}
+              bg="rgba(255, 215, 0, 0.12)"
+            />
+          )
+        )}
+
+        <button
+          className="dashboard-header__info-toggle"
+          onClick={handleToggleExpand}
+          title={isExpanded ? "Hide project info" : "Show project info"}
+        >
+          <span className={`dashboard-header__toggle-icon${isExpanded ? " dashboard-header__toggle-icon--expanded" : ""}`}>
+            ▶
+          </span>
+          {isExpanded ? "Hide project info" : "Show project info"}
+        </button>
+      </div>
+
+      {/* ── Expandable metadata ──────────────────────────── */}
+      <div className={`dashboard-header__body${isExpanded ? " dashboard-header__body--expanded" : ""}`}>
+        <div className="dashboard-header__body-inner">
+          {isEditing ? (
+            <GraphInfoEditForm onClose={handleCancelEdit} />
+          ) : (
+            <GraphInfoDisplay onEdit={handleEditClick} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -145,48 +174,5 @@ function Badge({ label, color, bg }: { label: string; color: string; bg: string 
     }}>
       {label}
     </span>
-  );
-}
-
-function TabButton({ label, icon, isActive, onClick, isDisabled }: {
-  label: string;
-  icon: React.ReactNode;
-  isActive: boolean;
-  onClick: () => void;
-  isDisabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={isDisabled ? undefined : onClick}
-      disabled={isDisabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 16px",
-        fontSize: 12,
-        fontWeight: isActive ? 600 : 400,
-        color: isDisabled
-          ? theme.colors.textMuted
-          : isActive
-            ? theme.colors.primary
-            : theme.colors.text,
-        background: "transparent",
-        border: "none",
-        borderBottom: isActive ? `2px solid ${theme.colors.primary}` : "2px solid transparent",
-        cursor: isDisabled ? "default" : "pointer",
-        opacity: isDisabled ? 0.4 : 1,
-        transition: "color 0.15s, border-color 0.15s",
-        marginBottom: -1,
-      }}
-    >
-      {icon}
-      {label}
-      {isDisabled && (
-        <span style={{ fontSize: 9, color: theme.colors.textMuted, fontStyle: "italic" }}>
-          soon
-        </span>
-      )}
-    </button>
   );
 }

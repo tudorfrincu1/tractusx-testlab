@@ -30,33 +30,36 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.logging.structured import StructuredLogger
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.logging.structured import StructuredLogger
+from tractusx_testlab.models import (
     AssertionSummary,
     JobStatus,
     ScriptResult,
     ScriptStatus,
     StepResult,
-    TestCaseResult as TckResult,  # SDK alias
+    TckResult as TckResult,  # SDK alias
 )
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.mock_server import _BackgroundMockServer
 from tractusx_testlab.player.execution.step_runner import (
-    execute_cleanup_steps,
+    execute_teardown_steps,
     execute_main_steps,
     execute_setup_steps,
     run_script,
 )
 from tractusx_testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
-from tractusx_sdk.extensions.testlab.player.loading.ordering import topological_sort
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck, TestScript
-from tractusx_sdk.extensions.testlab.services.manager import ServiceManager
+from tractusx_testlab.player.loading.loader import Loader
+from tractusx_testlab.player.loading.ordering import topological_sort
+from tractusx_testlab.scripting.script import Tck as Tck, TestScript
+from tractusx_testlab.server.callbacks import CallbackManager
+from tractusx_testlab.server.mock_registry import get_callback_manager, set_callback_manager
+from tractusx_testlab.services.manager import ServiceManager
 
 # Ensure built-in steps are registered
-import tractusx_sdk.extensions.testlab.steps  # noqa: F401
+import tractusx_testlab.steps  # noqa: F401
 
 
 class TestlabPlayer:
@@ -68,7 +71,7 @@ class TestlabPlayer:
         result = await player.run("my_tck.yaml")
     """
 
-    __slots__ = ("_config", "_logger", "_monitor", "_jobs", "_loader")
+    __slots__ = ("_config", "_logger", "_monitor", "_jobs", "_loader", "_mock_server")
 
     def __init__(self, config: Optional[TestlabConfig] = None) -> None:
         self._config = config or ConfigLoader.load()
@@ -76,6 +79,7 @@ class TestlabPlayer:
         self._monitor = ExecutionMonitor(self._logger)
         self._jobs = JobManager()
         self._loader = Loader()
+        self._mock_server: Optional[_BackgroundMockServer] = None
 
     @property
     def jobs(self) -> JobManager:
@@ -113,6 +117,8 @@ class TestlabPlayer:
         svc_mgr = ServiceManager()
         context = StepContext(services=svc_mgr, job=job, config=self._config)
 
+        self._ensure_callback_manager()
+
         self._seed_context_variables(context, tck, runtime_vars)
 
         tck_started_at = datetime.now(timezone.utc)
@@ -123,6 +129,10 @@ class TestlabPlayer:
         tck_finished_at = datetime.now(timezone.utc)
 
         svc_mgr.teardown()
+
+        if self._mock_server is not None:
+            self._mock_server.stop()
+            self._mock_server = None
 
         result = self._build_tck_result(
             tck.name, script_results, tck_started_at, tck_finished_at,
@@ -141,6 +151,18 @@ class TestlabPlayer:
             monitor.add_callback(callback)
         return monitor
 
+    def _ensure_callback_manager(self) -> None:
+        """Ensure a CallbackManager and mock server exist for callback steps."""
+        if get_callback_manager() is not None:
+            return
+        manager = CallbackManager()
+        set_callback_manager(manager)
+        self._mock_server = _BackgroundMockServer(
+            port=self._config.server_port,
+            config=self._config,
+        )
+        self._mock_server.start()
+
     @staticmethod
     def _seed_context_variables(
         context: StepContext,
@@ -148,6 +170,9 @@ class TestlabPlayer:
         runtime_vars: Optional[dict],
     ) -> None:
         """Seed context with shared variables (medium priority) and runtime vars (highest)."""
+        if tck.base_dir is not None:
+            context.set_variable("_tck_root", str(tck.base_dir))
+
         if tck.definition.shared_variables:
             for var_name, var_def in tck.definition.shared_variables.items():
                 if var_def.default is not None:

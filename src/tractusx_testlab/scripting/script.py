@@ -26,9 +26,11 @@
 
 from __future__ import annotations
 
-from tractusx_sdk.extensions.testlab.models import (
+from pathlib import Path
+
+from tractusx_testlab.models import (
     ScriptDefinition as SdkScriptDefinition,
-    TestCaseDefinition as SdkTckDefinition,
+    TckDefinition as SdkTckDefinition,
 )
 from tractusx_testlab.models.definitions import (
     ScriptDefinition,
@@ -65,8 +67,8 @@ class TestScript:
         return self.definition.setup
 
     @property
-    def cleanup(self):
-        return self.definition.cleanup
+    def teardown(self):
+        return self.definition.teardown
 
     @property
     def services(self):
@@ -78,9 +80,10 @@ class TestScript:
 
     @property
     def depends_on(self) -> list[str]:
+        raw = getattr(self.definition, "depends_on", None) or []
         return [
             dep if isinstance(dep, str) else dep.file
-            for dep in self.definition.depends_on
+            for dep in raw
         ]
 
     @property
@@ -94,10 +97,11 @@ class TestScript:
 class Tck:
     """Runtime wrapper for a TCK definition."""
 
-    __slots__ = ("definition", "_scripts")
+    __slots__ = ("definition", "_scripts", "base_dir")
 
-    def __init__(self, definition: TckDefinition | SdkTckDefinition):
+    def __init__(self, definition: TckDefinition | SdkTckDefinition, base_dir: Path | None = None):
         self.definition = definition
+        self.base_dir = base_dir
         self._scripts: list[TestScript] = []
         for test_definition in definition.tests:
             if isinstance(test_definition, (ScriptDefinition, SdkScriptDefinition)):

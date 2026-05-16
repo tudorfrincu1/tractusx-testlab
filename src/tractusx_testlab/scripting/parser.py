@@ -31,33 +31,25 @@ from typing import Any, Optional, Union
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.syntax import defaults, keys
+from tractusx_testlab.syntax import defaults, keys
 from tractusx_testlab.syntax.keys import TEST as _TEST_KEY
 
 from tractusx_testlab.syntax.keys import PRECONDITIONS as _PRECONDITIONS_KEY
 
-from tractusx_sdk.extensions.testlab.models import (
-    DependencyRef,
-    ScriptKind as _SdkScriptKind,
+from tractusx_testlab.models import (
     SdkCallMode,
 )
 from tractusx_testlab.models.definitions import (
     ImportDefinition,
-    ListenerDefinition,
     ScriptDefinition,
     ServiceDefinition,
     TckDefinition,
 )
 from tractusx_testlab.models.enums import ScriptKind, ServiceType
 
-from tractusx_sdk.extensions.testlab.scripting._builders import (
-    parse_depends_on,
+from tractusx_testlab.scripting._builders import (
     parse_step,
     parse_variables,
-)
-from tractusx_sdk.extensions.testlab.scripting._dependencies import (
-    infer_output_dependencies,
-    resolve_file_dependencies,
 )
 
 _INCLUDE_PREFIX = "!include "
@@ -144,9 +136,6 @@ class YamlParser:
             for imp in data.get(keys.IMPORTS, [])
         ]
 
-        tests = resolve_file_dependencies(tests, base_dir, YamlParser.parse_script)
-        infer_output_dependencies(tests)
-
         return TckDefinition(
             kind=ScriptKind.TCK,
             name=data.get(keys.NAME, defaults.NAME),
@@ -165,15 +154,11 @@ class YamlParser:
         preconditions = [parse_step(step_data).model_dump() for step_data in data.get(_PRECONDITIONS_KEY, [])]
         setup = [parse_step(step_data).model_dump() for step_data in data.get(keys.SETUP, [])]
         steps = [parse_step(step_data).model_dump() for step_data in data.get(keys.STEPS, [])]
-        cleanup = [parse_step(step_data).model_dump() for step_data in data.get(keys.CLEANUP, [])]
+        teardown = [parse_step(step_data).model_dump() for step_data in data.get(keys.TEARDOWN, [])]
         services = [_parse_service(service_data) for service_data in data.get(keys.SERVICES, [])]
-        listeners = [
-            ListenerDefinition(**listener_entry) if isinstance(listener_entry, dict) else ListenerDefinition(name=str(listener_entry), path=str(listener_entry))
-            for listener_entry in data.get(keys.LISTEN, [])
-        ]
 
         return YamlParser._merge_with_base(
-            data, base_def, variables, preconditions, setup, steps, cleanup, services, listeners,
+            data, base_def, variables, preconditions, setup, steps, teardown, services,
         )
 
     @staticmethod
@@ -206,9 +191,8 @@ class YamlParser:
         preconditions: list,
         setup: list,
         steps: list,
-        cleanup: list,
+        teardown: list,
         services: list,
-        listeners: list,
     ) -> ScriptDefinition:
         """Build a ScriptDefinition using parsed fields, falling back to base_def when importing."""
         get = YamlParser._field_or_base
@@ -228,13 +212,11 @@ class YamlParser:
             description=get(data, keys.DESCRIPTION, base_def, None),
             import_from=import_path,
             allow_sdk_calls=sdk_calls,
-            depends_on=parse_depends_on(data.get(keys.DEPENDS_ON, [])) or get(data, "depends_on", base_def, []),
             outputs=get(data, keys.OUTPUTS, base_def, {}),
             variables=variables or get(data, "variables", base_def, {}),
             services=services or get(data, "services", base_def, []),
-            listen=listeners or get(data, "listen", base_def, []),
             preconditions=preconditions or get(data, "preconditions", base_def, []),
             setup=setup or get(data, "setup", base_def, []),
             steps=steps or get(data, "steps", base_def, []),
-            cleanup=cleanup or get(data, "cleanup", base_def, []),
+            teardown=teardown or get(data, "teardown", base_def, []),
         )

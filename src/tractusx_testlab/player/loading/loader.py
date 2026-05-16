@@ -19,26 +19,31 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Loader — resolves YAML files and .tckpkg archives into Tck objects."""
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Optional
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.models import (
-    ScriptKind as _SdkScriptKind,
-    TestCaseDefinition as TckDefinition,  # SDK alias
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.models import (
+    TckDefinition as TckDefinition,
 )
+from tractusx_testlab.scripting.script import Tck as Tck
 from tractusx_testlab.models.enums import ScriptKind
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.scripting.script import TestCase as Tck  # SDK alias
+from tractusx_testlab.player.loading._parser import (
+    build_script,
+    build_test_case,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def _detect_kind(data: dict) -> ScriptKind:
@@ -64,17 +69,13 @@ def _detect_kind(data: dict) -> ScriptKind:
             )
         return kind
 
-    # Fallback: infer from structure (backward compatible)
     return ScriptKind.TCK if has_tests_key else ScriptKind.TEST
 
 
 class Loader:
     """Loads a TCK from a YAML file or a .tckpkg archive."""
 
-    __slots__ = ("_parser",)
-
-    def __init__(self) -> None:
-        self._parser = YamlParser()
+    __slots__ = ()
 
     def load(
         self,
@@ -84,37 +85,50 @@ class Loader:
     ) -> Tck:
         """Load a TCK from *path*.
 
-        For ``.tckpkg`` files the archive is decrypted and verified first.
-        For ``.yaml`` / ``.yml`` files the YAML is parsed directly.
+        Uses the local parser to support testlab-extended enum values
+        (assertion types, service types) that the SDK parser rejects.
         """
         if path.suffix == ".tckpkg":
-            if player_private_key is None or compiler_public_key is None:
-                raise ValueError(
-                    "player_private_key and compiler_public_key are required to load .tckpkg files"
-                )
-            yaml_bytes = Packager.extract_and_verify(path, player_private_key, compiler_public_key)
-            # Parse from in-memory YAML
-            data = yaml.safe_load(yaml_bytes)
-            kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
-            if kind == ScriptKind.TCK:
-                definition = self._parser.parse_tck_from_dict(data, base_dir=path.parent)
-            else:
-                script_def = self._parser.parse_script_from_dict(data)
-                definition = TckDefinition(name=script_def.name, tests=[script_def])
-            return Tck(definition)
+            return self._load_package(path, player_private_key, compiler_public_key)
 
-        # Plain YAML — detect type via ``kind`` field or structural heuristic
+        return self._load_yaml(path)
+
+    def _load_package(
+        self,
+        path: Path,
+        player_private_key: Optional[bytes],
+        compiler_public_key: Optional[bytes],
+    ) -> Tck:
+        """Load and verify a .tckpkg archive."""
+        if player_private_key is None or compiler_public_key is None:
+            raise ValueError(
+                "player_private_key and compiler_public_key are required "
+                "to load .tckpkg files"
+            )
+        yaml_bytes = Packager.extract_and_verify(
+            path, player_private_key, compiler_public_key,
+        )
+        data = yaml.safe_load(yaml_bytes)
+        return self._parse_data(data, base_dir=path.parent)
+
+    def _load_yaml(self, path: Path) -> Tck:
+        """Load a plain YAML file."""
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
+        return self._parse_data(data, base_dir=path.parent)
 
+    def _parse_data(self, data: object, base_dir: Path) -> Tck:
+        """Parse raw YAML data into a Tck runtime object."""
         kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
-        if kind == ScriptKind.TCK:
-            definition = self._parser.parse_tck(path)
-        else:
-            script_def = self._parser.parse_script(path)
-            resolved = YamlParser._resolve_file_dependencies(
-                [script_def], base_dir=path.parent,
-            )
-            definition = TckDefinition(name=script_def.name, tests=resolved)
 
-        return Tck(definition)
+        if kind == ScriptKind.TCK:
+            definition = build_test_case(data, base_dir=base_dir)
+        else:
+            script_def = build_script(data, base_dir=base_dir)
+            definition = TckDefinition.model_construct(
+                name=script_def.name,
+                tests=[script_def],
+                imports=[],
+            )
+
+        return Tck(definition, base_dir=base_dir)

@@ -32,7 +32,7 @@ import { SchemaEditor } from "../YamlEditor/SchemaEditor";
 import { DependencyGraph } from "../GraphView/DependencyGraph";
 import { ServiceDialog } from "../ServiceDialog/ServiceDialog";
 import { PanelHeader, PanelTabBar, IconBtn } from "./PanelControls";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
@@ -48,8 +48,8 @@ import {
   collectBlockWarnings,
   modelErrorsToIssues,
 } from "../BlockEditor/ui/ValidationPanel";
-import { useTestLabStore } from "../../store/useTestLabStore";
-import { useExecutionStore } from "../../store/useExecutionStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
 import { ExecutionPanel } from "../ExecutionPanel/ExecutionPanel";
 
 export interface EditorPanelsProps {

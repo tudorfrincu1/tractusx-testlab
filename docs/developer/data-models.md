@@ -46,17 +46,12 @@ interface ScriptDefinition {
   version?: string;
   dataspace_version?: string;
   description?: string;
-  allow_sdk_calls?: SdkCallMode;          // "ALLOWLIST" | "OPEN"
-  depends_on?: (string | DependencyRef)[];
-  outputs?: Record<string, string>;
   preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   services?: ServiceDefinition[];
   setup?: Step[];                          // Pre-test steps
   steps: Step[];                           // Main test steps (required, ≥1)
   teardown?: Step[];                       // Cleanup steps
-  cleanup?: Step[];                        // Alias for teardown
-  listen?: ListenerDefinition[];
 }
 ```
 

@@ -25,7 +25,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
 import { theme } from "../../theme/tractusxTheme";
 import {
   registerBlocks,
@@ -35,8 +35,8 @@ import {
   populateWorkspaceFromModel,
   collectWorkspaceVariables,
 } from "../BlockEditor/config/blockDefinitions";
-import type { ScriptDefinition, TestLabDocument, TckDefinition } from "../../models/schema";
-import { isTest, isTck } from "../../models/schema";
+import type { ScriptDefinition, TestLabDocument } from "../../models/schema";
+import { isTest } from "../../models/schema";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,9 +125,7 @@ export function BlocklyWorkspace() {
       // Suppress change events during initial block creation
       isUpdatingFromStore.current = true;
 
-      // Create root block based on kind
-      const rootType = modelKind === "tck" ? "tck_root" : "test_root";
-      const rootBlock = ws.newBlock(rootType);
+      const rootBlock = ws.newBlock("test_root");
       rootBlock.initSvg();
       rootBlock.render();
       rootBlock.moveBy(30, 30);
@@ -136,10 +134,6 @@ export function BlocklyWorkspace() {
       const currentModel = useTestLabStore.getState().model;
       if (isTest(currentModel)) {
         rootBlock.setFieldValue(currentModel.name || "my_test", "NAME");
-        rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
-        rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
-      } else if (isTck(currentModel)) {
-        rootBlock.setFieldValue(currentModel.name || "my-tck", "NAME");
         rootBlock.setFieldValue(currentModel.version || "1.0", "VERSION");
         rootBlock.setFieldValue(currentModel.description || "", "DESCRIPTION");
       }
@@ -232,29 +226,6 @@ export function BlocklyWorkspace() {
 
         // Re-populate child blocks (steps in setup/steps/teardown)
         for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
-          const conn = rootBlock.getInput(input)?.connection;
-          if (conn) {
-            // Dispose ALL blocks in the chain, not just the first
-            let child = conn.targetBlock();
-            while (child) {
-              const next = child.getNextBlock();
-              child.dispose(true); // true = dispose children (value/statement inputs too)
-              child = next;
-            }
-          }
-        }
-        populateWorkspaceFromModel(ws, rootBlock, model, catalog);
-      }
-    } else if (isTck(model)) {
-      const tc = model as TckDefinition;
-      const rootBlock = ws.getBlocksByType("tck_root", false)[0];
-      if (rootBlock) {
-        rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
-        rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
-        rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
-
-        // Re-populate child blocks (variables, preconditions, tests)
-        for (const input of ["VARIABLES", "PRECONDITIONS", "TESTS"]) {
           const conn = rootBlock.getInput(input)?.connection;
           if (conn) {
             // Dispose ALL blocks in the chain, not just the first

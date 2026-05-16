@@ -23,9 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import type { ServiceDefinition } from "../../models/schema";
-import type { ServiceFieldDef } from "../../store/useServiceStore";
+import type { ServiceFieldDef } from "../../store/slices/useServiceStore";
 import { theme } from "../../theme/tractusxTheme";
-import { SERVICE_SCHEMAS } from "../../store/useServiceStore";
+import { SERVICE_SCHEMAS } from "../../store/slices/useServiceStore";
 
 /* ── Service Form ──────────────────────────────────────────────────────────── */
 
@@ -57,7 +57,6 @@ export function ServiceForm({ service, isCreating, onChange, onSave, onCancel }:
           value={service.name}
           onChange={(e) => onChange({ ...service, name: e.target.value })}
           placeholder="e.g., saturn-connector"
-          disabled={!isCreating}
           style={inputStyle}
         />
       </FieldRow>

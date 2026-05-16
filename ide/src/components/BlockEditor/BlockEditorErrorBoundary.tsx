@@ -32,7 +32,7 @@
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { theme } from "../../theme/tractusxTheme";
-import { useTestLabStore } from "../../store/useTestLabStore";
+import { useTestLabStore } from "../../store/slices/useTestLabStore";
 import { createEmptyTest, createEmptyTck } from "../../models/schema";
 
 interface Props {

@@ -28,13 +28,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_sdk.extensions.testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript
-from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+from tractusx_testlab.models import ScriptStatus, StepStatus
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.jobs import JobManager
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.scripting.script import TestScript
+from tractusx_testlab.steps.conditions import ConditionEvaluator
 from tractusx_testlab.models.enums import StepPhase
 from tractusx_testlab.models.preconditions import PreconditionLog
 from tractusx_testlab.models.results import StepResult

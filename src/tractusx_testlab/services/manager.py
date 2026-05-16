@@ -33,11 +33,11 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     ServiceNotFoundError,
     ServiceState,
 )
-from tractusx_sdk.extensions.testlab.syntax import defaults
+from tractusx_testlab.syntax import defaults
 
 from tractusx_testlab.models.definitions import ServiceDefinition
 from tractusx_testlab.models.enums import ServiceType

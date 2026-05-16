@@ -30,26 +30,28 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
-from tractusx_sdk.extensions.testlab.syntax.context_vars import (
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.syntax.context_vars import (
     DATAPLANE_ENDPOINT,
     EDR_TOKEN,
     TRANSFER_ID,
 )
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
-@step("dataplane_call")
+@step("dataplane_call", aliases=["http_call_dataplane"])
 class DataplaneCallStep(BaseStep):
     """Fetch data from a data-plane endpoint using an EDR token."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        endpoint = params.get("endpoint") or context.get_variable(DATAPLANE_ENDPOINT)
-        token = params.get("token") or context.get_variable(EDR_TOKEN)
+        endpoint = params.get("url") or params.get("endpoint") or context.get_variable(DATAPLANE_ENDPOINT)
+        if isinstance(endpoint, dict):
+            endpoint = endpoint.get("endpoint") or endpoint.get("baseUrl")
+        token = params.get("edr_token") or params.get("token") or context.get_variable(EDR_TOKEN)
         method = params.get("method", "GET").upper()
         body = params.get("body")
         headers = {"Authorization": token, **(params.get("headers") or {})}

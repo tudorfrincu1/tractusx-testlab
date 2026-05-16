@@ -31,7 +31,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from tractusx_sdk.extensions.testlab.models import Job, JobEvent, JobMemory
+from tractusx_testlab.models import Job, JobEvent, JobMemory
 
 from tractusx_testlab.models.enums import JobStatus
 

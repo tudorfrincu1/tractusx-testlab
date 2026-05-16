@@ -26,8 +26,8 @@
 import type { Block, Workspace } from "blockly";
 import type { Step, StepDefinition, ScriptDefinition } from "../../../../models/schema";
 import { isTemplateStep } from "../../../../models/schema";
-import { useServiceStore } from "../../../../store/useServiceStore";
-import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
+import { useServiceStore } from "../../../../store/slices/useServiceStore";
+import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 import { toCatalogStepType } from "../stepTypeAliases";
 import {
   makeBlock,
@@ -40,7 +40,7 @@ import {
 } from "../helpers";
 import { populateAssertions } from "./populateAssertions";
 import { deserializePreconditionPolicyBlock } from "../serialize/preconditionSerializers";
-import { truncateJsonPreview } from "../../blocks/jsonEditor";
+import { truncateJsonPreview } from "../../blocks";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -135,26 +135,11 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               break;
             case "json":
               if (typeof paramVal === "object") {
-                const entries = Object.entries(paramVal as Record<string, unknown>);
-                const hasNested = entries.some(([, v]) =>
-                  typeof v === "object" && v !== null,
-                );
-                if (entries.length > 3 || hasNested) {
-                  const vjb = makeBlock(ws, "value_json");
-                  const jsonStr = JSON.stringify(paramVal, null, 2);
-                  vjb.setFieldValue(jsonStr, "JSON_VALUE");
-                  vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
-                  attachChain(sb, fieldKey, [vjb]);
-                } else {
-                  const kvBlocks: Block[] = [];
-                  for (const [key, value] of entries) {
-                    const kvb = makeBlock(ws, "key_value_pair");
-                    kvb.setFieldValue(key, "KEY");
-                    connectValue(kvb, "VALUE", createValueBlockFromString(ws, toBlockValueString(value)));
-                    kvBlocks.push(kvb);
-                  }
-                  attachChain(sb, fieldKey, kvBlocks);
-                }
+                const vjb = makeBlock(ws, "value_json");
+                const jsonStr = JSON.stringify(paramVal, null, 2);
+                vjb.setFieldValue(jsonStr, "JSON_VALUE");
+                vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
+                connectValue(sb, fieldKey, vjb);
               }
               break;
             case "array":
@@ -173,6 +158,12 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               const jpb = makeBlock(ws, "value_json_path");
               jpb.setFieldValue(String(paramVal), "VALUE");
               connectValue(sb, fieldKey, jpb);
+              break;
+            }
+            case "api_path": {
+              const apb = makeBlock(ws, "value_api_path");
+              apb.setFieldValue(String(paramVal), "PATH");
+              connectValue(sb, fieldKey, apb);
               break;
             }
             default:

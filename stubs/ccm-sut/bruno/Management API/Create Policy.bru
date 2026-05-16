@@ -1,0 +1,25 @@
+meta {
+  name: Create Policy
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/v1/dsp/management/v3/policydefinitions
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "@id": "test-policy-001"
+  }
+}
+
+script:post-response {
+  bru.setVar("policy_id", res.body["@id"]);
+}

@@ -52,11 +52,11 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, Optional
 
-from tractusx_sdk.extensions.testlab.models.enums import StepStatus
+from tractusx_testlab.models.enums import StepStatus
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.models.results import StepResult
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.models.results import StepResult
+    from tractusx_testlab.player.execution.context import StepContext
 
 # ---------------------------------------------------------------------------
 # Regex patterns for parsing condition expressions

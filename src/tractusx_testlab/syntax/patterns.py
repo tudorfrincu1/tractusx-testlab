@@ -31,5 +31,8 @@ import re
 VAR_REF = re.compile(r"\$\{(!?[\w]+(?::[\w]+)?)}")
 """Matches ``${var}`` and ``${!test:output}`` references."""
 
+AT_VAR_REF = re.compile(r"@([\w]+)")
+"""Matches ``@variable_name`` references used in YAML blocks."""
+
 OUTPUT_REF = re.compile(r"\$\{!([^:}]+):([^}]+)}")
 """Matches ``${!test_name:output_name}`` — captures test name and output name."""

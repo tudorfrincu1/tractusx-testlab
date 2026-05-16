@@ -26,7 +26,7 @@
 import type { Workspace } from "blockly";
 import type { Step } from "../../../../../models/schema";
 import { isTemplateStep } from "../../../../../models/schema";
-import { useProjectStore } from "../../../../../store/useProjectStore";
+import { useProjectStore } from "../../../../../store/slices/useProjectStore";
 import type { BlockCatalog } from "./catalogLoader";
 import { findCatalogEntry } from "./catalogLoader";
 

@@ -31,12 +31,12 @@ import type {
   ScriptDefinition,
   TestLabDocument,
 } from "../../../../models/schema";
-import { useServiceStore } from "../../../../store/useServiceStore";
-import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
+import { useServiceStore } from "../../../../store/slices/useServiceStore";
+import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "../helpers";
 import { toRuntimeStepType } from "../stepTypeAliases";
 import { parseUnsupportedParams } from "../unsupportedStepPayload";
-import { workspaceToTck } from "./workspaceToTck";
+import { parseJsonWithVarRefs } from "../../blocks/json/modal/jsonVarRefs";
 import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
@@ -44,11 +44,6 @@ export function workspaceToModel(
   workspace: Workspace,
   catalog: BlockCatalog
 ): Partial<TestLabDocument> {
-  const tckRoot = workspace.getBlocksByType("tck_root", false)[0];
-  if (tckRoot) {
-    return workspaceToTck(tckRoot);
-  }
-
   const rootBlock = workspace.getBlocksByType("test_root", false)[0];
   if (!rootBlock) return {};
 
@@ -139,7 +134,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         } else if (kvBlock.type === "value_json") {
           const raw = kvBlock.getFieldValue("JSON_VALUE") || "{}";
           try {
-            const parsed: unknown = JSON.parse(raw);
+            const parsed: unknown = parseJsonWithVarRefs(raw);
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
               Object.assign(params, parsed as Record<string, unknown>);
             }
@@ -199,35 +194,18 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           break;
         }
         case "json": {
-          let merged: Record<string, unknown> = {};
-          let current = block.getInputTargetBlock(fieldKey);
-          console.log(`[DEBUG json] step=${stepType} param=${p.name} fieldKey=${fieldKey} firstBlock=${current?.type ?? "null"}`);
-          while (current) {
-            console.log(`[DEBUG json] walking block type=${current.type} id=${current.id}`);
-            if (current.type === "value_json") {
-              const raw = current.getFieldValue("JSON_VALUE");
-              console.log(`[DEBUG json] value_json raw=`, JSON.stringify(raw), `typeof=${typeof raw}`);
-              const jsonStr = raw || "{}";
-              try {
-                const parsed: unknown = JSON.parse(jsonStr);
-                console.log(`[DEBUG json] parsed=`, parsed);
-                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-                  merged = { ...(parsed as Record<string, unknown>), ...merged };
-                }
-              } catch (e) {
-                console.log(`[DEBUG json] parse error:`, e);
+          const connected = block.getInputTargetBlock(fieldKey);
+          if (connected && connected.type === "value_json") {
+            const raw = connected.getFieldValue("JSON_VALUE") || "{}";
+            try {
+              const parsed: unknown = parseJsonWithVarRefs(raw);
+              if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                params[p.name] = parsed;
               }
-            } else if (current.type === "key_value_pair") {
-              const key = current.getFieldValue("KEY") || "";
-              const value = readValueBlockAsUnknown(current.getInputTargetBlock("VALUE"));
-              if (key && value !== undefined) merged[key] = value;
-            } else {
-              console.log(`[DEBUG json] UNKNOWN block type in chain: ${current.type}`);
+            } catch {
+              // Invalid JSON stored — skip
             }
-            current = current.getNextBlock();
           }
-          console.log(`[DEBUG json] merged=`, merged);
-          if (Object.keys(merged).length > 0) params[p.name] = merged;
           break;
         }
         case "steps": {

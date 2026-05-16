@@ -26,9 +26,9 @@
 
 from __future__ import annotations
 
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_service_def
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.loading.resolver import resolve_service_def
+from tractusx_testlab.scripting.script import TestScript
 
 
 def seed_script_defaults(script: TestScript, context: StepContext) -> None:

@@ -1,0 +1,875 @@
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+ Copyright (c) 2026 Catena-X Automotive Network e.V.
+
+ See the NOTICE file(s) distributed with this work for additional
+ information regarding copyright ownership.
+
+ This program and the accompanying materials are made available under the
+ terms of the Apache License, Version 2.0 which is available at
+ https://www.apache.org/licenses/LICENSE-2.0.
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations
+ under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestLab — Pipeline Graph</title>
+<style>
+  :root {
+    --bg: #1a1a1a; --bg-light: #242424; --bg-lighter: #2d2d2d; --bg-lightest: #303030;
+    --surface: #2a2a2a; --text: #e0e0e0; --text-muted: #999; --text-bright: #fff;
+    --border: #404040; --border-light: #555; --primary: #FFD700; --primary-dark: #B8860B;
+    --primary-light: #FFEB3B;
+    --idle: #6b7280; --running: #eab308; --passed: #22c55e; --failed: #ef4444;
+    --skipped: #6b7280; --pending: #4b5563;
+    --edge-flow: #3b82f6; --node-bg: #262626; --node-border: #3a3a3a;
+    --error-bg: rgba(239,68,68,0.08); --error-border: rgba(239,68,68,0.3);
+    --info-color: #60a5fa; --warn-color: #fbbf24; --critical-color: #ef4444;
+    --input-color: #2dd4bf; --output-color: #3b82f6; --output-bg: var(--bg-lighter);
+    --sidebar-w: 240px; --detail-w: 380px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .mono { font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace; }
+
+  /* ── Header ── */
+  .header { background: var(--bg-light); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .header-title { font-size: 14px; font-weight: 600; color: var(--primary); white-space: nowrap; }
+  .header-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+  .header-status .badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-idle { background: var(--bg-lighter); color: var(--text-muted); }
+  .badge-running { background: rgba(234,179,8,0.2); color: var(--running); }
+  .badge-passed { background: rgba(34,197,94,0.15); color: var(--passed); }
+  .badge-failed { background: rgba(239,68,68,0.15); color: var(--failed); }
+  .header-stats { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-muted); margin-left: auto; }
+  .stat { display: flex; align-items: center; gap: 4px; }
+  .stat-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .stat-val { font-weight: 600; color: var(--text); }
+  .controls { display: flex; gap: 8px; align-items: center; }
+  .sim-btn { padding: 7px 18px; font-size: 12px; font-weight: 600; border: 1px solid var(--primary-dark); border-radius: 6px; background: transparent; color: var(--primary); cursor: pointer; transition: all 0.2s; }
+  .sim-btn:hover { background: var(--primary-dark); color: var(--bg); }
+  .sim-btn.running { background: var(--running); border-color: var(--running); color: var(--bg); pointer-events: none; }
+  .reset-btn { padding: 7px 14px; font-size: 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; }
+  .reset-btn:hover { border-color: var(--border-light); color: var(--text); }
+
+  /* ── Main Area ── */
+  .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content-area { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+  /* ═══ GitHub Style Layout ═══ */
+  .gh-layout { display: flex; flex: 1; overflow: hidden; }
+  .gh-sidebar { width: var(--sidebar-w); background: var(--bg-light); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+  .gh-sidebar-title { padding: 14px 16px 10px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .gh-job { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.15s; border-left: 3px solid transparent; }
+  .gh-job:hover { background: var(--bg-lighter); }
+  .gh-job.selected { background: var(--bg-lighter); border-left-color: var(--primary); }
+  .gh-job-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .gh-job-icon.idle { background: var(--pending); color: var(--bg); }
+  .gh-job-icon.running { background: var(--running); color: var(--bg); animation: ghPulse 1.2s ease-in-out infinite; }
+  .gh-job-icon.passed { background: var(--passed); color: var(--bg); }
+  .gh-job-icon.failed { background: var(--failed); color: var(--text-bright); }
+  .gh-job-icon.skipped { background: var(--skipped); color: var(--bg); opacity: 0.5; }
+  @keyframes ghPulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+  .gh-job-info { flex: 1; min-width: 0; }
+  .gh-job-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gh-job-meta { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .gh-job.status-skipped .gh-job-name { opacity: 0.5; }
+
+  /* ── Canvas (zoomable/pannable) ── */
+  .gh-graph { flex: 1; overflow: hidden; position: relative; cursor: grab; }
+  .gh-graph.panning { cursor: grabbing; }
+  .gh-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; }
+  .gh-canvas-inner { display: flex; align-items: center; justify-content: center; min-width: 100%; min-height: 100%; padding: 60px 40px; }
+
+  /* Vertical mode */
+  .gh-canvas-inner.vertical { flex-direction: column; }
+  .gh-canvas-inner.vertical .gh-dag { flex-direction: column; align-items: center; }
+  .gh-canvas-inner.vertical .gh-connector { width: 2px; height: 48px; flex-shrink: 0; }
+  .gh-canvas-inner.vertical .gh-connector::after { right: auto; top: auto; bottom: -1px; left: -3px; border: 4px solid transparent; border-top-color: var(--border); border-left-color: transparent; }
+  .gh-canvas-inner.vertical .gh-connector.animated::after { border-top-color: var(--edge-flow); border-left-color: transparent; }
+  .gh-canvas-inner.vertical .gh-connector.passed::after { border-top-color: var(--passed); border-left-color: transparent; }
+  .gh-canvas-inner.vertical .gh-connector.failed::after { border-top-color: var(--failed); border-left-color: transparent; }
+  .gh-canvas-inner.vertical .gh-connector.skipped::after { border-top-color: var(--skipped); border-left-color: transparent; }
+  .gh-canvas-inner.vertical .gh-connector-vars { top: auto; left: auto; right: -60px; top: 50%; transform: translateY(-50%); }
+
+  .gh-dag { display: flex; align-items: center; gap: 0; position: relative; }
+
+  /* ── Nodes ── */
+  .gh-node { display: flex; flex-direction: column; align-items: stretch; padding: 10px 18px 14px; background: var(--node-bg); border: 2px solid var(--node-border); border-radius: 24px; cursor: pointer; transition: all 0.2s; white-space: nowrap; user-select: none; min-width: 160px; position: relative; z-index: 1; overflow: hidden; }
+  .gh-node:hover { border-color: var(--border-light); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .gh-node.selected { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .gh-node.status-running { border-color: var(--running); }
+  .gh-node.status-passed { border-color: var(--passed); }
+  .gh-node.status-failed { border-color: var(--failed); }
+  .gh-node.status-skipped { border-color: var(--skipped); opacity: 0.5; }
+  .gh-node-top { display: flex; align-items: center; gap: 10px; }
+  .gh-node-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .gh-node-icon.idle { background: var(--pending); color: var(--bg); }
+  .gh-node-icon.running { background: var(--running); color: var(--bg); animation: ghPulse 1.2s ease-in-out infinite; }
+  .gh-node-icon.passed { background: var(--passed); color: var(--bg); }
+  .gh-node-icon.failed { background: var(--failed); color: var(--text-bright); }
+  .gh-node-icon.skipped { background: var(--skipped); color: var(--bg); opacity: 0.5; }
+  .gh-node-label { font-size: 12px; font-weight: 500; color: var(--text-bright); }
+  .gh-node-steps { font-size: 10px; color: var(--text-muted); margin-left: auto; padding-left: 10px; }
+
+  /* ── Node Progress Bar ── */
+  .gh-node-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.04); border-radius: 0 0 22px 22px; overflow: hidden; }
+  .gh-node-progress-fill { height: 100%; border-radius: 0 0 22px 22px; transition: width 0.3s ease, background 0.3s ease; width: 0%; }
+  .gh-node-progress-fill.running { background: var(--running); animation: progressGlow 1.5s ease-in-out infinite; }
+  .gh-node-progress-fill.passed { background: var(--passed); }
+  .gh-node-progress-fill.failed { background: var(--failed); }
+  .gh-node-progress-fill.skipped { background: var(--skipped); opacity: 0.3; }
+  @keyframes progressGlow { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+
+  /* ── Connectors ── */
+  .gh-connector { width: 48px; height: 2px; background: var(--border); flex-shrink: 0; position: relative; }
+  .gh-connector::after { content: ''; position: absolute; right: -1px; top: -3px; border: 4px solid transparent; border-left-color: var(--border); }
+  .gh-connector.animated { background: var(--edge-flow); }
+  .gh-connector.animated::after { border-left-color: var(--edge-flow); }
+  .gh-connector.passed { background: var(--passed); opacity: 0.5; }
+  .gh-connector.passed::after { border-left-color: var(--passed); opacity: 0.5; }
+  .gh-connector.failed { background: var(--failed); opacity: 0.5; }
+  .gh-connector.failed::after { border-left-color: var(--failed); opacity: 0.5; }
+  .gh-connector.skipped { background: var(--skipped); opacity: 0.3; }
+  .gh-connector.skipped::after { border-left-color: var(--skipped); opacity: 0.3; }
+  .gh-connector-vars { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--input-color); white-space: nowrap; font-family: 'SF Mono', Monaco, Consolas, monospace; opacity: 0; transition: opacity 0.2s; }
+  .gh-connector:hover .gh-connector-vars { opacity: 1; }
+
+  /* ── Zoom Controls ── */
+  .zoom-controls { position: absolute; bottom: 16px; right: 16px; display: flex; align-items: center; gap: 4px; background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 4px; z-index: 10; }
+  .zoom-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: background 0.15s; }
+  .zoom-btn:hover { background: var(--bg-lighter); }
+  .zoom-btn:active { background: var(--bg-lightest); }
+  .zoom-level { font-size: 10px; color: var(--text-muted); min-width: 36px; text-align: center; user-select: none; }
+  .zoom-separator { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+  /* ═══ SHARED: Detail Panel ═══ */
+  .detail-panel { width: 0; background: var(--bg-light); border-left: 1px solid var(--border); flex-shrink: 0; overflow: hidden; transition: width 0.25s ease; display: flex; flex-direction: column; }
+  .detail-panel.open { width: var(--detail-w); }
+  .detail-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .detail-panel-title { font-size: 14px; font-weight: 600; color: var(--text-bright); display: flex; align-items: center; gap: 8px; }
+  .detail-panel-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px; border-radius: 4px; }
+  .detail-panel-close:hover { background: var(--bg-lighter); color: var(--text); }
+  .detail-panel-body { flex: 1; overflow-y: auto; }
+  .detail-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .detail-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .detail-section-title.inputs { color: var(--input-color); }
+  .detail-section-title.outputs { color: var(--output-color); }
+  .detail-section-title.steps { color: var(--text-muted); }
+
+  .detail-status-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .detail-status-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .detail-status-icon.idle { background: var(--pending); color: var(--bg); }
+  .detail-status-icon.running { background: var(--running); color: var(--bg); }
+  .detail-status-icon.passed { background: var(--passed); color: var(--bg); }
+  .detail-status-icon.failed { background: var(--failed); color: var(--text-bright); }
+  .detail-status-icon.skipped { background: var(--skipped); color: var(--bg); }
+  .detail-status-info { flex: 1; }
+  .detail-status-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+  .detail-status-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .detail-input-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 11px; font-family: 'SF Mono', Monaco, Consolas, monospace; }
+  .detail-input-var { color: var(--input-color); }
+  .detail-input-arrow { color: var(--text-muted); font-size: 10px; }
+  .detail-input-source { color: var(--text-muted); font-size: 10px; font-style: italic; }
+  .detail-no-inputs { font-size: 11px; color: var(--text-muted); font-style: italic; }
+  .detail-output-tag { display: inline-block; padding: 2px 7px; margin: 2px; background: var(--output-bg); border: 1px solid rgba(59,130,246,0.2); border-radius: 4px; font-size: 10px; color: var(--output-color); font-family: 'SF Mono', Monaco, Consolas, monospace; }
+
+  .detail-step { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; position: relative; }
+  .detail-step:not(:last-child)::before { content:''; position: absolute; left: 7px; top: 22px; bottom: -5px; width: 1px; background: var(--border); }
+  .detail-step-dot { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; position: relative; z-index: 1; }
+  .detail-step-dot-inner { width: 10px; height: 10px; border-radius: 50%; }
+  .detail-step-dot-inner.idle { background: var(--pending); }
+  .detail-step-dot-inner.running { background: var(--running); animation: stepPulse 0.8s ease-in-out infinite; }
+  .detail-step-dot-inner.passed { background: var(--passed); }
+  .detail-step-dot-inner.failed { background: var(--failed); }
+  .detail-step-dot-inner.skipped { background: var(--skipped); opacity: 0.4; }
+  @keyframes stepPulse { 0%,100% { box-shadow: 0 0 4px var(--running); transform: scale(1); } 50% { box-shadow: 0 0 10px var(--running); transform: scale(1.2); } }
+  .detail-step-label { font-size: 12px; color: var(--text); line-height: 18px; }
+  .detail-step-label.failed { color: var(--failed); font-weight: 600; }
+  .detail-step-label.skipped { color: var(--text-muted); opacity: 0.5; }
+
+  .detail-error-box { margin: 8px 0 4px; padding: 10px 12px; background: var(--error-bg); border: 1px solid var(--error-border); border-radius: 8px; }
+  .detail-error-type { font-size: 11px; font-weight: 700; color: var(--failed); display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+  .detail-error-detail { font-size: 11px; line-height: 1.7; }
+  .detail-error-detail .lbl { color: var(--text-muted); }
+  .detail-error-detail .val { color: var(--text-bright); }
+  .detail-error-detail .val.bad { color: var(--failed); }
+  .detail-error-detail .val.good { color: var(--passed); }
+
+  .detail-recs { margin-top: 8px; padding: 10px 12px; background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.15); border-radius: 8px; }
+  .detail-recs-title { font-size: 11px; font-weight: 600; color: var(--info-color); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .detail-rec-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11px; line-height: 1.5; }
+  .detail-rec-item:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .detail-rec-sev { flex-shrink: 0; width: 18px; text-align: center; font-size: 13px; }
+  .detail-rec-text { flex: 1; color: var(--text); }
+  .detail-rec-text a { color: var(--primary); text-decoration: none; }
+  .detail-rec-text a:hover { text-decoration: underline; }
+  .sev-label { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+  .sev-label.critical { background: rgba(239,68,68,0.15); color: var(--critical-color); }
+  .sev-label.warning { background: rgba(251,191,36,0.15); color: var(--warn-color); }
+  .sev-label.info { background: rgba(96,165,250,0.15); color: var(--info-color); }
+
+  .detail-blocked { padding: 10px 16px; background: rgba(107,114,128,0.1); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+  .detail-blocked .blk-icon { color: var(--failed); }
+
+  /* ═══ ANNOTATIONS ═══ */
+  .annotations { background: var(--bg-light); border-top: 1px solid var(--border); flex-shrink: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+  .annotations.has-errors { max-height: 250px; border-top-color: var(--failed); }
+  .annotations-header { padding: 10px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .annotations-title { font-size: 12px; font-weight: 600; color: var(--failed); display: flex; align-items: center; gap: 6px; }
+  .annotations-badge { background: var(--failed); color: var(--text-bright); font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .annotations-body { padding: 10px 20px; overflow-y: auto; max-height: 190px; }
+  .annotation-card { display: flex; gap: 12px; padding: 10px 12px; background: var(--node-bg); border: 1px solid var(--error-border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
+  .annotation-card:hover { border-color: var(--failed); }
+  .annotation-card:last-child { margin-bottom: 0; }
+  .annotation-icon { color: var(--failed); font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .annotation-content { flex: 1; }
+  .annotation-stage { font-size: 12px; font-weight: 600; color: var(--text-bright); margin-bottom: 2px; }
+  .annotation-step { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .annotation-error { font-size: 11px; color: var(--failed); font-weight: 500; }
+  .annotation-detail { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .annotation-recs { font-size: 10px; color: var(--info-color); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">TestLab</div>
+  <div class="header-status">
+    <span class="badge badge-idle" id="pipelineBadge">Idle</span>
+    <span id="pipelineDuration" style="font-size:11px"></span>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-dot" style="background:var(--text-muted)"></div><span class="stat-val" id="statTotal">5</span> stages</div>
+    <div class="stat"><div class="stat-dot" style="background:var(--passed)"></div><span class="stat-val" id="statPassed">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:var(--failed)"></div><span class="stat-val" id="statFailed">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:var(--skipped)"></div><span class="stat-val" id="statSkipped">0</span></div>
+    <div class="stat" style="margin-left:8px">Steps: <span class="stat-val" id="statSteps">29</span></div>
+  </div>
+  <div class="controls">
+    <button class="reset-btn" onclick="resetAll()">&#x21BA; Reset</button>
+    <button class="sim-btn" id="simBtn" onclick="simulate()">&#x25B6; Simulate</button>
+  </div>
+</div>
+
+<div class="main-area">
+  <div class="content-area">
+    <div class="gh-layout">
+      <div class="gh-sidebar" id="ghSidebar"></div>
+      <div class="gh-graph" id="ghGraph">
+        <div class="gh-canvas" id="ghCanvas">
+          <div class="gh-canvas-inner" id="ghCanvasInner">
+            <div class="gh-dag" id="ghDag"></div>
+          </div>
+        </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+          <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">&minus;</button>
+          <div class="zoom-separator"></div>
+          <span class="zoom-level" id="zoomLevel">100%</span>
+          <div class="zoom-separator"></div>
+          <button class="zoom-btn" onclick="fitToView()" title="Fit to View" style="font-size:11px">Fit</button>
+          <div class="zoom-separator"></div>
+          <button class="zoom-btn" id="orientationBtn" onclick="toggleOrientation()" title="Switch to Vertical">&#x2194;</button>
+        </div>
+      </div>
+    </div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-panel-header">
+        <div class="detail-panel-title" id="detailTitle"></div>
+        <button class="detail-panel-close" onclick="closeDetail()">&#x2715;</button>
+      </div>
+      <div class="detail-panel-body" id="detailBody"></div>
+    </div>
+  </div>
+  <div class="annotations" id="annotations">
+    <div class="annotations-header">
+      <div class="annotations-title">&#x26A0; Annotations <span class="annotations-badge" id="annCount">0</span></div>
+    </div>
+    <div class="annotations-body" id="annBody"></div>
+  </div>
+</div>
+
+<script>
+/* === Data === */
+var STAGES = [
+  {
+    id: 'request_certificate', label: 'Request Certificate', services: ['provider_edc'],
+    inputs: [],
+    outputs: ['catalog','datasets','ccmapi_asset_id','ccmapi_offer_id','contract_agreement_id','data_address','edr_token','request_id','request_status','document_id'],
+    steps: [
+      { label: 'Get catalog from provider', result: 'passed' },
+      { label: 'Find CCMAPI dataset', result: 'passed' },
+      { label: 'Negotiate contract', result: 'passed' },
+      { label: 'Wait for agreement', result: 'passed' },
+      { label: 'Request transfer', result: 'passed' },
+      { label: 'Extract EDR token', result: 'passed' }
+    ]
+  },
+  {
+    id: 'validate_payload', label: 'Validate Payload', services: [],
+    inputs: [
+      { variable: 'data_address', from: 'request_certificate' },
+      { variable: 'edr_token', from: 'request_certificate' }
+    ],
+    outputs: ['bpc_schema','status_code','response_body','response_headers','value'],
+    steps: [
+      { label: 'Fetch response body', result: 'passed' },
+      { label: 'Parse BPC schema', result: 'passed' },
+      { label: 'Validate against schema', result: 'passed' }
+    ]
+  },
+  {
+    id: 'await_feedback_callback', label: 'Await Feedback Callback', services: [],
+    inputs: [
+      { variable: 'request_id', from: 'request_certificate' }
+    ],
+    outputs: ['callback_method','callback_path','callback_payload','callback_request_id','callback_feedback_status','callback_feedback_message'],
+    steps: [
+      { label: 'Start mock server', result: 'passed' },
+      { label: 'Register callback endpoint', result: 'passed' },
+      { label: 'Wait for callback', result: 'passed' },
+      { label: 'Parse callback payload', result: 'passed' },
+      { label: 'Validate feedback status', result: 'passed' }
+    ]
+  },
+  {
+    id: 'send_feedback', label: 'Send Feedback', services: ['provider_edc'],
+    inputs: [
+      { variable: 'callback_request_id', from: 'await_feedback_callback' },
+      { variable: 'edr_token', from: 'request_certificate' },
+      { variable: 'contract_agreement_id', from: 'request_certificate' }
+    ],
+    outputs: ['notification_catalog','notification_datasets','notification_asset_id','notification_offer_id','notification_agreement_id','notification_dataplane_url','notification_edr_token','notification_id','ack_payload','notification_ack_status'],
+    steps: [
+      { label: 'Get notification catalog', result: 'passed' },
+      { label: 'Find notification dataset', result: 'passed' },
+      { label: 'Negotiate notification contract', result: 'failed',
+        error: {
+          type: 'Assertion Failed',
+          assertion: 'HTTP response status code check',
+          expected: 'status_code == 200',
+          received: 'status_code == 403'
+        },
+        recommendations: [
+          { severity: 'critical', icon: '\uD83D\uDD34', text: 'Check provider_edc policy permissions for notification asset' },
+          { severity: 'warning', icon: '\u26A0\uFE0F', text: "Verify BPN is registered in the provider's access policy" },
+          { severity: 'info', icon: '\uD83D\uDCA1', text: 'See: <a href="#">Troubleshooting \u2192 Contract Negotiation Failures</a>' }
+        ]
+      },
+      { label: 'Wait for agreement', result: 'skipped' },
+      { label: 'Request transfer', result: 'skipped' },
+      { label: 'Get dataplane URL', result: 'skipped' },
+      { label: 'Extract EDR token', result: 'skipped' },
+      { label: 'Send notification', result: 'skipped' },
+      { label: 'Wait for acknowledgment', result: 'skipped' },
+      { label: 'Validate ack status', result: 'skipped' }
+    ]
+  },
+  {
+    id: 'expose_testlab_asset', label: 'Expose TestLab Asset', services: ['testlab_edc'],
+    inputs: [
+      { variable: 'notification_id', from: 'send_feedback' }
+    ],
+    outputs: ['testlab_asset_id','testlab_policy_id','testlab_contract_def_id','sut_request_body'],
+    steps: [
+      { label: 'Create testlab asset', result: 'skipped' },
+      { label: 'Create policy', result: 'skipped' },
+      { label: 'Create contract definition', result: 'skipped' },
+      { label: 'Wait for SUT request', result: 'skipped' },
+      { label: 'Validate SUT request body', result: 'skipped' }
+    ],
+    blockedBy: 'send_feedback'
+  }
+];
+
+/* === State === */
+var selectedStageId = null;
+var simRunning = false;
+var stageStatuses = {};
+var stageProgress = {};
+var stepStatuses = {};
+var connectorStatuses = {};
+var collectedErrors = [];
+var simStartTime = null;
+
+/* Canvas state */
+var zoom = 1;
+var panX = 0;
+var panY = 0;
+var isPanning = false;
+var panStartX = 0;
+var panStartY = 0;
+var panStartPanX = 0;
+var panStartPanY = 0;
+var orientation = 'horizontal';
+
+var ZOOM_MIN = 0.25;
+var ZOOM_MAX = 2;
+var ZOOM_STEP = 0.15;
+
+/* === Helpers === */
+function statusClass(id) { return stageStatuses[id] || 'idle'; }
+function statusIconText(status, index) {
+  if (status === 'passed') return '\u2713';
+  if (status === 'failed') return '\u2717';
+  if (status === 'skipped') return '\u25CC';
+  return String(index + 1);
+}
+function progressText(id) {
+  var p = stageProgress[id];
+  var stage = STAGES.find(function(s) { return s.id === id; });
+  if (!p) return '0/' + stage.steps.length;
+  return p.done + '/' + p.total + (p.hasFailed ? ' \u2717' : p.done === p.total ? ' \u2713' : '');
+}
+function getEdgeVars(fromIdx, toIdx) {
+  var toStage = STAGES[toIdx];
+  if (!toStage.inputs) return [];
+  return toStage.inputs
+    .filter(function(inp) { return STAGES.findIndex(function(s) { return s.id === inp.from; }) === fromIdx; })
+    .map(function(inp) { return inp.variable; });
+}
+
+/* === Canvas: Zoom & Pan === */
+function applyTransform() {
+  var canvas = document.getElementById('ghCanvas');
+  canvas.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')';
+  document.getElementById('zoomLevel').textContent = Math.round(zoom * 100) + '%';
+}
+
+function zoomIn() {
+  zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
+  applyTransform();
+}
+
+function zoomOut() {
+  zoom = Math.max(ZOOM_MIN, zoom - ZOOM_STEP);
+  applyTransform();
+}
+
+function fitToView() {
+  var graph = document.getElementById('ghGraph');
+  var dag = document.getElementById('ghDag');
+  if (!graph || !dag) return;
+
+  /* Reset to measure natural size */
+  zoom = 1; panX = 0; panY = 0;
+  applyTransform();
+
+  requestAnimationFrame(function() {
+    var dagRect = dag.getBoundingClientRect();
+    var graphRect = graph.getBoundingClientRect();
+
+    var scaleX = (graphRect.width - 80) / dagRect.width;
+    var scaleY = (graphRect.height - 80) / dagRect.height;
+    zoom = Math.min(Math.max(Math.min(scaleX, scaleY), ZOOM_MIN), ZOOM_MAX);
+
+    /* Center */
+    var scaledW = dagRect.width * zoom;
+    var scaledH = dagRect.height * zoom;
+    panX = (graphRect.width - scaledW) / 2 - (dagRect.left - graphRect.left) * zoom;
+    panY = (graphRect.height - scaledH) / 2 - (dagRect.top - graphRect.top) * zoom;
+    applyTransform();
+  });
+}
+
+function toggleOrientation() {
+  orientation = orientation === 'horizontal' ? 'vertical' : 'horizontal';
+  var btn = document.getElementById('orientationBtn');
+  btn.innerHTML = orientation === 'horizontal' ? '&#x2194;' : '&#x2195;';
+  btn.title = orientation === 'horizontal' ? 'Switch to Vertical' : 'Switch to Horizontal';
+  var inner = document.getElementById('ghCanvasInner');
+  inner.classList.toggle('vertical', orientation === 'vertical');
+  renderGraph();
+  setTimeout(fitToView, 50);
+}
+
+/* Mouse wheel zoom */
+function handleWheel(e) {
+  e.preventDefault();
+  var graph = document.getElementById('ghGraph');
+  var rect = graph.getBoundingClientRect();
+  var mouseX = e.clientX - rect.left;
+  var mouseY = e.clientY - rect.top;
+
+  var oldZoom = zoom;
+  var delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+  zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom + delta));
+
+  /* Zoom toward mouse position */
+  var scale = zoom / oldZoom;
+  panX = mouseX - scale * (mouseX - panX);
+  panY = mouseY - scale * (mouseY - panY);
+  applyTransform();
+}
+
+/* Pan via drag */
+function handleMouseDown(e) {
+  if (e.target.closest('.gh-node') || e.target.closest('.zoom-controls')) return;
+  isPanning = true;
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panStartPanX = panX;
+  panStartPanY = panY;
+  document.getElementById('ghGraph').classList.add('panning');
+  e.preventDefault();
+}
+
+function handleMouseMove(e) {
+  if (!isPanning) return;
+  panX = panStartPanX + (e.clientX - panStartX);
+  panY = panStartPanY + (e.clientY - panStartY);
+  applyTransform();
+}
+
+function handleMouseUp() {
+  if (!isPanning) return;
+  isPanning = false;
+  document.getElementById('ghGraph').classList.remove('panning');
+}
+
+/* === Render: Graph === */
+function renderGraph() {
+  /* Sidebar */
+  var sb = '<div class="gh-sidebar-title">Stages</div>';
+  STAGES.forEach(function(s, i) {
+    var st = statusClass(s.id);
+    var sel = selectedStageId === s.id ? ' selected' : '';
+    sb += '<div class="gh-job status-' + st + sel + '" onclick="selectStage(\'' + s.id + '\')">'
+      + '<div class="gh-job-icon ' + st + '">' + statusIconText(st, i) + '</div>'
+      + '<div class="gh-job-info"><div class="gh-job-name">' + s.label + '</div>'
+      + '<div class="gh-job-meta">' + s.steps.length + ' steps' + (s.services.length ? ' \u00B7 ' + s.services.join(', ') : '') + '</div></div></div>';
+  });
+  document.getElementById('ghSidebar').innerHTML = sb;
+
+  /* DAG nodes */
+  var dag = '';
+  STAGES.forEach(function(s, i) {
+    var st = statusClass(s.id);
+    var sel = selectedStageId === s.id ? ' selected' : '';
+    var p = stageProgress[s.id] || { done: 0, total: s.steps.length, hasFailed: false };
+    var pct = p.total > 0 ? (p.done / p.total * 100) : 0;
+    var barClass = p.hasFailed ? 'failed' : st === 'passed' ? 'passed' : st === 'running' ? 'running' : st === 'skipped' ? 'skipped' : '';
+
+    dag += '<div class="gh-node status-' + st + sel + '" onclick="selectStage(\'' + s.id + '\')">'
+      + '<div class="gh-node-top">'
+      + '<div class="gh-node-icon ' + st + '">' + statusIconText(st, i) + '</div>'
+      + '<div class="gh-node-label">' + s.label + '</div>'
+      + '<div class="gh-node-steps">' + progressText(s.id) + '</div>'
+      + '</div>'
+      + '<div class="gh-node-progress"><div class="gh-node-progress-fill ' + barClass + '" style="width:' + pct + '%"></div></div>'
+      + '</div>';
+
+    if (i < STAGES.length - 1) {
+      var cst = connectorStatuses[i] || '';
+      var vars = getEdgeVars(i, i + 1);
+      var varLabel = vars.length ? vars.map(function(v) { return '@' + v; }).join(', ') : '';
+      dag += '<div class="gh-connector ' + cst + '"><div class="gh-connector-vars">' + varLabel + '</div></div>';
+    }
+  });
+  document.getElementById('ghDag').innerHTML = dag;
+}
+
+/* === Detail Panel === */
+function selectStage(id) {
+  selectedStageId = id;
+  openDetail(id);
+  renderGraph();
+}
+
+function openDetail(id) {
+  var stage = STAGES.find(function(s) { return s.id === id; });
+  if (!stage) return;
+  var si = STAGES.indexOf(stage);
+  var st = statusClass(id);
+  var panel = document.getElementById('detailPanel');
+  panel.classList.add('open');
+
+  document.getElementById('detailTitle').innerHTML =
+    '<div class="detail-status-icon ' + st + '">' + statusIconText(st, si) + '</div> ' + stage.label;
+
+  var html = '';
+  var p = stageProgress[id] || { done: 0, total: stage.steps.length, hasFailed: false };
+  html += '<div class="detail-status-row"><div class="detail-status-info">'
+    + '<div class="detail-status-name">' + p.done + '/' + p.total + ' steps'
+    + (p.hasFailed ? ' \u00B7 <span style="color:var(--failed)">Failed</span>' : p.done === p.total && st === 'passed' ? ' \u00B7 <span style="color:var(--passed)">Passed</span>' : '')
+    + '</div><div class="detail-status-meta">' + (stage.services.length ? 'Services: ' + stage.services.join(', ') : 'No services') + '</div></div></div>';
+
+  if (stage.blockedBy) {
+    html += '<div class="detail-blocked"><span class="blk-icon">\u2298</span> Blocked by: <strong>' + stage.blockedBy + '</strong> failure</div>';
+  }
+
+  html += '<div class="detail-section"><div class="detail-section-title inputs">\u2B06 Inputs</div>';
+  if (stage.inputs.length === 0) {
+    html += '<div class="detail-no-inputs">No inputs \u2014 first stage in chain</div>';
+  } else {
+    stage.inputs.forEach(function(inp) {
+      html += '<div class="detail-input-row"><span class="detail-input-var">@' + inp.variable + '</span>'
+        + '<span class="detail-input-arrow">\u2190</span><span class="detail-input-source">' + inp.from + '</span></div>';
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="detail-section"><div class="detail-section-title steps">Steps</div>';
+  stage.steps.forEach(function(step, sti) {
+    var sst = (stepStatuses[id] && stepStatuses[id][sti]) || 'idle';
+    html += '<div class="detail-step"><div class="detail-step-dot"><div class="detail-step-dot-inner ' + sst + '"></div></div>'
+      + '<div style="flex:1"><div class="detail-step-label ' + sst + '">' + step.label + '</div>';
+    if (step.error && sst === 'failed') {
+      html += '<div class="detail-error-box">'
+        + '<div class="detail-error-type">\u26A0 ' + step.error.type + '</div>'
+        + '<div class="detail-error-detail">'
+        + '<div><span class="lbl">Assertion: </span><span class="val">' + step.error.assertion + '</span></div>'
+        + '<div><span class="lbl">Expected: </span><span class="val good">' + step.error.expected + '</span></div>'
+        + '<div><span class="lbl">Received: </span><span class="val bad">' + step.error.received + '</span></div></div>';
+      if (step.recommendations && step.recommendations.length) {
+        html += '<div class="detail-recs"><div class="detail-recs-title">\uD83D\uDCA1 Recommendations</div>';
+        step.recommendations.forEach(function(r) {
+          html += '<div class="detail-rec-item"><span class="detail-rec-sev">' + r.icon + '</span>'
+            + '<span class="detail-rec-text">' + r.text + '<span class="sev-label ' + r.severity + '">' + r.severity + '</span></span></div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  if (stage.outputs.length) {
+    html += '<div class="detail-section"><div class="detail-section-title outputs">\u2B07 Outputs</div>';
+    stage.outputs.forEach(function(o) { html += '<span class="detail-output-tag">@' + o + '</span>'; });
+    html += '</div>';
+  }
+
+  document.getElementById('detailBody').innerHTML = html;
+}
+
+function closeDetail() {
+  selectedStageId = null;
+  document.getElementById('detailPanel').classList.remove('open');
+  renderGraph();
+}
+
+/* === Annotations === */
+function updateAnnotations(errors) {
+  collectedErrors = errors;
+  var ann = document.getElementById('annotations');
+  var count = errors.length;
+  document.getElementById('annCount').textContent = count;
+  ann.classList.toggle('has-errors', count > 0);
+  if (count === 0) { document.getElementById('annBody').innerHTML = ''; return; }
+  document.getElementById('annBody').innerHTML = errors.map(function(e) {
+    var recs = (e.recommendations || []).map(function(r) { return r.icon + ' ' + r.text.replace(/<[^>]+>/g, ''); }).join(' \u00B7 ');
+    return '<div class="annotation-card" onclick="selectStage(\'' + e.stageId + '\')">'
+      + '<div class="annotation-icon">\u2717</div><div class="annotation-content">'
+      + '<div class="annotation-stage">' + e.stageLabel + '</div>'
+      + '<div class="annotation-step">Step ' + (e.stepIndex + 1) + ': ' + e.stepLabel + '</div>'
+      + '<div class="annotation-error">\u26A0 ' + e.error.type + '</div>'
+      + '<div class="annotation-detail">Expected: ' + e.error.expected + ' \u00B7 Received: ' + e.error.received + '</div>'
+      + (recs ? '<div class="annotation-recs">' + recs + '</div>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+/* === Summary === */
+function updateSummary(passed, failed, skipped) {
+  document.getElementById('statPassed').textContent = passed;
+  document.getElementById('statFailed').textContent = failed;
+  document.getElementById('statSkipped').textContent = skipped;
+}
+
+function setPipelineBadge(status) {
+  var el = document.getElementById('pipelineBadge');
+  el.className = 'badge badge-' + status;
+  el.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+/* === Reset & Simulate === */
+function resetAll() {
+  if (simRunning) return;
+  STAGES.forEach(function(s) {
+    stageStatuses[s.id] = 'idle';
+    stageProgress[s.id] = { done: 0, total: s.steps.length, hasFailed: false };
+    stepStatuses[s.id] = {};
+  });
+  Object.keys(connectorStatuses).forEach(function(k) { delete connectorStatuses[k]; });
+  collectedErrors = [];
+  selectedStageId = null;
+  document.getElementById('detailPanel').classList.remove('open');
+  setPipelineBadge('idle');
+  document.getElementById('pipelineDuration').textContent = '';
+  updateSummary(0, 0, 0);
+  updateAnnotations([]);
+  renderGraph();
+}
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+async function simulate() {
+  if (simRunning) return;
+  simRunning = true;
+  var btn = document.getElementById('simBtn');
+  btn.textContent = '\u27F3 Running\u2026';
+  btn.classList.add('running');
+
+  resetAll();
+  setPipelineBadge('running');
+  simStartTime = Date.now();
+  var durationInterval = setInterval(function() {
+    var elapsed = ((Date.now() - simStartTime) / 1000).toFixed(1);
+    document.getElementById('pipelineDuration').textContent = elapsed + 's';
+  }, 100);
+
+  await sleep(300);
+
+  var errors = [];
+  var passed = 0, failed = 0, skipped = 0;
+  var pipelineFailed = false;
+
+  for (var si = 0; si < STAGES.length; si++) {
+    var stage = STAGES[si];
+
+    if (pipelineFailed) {
+      stageStatuses[stage.id] = 'skipped';
+      stageProgress[stage.id] = { done: 0, total: stage.steps.length, hasFailed: false };
+      stage.steps.forEach(function(_, sti) { stepStatuses[stage.id][sti] = 'skipped'; });
+      if (si > 0) connectorStatuses[si - 1] = 'skipped';
+      skipped++;
+      updateSummary(passed, failed, skipped);
+      renderGraph();
+      await sleep(200);
+      continue;
+    }
+
+    if (si > 0) { connectorStatuses[si - 1] = 'animated'; renderGraph(); }
+    stageStatuses[stage.id] = 'running';
+    stepStatuses[stage.id] = {};
+    renderGraph();
+    selectStage(stage.id);
+    await sleep(300);
+
+    var doneSoFar = 0;
+    var stageFailed = false;
+
+    for (var sti = 0; sti < stage.steps.length; sti++) {
+      var step = stage.steps[sti];
+
+      if (stageFailed) {
+        stepStatuses[stage.id][sti] = 'skipped';
+        renderGraph();
+        if (selectedStageId === stage.id) openDetail(stage.id);
+        await sleep(60);
+        continue;
+      }
+
+      stepStatuses[stage.id][sti] = 'running';
+      renderGraph();
+      if (selectedStageId === stage.id) openDetail(stage.id);
+      await sleep(400 + Math.random() * 200);
+
+      if (step.result === 'failed') {
+        stepStatuses[stage.id][sti] = 'failed';
+        doneSoFar++;
+        stageProgress[stage.id] = { done: doneSoFar, total: stage.steps.length, hasFailed: true };
+        stageFailed = true;
+        pipelineFailed = true;
+        errors.push({
+          stageId: stage.id, stageLabel: stage.label,
+          stepIndex: sti, stepLabel: step.label,
+          error: step.error, recommendations: step.recommendations || []
+        });
+        renderGraph();
+        if (selectedStageId === stage.id) openDetail(stage.id);
+        await sleep(300);
+      } else {
+        stepStatuses[stage.id][sti] = 'passed';
+        doneSoFar++;
+        stageProgress[stage.id] = { done: doneSoFar, total: stage.steps.length, hasFailed: false };
+        renderGraph();
+        if (selectedStageId === stage.id) openDetail(stage.id);
+        await sleep(80);
+      }
+    }
+
+    if (stageFailed) {
+      stageStatuses[stage.id] = 'failed';
+      if (si > 0) connectorStatuses[si - 1] = 'failed';
+      failed++;
+    } else {
+      stageStatuses[stage.id] = 'passed';
+      stageProgress[stage.id] = { done: stage.steps.length, total: stage.steps.length, hasFailed: false };
+      if (si > 0) connectorStatuses[si - 1] = 'passed';
+      passed++;
+    }
+    updateSummary(passed, failed, skipped);
+    renderGraph();
+    if (selectedStageId === stage.id) openDetail(stage.id);
+    await sleep(200);
+  }
+
+  clearInterval(durationInterval);
+  var totalTime = ((Date.now() - simStartTime) / 1000).toFixed(1);
+  document.getElementById('pipelineDuration').textContent = totalTime + 's';
+  setPipelineBadge(failed > 0 ? 'failed' : 'passed');
+  updateAnnotations(errors);
+
+  btn.textContent = '\u25B6 Simulate';
+  btn.classList.remove('running');
+  simRunning = false;
+}
+
+/* === Event Listeners === */
+document.addEventListener('DOMContentLoaded', function() {
+  var graph = document.getElementById('ghGraph');
+
+  /* Wheel zoom */
+  graph.addEventListener('wheel', handleWheel, { passive: false });
+
+  /* Pan */
+  graph.addEventListener('mousedown', handleMouseDown);
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+
+  /* Touch support for pan */
+  var touchStartX, touchStartY, touchPanX, touchPanY;
+  graph.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1 && !e.target.closest('.gh-node') && !e.target.closest('.zoom-controls')) {
+      isPanning = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchPanX = panX;
+      touchPanY = panY;
+      graph.classList.add('panning');
+    }
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (!isPanning || e.touches.length !== 1) return;
+    panX = touchPanX + (e.touches[0].clientX - touchStartX);
+    panY = touchPanY + (e.touches[0].clientY - touchStartY);
+    applyTransform();
+  }, { passive: true });
+  document.addEventListener('touchend', function() {
+    if (isPanning) { isPanning = false; graph.classList.remove('panning'); }
+  });
+});
+
+/* === Init === */
+resetAll();
+</script>
+</body>
+</html>

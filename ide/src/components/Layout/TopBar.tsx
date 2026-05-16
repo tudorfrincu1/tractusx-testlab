@@ -24,9 +24,9 @@
 // It was reviewed and tested by a human committer.
 
 import { useRef, useState } from "react";
-import { useProjectStore } from "../../store/useProjectStore";
-import { yamlToModel } from "../../sync/yamlToModel";
-import { importProjectZip, importExampleFolder } from "../../store/projectIO";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { yamlToModel } from "../../sync";
+import { importProjectZip, importExampleFolder } from "../../store/project/projectIO";
 import { ExportDialog } from "../ExportDialog/ExportDialog";
 import { theme } from "../../theme/tractusxTheme";
 import ScienceIcon from "@mui/icons-material/Science";
@@ -74,7 +74,7 @@ export function TopBar() {
         useProjectStore.setState({
           hasProject: true,
           projectName: project.projectName,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,
@@ -103,7 +103,7 @@ export function TopBar() {
           hasProject: true,
           projectName: project.projectName,
           projectGeneration: useProjectStore.getState().projectGeneration + 1,
-          testCase: project.testCase,
+          tck: project.tck,
           tests: project.tests,
           schemas: project.schemas,
           testOrder: project.testOrder,

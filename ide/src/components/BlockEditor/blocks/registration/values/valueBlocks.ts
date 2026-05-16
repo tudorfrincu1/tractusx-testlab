@@ -37,6 +37,13 @@ import {
   segmentsToPath,
 } from "../../path/core/pathBuilder";
 import type { PathSegment } from "../../path/core/pathBuilder";
+import {
+  defaultApiSegments,
+  parseApiPath,
+  requestOpenApiPathBuilder,
+  segmentsToApiPath,
+} from "../../api-path/core/apiPathBuilder";
+import type { ApiPathSegment } from "../../api-path/core/apiPathBuilder";
 import { requestOpenJsonEditor, truncateJsonPreview } from "../../json/core/jsonEditor";
 import { resolveVariableSchema } from "../../path/schema/schemaResolver";
 
@@ -84,9 +91,14 @@ const ICON_EDIT_JSON = `data:image/svg+xml,${encodeURIComponent(
 
 const DEFAULT_JSON = JSON.stringify({ key: "value", count: 1, active: true }, null, 2);
 
-/** Internal type for blocks that store segment data. */
+/** Internal type for blocks that store JSON path segment data. */
 interface BlockWithSegments {
   __segments?: PathSegment[];
+}
+
+/** Internal type for blocks that store API path segment data. */
+interface BlockWithApiSegments {
+  __segments?: ApiPathSegment[];
 }
 
 export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: BlockCatalog) {
@@ -141,8 +153,45 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJsonPath);
       this.setCommentText("This is json path variable, with editable path tool")
-      this.setTooltip("A dot-notation path (e.g. items.0.id) — click ✏ to edit");
+      this.setTooltip("A dot-notation path (e.g. items.0.id) — click pencil to edit");
       (this as unknown as BlockWithSegments).__segments = segs;
+    },
+  };
+
+  Blockly.Blocks["value_api_path"] = {
+    init(this: Block) {
+      const segs = defaultApiSegments();
+      const path = segmentsToApiPath(segs);
+      this.appendDummyInput()
+        .appendField("/")
+        .appendField(new Blockly.FieldLabelSerializable(path), "PATH")
+        .appendField(new Blockly.FieldImage(
+          ICON_EDIT_PENCIL, 16, 16, "Edit path",
+          (field: InstanceType<typeof BlocklyType.FieldImage>) => {
+            const block = field.getSourceBlock();
+            if (!block) return;
+            const svgRoot = field.getSvgRoot();
+            const rect = svgRoot?.getBoundingClientRect();
+            const pos = rect
+              ? { x: rect.right + 8, y: rect.top }
+              : { x: 400, y: 300 };
+            const currentPath = block.getFieldValue("PATH") || "";
+            const segments: ApiPathSegment[] =
+              (block as unknown as BlockWithApiSegments).__segments
+              ?? parseApiPath(currentPath);
+            const variables = collectWorkspaceVariables(block.workspace, catalog);
+            requestOpenApiPathBuilder({
+              blockId: block.id,
+              segments,
+              position: pos,
+              variables,
+            });
+          },
+        ));
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueApiPath);
+      this.setTooltip("An API endpoint path — click pencil to edit segments");
+      (this as unknown as BlockWithApiSegments).__segments = segs;
     },
   };
 
@@ -238,12 +287,10 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
               position: pos,
             });
           },
-        ));
-      this.appendDummyInput("JSON_STORE")
+        ))
         .appendField(new Blockly.FieldLabelSerializable(DEFAULT_JSON), "JSON_VALUE");
-      this.getInput("JSON_STORE")!.setVisible(false);
-      this.setPreviousStatement(true, "key_value");
-      this.setNextStatement(true, "key_value");
+      this.getField("JSON_VALUE")!.setVisible(false);
+      this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJson);
       this.setTooltip("A raw JSON object — click ✏ to edit");
     },

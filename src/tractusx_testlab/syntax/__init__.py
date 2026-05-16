@@ -24,6 +24,6 @@
 
 """YAML syntax constants — keys, defaults, and patterns."""
 
-from tractusx_sdk.extensions.testlab.syntax import context_vars, defaults, keys, patterns
+from tractusx_testlab.syntax import context_vars, defaults, keys, patterns
 
 __all__ = ["context_vars", "defaults", "keys", "patterns"]

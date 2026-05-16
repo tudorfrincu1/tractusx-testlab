@@ -1,0 +1,32 @@
+meta {
+  name: Available Notification
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/companycertificate/available
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "header": {
+      "messageId": "urn:uuid:{{$guid}}",
+      "context": "CompanyCertificateManagement-CCMAPI-Available:1.0.0",
+      "sentDateTime": "{{$isoTimestamp}}",
+      "senderBpn": "{{consumer_bpn}}",
+      "receiverBpn": "{{provider_bpn}}",
+      "version": "3.1.0",
+      "senderFeedbackUrl": "{{callback_url}}/api/v1/dsp"
+    },
+    "content": {
+      "certificateType": "iso9001"
+    }
+  }
+}

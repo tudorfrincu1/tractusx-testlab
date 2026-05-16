@@ -30,13 +30,12 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from tractusx_sdk.extensions.testlab.models.enums import (
+from tractusx_testlab.models.enums import (
     AssertionSeverity,
     FailurePolicy,
     SdkCallMode,
     ValueSource,
 )
-from tractusx_sdk.extensions.testlab.models import DependencyRef
 from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
 
 
@@ -53,34 +52,31 @@ class Assertion(BaseModel):
     severity: AssertionSeverity = AssertionSeverity.HARD
     source: ValueSource = ValueSource.INLINE
     value: Optional[Any] = None
-    path: Optional[str] = None
+    path: Optional[str] = Field(default=None, alias="output")
     description: Optional[str] = None
     schema_ref: Optional[str] = Field(default=None, alias="schema")
     min: Optional[Any] = None
     max: Optional[Any] = None
+    operator: Optional[str] = None
+    expected: Optional[Any] = None
 
     model_config = {"populate_by_name": True}
 
 
 class StepDefinition(BaseModel):
     type: str
+    name: Optional[str] = None
     description: Optional[str] = None
     params: dict = Field(default_factory=dict)
     on_failure: FailurePolicy = FailurePolicy.ABORT
     timeout_s: Optional[float] = None
     expect: list[Assertion] = Field(default_factory=list)
     store_in_memory: Optional[dict[str, str]] = None
+    store_in_variable: Optional[str] = None
     if_condition: Optional[str] = Field(default=None, alias="if")
     output_definitions: list[dict[str, str]] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
-
-
-class ListenerDefinition(BaseModel):
-    name: str
-    path: str
-    method: str = "POST"
-    timeout_s: float = 60.0
 
 
 class ServiceDefinition(BaseModel):
@@ -99,15 +95,14 @@ class ScriptDefinition(BaseModel):
     description: Optional[str] = None
     import_from: Optional[str] = None
     allow_sdk_calls: SdkCallMode = SdkCallMode.ALLOWLIST
-    depends_on: list[Union[str, DependencyRef]] = Field(default_factory=list)
     outputs: dict[str, str] = Field(default_factory=dict)
     variables: dict[str, VariableDefinition] = Field(default_factory=dict)
     services: list[ServiceDefinition] = Field(default_factory=list)
-    listen: list[ListenerDefinition] = Field(default_factory=list)
     preconditions: list[StepDefinition] = Field(default_factory=list)
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)
-    cleanup: list[StepDefinition] = Field(default_factory=list)
+    teardown: list[StepDefinition] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
 
 
 class ImportDefinition(BaseModel):

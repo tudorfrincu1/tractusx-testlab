@@ -26,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import { useExecutionStore } from "../../store/useExecutionStore";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
 import "./NotificationBar.css";
 
 /** Auto-dismiss delay for success messages (ms). */

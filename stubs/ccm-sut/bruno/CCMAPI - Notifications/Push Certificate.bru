@@ -1,0 +1,33 @@
+meta {
+  name: Push Certificate
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/companycertificate/push
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "header": {
+      "messageId": "urn:uuid:{{$guid}}",
+      "context": "CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+      "sentDateTime": "{{$isoTimestamp}}",
+      "senderBpn": "{{consumer_bpn}}",
+      "receiverBpn": "{{provider_bpn}}",
+      "version": "3.1.0",
+      "senderFeedbackUrl": "{{callback_url}}/api/v1/dsp"
+    },
+    "content": {
+      "certificateType": "iso9001",
+      "documentId": "doc-12345678"
+    }
+  }
+}

@@ -35,7 +35,7 @@ Accepted
 
 The product concept "test case" was too generic and caused multiple problems:
 
-- **Naming collision**: Python's `unittest.TestCase` made class naming awkward and confusing in code.
+- **Naming collision**: Python's `unittest.Tck` made class naming awkward and confusing in code.
 - **Conceptual ambiguity**: users couldn't tell whether "test case" meant the overarching container or an individual test script inside it.
 - **Weak product identity**: the name didn't communicate that this is a Technology Compatibility Kit for certification testing.
 
@@ -48,7 +48,7 @@ Rename the overarching container concept from **"test-case"** to **"tck"** (Tech
 Specific changes:
 
 - YAML `kind: test-case` → `kind: tck`
-- All Python class names: `TestCase` → `Tck` (e.g., `TckModel`, `TckCompiler`)
+- All Python class names: `Tck` → `Tck` (e.g., `TckModel`, `TckCompiler`)
 - All method/variable names: `test_case` → `tck`
 - File extension: `.testpkg` → `.tckpkg`
 - UI labels: "Test Case" → "TCK"
@@ -61,7 +61,7 @@ Specific changes:
 **Positive**:
 
 - Clearer product identity — users immediately understand this is certification tooling
-- No naming collision with `unittest.TestCase`
+- No naming collision with `unittest.Tck`
 - Aligns terminology with industry-standard "TCK" concept (Java TCK, Jakarta TCK)
 
 **Negative**:

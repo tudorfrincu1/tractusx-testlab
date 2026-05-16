@@ -30,9 +30,7 @@ import { FieldWrappedText } from "../../../fields/FieldWrappedText";
 import {
   blockIcon,
   ICON_TEST,
-  ICON_TCK,
   ICON_VARIABLE,
-  ICON_PRECONDITION,
 } from "../../common/fields/icons";
 
 export function registerRootBlocks(Blockly: typeof BlocklyType) {
@@ -54,50 +52,6 @@ export function registerRootBlocks(Blockly: typeof BlocklyType) {
       this.setColour(blockColors.root);
       this.setTooltip("Root test definition");
       this.setDeletable(false);
-    },
-  };
-
-  Blockly.Blocks["tck_root"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_TCK))
-        .appendField("TCK:")
-        .appendField(new Blockly.FieldTextInput("my-tck"), "NAME");
-      this.appendDummyInput()
-        .appendField("Version:")
-        .appendField(new Blockly.FieldTextInput("1.0"), "VERSION");
-      this.appendDummyInput()
-        .appendField("Description:")
-        .appendField(new FieldWrappedText(""), "DESCRIPTION");
-      this.appendStatementInput("PRECONDITIONS")
-        .appendField("Preconditions")
-        .setCheck("precondition");
-      this.appendStatementInput("TESTS")
-        .appendField("Tests")
-        .setCheck("test_entry");
-      this.setColour(blockColors.rootTck);
-      this.setTooltip("Test case — groups multiple tests with shared configuration");
-      this.setDeletable(false);
-    },
-  };
-
-  Blockly.Blocks["test_ref"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_TEST))
-        .appendField("Test:")
-        .appendField(new Blockly.FieldTextInput("test-name"), "TEST_NAME");
-      this.appendDummyInput()
-        .appendField("Description:")
-        .appendField(new FieldWrappedText(""), "DESCRIPTION");
-      this.appendStatementInput("WITH")
-        .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("with:")
-        .setCheck("key_value");
-      this.setPreviousStatement(true, "test_entry");
-      this.setNextStatement(true, "test_entry");
-      this.setColour(blockColors.testRef);
-      this.setTooltip("Reference a reusable test with optional variable overrides");
     },
   };
 
@@ -140,19 +94,4 @@ export function registerRootBlocks(Blockly: typeof BlocklyType) {
     },
   };
 
-  Blockly.Blocks["precondition"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_PRECONDITION))
-        .appendField("Precondition:")
-        .appendField(new Blockly.FieldTextInput("PRE-001"), "PRE_ID");
-      this.appendDummyInput()
-        .appendField("description:")
-        .appendField(new FieldWrappedText(""), "PRE_DESCRIPTION");
-      this.setPreviousStatement(true, "precondition");
-      this.setNextStatement(true, "precondition");
-      this.setColour(blockColors.precondition);
-      this.setTooltip("Define a precondition that must be met before running");
-    },
-  };
 }

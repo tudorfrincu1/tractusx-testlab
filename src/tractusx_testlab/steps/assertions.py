@@ -29,7 +29,7 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     AssertionResult,
     AssertionSeverity,
     AssertionSummary,
@@ -42,6 +42,47 @@ from tractusx_testlab.steps import _checks
 
 # Matches a path segment with a predicate filter: ``name[key=value]``
 _PREDICATE_RE = re.compile(r"^([^\[]+)\[([^=\]]+)=([^\]]*)\]$")
+_SENTINEL = object()
+
+
+def _snake_to_camel(name: str) -> str:
+    """Convert ``snake_case`` to ``camelCase``."""
+    parts = name.split("_")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
+
+
+def _dict_get(d: dict, key: str) -> Any:
+    """Get value from dict, trying original key first, then camelCase fallback."""
+    if key in d:
+        return d[key]
+    camel = _snake_to_camel(key)
+    if camel != key and camel in d:
+        return d[camel]
+    return None
+
+
+def _traverse_dict(data: dict, path: str) -> Any:
+    """Walk a nested dict/list structure along a dot-separated *path*."""
+    parts = path.split(".")
+    current: Any = data
+    for part in parts:
+        if current is None:
+            return None
+        m = _PREDICATE_RE.match(part)
+        if m:
+            name, pred_key, pred_val = m.group(1), m.group(2), m.group(3)
+            current = _dict_get(current, name) if isinstance(current, dict) else None
+            if not isinstance(current, list):
+                return None
+            current = _find_by_predicate(current, pred_key, pred_val)
+        elif isinstance(current, dict):
+            current = _dict_get(current, part)
+        elif isinstance(current, list) and part.isdigit():
+            idx = int(part)
+            current = current[idx] if idx < len(current) else None
+        else:
+            return None
+    return current
 
 
 class AssertionEngine:
@@ -91,11 +132,23 @@ class AssertionEngine:
         if assertion.type == AssertionType.BETWEEN:
             return [assertion.min, assertion.max]
         if assertion.type == AssertionType.SCHEMA_VALIDATION:
-            return assertion.schema_ref
+            ref = assertion.schema_ref
+            if isinstance(ref, str) and ref.startswith("@"):
+                return context_vars.get(ref[1:], ref)
+            return ref
+        if assertion.type == AssertionType.ASSERT_FIELD:
+            exp_val = assertion.expected
+            if isinstance(exp_val, str) and exp_val.startswith("@"):
+                exp_val = context_vars.get(exp_val[1:], exp_val)
+            return {"operator": assertion.operator or "equals", "value": exp_val}
         if assertion.source == ValueSource.VARIABLE:
             var_name = assertion.value
             return context_vars.get(var_name, assertion.value)
-        return assertion.value
+        # Auto-resolve @var references in inline values
+        val = assertion.value
+        if isinstance(val, str) and val.startswith("@"):
+            return context_vars.get(val[1:], val)
+        return val
 
     @staticmethod
     def extract_path(output: Any, path: Optional[str]) -> Any:
@@ -120,30 +173,58 @@ class AssertionEngine:
         """
         if path is None:
             return output
-        if isinstance(output, dict):
-            parts = path.split(".")
-            current = output
-            for part in parts:
-                if current is None:
-                    return None
-                m = _PREDICATE_RE.match(part)
-                if m:
-                    name, pred_key, pred_val = m.group(1), m.group(2), m.group(3)
-                    if isinstance(current, dict):
-                        current = current.get(name)
-                    else:
-                        return None
-                    if not isinstance(current, list):
-                        return None
-                    current = _find_by_predicate(current, pred_key, pred_val)
-                elif isinstance(current, dict):
-                    current = current.get(part)
-                elif isinstance(current, list) and part.isdigit():
-                    idx = int(part)
-                    current = current[idx] if idx < len(current) else None
+        # Unwrap StepOutput: check value dict → response attrs → StepOutput slots
+        from tractusx_testlab.steps.base import StepOutput as _SO
+        if isinstance(output, _SO):
+            # Support compound dot-paths: split first segment for StepOutput resolution
+            parts = path.split(".", 1)
+            first = parts[0]
+            rest = parts[1] if len(parts) > 1 else None
+
+            # Map well-known aliases
+            if first == "response_body":
+                resolved = output.value if output.value is not None else (
+                    output.response.body if output.response else None
+                )
+            elif isinstance(output.value, dict):
+                result = _dict_get(output.value, first)
+                if result is not None:
+                    resolved = result
+                elif not rest and ("." in path or "[" in path):
+                    return _traverse_dict(output.value, path)
                 else:
-                    return None
-            return current
+                    resolved = None
+            else:
+                resolved = None
+
+            # Fall back to response attrs, StepOutput slots
+            if resolved is None and output.response is not None:
+                resp_val = getattr(output.response, first, _SENTINEL)
+                if resp_val is not _SENTINEL:
+                    resolved = resp_val
+            # Check response body dict for keys like asset_id, policy_id
+            if resolved is None and output.response is not None and isinstance(output.response.body, dict):
+                body_val = output.response.body.get(first)
+                if body_val is not None:
+                    resolved = body_val
+            if resolved is None:
+                slot_val = getattr(output, first, _SENTINEL)
+                if slot_val is not _SENTINEL:
+                    resolved = slot_val
+
+            # If there's a remaining path and resolved is navigable, continue
+            if rest and resolved is not None:
+                if isinstance(resolved, dict):
+                    return _traverse_dict(resolved, rest)
+                return getattr(resolved, rest, None)
+
+            # Final fallback: full dot-path traversal on value dict
+            if resolved is None and isinstance(output.value, dict):
+                return _traverse_dict(output.value, path)
+            return resolved
+
+        if isinstance(output, dict):
+            return _traverse_dict(output, path)
         return getattr(output, path, None)
 
     # Keep old name as internal alias for backward compatibility
@@ -221,4 +302,5 @@ _ASSERTION_CHECKS = {
     AssertionType.GREATER_OR_EQUAL: _checks.check_greater_or_equal,
     AssertionType.LESS_OR_EQUAL: _checks.check_less_or_equal,
     AssertionType.BETWEEN: _checks.check_between,
+    AssertionType.ASSERT_FIELD: _checks.check_assert_field,
 }

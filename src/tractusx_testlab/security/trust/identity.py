@@ -29,7 +29,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from tractusx_sdk.extensions.testlab.security.crypto.keygen import (
+from tractusx_testlab.security.crypto.keygen import (
     KeyPair,
     generate_ed25519_keypair,
     generate_rsa_keypair,
@@ -66,7 +66,7 @@ class PlayerIdentity:
         sign_priv = load_private_key(directory / "signing.pem")
         sign_pub = load_public_key(directory / "signing.pub")
 
-        from tractusx_sdk.extensions.testlab.security.crypto.keygen import _fingerprint
+        from tractusx_testlab.security.crypto.keygen import _fingerprint
 
         return PlayerIdentity(
             encryption=KeyPair(enc_priv, enc_pub, _fingerprint(enc_pub)),

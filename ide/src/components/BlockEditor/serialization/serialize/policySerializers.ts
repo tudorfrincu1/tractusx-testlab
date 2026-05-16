@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import { KNOWN_LEFT_OPERANDS } from "../../blocks/policyConstants";
+import { KNOWN_LEFT_OPERANDS } from "../../blocks";
 import {
   readValueBlockAsUnknown,
   makeBlock,

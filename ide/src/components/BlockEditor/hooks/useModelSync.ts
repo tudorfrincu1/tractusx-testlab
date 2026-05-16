@@ -24,13 +24,13 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
 import {
   workspaceToModel,
   populateWorkspaceFromModel,
 } from "../config/blockDefinitions";
-import type { TestLabDocument, ScriptDefinition, TckDefinition } from "../../../models/schema";
-import { isTest, isTck } from "../../../models/schema";
+import type { TestLabDocument, ScriptDefinition } from "../../../models/schema";
+import { isTest } from "../../../models/schema";
 import type { WorkspaceRefs } from "../workspaceTypes";
 
 /** Dispose every block chained to a statement input on `root`. */
@@ -155,19 +155,6 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
           rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
 
           for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
-            disposeStatementChain(rootBlock, input);
-          }
-          populateWorkspaceFromModel(ws, rootBlock, model, catalog);
-        }
-      } else if (isTck(model)) {
-        const tc = model as TckDefinition;
-        const rootBlock = ws.getBlocksByType("tck_root", false)[0];
-        if (rootBlock) {
-          rootBlock.setFieldValue(tc.name || "my-tck", "NAME");
-          rootBlock.setFieldValue(tc.version || "1.0", "VERSION");
-          rootBlock.setFieldValue(tc.description || "", "DESCRIPTION");
-
-          for (const input of ["PRECONDITIONS", "TESTS"]) {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);

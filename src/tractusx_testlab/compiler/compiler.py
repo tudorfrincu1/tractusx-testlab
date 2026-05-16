@@ -31,11 +31,11 @@ from typing import Optional
 
 import yaml
 
-from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-from tractusx_sdk.extensions.testlab.compiler.validator import ScriptValidator, ValidationResult
-from tractusx_sdk.extensions.testlab.models import PackageManifest
-from tractusx_sdk.extensions.testlab.scripting.parser import YamlParser
-from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
+from tractusx_testlab.compiler.packager import Packager
+from tractusx_testlab.compiler.validator import ScriptValidator, ValidationResult
+from tractusx_testlab.models import PackageManifest
+from tractusx_testlab.scripting.parser import YamlParser
+from tractusx_testlab.security.trust.identity import PlayerIdentity
 
 
 class Compiler:

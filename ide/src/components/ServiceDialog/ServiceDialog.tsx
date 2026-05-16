@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useState } from "react";
-import { useServiceStore, SERVICE_SCHEMAS } from "../../store/useServiceStore";
+import { useServiceStore, SERVICE_SCHEMAS } from "../../store/slices/useServiceStore";
 import type { ServiceDefinition, ServiceType } from "../../models/schema";
 import { theme } from "../../theme/tractusxTheme";
 import CloseIcon from "@mui/icons-material/Close";

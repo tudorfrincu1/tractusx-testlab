@@ -26,18 +26,9 @@
 import type { Block, Workspace } from "blockly";
 import type {
   TestLabDocument,
-  TckDefinition,
 } from "../../../../models/schema";
-import { isTck, isTest, isTestRef } from "../../../../models/schema";
-import { findCatalogEntry, type BlockCatalog } from "../../blocks/catalogLoader";
-import { deriveTestLabel } from "../../blocks/icons";
-import {
-  makeBlock,
-  setDropdownValue,
-  attachChain,
-  connectValue,
-  createValueBlockFromString,
-} from "../helpers";
+import { isTest } from "../../../../models/schema";
+import { type BlockCatalog } from "../../blocks";
 import * as deferredDropdowns from "../deferredDropdowns";
 import { populateTest } from "./populateTest";
 
@@ -50,9 +41,7 @@ export function populateWorkspaceFromModel(
   // Clear any stale deferred values from a previous import
   deferredDropdowns.clear();
 
-  if (isTck(model)) {
-    populateTck(ws, root, model);
-  } else if (isTest(model)) {
+  if (isTest(model)) {
     populateTest(ws, root, model, catalog);
   }
 
@@ -67,48 +56,6 @@ export function populateWorkspaceFromModel(
   // creation. Now that every block exists and is rendered, getOptions()
   // returns the full list and the values will stick.
   deferredDropdowns.flush(ws);
-}
-
-function populateTck(ws: Workspace, root: Block, tc: TckDefinition) {
-  if (tc.preconditions) {
-    const preBlocks: Block[] = [];
-    for (const pre of tc.preconditions) {
-      const pb = makeBlock(ws, "precondition");
-      pb.setFieldValue(pre.id || "", "PRE_ID");
-      pb.setFieldValue(pre.description || "", "PRE_DESCRIPTION");
-      preBlocks.push(pb);
-    }
-    attachChain(root, "PRECONDITIONS", preBlocks);
-  }
-
-  if (tc.tests) {
-    const testBlocks: Block[] = [];
-    for (const t of tc.tests) {
-      if (isTestRef(t)) {
-        const tb = makeBlock(ws, "test_ref");
-        tb.setFieldValue(t.test, "TEST_NAME");
-        tb.setFieldValue(t.description || "", "DESCRIPTION");
-        if (t.with && Object.keys(t.with).length > 0) {
-          const kvBlocks: Block[] = [];
-          for (const [key, value] of Object.entries(t.with)) {
-            const kvb = makeBlock(ws, "key_value_pair");
-            kvb.setFieldValue(key, "KEY");
-            connectValue(kvb, "VALUE", createValueBlockFromString(ws, String(value)));
-            kvBlocks.push(kvb);
-          }
-          attachChain(tb, "WITH", kvBlocks);
-        }
-        testBlocks.push(tb);
-      } else if (typeof t === "string") {
-        const tb = makeBlock(ws, "test_ref");
-        const path = t.replace(/^!include\s+/, "");
-        tb.setFieldValue(deriveTestLabel(path), "TEST_NAME");
-        tb.setFieldValue("", "DESCRIPTION");
-        testBlocks.push(tb);
-      }
-    }
-    attachChain(root, "TESTS", testBlocks);
-  }
 }
 
 export function cleanupOrphanBlocks(ws: Workspace, root: Block) {

@@ -27,30 +27,39 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlparse
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.extensions.testlab.models import ListenerDefinition, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
+from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.server.mock_registry import get_callback_manager
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 logger = logging.getLogger(__name__)
 
-_CALLBACKS_PATH_PREFIX = "/callbacks"
-_DEFAULT_TIMEOUT_S = 60.0
+_DEFAULT_TIMEOUT_S = 30.0
+
+
+def _extract_path_from_endpoint_url(endpoint_url: str) -> str:
+    """Extract the callback path from a mock endpoint URL.
+
+    The ``MockEndpointStep`` output is a full URL like
+    ``http://localhost:8080/companycertificate/status``.
+    We need just ``/companycertificate/status``.
+    """
+    return urlparse(endpoint_url).path
 
 
 @step("wait_for_call")
 class WaitForCallStep(BaseStep):
-    """Wait for an inbound HTTP request on a previously-registered path.
+    """Wait for an inbound HTTP request on a previously-registered mock endpoint.
 
     Params:
-        path (str): URL path to listen on (e.g. ``/companycertificate/status``).
-        method (str): HTTP method to match (default ``POST``).
-        timeout (float): Seconds to wait before failing (default ``60``).
+        endpoint_id (str): Variable reference to a mock endpoint's output URL.
+        timeout_s (float): Seconds to wait before failing (default ``30``).
 
     Output:
         The request body received from the inbound call.
@@ -62,9 +71,9 @@ class WaitForCallStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinition
     ) -> StepOutput:
-        path: str = params["path"]
+        raw_endpoint_id: str = params["endpoint_id"]
         method: str = params.get("method", "POST").upper()
-        timeout: float = params.get("timeout", _DEFAULT_TIMEOUT_S)
+        timeout: float = float(params.get("timeout_s", _DEFAULT_TIMEOUT_S))
 
         manager = get_callback_manager()
         if manager is None:
@@ -72,18 +81,24 @@ class WaitForCallStep(BaseStep):
                 "No CallbackManager available — wait_for_call requires the TestLab server"
             )
 
-        full_path = f"{_CALLBACKS_PATH_PREFIX}{path}"
-        listener = ListenerDefinition(
-            name=definition.type,
-            path=full_path,
-            method=method,
-            timeout_s=timeout,
-        )
+        # endpoint_id may be a full URL (from a previous step output) or a plain
+        # string ID referencing a mock registered via MockEndpointStep.  When it
+        # looks like a URL we parse the path directly; otherwise we look up the
+        # context variable that MockEndpointStep stored under that ID.
+        if raw_endpoint_id.startswith(("http://", "https://")):
+            full_path = _extract_path_from_endpoint_url(raw_endpoint_id)
+        else:
+            stored_url = context.get_variable(raw_endpoint_id)
+            if stored_url and isinstance(stored_url, str) and stored_url.startswith(("http://", "https://")):
+                full_path = _extract_path_from_endpoint_url(stored_url)
+            else:
+                # Treat the raw value as a path fragment
+                full_path = f"/{raw_endpoint_id}" if not raw_endpoint_id.startswith("/") else raw_endpoint_id
 
-        manager.register(listener)
+        manager.register(full_path, method)
         logger.info("Waiting up to %.0fs for %s %s", timeout, method, full_path)
 
-        result = await manager.wait(listener)
+        result = await manager.wait(full_path, method, timeout)
 
         if result.timed_out:
             raise RuntimeError(
@@ -91,4 +106,9 @@ class WaitForCallStep(BaseStep):
             )
 
         logger.info("Received callback on %s %s", method, full_path)
-        return StepOutput(value=result.payload)
+        return StepOutput(value={
+            "method": result.method,
+            "path": result.path,
+            "headers": result.headers,
+            "body": result.payload,
+        })

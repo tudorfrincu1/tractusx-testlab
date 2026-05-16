@@ -30,12 +30,12 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 @step("http_request", aliases=["http_call"])
@@ -77,6 +77,12 @@ class HttpRequestStep(BaseStep):
             resp_body = resp.json()
         except (ValueError, TypeError):
             resp_body = resp.text
+
+        # Auto-store response body fields in context for downstream access
+        if isinstance(resp_body, dict):
+            for key, val in resp_body.items():
+                context.set_variable(key, val)
+        context.set_variable("status_code", resp.status_code)
 
         return StepOutput(
             value=resp_body,

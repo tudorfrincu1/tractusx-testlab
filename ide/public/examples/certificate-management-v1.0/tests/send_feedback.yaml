@@ -26,22 +26,29 @@ name: send-feedback-notification
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Send a CCMAPI feedback notification to the provider via EDC dataplane (SEND direction)
-  and await the provider's RECEIVE acknowledgment on a TestLab mock endpoint.
-
-depends_on:
-  - file: tests/request_certificate.yaml
-    outputs:
-      - request_id
-  - "tests/validate_payload.yaml"
-  - "tests/await_feedback_callback.yaml"
+  Send a CX-0135 CCMAPI status notification to the provider via EDC dataplane
+  and await the provider's acknowledgment on a TestLab mock endpoint.
 
 services:
   - name: provider_edc
-    type: edc_connector_saturn
+    type: connector_consumer
     base_url: "@provider_address"
 
 setup:
+  - type: import_variable
+    description: Import request ID from request test
+    params:
+      test: request-certificate
+      select: request_id
+      store_in_variable: request_id
+
+  - type: import_variable
+    description: Import document ID from request test
+    params:
+      test: request-certificate
+      select: document_id
+      store_in_variable: document_id
+
   - type: mock_endpoint
     description: Expose mock endpoint for provider RECEIVE acknowledgment
     params:
@@ -54,17 +61,22 @@ setup:
 
 steps:
   - type: query_catalog
-    description: Find CCMAPI notification endpoint in provider catalog
+    description: Find CCMAPI endpoint in provider catalog
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
       filter:
         filter_expression:
           - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "like"
-            operand_right: "%https://w3id.org/catenax/taxonomy#CCMAPI%"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
+          - operand_left: "http://purl.org/dc/terms/subject"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          - operand_left: "https://w3id.org/catenax/ontology/common#version"
+            operator: "="
+            operand_right: "3.0"
     store_in_memory:
-      notification_catalog: "catalog"
       notification_datasets: "datasets"
     expect:
       - type: "NOT_NULL"
@@ -75,8 +87,7 @@ steps:
     params:
       variable: "notification_datasets"
       path: "[0].@id"
-    store_in_memory:
-      notification_asset_id: "value"
+      store_in_variable: notification_asset_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -86,8 +97,7 @@ steps:
     params:
       variable: "notification_datasets"
       path: "[0].odrl:hasPolicy"
-    store_in_memory:
-      notification_offer_id: "value"
+      store_in_variable: notification_offer_id
     expect:
       - type: "NOT_NULL"
         output: value
@@ -99,8 +109,7 @@ steps:
       counter_party_address: "@provider_address"
       offer_id: "@notification_offer_id"
       asset_id: "@notification_asset_id"
-    store_in_memory:
-      notification_agreement_id: "agreement_id"
+      store_in_variable: notification_agreement_id
     expect:
       - type: "NOT_NULL"
         output: agreement_id
@@ -117,29 +126,33 @@ steps:
       notification_edr_token: "edr_token"
 
   - type: generate_uuid
-    description: Generate notification ID
-    store_in_memory:
-      notification_id: "uuid"
+    description: Generate feedback message ID
+    params:
+      store_in_variable: feedback_uuid
 
   - type: http_call_dataplane
-    description: Send CCMAPI feedback notification to provider via dataplane
+    description: Send CX-0135 status notification to provider via dataplane
     params:
       method: POST
-      url: "@notification_dataplane_url"
+      url: "@notification_dataplane_url/companycertificate/status"
       edr_token: "@notification_edr_token"
       headers:
         Content-Type: "application/json"
       body:
         header:
-          notificationId: "@notification_id"
-          senderBPN: "@consumer_bpn"
-          recipientBPN: "@provider_bpn"
-          type: "SEND"
-          status: "SENT"
+          messageId: "urn:uuid:@feedback_uuid"
+          context: "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
+          sentDateTime: "2026-01-01T00:00:00Z"
+          senderBpn: "@consumer_bpn"
+          receiverBpn: "@provider_bpn"
+          relatedMessageId: "urn:uuid:@request_id"
+          version: "3.1.0"
+          senderFeedbackUrl: "@testlab_dsp_url"
         content:
-          requestId: "@request_id"
-          feedbackType: "CERTIFICATE_FEEDBACK"
-          message: "Validation completed for certificate request"
+          documentId: "@document_id"
+          certificateStatus: "ACCEPTED"
+          locationBpns:
+            - "@location_bpns"
     expect:
       - type: "EQUALS"
         output: status_code
@@ -158,10 +171,10 @@ steps:
         value: "POST"
 
   - type: json_path_extract
-    description: Extract acknowledgment status from provider response
+    description: Extract acknowledgment certificate status
     params:
       variable: "ack_payload"
-      path: "status"
+      path: "content.certificateStatus"
     store_in_memory:
       notification_ack_status: "value"
     expect:

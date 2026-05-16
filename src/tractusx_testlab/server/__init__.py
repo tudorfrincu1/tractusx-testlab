@@ -33,7 +33,7 @@ def create_app(*args, **kwargs):
 
 def __getattr__(name):
     if name == "PackageStorage":
-        from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+        from tractusx_testlab.server.storage import PackageStorage
         return PackageStorage
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

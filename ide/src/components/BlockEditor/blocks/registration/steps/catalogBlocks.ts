@@ -87,10 +87,10 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                 break;
 
               case "json":
-                this.appendStatementInput(fieldKey)
+                this.appendValueInput(fieldKey)
                   .appendField(blockIcon(Blockly, ICON_JSON))
                   .appendField(paramLabel)
-                  .setCheck("key_value");
+                  .setCheck("param_value");
                 break;
 
               case "array":

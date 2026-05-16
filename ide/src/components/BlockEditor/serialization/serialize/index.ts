@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 export { workspaceToModel, readStepChain } from "./workspaceToModel";
-export { workspaceToTck } from "./workspaceToTck";
 export { serializePreconditionPolicyBlock, deserializePreconditionPolicyBlock } from "./preconditionSerializers";
 export {
   serializeConstraintChain,

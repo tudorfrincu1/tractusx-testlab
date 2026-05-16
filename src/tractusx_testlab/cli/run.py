@@ -60,9 +60,12 @@ def run(
     ),
 ) -> None:
     """Load and execute a TCK, printing results to stdout."""
-    from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-    from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
-    from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
+    from tractusx_testlab.config.settings import TestlabConfig
+    from tractusx_testlab.models import ScriptStatus, StepStatus
+    from tractusx_testlab.player.execution.player import TestlabPlayer
+
+    # Register all local step executors (triggers @step() decorators)
+    import tractusx_testlab.steps  # noqa: F401
 
     runtime_vars = _build_runtime_vars(config_file, var)
 
@@ -125,12 +128,12 @@ def _load_tck(
     compiler_pub: Optional[Path],
 ):
     """Load a TCK from YAML or encrypted .tckpkg."""
-    from tractusx_sdk.extensions.testlab.player.loading.loader import Loader
+    from tractusx_testlab.player.loading.loader import Loader
 
     loader = Loader()
 
     if target.suffix == ".tckpkg":
-        from tractusx_sdk.extensions.testlab.security.crypto.keygen import load_private_key, load_public_key
+        from tractusx_testlab.security.crypto.keygen import load_private_key, load_public_key
 
         priv = load_private_key(player_keys / "encryption.pem")
         pub = load_public_key(compiler_pub)

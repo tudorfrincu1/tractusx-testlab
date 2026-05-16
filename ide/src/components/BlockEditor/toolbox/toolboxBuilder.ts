@@ -24,8 +24,8 @@
 // It was reviewed and tested by a human committer.
 
 import { ScriptKind } from "../../../models/schema";
-import type { BlockCatalog, BlockCatalogCategory } from "../blocks/catalogLoader";
-import { useServiceStore } from "../../../store/useServiceStore";
+import type { BlockCatalog, BlockCatalogCategory } from "../blocks";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
 import { blockColors, getCategoryColor } from "../config/blockColors";
 import { PHASE_DEFINITIONS } from "./phaseConfig";
 
@@ -118,43 +118,6 @@ function buildPhaseGroups(catalog: BlockCatalog): object[] {
 }
 
 export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables?: string[]): object {
-  if (kind === "tck") {
-    const serviceCategories = [...buildCategoryMap(catalog).values()];
-    return {
-      kind: "categoryToolbox",
-      contents: [
-        {
-          kind: "category",
-          name: "Tests",
-          colour: blockColors.testRef,
-          contents: [{ kind: "block", type: "test_ref" }],
-        },
-        {
-          kind: "category",
-          name: "Variables",
-          colour: blockColors.variableDef,
-          contents: [{ kind: "block", type: "variable_def" }],
-        },
-        {
-          kind: "category",
-          name: "Preconditions",
-          colour: blockColors.precondition,
-          contents: [{ kind: "block", type: "precondition" }],
-        },
-        {
-          kind: "category",
-          name: "Authentication",
-          colour: blockColors.authentication,
-          contents: [
-            { kind: "block", type: "auth_oauth2" },
-            { kind: "block", type: "auth_api_key" },
-          ],
-        },
-        ...serviceCategories,
-      ],
-    };
-  }
-
   const vars = variables || [];
 
   const variableContents: object[] = [];
@@ -208,6 +171,7 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
           { kind: "block", type: "value_number" },
           { kind: "block", type: "value_boolean" },
           { kind: "block", type: "value_json_path" },
+          { kind: "block", type: "value_api_path" },
         ],
       },
       {

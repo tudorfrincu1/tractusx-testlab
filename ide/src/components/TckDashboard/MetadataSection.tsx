@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useProjectStore } from "../../store/useProjectStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
 import { SectionCard, InlineField, SelectField, StandardsField, TagField, VersionField } from "./FormFields";
 
 /* ── Constants ──────────────────────────────────────────────────────────── */

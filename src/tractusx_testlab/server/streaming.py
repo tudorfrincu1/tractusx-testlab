@@ -40,7 +40,7 @@ from starlette.responses import StreamingResponse
 
 from tractusx_testlab.models.definitions import TckDefinition
 from tractusx_testlab.models.enums import ScriptKind
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck

@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import { useTestLabStore } from "../../../store/useTestLabStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
 import {
   buildToolbox,
   workspaceToModel,

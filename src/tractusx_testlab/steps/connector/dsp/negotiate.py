@@ -28,10 +28,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.extensions.testlab.models import HttpRequest, HttpResponse, StepDefinition
-from tractusx_sdk.extensions.testlab.scripting.registry import step
-from tractusx_sdk.extensions.testlab.steps.base import BaseStep, StepOutput
-from tractusx_sdk.extensions.testlab.syntax.context_vars import (
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.syntax.context_vars import (
     DSP_CONTRACT_AGREEMENT_ID,
     DSP_NEGOTIATION_CONSUMER_PID,
     DSP_NEGOTIATION_PROVIDER_PID,
@@ -42,7 +42,7 @@ from tractusx_sdk.extensions.testlab.syntax.context_vars import (
 from ._constants import DSPACE_AGREEMENT_ID, DSPACE_CONSUMER_PID, DSPACE_PROVIDER_PID, DSPACE_STATE
 
 if TYPE_CHECKING:
-    from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
+    from tractusx_testlab.player.execution.context import StepContext
 
 
 @step("dsp_negotiate")

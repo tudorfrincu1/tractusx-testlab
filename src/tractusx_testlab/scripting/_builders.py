@@ -28,12 +28,11 @@ from __future__ import annotations
 
 from typing import Union
 
-from tractusx_sdk.extensions.testlab.syntax import defaults
+from tractusx_testlab.syntax import defaults
 import tractusx_testlab.syntax.keys as keys
 
-from tractusx_sdk.extensions.testlab.models import (
+from tractusx_testlab.models import (
     AssertionSeverity,
-    DependencyRef,
     FailurePolicy,
     ValueSource,
     VariableDefinition,
@@ -77,15 +76,23 @@ def parse_step(raw: dict) -> StepDefinition:
     expectations = [parse_assertion(assertion_data) for assertion_data in expect_raw]
 
     output_defs_raw = raw.get(keys.OUTPUT_DEFINITIONS, [])
+    params = dict(raw.get(keys.PARAMS, {}))
+
+    store_in_var = raw.get("store_in_variable") or params.pop("store_in_variable", None)
+    if store_in_var:
+        store_in_memory = {store_in_var: "."}
+    else:
+        store_in_memory = raw.get(keys.STORE_IN_MEMORY)
 
     return StepDefinition(
         type=raw.get(keys.TYPE, defaults.NAME),
         description=raw.get(keys.DESCRIPTION),
-        params=raw.get(keys.PARAMS, {}),
+        params=params,
         on_failure=FailurePolicy(raw[keys.ON_FAILURE]) if keys.ON_FAILURE in raw else FailurePolicy.ABORT,
         timeout_s=raw.get(keys.TIMEOUT_S),
         expect=expectations,
-        store_in_memory=raw.get(keys.STORE_IN_MEMORY),
+        store_in_memory=store_in_memory,
+        store_in_variable=store_in_var,
         if_condition=raw.get(keys.IF),
         output_definitions=output_defs_raw,
     )
@@ -119,6 +126,11 @@ def _parse_typed_assertion(raw: dict) -> Assertion:
     """Parse an assertion written in the explicit typed format."""
     assertion_type = AssertionType(raw[keys.TYPE])
     output_field = raw.get(keys.OUTPUT)
+    path_field = raw.get(keys.PATH)
+    if output_field and path_field:
+        combined_path = f"{output_field}.{path_field}"
+    else:
+        combined_path = output_field or path_field
     schema_ref = raw.get(keys.ASSERTION_SCHEMA)
 
     min_val = raw.get(keys.ASSERTION_MIN)
@@ -129,11 +141,13 @@ def _parse_typed_assertion(raw: dict) -> Assertion:
         severity=AssertionSeverity(raw.get(keys.SEVERITY, defaults.ASSERTION_SEVERITY)),
         source=ValueSource(raw.get(keys.SOURCE, defaults.VALUE_SOURCE)),
         value=raw.get(keys.VALUE),
-        path=output_field,
+        path=combined_path,
         description=raw.get(keys.DESCRIPTION),
         schema_ref=schema_ref,
         min=min_val,
         max=max_val,
+        operator=raw.get("operator"),
+        expected=raw.get("expected"),
     )
 
 
@@ -192,18 +206,3 @@ def parse_service(raw: dict) -> ServiceDefinition:
         params=raw.get(keys.PARAMS),
     )
 
-
-def parse_depends_on(raw: list) -> list[Union[str, DependencyRef]]:
-    """Parse ``depends_on`` entries — strings or file-reference dicts."""
-    result: list[Union[str, DependencyRef]] = []
-    for entry in raw:
-        if isinstance(entry, str):
-            result.append(entry)
-        elif isinstance(entry, dict) and keys.FILE in entry:
-            result.append(DependencyRef(
-                file=entry[keys.FILE],
-                outputs=entry.get(keys.OUTPUTS, []),
-            ))
-        else:
-            raise ValueError(f"Invalid depends_on entry: {entry}")
-    return result

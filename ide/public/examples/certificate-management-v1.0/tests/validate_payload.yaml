@@ -26,30 +26,86 @@ name: validate-certificate-payload
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Fetch and validate certificate payload against CX-0135
+  Discover certificate Submodel asset in provider catalog via EDC,
+  negotiate + pull via EDR, and validate against CX-0135
   BusinessPartnerCertificate semantic model v3.1.0.
 
-depends_on:
-  - file: tests/request_certificate.yaml
-    outputs:
-      - document_id
+services:
+  - name: provider_edc
+    type: connector_consumer
+    base_url: "@provider_address"
 
 setup:
+  - type: import_variable
+    description: Import document ID from request test
+    params:
+      test: request-certificate
+      select: document_id
+      store_in_variable: document_id
+
   - type: load_schema
     description: Load BusinessPartnerCertificate v3.1.0 schema
     params:
       name: bpc_schema
       source: file
       path: ../schemas/business_partner_certificate_schema.json
-    store_in_memory:
-      bpc_schema: "$"
+      store_in_variable: bpc_schema
 
 steps:
-  - type: http_call
-    description: Fetch certificate payload from provider
+  - type: query_catalog
+    description: Discover certificate Submodel asset in provider catalog
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      filter:
+        filter_expression:
+          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
+          - operand_left: "http://purl.org/dc/terms/subject"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+    expect:
+      - type: "NOT_NULL"
+        output: datasets
+
+  - type: json_path_extract
+    description: Extract certificate asset ID
+    params:
+      variable: "datasets"
+      path: "[0].@id"
+      store_in_variable: cert_asset_id
+
+  - type: json_path_extract
+    description: Extract certificate offer policy
+    params:
+      variable: "datasets"
+      path: "[0].odrl:hasPolicy"
+      store_in_variable: cert_offer_id
+
+  - type: negotiate
+    description: Negotiate contract for certificate asset
+    params:
+      service: provider_edc
+      counter_party_address: "@provider_address"
+      offer_id: "@cert_offer_id"
+      asset_id: "@cert_asset_id"
+      store_in_variable: cert_agreement_id
+
+  - type: initiate_transfer
+    description: Get dataplane credentials for certificate
+    params:
+      service: provider_edc
+      agreement_id: "@cert_agreement_id"
+      asset_id: "@cert_asset_id"
+      transfer_type: "HttpData-PULL"
+
+  - type: http_call_dataplane
+    description: Fetch certificate payload via data plane
     params:
       method: GET
       url: "@data_address/companycertificate/@document_id"
+      edr_token: "@edr_token"
       headers:
         Accept: "application/json"
     store_in_memory:
@@ -63,9 +119,6 @@ steps:
       - type: "SCHEMA_VALIDATION"
         output: response_body
         schema: "@bpc_schema"
-      # assert_field: validate a nested field directly on the step output,
-      # combining path extraction + assertion in one block.
-      # Uses the schema-aware path builder to autocomplete field paths.
       - type: "ASSERT_FIELD"
         output: response_body
         path: "certificateType"

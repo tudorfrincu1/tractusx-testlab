@@ -28,10 +28,10 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useProjectStore } from "../store/useProjectStore";
-import { useCompileStore } from "../store/useCompileStore";
-import { useExecutionStore } from "../store/useExecutionStore";
-import { modelToYaml } from "../sync/modelToYaml";
+import { useProjectStore } from "../store/slices/useProjectStore";
+import { useCompileStore } from "../store/slices/useCompileStore";
+import { useExecutionStore } from "../store/slices/useExecutionStore";
+import { modelToYaml } from "../sync";
 
 const AUTO_COMPILE_DELAY_MS = 800;
 

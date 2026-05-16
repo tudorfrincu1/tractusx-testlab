@@ -29,15 +29,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from tractusx_sdk.extensions.testlab.models import ScriptStatus, StepStatus
-from tractusx_sdk.extensions.testlab.player.execution.context import StepContext
-from tractusx_sdk.extensions.testlab.player.execution.monitor import ExecutionMonitor
+from tractusx_testlab.models import ScriptStatus, StepStatus
+from tractusx_testlab.player.execution.context import StepContext
+from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager
-from tractusx_sdk.extensions.testlab.player.loading.resolver import resolve_params
-from tractusx_sdk.extensions.testlab.scripting.registry import StepRegistry
-from tractusx_sdk.extensions.testlab.scripting.script import TestScript
-from tractusx_sdk.extensions.testlab.steps.assertions import AssertionEngine
-from tractusx_sdk.extensions.testlab.steps.conditions import ConditionEvaluator
+from tractusx_testlab.player.loading.resolver import resolve_params
+from tractusx_testlab.scripting.registry import StepRegistry
+from tractusx_testlab.scripting.script import TestScript
+from tractusx_testlab.steps.assertions import AssertionEngine
+from tractusx_testlab.steps.conditions import ConditionEvaluator
 from tractusx_testlab.models.enums import StepPhase
 from tractusx_testlab.models.results import AssertionResult, AssertionSummary, ScriptResult, StepResult
 from tractusx_testlab.player.execution._helpers import seed_script_defaults, register_script_services
@@ -93,13 +93,39 @@ def store_step_outputs(
     step_def: Any, step_result: StepResult, context: StepContext,
 ) -> None:
     """Persist step outputs into context variables when store_in_memory is configured."""
-    if not step_def.store_in_memory or step_result.output is None:
+    if step_result.output is None:
         return
+
+    store_in_var = getattr(step_def, "store_in_variable", None)
+    if store_in_var and not step_def.store_in_memory:
+        # Unwrap StepOutput: store the .value so downstream @var refs get usable data
+        from tractusx_testlab.steps.base import StepOutput
+        output = step_result.output
+        if isinstance(output, StepOutput):
+            output = output.value
+        context.set_variable(store_in_var, output)
+        return
+
+    if not step_def.store_in_memory:
+        return
+
+    # Reconstruct StepOutput for path resolution with aliases like response_body
+    from tractusx_testlab.steps.base import StepOutput
+    raw = step_result.output
+    if isinstance(raw, StepOutput):
+        full_output = raw
+    else:
+        full_output = StepOutput(
+            value=raw,
+            request=step_result.request,
+            response=step_result.response,
+        )
+
     for var_name, output_path in step_def.store_in_memory.items():
         if output_path == ".":
-            value = step_result.output
+            value = full_output.value
         else:
-            value = AssertionEngine.extract_path(step_result.output, output_path)
+            value = AssertionEngine.extract_path(full_output, output_path)
         context.set_variable(var_name, value)
 
 
@@ -210,34 +236,34 @@ async def execute_main_steps(
     return step_results, script_status
 
 
-async def execute_cleanup_steps(
+async def execute_teardown_steps(
     script: TestScript,
     context: StepContext,
     job_id: str,
     monitor: ExecutionMonitor,
 ) -> list[StepResult]:
-    """Run cleanup steps unconditionally (even after failure)."""
-    cleanup_results: list[StepResult] = []
-    for step_idx, step_def in enumerate(script.definition.cleanup):
-        cleanup_name = f"{script.name}[cleanup:{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, f"cleanup:{step_def.type}")
+    """Run teardown steps unconditionally (even after failure)."""
+    teardown_results: list[StepResult] = []
+    for step_idx, step_def in enumerate(script.definition.teardown):
+        teardown_name = f"{script.name}[teardown:{step_idx}]:{step_def.type}"
+        monitor.on_step_started(job_id, step_idx, f"teardown:{step_def.type}")
 
         step_cls = StepRegistry.get(step_def.type, script.definition.version)
         if step_cls:
-            result = await run_step(step_cls, step_def, cleanup_name, context)
+            result = await run_step(step_cls, step_def, teardown_name, context)
         else:
             result = StepResult(
-                step_name=cleanup_name,
+                step_name=teardown_name,
                 step_type=step_def.type,
                 phase=StepPhase.CLEANUP,
                 status=StepStatus.FAILED,
-                error=f"No implementation found for cleanup step '{step_def.type}'",
+                error=f"No implementation found for teardown step '{step_def.type}'",
             )
         result.phase = StepPhase.CLEANUP
-        cleanup_results.append(result)
+        teardown_results.append(result)
         monitor.on_step_completed(job_id, result)
 
-    return cleanup_results
+    return teardown_results
 
 
 async def run_script(
@@ -247,7 +273,7 @@ async def run_script(
     monitor: ExecutionMonitor,
     jobs: JobManager,
 ) -> ScriptResult:
-    """Execute all steps in a script sequentially (precondition → setup → main → cleanup)."""
+    """Execute all steps in a script sequentially (precondition → setup → main → teardown)."""
     seed_script_defaults(script, context)
     register_script_services(script, context)
 
@@ -273,12 +299,12 @@ async def run_script(
                 script, context, job_id, monitor, jobs,
             )
 
-    cleanup_results = await execute_cleanup_steps(
+    teardown_results = await execute_teardown_steps(
         script, context, job_id, monitor,
     )
 
     script_end = datetime.now(timezone.utc)
-    all_step_results = precondition_results + setup_results + step_results + cleanup_results
+    all_step_results = precondition_results + setup_results + step_results + teardown_results
 
     return ScriptResult(
         script_name=script.name,

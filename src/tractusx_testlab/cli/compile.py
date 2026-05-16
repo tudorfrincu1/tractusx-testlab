@@ -56,9 +56,9 @@ def compile(
     ),
 ) -> None:
     """Compile a YAML test script into an encrypted, signed .tckpkg archive."""
-    from tractusx_sdk.extensions.testlab.compiler.compiler import Compiler
-    from tractusx_sdk.extensions.testlab.security.trust.identity import PlayerIdentity
-    from tractusx_sdk.extensions.testlab.security.crypto.keygen import _fingerprint
+    from tractusx_testlab.compiler.compiler import Compiler
+    from tractusx_testlab.security.trust.identity import PlayerIdentity
+    from tractusx_testlab.security.crypto.keygen import _fingerprint
 
     # Load compiler identity
     compiler_identity = PlayerIdentity.load(compiler_keys)
@@ -119,7 +119,7 @@ def info(
     package: Path = typer.Argument(..., help="Path to a .tckpkg archive."),
 ) -> None:
     """Display the manifest of a compiled .tckpkg package."""
-    from tractusx_sdk.extensions.testlab.compiler.packager import Packager
+    from tractusx_testlab.compiler.packager import Packager
 
     manifest = Packager.read_manifest(package)
     typer.echo(json.dumps(json.loads(manifest.model_dump_json()), indent=2))
@@ -146,8 +146,8 @@ def decompile(
     ),
 ) -> None:
     """Decrypt and verify an encrypted .tckpkg, extracting the original YAML."""
-    from tractusx_sdk.extensions.testlab.compiler.packager import Packager
-    from tractusx_sdk.extensions.testlab.security.crypto.keygen import load_private_key, load_public_key
+    from tractusx_testlab.compiler.packager import Packager
+    from tractusx_testlab.security.crypto.keygen import load_private_key, load_public_key
 
     priv_key_path = player_keys / "encryption.pem"
     if not priv_key_path.exists():

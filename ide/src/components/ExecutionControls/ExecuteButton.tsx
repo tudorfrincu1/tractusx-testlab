@@ -26,10 +26,10 @@ import { useCallback } from "react";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StopIcon from "@mui/icons-material/Stop";
 import PauseIcon from "@mui/icons-material/Pause";
-import { useExecutionStore } from "../../store/useExecutionStore";
-import { useProjectStore } from "../../store/useProjectStore";
-import { useCompileStore } from "../../store/useCompileStore";
-import { modelToYaml } from "../../sync/modelToYaml";
+import { useExecutionStore } from "../../store/slices/useExecutionStore";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { useCompileStore } from "../../store/slices/useCompileStore";
+import { modelToYaml } from "../../sync";
 import "./ExecutionControls.css";
 
 /**

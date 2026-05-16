@@ -88,11 +88,6 @@ export const AuthType = {
 } as const;
 export type AuthType = (typeof AuthType)[keyof typeof AuthType];
 
-export interface DependencyRef {
-  file: string;
-  outputs: string[];
-}
-
 export interface VariableDefinition {
   type: string;
   default?: unknown;
@@ -110,27 +105,6 @@ export interface Assertion {
   path?: string;
   operator?: string;
   expected?: unknown;
-}
-
-export interface TestInputDefinition {
-  name: string;
-  type?: string;
-  source?: string;
-  description?: string;
-  values?: unknown[];
-}
-
-export interface TestOutputDefinition {
-  name: string;
-  type?: string;
-  description?: string;
-  values?: unknown[];
-}
-
-export interface TestPrerequisite {
-  test: string;
-  strict_order?: boolean;
-  exports_required?: string[];
 }
 
 export interface StepDefinition {
@@ -154,13 +128,6 @@ export type Step = StepDefinition | TemplateStepDefinition;
 
 export function isTemplateStep(step: Step): step is TemplateStepDefinition {
   return "template" in step;
-}
-
-export interface ListenerDefinition {
-  name: string;
-  path: string;
-  method?: string;
-  timeout_s?: number;
 }
 
 export interface ServiceDefinition {
@@ -188,15 +155,10 @@ export interface ScriptDefinition {
   dataspace_version?: string;
   description?: string;
   allow_sdk_calls?: SdkCallMode;
-  depends_on?: (string | DependencyRef)[];
-  inputs?: TestInputDefinition[];
   outputs?: Record<string, string>;
-  output_definitions?: TestOutputDefinition[];
-  prerequisites?: TestPrerequisite[];
   preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   services?: ServiceDefinition[];
-  listen?: ListenerDefinition[];
   setup?: Step[];
   steps: Step[];
   teardown?: Step[];

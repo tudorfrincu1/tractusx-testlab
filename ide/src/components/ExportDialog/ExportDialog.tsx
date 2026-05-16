@@ -23,8 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo, useState } from "react";
-import { useProjectStore } from "../../store/useProjectStore";
-import { modelToYaml } from "../../sync/modelToYaml";
+import { useProjectStore } from "../../store/slices/useProjectStore";
+import { modelToYaml } from "../../sync";
 import { theme } from "../../theme/tractusxTheme";
 
 import FolderZipIcon from "@mui/icons-material/FolderZip";

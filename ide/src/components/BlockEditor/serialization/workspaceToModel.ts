@@ -31,12 +31,12 @@ import type {
   ScriptDefinition,
   TestLabDocument,
 } from "../../../models/schema";
-import { useServiceStore } from "../../../store/useServiceStore";
-import { findCatalogEntry, type BlockCatalog } from "../blocks/catalogLoader";
+import { useServiceStore } from "../../../store/slices/useServiceStore";
+import { findCatalogEntry, type BlockCatalog } from "../blocks";
 import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, serializeStructuralBlock } from "./helpers";
 import { toRuntimeStepType } from "./stepTypeAliases";
 import { parseUnsupportedParams } from "./unsupportedStepPayload";
-import { workspaceToTck } from "./workspaceToTck";
+import { parseJsonWithVarRefs } from "../blocks/json/modal/jsonVarRefs";
 import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
@@ -44,11 +44,6 @@ export function workspaceToModel(
   workspace: Workspace,
   catalog: BlockCatalog
 ): Partial<TestLabDocument> {
-  const tckRoot = workspace.getBlocksByType("tck_root", false)[0];
-  if (tckRoot) {
-    return workspaceToTck(tckRoot);
-  }
-
   const rootBlock = workspace.getBlocksByType("test_root", false)[0];
   if (!rootBlock) return {};
 
@@ -189,17 +184,18 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           break;
         }
         case "json": {
-          const jsonObj: Record<string, unknown> = {};
-          let kvBlock = block.getInputTargetBlock(fieldKey);
-          while (kvBlock) {
-            if (kvBlock.type === "key_value_pair") {
-              const key = kvBlock.getFieldValue("KEY") || "";
-              const value = readValueBlockAsUnknown(kvBlock.getInputTargetBlock("VALUE"));
-              if (key && value !== undefined) jsonObj[key] = value;
+          const connected = block.getInputTargetBlock(fieldKey);
+          if (connected && connected.type === "value_json") {
+            const raw = connected.getFieldValue("JSON_VALUE") || "{}";
+            try {
+              const parsed: unknown = parseJsonWithVarRefs(raw);
+              if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                params[p.name] = parsed;
+              }
+            } catch {
+              // Invalid JSON stored — skip
             }
-            kvBlock = kvBlock.getNextBlock();
           }
-          if (Object.keys(jsonObj).length > 0) params[p.name] = jsonObj;
           break;
         }
         case "steps": {

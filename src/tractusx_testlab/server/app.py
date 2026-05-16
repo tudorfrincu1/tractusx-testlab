@@ -30,17 +30,22 @@ import importlib.metadata
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
-from tractusx_sdk.extensions.testlab.config.loader import ConfigLoader
-from tractusx_sdk.extensions.testlab.config.settings import TestlabConfig
-from tractusx_sdk.extensions.testlab.player.execution.player import TestlabPlayer
-from tractusx_sdk.extensions.testlab.server.callbacks import CallbackManager
-from tractusx_sdk.extensions.testlab.server.storage import PackageStorage
+from tractusx_testlab.config.loader import ConfigLoader
+from tractusx_testlab.config.settings import TestlabConfig
+from tractusx_testlab.player.execution.player import TestlabPlayer
+from tractusx_testlab.server.callbacks import CallbackManager
+from tractusx_testlab.server.mock_registry import get_mock, get_callback_manager, set_callback_manager
+from tractusx_testlab.server.storage import PackageStorage
 
 from tractusx_testlab.server.routes import router
+
+_logger = logging.getLogger(__name__)
 
 
 def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
@@ -61,7 +66,9 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
     # Shared instances — stored on app.state for FastAPI dependency injection
     app.state.player = TestlabPlayer(config=config)
     app.state.storage = PackageStorage(base_dir=Path(config.storage_dir) / "packages")
-    app.state.callbacks = CallbackManager()
+    existing_manager = get_callback_manager()
+    app.state.callbacks = existing_manager if existing_manager is not None else CallbackManager()
+    set_callback_manager(app.state.callbacks)
 
     app.include_router(router)
 
@@ -80,5 +87,34 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
         except importlib.metadata.PackageNotFoundError:
             version = "unknown"
         return JSONResponse(content={"status": "ok", "version": version})
+
+    # ── Catch-all for mock endpoints registered at arbitrary paths ─────
+    # SUTs send callbacks to URLs like /companycertificate/status.
+    # This route must be added LAST so it doesn't shadow named routes.
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    async def mock_catch_all(path: str, request: Request) -> JSONResponse:
+        """Handle inbound calls to dynamically-registered mock endpoints."""
+        full_path = f"/{path}"
+        method = request.method
+        headers = dict(request.headers)
+        body = None
+        if method in ("POST", "PUT"):
+            try:
+                body = await request.json()
+            except ValueError:
+                body = {}
+
+        callbacks: CallbackManager = app.state.callbacks
+        mock = get_mock(full_path, method)
+
+        # Resolve the callback listener (so wait_for_call steps unblock)
+        matched = callbacks.resolve(full_path, method, headers, body)
+        if mock is not None:
+            _logger.info("Mock catch-all matched %s %s -> %d", method, full_path, mock.status_code)
+            return JSONResponse(content=mock.body, status_code=mock.status_code)
+        if matched:
+            return JSONResponse(content={"status": "received"})
+
+        raise HTTPException(404, f"No mock or listener for {method} {full_path}")
 
     return app

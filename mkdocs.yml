@@ -167,6 +167,11 @@ nav:
     - Development Workflow: tutorials/development-workflow.md
     - Debugging: tutorials/debugging.md
     - CCM Conformity Testing: tutorials/ccm-conformity-testing.md
+    - Certificate Management:
+      - Overview: tutorials/certificate-management-ide-guide.md
+      - Business Guide: tutorials/ccm-business-guide.md
+      - Developer Guide: tutorials/ccm-developer-guide.md
+      - Architecture Guide: tutorials/ccm-architecture-guide.md
     - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
