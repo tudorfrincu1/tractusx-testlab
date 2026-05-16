@@ -78,6 +78,12 @@ class HttpRequestStep(BaseStep):
         except (ValueError, TypeError):
             resp_body = resp.text
 
+        # Auto-store response body fields in context for downstream access
+        if isinstance(resp_body, dict):
+            for key, val in resp_body.items():
+                context.set_variable(key, val)
+        context.set_variable("status_code", resp.status_code)
+
         return StepOutput(
             value=resp_body,
             request=req,

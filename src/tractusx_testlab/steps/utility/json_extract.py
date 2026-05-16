@@ -51,6 +51,9 @@ def _extract_by_path(data: object, path: str) -> object:
     """
     current = data
     for segment in path.split("."):
+        # Handle bracket notation: [0], [1], etc.
+        if segment.startswith("[") and segment.endswith("]"):
+            segment = segment[1:-1]
         if isinstance(current, dict):
             current = current[segment]
         elif isinstance(current, (list, tuple)):
@@ -77,7 +80,9 @@ class JsonPathExtractStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinition
     ) -> StepOutput:
-        source_name = params["source"]
+        source_name = params.get("source") or params.get("variable")
+        if source_name is None:
+            raise KeyError("json_path_extract requires either 'source' or 'variable' param")
         path = params["path"]
 
         data = context.get_variable(source_name)
@@ -86,4 +91,10 @@ class JsonPathExtractStep(BaseStep):
 
         extracted = _extract_by_path(data, path)
         logger.debug("Extracted '%s' from '%s': %s", path, source_name, type(extracted).__name__)
+
+        store_in = params.get("store_in_variable")
+        if store_in:
+            context.set_variable(store_in, extracted)
+            logger.debug("Stored extracted value in variable '%s'", store_in)
+
         return StepOutput(value=extracted)

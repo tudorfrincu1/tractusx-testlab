@@ -22,38 +22,21 @@
 ## It was reviewed and tested by a human committer.
 
 kind: test
-name: validate-certificate-payload
+name: available-notification
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Discover certificate Submodel asset in provider catalog via EDC,
-  negotiate + pull via EDR, and validate against CX-0135
-  BusinessPartnerCertificate semantic model v3.1.0.
+  Test CX-0135 AVAILABLE notification: Certificate Provider notifies Consumer
+  that a new certificate is available via POST /companycertificate/available.
 
 services:
   - name: provider_edc
     type: connector_consumer
     base_url: "@provider_address"
 
-setup:
-  - type: import_variable
-    description: Import document ID from request test
-    params:
-      test: request-certificate
-      select: document_id
-      store_in_variable: document_id
-
-  - type: load_schema
-    description: Load BusinessPartnerCertificate v3.1.0 schema
-    params:
-      name: bpc_schema
-      source: file
-      path: ../schemas/business_partner_certificate_schema.json
-      store_in_variable: bpc_schema
-
 steps:
   - type: query_catalog
-    description: Discover certificate Submodel asset in provider catalog
+    description: Discover CCMAPI notification endpoint in SUT catalog
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
@@ -61,78 +44,77 @@ steps:
         filter_expression:
           - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
             operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
+            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
           - operand_left: "http://purl.org/dc/terms/subject"
             operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          - operand_left: "https://w3id.org/catenax/ontology/common#version"
+            operator: "="
+            operand_right: "3.0"
     expect:
       - type: "NOT_NULL"
         output: datasets
 
   - type: json_path_extract
-    description: Extract certificate asset ID
+    description: Extract CCMAPI asset ID
     params:
       variable: "datasets"
       path: "[0].@id"
-      store_in_variable: cert_asset_id
+      store_in_variable: avail_asset_id
 
   - type: json_path_extract
-    description: Extract certificate offer policy
+    description: Extract offer policy
     params:
       variable: "datasets"
       path: "[0].odrl:hasPolicy"
-      store_in_variable: cert_offer_id
+      store_in_variable: avail_offer_id
 
   - type: negotiate
-    description: Negotiate contract for certificate asset
+    description: Negotiate contract for available notification channel
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
-      offer_id: "@cert_offer_id"
-      asset_id: "@cert_asset_id"
-      store_in_variable: cert_agreement_id
+      offer_id: "@avail_offer_id"
+      asset_id: "@avail_asset_id"
+      store_in_variable: avail_agreement_id
 
   - type: initiate_transfer
-    description: Get dataplane credentials for certificate
+    description: Get dataplane credentials
     params:
       service: provider_edc
-      agreement_id: "@cert_agreement_id"
-      asset_id: "@cert_asset_id"
+      agreement_id: "@avail_agreement_id"
+      asset_id: "@avail_asset_id"
       transfer_type: "HttpData-PULL"
 
-  - type: http_call_dataplane
-    description: Fetch certificate payload via data plane
+  - type: generate_uuid
+    description: Generate available notification message ID
     params:
-      method: GET
-      url: "@data_address/companycertificate/@document_id"
+      store_in_variable: avail_message_id
+
+  - type: http_call_dataplane
+    description: Send certificate available notification to SUT
+    params:
+      method: POST
+      url: "@data_address/companycertificate/available"
       edr_token: "@edr_token"
       headers:
-        Accept: "application/json"
-    store_in_memory:
-      certificate_json: "response_body"
+        Content-Type: "application/json"
+      body:
+        header:
+          messageId: "urn:uuid:@avail_message_id"
+          context: "CompanyCertificateManagement-CCMAPI-Available:1.0.0"
+          sentDateTime: "2026-01-01T00:00:00Z"
+          senderBpn: "@consumer_bpn"
+          receiverBpn: "@provider_bpn"
+          relatedMessageId: "urn:uuid:@avail_message_id"
+          version: "3.1.0"
+          senderFeedbackUrl: "@testlab_dsp_url"
+        content:
+          documentId: "cert-asset-001"
+          certificateType: "@certificate_type"
+          locationBpns:
+            - "@location_bpns"
     expect:
       - type: "EQUALS"
         output: status_code
         value: 200
-      - type: "NOT_EMPTY"
-        output: response_body
-      - type: "SCHEMA_VALIDATION"
-        output: response_body
-        schema: "@bpc_schema"
-      - type: "ASSERT_FIELD"
-        output: response_body
-        path: "certificateType"
-        operator: "equals"
-        expected: "@certificate_type"
-
-  - type: json_path_extract
-    description: Validate certificate type matches requested type
-    params:
-      variable: "certificate_json"
-      path: "certificateType"
-    expect:
-      - type: "EQUALS"
-        output: value
-        value: "@certificate_type"
-
-

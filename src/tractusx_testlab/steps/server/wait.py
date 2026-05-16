@@ -41,20 +41,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _DEFAULT_TIMEOUT_S = 30.0
-_TESTLAB_PREFIX = "/testlab"
 
 
 def _extract_path_from_endpoint_url(endpoint_url: str) -> str:
     """Extract the callback path from a mock endpoint URL.
 
     The ``MockEndpointStep`` output is a full URL like
-    ``http://localhost:8080/testlab/callbacks/some/path``.
-    We need just ``/callbacks/some/path``.
+    ``http://localhost:8080/companycertificate/status``.
+    We need just ``/companycertificate/status``.
     """
-    parsed_path = urlparse(endpoint_url).path
-    if parsed_path.startswith(_TESTLAB_PREFIX):
-        return parsed_path[len(_TESTLAB_PREFIX):]
-    return parsed_path
+    return urlparse(endpoint_url).path
 
 
 @step("wait_for_call")
@@ -75,9 +71,9 @@ class WaitForCallStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinition
     ) -> StepOutput:
-        endpoint_url: str = params["endpoint_id"]
+        raw_endpoint_id: str = params["endpoint_id"]
         method: str = params.get("method", "POST").upper()
-        timeout: float = params.get("timeout_s", _DEFAULT_TIMEOUT_S)
+        timeout: float = float(params.get("timeout_s", _DEFAULT_TIMEOUT_S))
 
         manager = get_callback_manager()
         if manager is None:
@@ -85,7 +81,19 @@ class WaitForCallStep(BaseStep):
                 "No CallbackManager available — wait_for_call requires the TestLab server"
             )
 
-        full_path = _extract_path_from_endpoint_url(endpoint_url)
+        # endpoint_id may be a full URL (from a previous step output) or a plain
+        # string ID referencing a mock registered via MockEndpointStep.  When it
+        # looks like a URL we parse the path directly; otherwise we look up the
+        # context variable that MockEndpointStep stored under that ID.
+        if raw_endpoint_id.startswith(("http://", "https://")):
+            full_path = _extract_path_from_endpoint_url(raw_endpoint_id)
+        else:
+            stored_url = context.get_variable(raw_endpoint_id)
+            if stored_url and isinstance(stored_url, str) and stored_url.startswith(("http://", "https://")):
+                full_path = _extract_path_from_endpoint_url(stored_url)
+            else:
+                # Treat the raw value as a path fragment
+                full_path = f"/{raw_endpoint_id}" if not raw_endpoint_id.startswith("/") else raw_endpoint_id
 
         manager.register(full_path, method)
         logger.info("Waiting up to %.0fs for %s %s", timeout, method, full_path)
@@ -98,4 +106,9 @@ class WaitForCallStep(BaseStep):
             )
 
         logger.info("Received callback on %s %s", method, full_path)
-        return StepOutput(value=result.payload)
+        return StepOutput(value={
+            "method": result.method,
+            "path": result.path,
+            "headers": result.headers,
+            "body": result.payload,
+        })

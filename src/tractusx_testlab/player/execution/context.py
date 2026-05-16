@@ -148,12 +148,18 @@ class StepContext:
         return None
 
     def _get_base_url(self, stype: ServiceType) -> str:
-        """Return ``base_url + dma_path`` for the first service of *stype*."""
+        """Return ``base_url + dma_path`` for the first service of *stype*.
+
+        Avoids doubling the management path if the base_url already ends with it.
+        """
         service_definition = self._first_definition_of_type(stype)
         if service_definition is None:
             return ""
         dma = (service_definition.params or {}).get("dma_path", defaults.DMA_PATH)
-        return f"{service_definition.base_url}{dma}"
+        base = service_definition.base_url.rstrip("/")
+        if base.endswith(dma.rstrip("/")):
+            return base
+        return f"{base}{dma}"
 
     def get_provider_base_url(self) -> str:
         """Return ``base_url + dma_path`` for the first provider service."""

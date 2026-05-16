@@ -22,13 +22,12 @@
 ## It was reviewed and tested by a human committer.
 
 kind: test
-name: request-certificate
+name: push-certificate
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Request certificate via CCMAPI endpoint per CX-0135 v3.1.0.
-  Query catalog for CCMAPI offers (dct:type + dct:subject + cx-common:version),
-  negotiate contract, and POST certificate request with header+content envelope.
+  Test CX-0135 PUSH mechanism: Certificate Provider pushes a certificate
+  to the Certificate Consumer via EDC data plane POST /companycertificate/push.
 
 services:
   - name: provider_edc
@@ -37,7 +36,7 @@ services:
 
 steps:
   - type: query_catalog
-    description: Discover CCMAPI offers in provider catalog
+    description: Discover CCMAPI notification endpoint in SUT catalog
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
@@ -57,109 +56,84 @@ steps:
         output: datasets
 
   - type: json_path_extract
-    description: Extract CCMAPI asset ID from catalog datasets
+    description: Extract CCMAPI asset ID
     params:
       variable: "datasets"
       path: "[0].@id"
-      store_in_variable: ccmapi_asset_id
-    expect:
-      - type: "NOT_NULL"
-        output: value
+      store_in_variable: push_asset_id
 
   - type: json_path_extract
-    description: Extract CCMAPI offer policies
+    description: Extract offer policy
     params:
       variable: "datasets"
       path: "[0].odrl:hasPolicy"
-      store_in_variable: ccmapi_offer_id
-    expect:
-      - type: "NOT_NULL"
-        output: value
+      store_in_variable: push_offer_id
 
   - type: negotiate
-    description: Negotiate contract for CCMAPI asset
+    description: Negotiate contract for push channel
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
-      offer_id: "@ccmapi_offer_id"
-      asset_id: "@ccmapi_asset_id"
-      store_in_variable: contract_agreement_id
-    expect:
-      - type: "NOT_NULL"
-        output: agreement_id
+      offer_id: "@push_offer_id"
+      asset_id: "@push_asset_id"
+      store_in_variable: push_agreement_id
 
   - type: initiate_transfer
-    description: Get dataplane access credentials
+    description: Get dataplane credentials for push
     params:
       service: provider_edc
-      agreement_id: "@contract_agreement_id"
-      asset_id: "@ccmapi_asset_id"
+      agreement_id: "@push_agreement_id"
+      asset_id: "@push_asset_id"
       transfer_type: "HttpData-PULL"
 
   - type: generate_uuid
-    description: Generate request message ID
+    description: Generate push message ID
     params:
-      store_in_variable: request_uuid
+      store_in_variable: push_message_id
 
   - type: http_call_dataplane
-    description: POST certificate request to CCMAPI endpoint via data plane
+    description: Push certificate to SUT via data plane
     params:
       method: POST
-      url: "@data_address/companycertificate/request"
+      url: "@data_address/companycertificate/push"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"
       body:
         header:
-          messageId: "urn:uuid:@request_uuid"
-          context: "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
+          messageId: "urn:uuid:@push_message_id"
+          context: "CompanyCertificateManagement-CCMAPI-Push:1.0.0"
           sentDateTime: "2026-01-01T00:00:00Z"
           senderBpn: "@consumer_bpn"
           receiverBpn: "@provider_bpn"
-          relatedMessageId: "urn:uuid:@request_uuid"
+          relatedMessageId: "urn:uuid:@push_message_id"
           version: "3.1.0"
           senderFeedbackUrl: "@testlab_dsp_url"
         content:
-          certifiedBpn: "@provider_bpn"
-          certificateType: "@certificate_type"
-          locationBpns:
-            - "@location_bpns"
-    store_in_memory:
-      request_status: "response_body.content.requestStatus"
-      document_id: "response_body.content.documentId"
-      request_id: "response_body.header.relatedMessageId"
+          businessPartnerNumber: "@provider_bpn"
+          enclosedSites:
+            - enclosedSiteBpn: "@location_bpns"
+          registrationNumber: "CERT-PUSH-001"
+          uploader: "@consumer_bpn"
+          document:
+            documentID: "UUID--PUSH-001"
+            creationDate: "2026-01-01T00:00:00Z"
+            contentType: "application/pdf"
+            contentBase64: "iVBORw0KGgoAAAANSUhEUgA="
+          validator:
+            validatorName: "TÜV SÜD"
+            validatorBpn: "BPNL133631123120"
+          validUntil: "2028-12-31"
+          validFrom: "2026-01-01"
+          trustLevel: "none"
+          type:
+            certificateVersion: "2015"
+            certificateType: "@certificate_type"
+          areaOfApplication: "Quality Management"
+          issuer:
+            issuerName: "TÜV SÜD"
+            issuerBpn: "BPNL133631123120"
     expect:
       - type: "EQUALS"
         output: status_code
         value: 200
-      - type: "ASSERT_FIELD"
-        output: response_body
-        path: "content.requestStatus"
-        operator: "not_null"
-      - type: "ASSERT_FIELD"
-        output: response_body
-        path: "content.documentId"
-        operator: "not_null"
-
-teardown:
-  - type: export_variable
-    description: Export request ID for downstream tests
-    params:
-      name: request_id
-
-  - type: export_variable
-    description: Export document ID for payload validation
-    params:
-      name: document_id
-
-  - type: export_variable
-    description: Export data address for payload fetch
-    params:
-      name: data_address
-
-  - type: export_variable
-    description: Export EDR token for downstream tests
-    params:
-      name: edr_token
-
-

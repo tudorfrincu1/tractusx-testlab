@@ -131,4 +131,4 @@ class Loader:
                 imports=[],
             )
 
-        return Tck(definition)
+        return Tck(definition, base_dir=base_dir)

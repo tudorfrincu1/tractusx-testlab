@@ -60,11 +60,15 @@ class LoadSchemaStep(BaseStep):
         if source != "file":
             raise ValueError(f"Unsupported schema source: {source}. Only 'file' is supported.")
 
-        schema_path = (
-            Path(context.config.tck_root) / path
-            if hasattr(context.config, "tck_root")
-            else Path(path)
-        )
+        schema_path: Path
+        tck_root = context.get_variable("_tck_root")
+        if tck_root:
+            # Strip leading ../ sequences — paths are relative to TCK root, not subdirs
+            import re
+            normalized = re.sub(r'^(\.\.[\\/])+', '', path)
+            schema_path = (Path(tck_root) / normalized).resolve()
+        else:
+            schema_path = Path(path).resolve()
 
         if not schema_path.exists():
             raise FileNotFoundError(f"Schema file not found: {schema_path}")

@@ -200,7 +200,7 @@ def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_step
 
         player.monitor.add_callback(_on_progress)
         return asyncio.run(
-            player.run_test_case(tck, runtime_vars=runtime_vars or None)
+            player.run_tck(tck, runtime_vars=runtime_vars or None)
         )
 
 

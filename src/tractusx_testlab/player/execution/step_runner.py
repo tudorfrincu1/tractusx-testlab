@@ -98,16 +98,34 @@ def store_step_outputs(
 
     store_in_var = getattr(step_def, "store_in_variable", None)
     if store_in_var and not step_def.store_in_memory:
-        context.set_variable(store_in_var, step_result.output)
+        # Unwrap StepOutput: store the .value so downstream @var refs get usable data
+        from tractusx_testlab.steps.base import StepOutput
+        output = step_result.output
+        if isinstance(output, StepOutput):
+            output = output.value
+        context.set_variable(store_in_var, output)
         return
 
     if not step_def.store_in_memory:
         return
+
+    # Reconstruct StepOutput for path resolution with aliases like response_body
+    from tractusx_testlab.steps.base import StepOutput
+    raw = step_result.output
+    if isinstance(raw, StepOutput):
+        full_output = raw
+    else:
+        full_output = StepOutput(
+            value=raw,
+            request=step_result.request,
+            response=step_result.response,
+        )
+
     for var_name, output_path in step_def.store_in_memory.items():
         if output_path == ".":
-            value = step_result.output
+            value = full_output.value
         else:
-            value = AssertionEngine.extract_path(step_result.output, output_path)
+            value = AssertionEngine.extract_path(full_output, output_path)
         context.set_variable(var_name, value)
 
 

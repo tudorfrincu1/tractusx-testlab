@@ -37,28 +37,57 @@ if TYPE_CHECKING:
 
 
 def resolve_str(value: str, context: "StepContext") -> str:
-    """Replace ``${var}`` references in a single string."""
-    return patterns.VAR_REF.sub(
+    """Replace ``${var}`` and ``@var`` references in a single string.
+
+    If the entire string is a single ``@var`` reference, returns the raw variable
+    value (preserving dicts, lists, etc.). Otherwise performs string interpolation.
+    """
+    # Whole-string @var → return raw value (preserving type)
+    if value.startswith("@") and patterns.AT_VAR_REF.fullmatch(value):
+        var_name = value[1:]
+        resolved = context.get_variable(var_name)
+        return resolved if resolved is not None else value
+
+    # Inline @var replacements within a larger string (e.g. "@base_url/path")
+    result = patterns.AT_VAR_REF.sub(
         lambda m: str(context.get_variable(m.group(1), m.group(0))),
         value,
     )
 
+    # Also handle ${var} references
+    result = patterns.VAR_REF.sub(
+        lambda m: str(context.get_variable(m.group(1), m.group(0))),
+        result,
+    )
+    return result
+
+
+def _resolve_value(value: object, context: "StepContext") -> object:
+    """Recursively resolve variable references in any value type."""
+    if isinstance(value, str):
+        return resolve_str(value, context)
+    if isinstance(value, dict):
+        return resolve_params(value, context)
+    if isinstance(value, list):
+        return [_resolve_value(item, context) for item in value]
+    return value
+
 
 def resolve_params(params: dict, context: "StepContext") -> dict:
-    """Replace ``${var}`` references in param values with context variables."""
-    resolved: dict[str, Any] = {}
+    """Replace ``${var}`` and ``@var`` references in param values with context variables."""
+    resolved: dict[str, object] = {}
     for key, value in params.items():
-        if isinstance(value, str):
-            resolved[key] = resolve_str(value, context)
-        elif isinstance(value, dict):
-            resolved[key] = resolve_params(value, context)
-        else:
-            resolved[key] = value
+        resolved[key] = _resolve_value(value, context)
     return resolved
 
 
 def resolve_service_def(svc_def: ServiceDefinition, context: "StepContext") -> ServiceDefinition:
-    """Return a copy of *svc_def* with ``${var}`` references resolved."""
+    """Return a copy of *svc_def* with ``${var}`` and ``@var`` references resolved."""
+    resolved_base_url = resolve_str(svc_def.base_url, context)
+    if isinstance(resolved_base_url, str):
+        base_url = resolved_base_url
+    else:
+        base_url = str(resolved_base_url)
     resolved_auth = {
         auth_key: resolve_str(auth_value, context) if isinstance(auth_value, str) else auth_value
         for auth_key, auth_value in svc_def.auth.items()
@@ -72,7 +101,7 @@ def resolve_service_def(svc_def: ServiceDefinition, context: "StepContext") -> S
     return ServiceDefinition(
         name=svc_def.name,
         type=svc_def.type,
-        base_url=resolve_str(svc_def.base_url, context),
+        base_url=base_url,
         auth=resolved_auth,
         params=resolved_params,
     )

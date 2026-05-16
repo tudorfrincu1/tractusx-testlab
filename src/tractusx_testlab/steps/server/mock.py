@@ -44,7 +44,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _VARIABLE_PREFIX = "@"
-_CALLBACKS_PATH_PREFIX = "/callbacks"
 
 
 def _resolve_variables(obj: dict | list | str, context: "StepContext") -> dict | list | str:
@@ -85,16 +84,23 @@ class MockEndpointStep(BaseStep):
 
         resolved_body = _resolve_variables(raw_body, context)
 
-        full_path = f"{_CALLBACKS_PATH_PREFIX}{path}"
-        register_mock(full_path, method, MockResponse(status_code=status_code, body=resolved_body))
+        # Use the path as-is — it must match the URL the SUT will call
+        if not path.startswith("/"):
+            path = f"/{path}"
+        register_mock(path, method, MockResponse(status_code=status_code, body=resolved_body))
 
         # Pre-register a callback listener so wait_for_call can block on it
         callback_manager = get_callback_manager()
         if callback_manager is not None:
-            callback_manager.register(full_path, method)
+            callback_manager.register(path, method)
 
         port = context.config.server_port
-        endpoint_url = f"http://localhost:{port}/testlab{full_path}"
+        endpoint_url = f"http://localhost:{port}{path}"
 
-        logger.info("Registered mock endpoint %s %s -> %d", method, full_path, status_code)
+        # Store the URL under the mock's ID so wait_for_call can look it up
+        mock_id: str | None = params.get("id")
+        if mock_id:
+            context.set_variable(mock_id, endpoint_url)
+
+        logger.info("Registered mock endpoint %s %s -> %d", method, path, status_code)
         return StepOutput(value=endpoint_url)

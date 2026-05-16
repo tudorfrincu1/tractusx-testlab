@@ -72,7 +72,8 @@ def _normalize_asset_params(params: dict) -> dict:
 @step("create_asset")
 class CreateAssetStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        provider = context.get_provider_service()
+        service_name = params.get("service")
+        provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/assets"
         resolved = _normalize_asset_params(params)
         result = provider.create_asset(
@@ -86,12 +87,13 @@ class CreateAssetStep(BaseStep):
             private_properties=resolved.get("private_properties"),
             context=resolved.get("context"),
         )
+        asset_id = resolved["asset_id"]
         return StepOutput(
-            value=result,
+            value=asset_id,
             request=HttpRequest(method="POST", url=url, body=resolved),
             response=HttpResponse(
                 status_code=200 if result else 500,
-                body=result,
+                body={"asset_id": asset_id, **(result if isinstance(result, dict) else {})},
             ),
         )
 
@@ -99,7 +101,8 @@ class CreateAssetStep(BaseStep):
 @step("create_policy")
 class CreatePolicyStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        provider = context.get_provider_service()
+        service_name = params.get("service")
+        provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/policydefinitions"
 
         # CCM format may omit policy_id — auto-generate if missing
@@ -124,16 +127,20 @@ class CreatePolicyStep(BaseStep):
             obligations=params.get("obligations", []),
         )
         return StepOutput(
-            value=result,
+            value=policy_id,
             request=HttpRequest(method="POST", url=url, body=request_body),
-            response=HttpResponse(status_code=200 if result else 500, body=result),
+            response=HttpResponse(
+                status_code=200 if result else 500,
+                body={"policy_id": policy_id, **(result if isinstance(result, dict) else {})},
+            ),
         )
 
 
 @step("create_contract_definition", aliases=["create_contract_def"])
 class CreateContractDefinitionStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        provider = context.get_provider_service()
+        service_name = params.get("service")
+        provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions"
 
         # CCM format may omit contract_id — auto-generate if missing
@@ -141,18 +148,31 @@ class CreateContractDefinitionStep(BaseStep):
 
         # CCM uses contract_policy_id as alias for usage_policy_id
         usage_policy_id = params.get("usage_policy_id") or params.get("contract_policy_id", "")
+        # When the resolved value is a dict (from store_in_variable), extract the ID
+        if isinstance(usage_policy_id, dict):
+            usage_policy_id = usage_policy_id.get("policy_id") or usage_policy_id.get("@id", "")
 
         # CCM may use asset_selector instead of flat asset_id
         asset_id = params.get("asset_id", "")
 
+        access_policy_id = params.get("access_policy_id", "")
+        if isinstance(access_policy_id, dict):
+            access_policy_id = access_policy_id.get("policy_id") or access_policy_id.get("@id", "")
+
+        if isinstance(asset_id, dict):
+            asset_id = asset_id.get("asset_id") or asset_id.get("@id", "")
+
         result = provider.create_contract(
             contract_id=contract_id,
             usage_policy_id=usage_policy_id,
-            access_policy_id=params.get("access_policy_id", ""),
+            access_policy_id=access_policy_id,
             asset_id=asset_id,
         )
         return StepOutput(
-            value=result,
+            value=contract_id,
             request=HttpRequest(method="POST", url=url, body=params),
-            response=HttpResponse(status_code=200 if result else 500, body=result),
+            response=HttpResponse(
+                status_code=200 if result else 500,
+                body={"contract_def_id": contract_id, **(result if isinstance(result, dict) else {})},
+            ),
         )

@@ -82,9 +82,21 @@ def check_schema(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
         return False, f"Invalid schema: {exc}"
 
 
-def check_schema_validation(_actual: Any, _expected: Any, _output: Any) -> tuple[bool, str]:
-    """Validate against a schema URN — placeholder until external resolver is wired."""
-    return False, "SCHEMA_VALIDATION requires external schema resolver (not yet wired)"
+def check_schema_validation(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+    """Validate *actual* against a JSON schema provided in *expected*.
+
+    *expected* should be a parsed JSON schema dict (loaded by ``load_schema``).
+    """
+    if expected is None:
+        return False, "SCHEMA_VALIDATION: no schema provided"
+    try:
+        schema = expected if isinstance(expected, dict) else json.loads(expected)
+        jsonschema.validate(actual, schema)
+        return True, ""
+    except jsonschema.ValidationError as exc:
+        return False, f"Schema validation failed: {exc.message}"
+    except (json.JSONDecodeError, TypeError) as exc:
+        return False, f"Invalid schema: {exc}"
 
 
 def check_not_null(actual: Any, _expected: Any, _output: Any) -> tuple[bool, str]:

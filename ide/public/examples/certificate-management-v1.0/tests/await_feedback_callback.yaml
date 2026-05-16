@@ -27,7 +27,7 @@ version: "1.0"
 dataspace_version: "saturn"
 description: >
   Listen for provider callback after certificate processing and verify
-  feedback payload semantics for CX-0135 path /companycertificate/status.
+  CX-0135 header+content envelope on /companycertificate/status.
 
 setup:
   - type: import_variable
@@ -64,46 +64,49 @@ steps:
       - type: "EQUALS"
         output: path
         value: "/companycertificate/status"
-      # assert_field: assert fields directly on the callback body without
-      # a separate json_path_extract step. The schema-aware path builder
-      # in the IDE autocompletes valid paths from the response schema.
       - type: "ASSERT_FIELD"
         output: body
-        path: "requestId"
-        operator: "equals"
-        expected: "@request_id"
+        path: "header.relatedMessageId"
+        operator: "not_null"
       - type: "ASSERT_FIELD"
         output: body
-        path: "feedbackStatus"
+        path: "content.certificateStatus"
+        operator: "not_null"
+      - type: "ASSERT_FIELD"
+        output: body
+        path: "content.documentId"
+        operator: "not_null"
+      - type: "ASSERT_FIELD"
+        output: body
+        path: "content.locationBpns"
         operator: "not_null"
 
   - type: json_path_extract
-    description: Extract callback request ID
+    description: Extract callback certificate status
     params:
       variable: "callback_payload"
-      path: "requestId"
-      store_in_variable: callback_request_id
-    expect:
-      - type: "EQUALS"
-        output: value
-        value: "@request_id"
-
-  - type: json_path_extract
-    description: Extract callback feedback status
-    params:
-      variable: "callback_payload"
-      path: "feedbackStatus"
-      store_in_variable: callback_feedback_status
+      path: "content.certificateStatus"
+      store_in_variable: callback_certificate_status
     expect:
       - type: "NOT_NULL"
         output: value
 
   - type: json_path_extract
-    description: Extract callback feedback message
+    description: Extract callback document ID
     params:
       variable: "callback_payload"
-      path: "feedbackMessage"
-      store_in_variable: callback_feedback_message
+      path: "content.documentId"
+      store_in_variable: callback_document_id
+    expect:
+      - type: "NOT_NULL"
+        output: value
+
+  - type: json_path_extract
+    description: Extract related message ID from callback header
+    params:
+      variable: "callback_payload"
+      path: "header.relatedMessageId"
+      store_in_variable: callback_related_message_id
     expect:
       - type: "NOT_NULL"
         output: value

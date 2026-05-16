@@ -25,7 +25,7 @@ kind: tck
 name: certificate-management
 version: "0.0.1"
 description: >
-  Validate CCMAPI certificate management workflow per CX-0135 v2.4.0:
+  Validate CCMAPI certificate management workflow per CX-0135 v3.1.0:
   (1) Request certificate from provider
   (2) Validate certificate payload against schema
   (3) Await provider feedback callback
@@ -34,7 +34,7 @@ description: >
 author: Certificate Management Expert Group
 standards:
   - id: CX-0135
-    version: v2.4.0
+    version: v3.1.0
 tags:
   - CCM
 variables:
@@ -66,6 +66,10 @@ variables:
     type: str
     description: TestLab EDC DSP endpoint — what the SUT must point its catalog query at
     runtime: true
+  testlab_mock_base_url:
+    type: str
+    description: Base URL for TestLab mock server endpoints
+    runtime: true
   sut_response_timeout:
     type: int
     description: Seconds to wait for SUT to negotiate and pull data from TestLab
@@ -82,4 +86,10 @@ tests:
     description: Send CCMAPI feedback notification to provider and await acknowledgment
   - test: tests/expose_testlab_asset.yaml
     description: Register a CCMAPI asset in TestLab EDC, expose mock data, and verify SUT consumer behavior
+  - test: tests/push_certificate.yaml
+    description: Push certificate to SUT via EDC data plane (CX-0135 PUSH mechanism)
+  - test: tests/available_notification.yaml
+    description: Send certificate availability notification to SUT (CX-0135 AVAILABLE mechanism)
+  - test: tests/error_handling.yaml
+    description: Verify CX-0135 error handling and REJECTED status flow
 

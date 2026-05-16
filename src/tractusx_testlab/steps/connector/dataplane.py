@@ -49,6 +49,8 @@ class DataplaneCallStep(BaseStep):
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         endpoint = params.get("url") or params.get("endpoint") or context.get_variable(DATAPLANE_ENDPOINT)
+        if isinstance(endpoint, dict):
+            endpoint = endpoint.get("endpoint") or endpoint.get("baseUrl")
         token = params.get("edr_token") or params.get("token") or context.get_variable(EDR_TOKEN)
         method = params.get("method", "GET").upper()
         body = params.get("body")

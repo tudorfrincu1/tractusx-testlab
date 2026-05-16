@@ -40,17 +40,33 @@ class CallbackManager:
     a matching request arrives or the timeout elapses.
     """
 
-    __slots__ = ("_listeners",)
+    __slots__ = ("_listeners", "_buffered", "_loop")
 
     def __init__(self) -> None:
         self._listeners: dict[str, asyncio.Future[CallbackResult]] = {}
+        self._buffered: dict[str, CallbackResult] = {}
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     def register(self, path: str, method: str) -> None:
-        """Prepare a listener slot. The future will be resolved when a request arrives."""
+        """Prepare a listener slot. The future will be resolved when a request arrives.
+
+        If a matching callback was already buffered (arrived before the listener
+        was registered), the future is resolved immediately.
+        """
         key = self._key(path, method)
         if key not in self._listeners:
-            loop = asyncio.get_event_loop()
-            self._listeners[key] = loop.create_future()
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.get_event_loop()
+            self._loop = loop
+            future: asyncio.Future[CallbackResult] = loop.create_future()
+            self._listeners[key] = future
+
+            # Check if a callback was buffered before the listener existed
+            buffered = self._buffered.pop(key, None)
+            if buffered is not None:
+                future.set_result(buffered)
 
     async def wait(self, path: str, method: str, timeout_s: float) -> CallbackResult:
         """Block until a callback arrives at *path*/*method* or *timeout_s* elapses."""
@@ -80,13 +96,9 @@ class CallbackManager:
     def resolve(self, path: str, method: str, headers: dict, payload: Any) -> bool:
         """Called by the webhook route when a request matches a listener.
 
-        Returns True if a listener was waiting.
+        Returns True if a listener was waiting or the result was buffered.
         """
         key = self._key(path, method)
-        future = self._listeners.get(key)
-        if future is None or future.done():
-            return False
-
         result = CallbackResult(
             listener_name=key,
             path=path,
@@ -95,15 +107,32 @@ class CallbackManager:
             payload=payload,
             received_at=datetime.now(timezone.utc),
         )
-        future.set_result(result)
+
+        future = self._listeners.get(key)
+        if future is not None and not future.done():
+            # Thread-safe: resolve may be called from uvicorn's background thread
+            # while the future belongs to the main event loop.
+            try:
+                current_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                current_loop = None
+            if self._loop is not None and current_loop is not self._loop:
+                self._loop.call_soon_threadsafe(future.set_result, result)
+            else:
+                future.set_result(result)
+            return True
+
+        # No listener yet — buffer for later registration
+        self._buffered[key] = result
         return True
 
     def clear(self) -> None:
-        """Cancel all pending listeners."""
+        """Cancel all pending listeners and clear buffers."""
         for future in self._listeners.values():
             if not future.done():
                 future.cancel()
         self._listeners.clear()
+        self._buffered.clear()
 
     @staticmethod
     def _key(path: str, method: str) -> str:

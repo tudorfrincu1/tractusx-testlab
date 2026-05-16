@@ -96,12 +96,19 @@ def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
 
 def parse_assertion(raw: dict) -> Assertion:
     """Parse a single assertion dict into a local Assertion model."""
+    output_val = raw.get("output")
+    path_val = raw.get(C.K_PATH)
+    if output_val and path_val:
+        combined_path = f"{output_val}.{path_val}"
+    else:
+        combined_path = output_val or path_val
+
     return Assertion(
         type=AssertionType(raw.get(C.K_TYPE, C.DEFAULT_ASSERTION_TYPE)),
         severity=AssertionSeverity(raw.get(C.K_SEVERITY, C.DEFAULT_ASSERTION_SEVERITY)),
         source=ValueSource(raw.get(C.K_SOURCE, C.DEFAULT_ASSERTION_SOURCE)),
         value=raw.get(C.K_VALUE),
-        path=raw.get(C.K_PATH),
+        path=combined_path,
         description=raw.get(C.K_DESCRIPTION),
         schema_ref=raw.get("schema"),
         min=raw.get("min"),
@@ -255,6 +262,6 @@ def _to_sdk_script_kind(raw: str):
     """Convert a raw kind string to the SDK ScriptKind enum."""
     try:
         from tractusx_testlab.models.enums import ScriptKind as SdkScriptKind
-        return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TEST_CASE}.get(raw, SdkScriptKind.TEST)
+        return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TCK}.get(raw, SdkScriptKind.TEST)
     except ImportError:
         return raw

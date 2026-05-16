@@ -52,7 +52,7 @@ class Assertion(BaseModel):
     severity: AssertionSeverity = AssertionSeverity.HARD
     source: ValueSource = ValueSource.INLINE
     value: Optional[Any] = None
-    path: Optional[str] = None
+    path: Optional[str] = Field(default=None, alias="output")
     description: Optional[str] = None
     schema_ref: Optional[str] = Field(default=None, alias="schema")
     min: Optional[Any] = None
@@ -102,6 +102,7 @@ class ScriptDefinition(BaseModel):
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)
     teardown: list[StepDefinition] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
 
 
 class ImportDefinition(BaseModel):
