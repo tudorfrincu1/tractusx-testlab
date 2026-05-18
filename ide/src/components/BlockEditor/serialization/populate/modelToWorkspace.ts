@@ -45,11 +45,17 @@ export function populateWorkspaceFromModel(
     populateTest(ws, root, model, catalog);
   }
 
-  // Pass 1: Render all blocks. This triggers Blockly's built-in field
-  // validation which may revert dropdown values that aren't yet in
-  // getOptions() (e.g. variable dropdowns before all step blocks exist).
+  // Pass 1: Render only top-level blocks. Blockly's render() cascades
+  // down the connected chain automatically. Rendering child blocks
+  // individually causes them to recalculate position independently,
+  // resulting in overlapping/piling at (0,0).
   for (const block of ws.getAllBlocks(false)) {
-    (block as unknown as { render: () => void }).render();
+    const isTopLevel =
+      !block.getParent() &&
+      (!block.previousConnection || !block.previousConnection.targetConnection);
+    if (isTopLevel) {
+      (block as unknown as { render: () => void }).render();
+    }
   }
 
   // Pass 2: Re-apply all dropdown values that were queued during block

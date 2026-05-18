@@ -80,7 +80,10 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                   .appendField(paramLabel)
                   .appendField(
                     new Blockly.FieldNumber(
-                      typeof param.default === "number" ? param.default : 0
+                      typeof param.default === "number" ? param.default : 0,
+                      -Infinity,
+                      Infinity,
+                      0
                     ),
                     fieldKey
                   );
@@ -158,6 +161,12 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                 this.appendStatementInput(fieldKey)
                   .appendField(paramLabel)
                   .setCheck("step");
+                break;
+
+              case "filter_expression_list":
+                this.appendStatementInput(fieldKey)
+                  .appendField(paramLabel)
+                  .setCheck("filter_expression");
                 break;
 
               default:

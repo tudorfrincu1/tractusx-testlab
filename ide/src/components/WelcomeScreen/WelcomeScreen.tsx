@@ -141,7 +141,7 @@ export function WelcomeScreen() {
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <img
-            src="/test-lab-app-logo-white-claim.png"
+            src={`${import.meta.env.BASE_URL}test-lab-app-logo-white-claim.png`}
             alt="Tractus-X TestLab"
             style={{ width: 260, marginBottom: 12 }}
           />

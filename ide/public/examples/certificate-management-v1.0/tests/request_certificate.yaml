@@ -36,7 +36,7 @@ services:
     base_url: "@provider_address"
 
 steps:
-  - type: query_catalog
+  - type: query_catalog_with_filters
     description: Discover CCMAPI offers in provider catalog
     params:
       service: provider_edc

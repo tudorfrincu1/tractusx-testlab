@@ -57,8 +57,8 @@ function isStepEvent(data: unknown): data is StepEvent {
   return (
     typeof data === "object" &&
     data !== null &&
-    "step_index" in data &&
-    "status" in data
+    "status" in data &&
+    ("step_index" in data || "step_name" in data)
   );
 }
 
@@ -135,24 +135,39 @@ export function handleSseEvent(
   }
 }
 
+/* ── Phase normalization ─────────────────────────────────────────────────── */
+
+const PHASE_MAP: Record<string, ExecutionPhase> = {
+  precondition: "precondition",
+  setup: "setup",
+  main: "main",
+  cleanup: "cleanup",
+};
+
+function normalizePhase(raw: string | undefined): ExecutionPhase {
+  if (!raw) return "main";
+  return PHASE_MAP[raw.toLowerCase()] ?? "main";
+}
+
 /* ── Step event handler ─────────────────────────────────────────────────── */
 
 function handleStepEvent(set: SseSetState, event: StepEvent): void {
   const step: ExecutionStep = {
-    index: event.step_index,
+    index: event.step_index ?? 0,
     name: event.step_name,
-    type: event.step_type,
-    phase: event.phase,
+    type: event.step_type ?? "",
+    phase: normalizePhase(event.phase),
     status: event.status,
     duration_s: event.duration_s,
     error: event.error,
   };
 
   set((state) => {
-    const existing = state.steps.findIndex((s) => s.index === step.index);
+    const existing = state.steps.findIndex((s) => s.name === step.name);
     const updated = [...state.steps];
     if (existing >= 0) {
-      updated[existing] = step;
+      // Merge: keep existing fields, update with new data
+      updated[existing] = { ...updated[existing], ...step };
     } else {
       updated.push(step);
     }

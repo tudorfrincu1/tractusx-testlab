@@ -60,7 +60,7 @@ setup:
         received: true
 
 steps:
-  - type: query_catalog
+  - type: query_catalog_with_filters
     description: Find CCMAPI endpoint in provider catalog
     params:
       service: provider_edc

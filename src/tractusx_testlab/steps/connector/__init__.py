@@ -28,7 +28,7 @@ _logger = _logging.getLogger(__name__)
 
 _SDK_CONNECTOR = "tractusx_testlab.steps.connector"
 
-for _mod in ("provision", "consume", "dataplane", "cleanup", "utils", "dsp"):
+for _mod in ("provision", "consume", "dataplane", "cleanup", "utils", "dsp", "catalog_filter"):
     try:
         __import__(f"{_SDK_CONNECTOR}.{_mod}")
     except ImportError:
@@ -38,6 +38,7 @@ for _mod in ("provision", "consume", "dataplane", "cleanup", "utils", "dsp"):
 import tractusx_testlab.steps.connector.provision  # noqa: F401
 import tractusx_testlab.steps.connector.consume  # noqa: F401
 import tractusx_testlab.steps.connector.dataplane  # noqa: F401
+import tractusx_testlab.steps.connector.catalog_filter  # noqa: F401
 import tractusx_testlab.steps.connector.cleanup  # noqa: F401
 import tractusx_testlab.steps.connector.utils  # noqa: F401
 import tractusx_testlab.steps.connector.dsp  # noqa: F401

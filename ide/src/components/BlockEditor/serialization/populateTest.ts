@@ -41,6 +41,7 @@ import {
 import { populateAssertions } from "./populateAssertions";
 import { deserializePreconditionPolicyBlock } from "./preconditionSerializers";
 import { truncateJsonPreview } from "../blocks";
+import { normalizeStepParams } from "./paramNormalizers";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -65,15 +66,19 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           continue;
         }
 
-        if (step.type === "import_variable" && step.params?.file) {
+        if (step.type === "import_variable" && (step.params?.file || step.params?.test)) {
           const ib = makeBlock(ws, "import_variable");
-          setDropdownValue(ib, "FILE", String(step.params.file));
-          if (step.params.export) {
-            setDropdownValue(ib, "EXPORT_VAR", String(step.params.export));
+          const fileValue = step.params.file
+            ? String(step.params.file)
+            : `tests/${String(step.params.test)}.yaml`;
+          setDropdownValue(ib, "FILE", fileValue);
+          const exportVar = step.params.export || step.params.select;
+          if (exportVar) {
+            setDropdownValue(ib, "EXPORT_VAR", String(exportVar));
           } else if (Array.isArray(step.params.outputs) && step.params.outputs.length > 0) {
             setDropdownValue(ib, "EXPORT_VAR", String(step.params.outputs[0]));
           }
-          const varName = step.params.variable || step.params.export || "imported_var";
+          const varName = step.params.store_in_variable || step.params.variable || exportVar || "imported_var";
           ib.setFieldValue(String(varName), "OUTPUT_VAR");
           blocks.push(ib);
           continue;
@@ -99,14 +104,23 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           continue;
         }
 
-        const catalogStepType = toCatalogStepType(step.type);
+        let catalogStepType = toCatalogStepType(step.type);
+
+        // Auto-upgrade: query_catalog with 2+ filter expressions → query_catalog_with_filters
+        if (catalogStepType === "query_catalog") {
+          const filterExpr = (step.params?.filter as Record<string, unknown> | undefined)?.filter_expression;
+          if (Array.isArray(filterExpr) && filterExpr.length >= 2) {
+            catalogStepType = "query_catalog_with_filters";
+          }
+        }
+
         const entry = findCatalogEntry(catalogStepType, catalog);
         if (!entry) {
           blocks.push(createUnsupportedStepBlock(step.description, step.type, step.params));
           continue;
         }
 
-        const effectiveParams = step.params ?? {};
+        const effectiveParams = normalizeStepParams(catalogStepType, step.params ?? {});
 
         const blockType = `step_${catalogStepType}`;
         const sb = makeBlock(ws, blockType);

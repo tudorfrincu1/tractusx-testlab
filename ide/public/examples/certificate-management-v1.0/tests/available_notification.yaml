@@ -35,7 +35,7 @@ services:
     base_url: "@provider_address"
 
 steps:
-  - type: query_catalog
+  - type: query_catalog_with_filters
     description: Discover CCMAPI notification endpoint in SUT catalog
     params:
       service: provider_edc

@@ -145,7 +145,7 @@ class TestTckParseCompilePipeline:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# HTTP endpoint integration: POST /testlab/test-execution/run/yaml
+# HTTP endpoint integration: POST /testlab/test-execution/run
 # ──────────────────────────────────────────────────────────────────────
 
 
@@ -197,7 +197,7 @@ class TestRunYamlEndpointE2E:
     ) -> None:
         """Submitting a valid TCK YAML returns 202 with a job_id — no 422 error."""
         response = await async_client.post(
-            "/testlab/test-execution/run/yaml",
+            "/testlab/test-execution/run",
             content=simple_tck_yaml.encode(),
         )
 
@@ -217,7 +217,7 @@ class TestRunYamlEndpointE2E:
     ) -> None:
         """The endpoint fires player.run_tck with a Tck object containing scripts."""
         await async_client.post(
-            "/testlab/test-execution/run/yaml",
+            "/testlab/test-execution/run",
             content=simple_tck_yaml.encode(),
         )
 
@@ -246,7 +246,7 @@ class TestRunYamlEndpointE2E:
         )
 
         response = await async_client.post(
-            "/testlab/test-execution/run/yaml",
+            "/testlab/test-execution/run",
             content=single_test_yaml.encode(),
         )
 

@@ -2,7 +2,9 @@
   "type": "generate_uuid",
   "label": "Generate UUID",
   "description": "Generate a random UUID v4 and store it in a variable.",
-  "params": [],
+  "params": [
+    { "name": "store_in_variable", "type": "string", "required": false, "description": "Variable name to store the generated UUID" }
+  ],
   "outputs": [
     {
       "name": "uuid",

@@ -199,11 +199,11 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     init(this: Block) {
       this.appendDummyInput()
         .appendField("#")
-        .appendField(new Blockly.FieldNumber(0), "VALUE");
+        .appendField(new Blockly.FieldNumber(0, -Infinity, Infinity, 0), "VALUE");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
-      this.setCommentText("This is a numberic value variable")
-      this.setTooltip("A numeric value");
+      this.setCommentText("This is a numeric value variable")
+      this.setTooltip("A numeric value (supports decimals)");
     },
   };
 

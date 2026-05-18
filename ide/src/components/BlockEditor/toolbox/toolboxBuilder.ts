@@ -27,7 +27,7 @@ import { ScriptKind } from "../../../models/schema";
 import type { BlockCatalog, BlockCatalogCategory } from "../blocks";
 import { useServiceStore } from "../../../store/slices/useServiceStore";
 import { blockColors, getCategoryColor } from "../config/blockColors";
-import { PHASE_DEFINITIONS } from "./phaseConfig";
+import { PHASE_DEFINITIONS, type PhaseBlockGroup } from "./phaseConfig";
 
 export const SERVICE_TYPE_RESOLUTION: Record<string, string[]> = {
   edc_connector: ["edc_connector_saturn", "edc_connector_jupiter"],
@@ -50,11 +50,72 @@ export function getActiveDataspaceVersions(): Set<string> {
   return versions;
 }
 
+/** EDC block ordering with label separators. */
+const EDC_CONSUMER_BLOCKS = ["step_query_catalog", "step_query_catalog_with_filters", "step_negotiate", "step_initiate_transfer"];
+const EDC_PROVIDER_BLOCKS = ["step_create_asset", "step_create_policy", "step_create_contract_def"];
+const EDC_STRUCTURE_BLOCKS = [
+  "filter_expression", "asset_criterion",
+  "odrl_permission", "odrl_prohibition", "odrl_obligation",
+  "odrl_logical_constraint", "odrl_constraint",
+];
+
+/** Build the EDC Connector category with nested sub-categories. */
+function buildEdcConnectorCategory(
+  cat: BlockCatalogCategory,
+  activeVersions: Set<string>,
+): object {
+  const available = new Set(
+    cat.blocks
+      .filter(
+        (b) =>
+          !b.custom_registration &&
+          (!b.dataspace_version ||
+            activeVersions.size === 0 ||
+            activeVersions.has(b.dataspace_version)),
+      )
+      .map((b) => `step_${b.type}`),
+  );
+
+  const colour = getCategoryColor(cat.name);
+
+  const consumerContents = EDC_CONSUMER_BLOCKS
+    .filter((t) => available.has(t))
+    .map((t) => ({ kind: "block", type: t }));
+
+  const providerContents = EDC_PROVIDER_BLOCKS
+    .filter((t) => available.has(t))
+    .map((t) => ({ kind: "block", type: t }));
+
+  const structureContents = EDC_STRUCTURE_BLOCKS
+    .map((t) => ({ kind: "block", type: t }));
+
+  const subCategories: object[] = [];
+  if (consumerContents.length > 0) {
+    subCategories.push({ kind: "category", name: "Data Consumer", colour, contents: consumerContents });
+  }
+  if (providerContents.length > 0) {
+    subCategories.push({ kind: "category", name: "Data Provider", colour, contents: providerContents });
+  }
+  if (structureContents.length > 0) {
+    subCategories.push({ kind: "category", name: "Data Structures", colour, contents: structureContents });
+  }
+
+  return {
+    kind: "category",
+    name: cat.name,
+    colour,
+    contents: subCategories,
+  };
+}
+
 /** Build a toolbox category object from a single catalog category. */
 function buildCatalogCategory(
   cat: BlockCatalogCategory,
   activeVersions: Set<string>,
 ): object {
+  if (cat.name === "EDC Connector") {
+    return buildEdcConnectorCategory(cat, activeVersions);
+  }
   return {
     kind: "category",
     name: cat.name,
@@ -62,9 +123,10 @@ function buildCatalogCategory(
     contents: cat.blocks
       .filter(
         (b) =>
-          !b.dataspace_version ||
-          activeVersions.size === 0 ||
-          activeVersions.has(b.dataspace_version),
+          !b.custom_registration &&
+          (!b.dataspace_version ||
+            activeVersions.size === 0 ||
+            activeVersions.has(b.dataspace_version)),
       )
       .map((b) => ({ kind: "block", type: `step_${b.type}` })),
   };
@@ -80,8 +142,88 @@ function buildCategoryMap(catalog: BlockCatalog): Map<string, object> {
   return map;
 }
 
+/** Build the Inputs block group with nested sub-categories. */
+function buildInputsCategory(blocks: readonly string[], variables: string[]): object {
+  const colour = blockColors.valueString;
+
+  const literalValues: object[] = [];
+  for (const t of ["value_string", "value_number", "value_boolean", "value_json", "key_value_pair"]) {
+    if (blocks.includes(t)) literalValues.push({ kind: "block", type: t });
+  }
+
+  const extractors: object[] = [];
+  for (const t of ["value_json_path", "value_api_path"]) {
+    if (blocks.includes(t)) extractors.push({ kind: "block", type: t });
+  }
+
+  const variableContents: object[] = [];
+  if (blocks.includes("variable_def")) variableContents.push({ kind: "block", type: "variable_def" });
+  if (variables.length > 0) {
+    variableContents.push({ kind: "sep", gap: "8" });
+    for (const v of variables) {
+      variableContents.push({ kind: "block", type: "variable_get", fields: { VAR_NAME: v } });
+    }
+    variableContents.push({ kind: "sep", gap: "8" });
+  }
+  if (blocks.includes("variable_get")) variableContents.push({ kind: "block", type: "variable_get" });
+
+  return {
+    kind: "category",
+    name: "Inputs",
+    colour,
+    contents: [
+      { kind: "category", name: "Literal Values", colour, contents: literalValues },
+      { kind: "category", name: "Extractors", colour, contents: extractors },
+      { kind: "category", name: "Variables", colour, contents: variableContents },
+    ],
+  };
+}
+
+/** Build the Validation block group with nested sub-categories. */
+function buildValidationCategory(blocks: readonly string[]): object {
+  const colour = blockColors.assertion;
+
+  const groups: { name: string; types: string[] }[] = [
+    { name: "Equality", types: ["assert_equals", "assert_not_equals", "assert_contains", "assert_not_contains", "assert_matches"] },
+    { name: "Schema", types: ["assert_schema", "assert_validates_schema"] },
+    { name: "Comparison", types: ["assert_compare", "assert_between"] },
+    { name: "Presence", types: ["assert_not_null", "assert_not_empty"] },
+    { name: "Structure", types: ["assert_field"] },
+  ];
+
+  return {
+    kind: "category",
+    name: "Validation",
+    colour,
+    contents: groups.map((g) => ({
+      kind: "category",
+      name: g.name,
+      colour,
+      contents: g.types
+        .filter((t) => blocks.includes(t))
+        .map((t) => ({ kind: "block", type: t })),
+    })).filter((c) => (c.contents as object[]).length > 0),
+  };
+}
+
+/** Build a toolbox category from a phase block group definition. */
+function buildBlockGroupCategory(group: PhaseBlockGroup, variables: string[]): object {
+  if (group.name === "Inputs") {
+    return buildInputsCategory(group.blocks, variables);
+  }
+  if (group.name === "Validation") {
+    return buildValidationCategory(group.blocks);
+  }
+  return {
+    kind: "category",
+    name: group.name,
+    colour: group.colour,
+    contents: group.blocks.map((type) => ({ kind: "block", type })),
+  };
+}
+
 /** Build nested phase-group categories for the step-editor toolbox. */
-function buildPhaseGroups(catalog: BlockCatalog): object[] {
+function buildPhaseGroups(catalog: BlockCatalog, variables: string[]): object[] {
   const categoryMap = buildCategoryMap(catalog);
   const phases: object[] = [];
 
@@ -89,18 +231,11 @@ function buildPhaseGroups(catalog: BlockCatalog): object[] {
     const children: object[] = [];
     for (const catName of phase.categories) {
       const cat = categoryMap.get(catName);
-      if (cat) {
-        children.push(cat);
-      }
+      if (cat) children.push(cat);
     }
     if (phase.blockGroups) {
       for (const group of phase.blockGroups) {
-        children.push({
-          kind: "category",
-          name: group.name,
-          colour: group.colour,
-          contents: group.blocks.map((type) => ({ kind: "block", type })),
-        });
+        children.push(buildBlockGroupCategory(group, variables));
       }
     }
     if (children.length > 0) {
@@ -117,24 +252,9 @@ function buildPhaseGroups(catalog: BlockCatalog): object[] {
   return phases;
 }
 
-export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables?: string[]): object {
+export function buildToolbox(catalog: BlockCatalog, _kind?: ScriptKind, variables?: string[]): object {
   const vars = variables || [];
-
-  const variableContents: object[] = [];
-  if (vars.length > 0) {
-    variableContents.push({ kind: "label", text: "Defined Variables" });
-    for (const v of vars) {
-      variableContents.push({
-        kind: "block",
-        type: "variable_get",
-        fields: { VAR_NAME: v },
-      });
-    }
-    variableContents.push({ kind: "sep", gap: "8" });
-  }
-  variableContents.push({ kind: "block", type: "variable_get" });
-
-  const phaseGroups = buildPhaseGroups(catalog);
+  const phaseGroups = buildPhaseGroups(catalog, vars);
 
   return {
     kind: "categoryToolbox",
@@ -148,71 +268,6 @@ export function buildToolbox(catalog: BlockCatalog, kind?: ScriptKind, variables
         contents: [
           { kind: "block", type: "auth_oauth2" },
           { kind: "block", type: "auth_api_key" },
-        ],
-      },
-      {
-        kind: "category",
-        name: "Variables",
-        colour: blockColors.variableDef,
-        contents: [
-          { kind: "block", type: "schema_import" },
-          { kind: "sep", gap: "16" },
-          { kind: "block", type: "variable_def" },
-          { kind: "sep", gap: "16" },
-          ...variableContents,
-        ],
-      },
-      {
-        kind: "category",
-        name: "Values",
-        colour: blockColors.valueString,
-        contents: [
-          { kind: "block", type: "value_string" },
-          { kind: "block", type: "value_number" },
-          { kind: "block", type: "value_boolean" },
-          { kind: "block", type: "value_json_path" },
-          { kind: "block", type: "value_api_path" },
-        ],
-      },
-      {
-        kind: "category",
-        name: "Assertions",
-        colour: blockColors.assertion,
-        contents: [
-          { kind: "block", type: "assert_equals" },
-          { kind: "block", type: "assert_not_equals" },
-          { kind: "block", type: "assert_contains" },
-          { kind: "block", type: "assert_not_contains" },
-          { kind: "block", type: "assert_matches" },
-          { kind: "block", type: "assert_schema" },
-          { kind: "block", type: "assert_validates_schema" },
-          { kind: "block", type: "assert_compare" },
-          { kind: "block", type: "assert_between" },
-          { kind: "block", type: "assert_not_null" },
-          { kind: "block", type: "assert_not_empty" },
-          { kind: "block", type: "assert_field" },
-        ],
-      },
-      {
-        kind: "category",
-        name: "JSON",
-        colour: blockColors.json,
-        contents: [
-          { kind: "block", type: "key_value_pair" },
-          { kind: "block", type: "value_json" },
-        ],
-      },
-      {
-        kind: "category",
-        name: "EDC Structures",
-        colour: "#374151",
-        contents: [
-          { kind: "block", type: "asset_criterion" },
-          { kind: "block", type: "odrl_permission" },
-          { kind: "block", type: "odrl_prohibition" },
-          { kind: "block", type: "odrl_obligation" },
-          { kind: "block", type: "odrl_logical_constraint" },
-          { kind: "block", type: "odrl_constraint" },
         ],
       },
     ],

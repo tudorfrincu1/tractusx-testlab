@@ -52,7 +52,7 @@ setup:
       store_in_variable: bpc_schema
 
 steps:
-  - type: query_catalog
+  - type: query_catalog_with_filters
     description: Discover certificate Submodel asset in provider catalog
     params:
       service: provider_edc

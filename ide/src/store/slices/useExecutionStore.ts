@@ -162,6 +162,12 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => {
 
     try {
       const { job_id, status } = await submitTestYaml(backendUrl, yaml);
+
+      if (!job_id) {
+        set({ error: "Backend did not return a job_id", isExecuting: false });
+        return;
+      }
+
       set({ jobId: job_id, jobStatus: status as JobStatus });
 
       abortStream = connectJobStream(

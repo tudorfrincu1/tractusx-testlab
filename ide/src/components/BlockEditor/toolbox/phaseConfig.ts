@@ -51,6 +51,12 @@ const PHASE_COLOUR = "#334155";
 /** Colour for variable-related block groups */
 const VARIABLE_COLOUR = "#5B21B6";
 
+/** Colour for value/input block groups */
+const INPUT_COLOUR = "#1E293B";
+
+/** Colour for assertion/validation block groups */
+const VALIDATION_COLOUR = "#BE123C";
+
 /**
  * Ordered phase definitions for the step-editor toolbox.
  * Categories are grouped under these phases as nested categories.
@@ -62,7 +68,11 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
     colour: PHASE_COLOUR,
     categories: ["Precondition", "Mock"],
     blockGroups: [
-      { name: "Import", colour: VARIABLE_COLOUR, blocks: ["import_variable"] },
+      {
+        name: "Import",
+        colour: VARIABLE_COLOUR,
+        blocks: ["import_variable", "schema_import"],
+      },
     ],
   },
   {
@@ -78,6 +88,41 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
       "Validation",
       "Flow",
       "Wait",
+    ],
+    blockGroups: [
+      {
+        name: "Inputs",
+        colour: INPUT_COLOUR,
+        blocks: [
+          "value_string",
+          "value_number",
+          "value_boolean",
+          "value_json",
+          "key_value_pair",
+          "value_json_path",
+          "value_api_path",
+          "variable_def",
+          "variable_get",
+        ],
+      },
+      {
+        name: "Validation",
+        colour: VALIDATION_COLOUR,
+        blocks: [
+          "assert_equals",
+          "assert_not_equals",
+          "assert_contains",
+          "assert_not_contains",
+          "assert_matches",
+          "assert_schema",
+          "assert_validates_schema",
+          "assert_compare",
+          "assert_between",
+          "assert_not_null",
+          "assert_not_empty",
+          "assert_field",
+        ],
+      },
     ],
   },
   {

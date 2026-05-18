@@ -91,10 +91,11 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       const exportVar = current.getFieldValue("EXPORT_VAR") || "";
       const outputVar = current.getFieldValue("OUTPUT_VAR") || exportVar;
       if (file && file !== "__NONE__" && exportVar && exportVar !== "__NONE__") {
+        const testName = file.replace(/^tests\//, "").replace(/\.yaml$/, "");
         steps.push({
           type: "import_variable",
-          description: `Import ${exportVar}`,
-          params: { file, export: exportVar, variable: outputVar },
+          description: `Import ${exportVar} from ${testName}`,
+          params: { test: testName, select: exportVar, store_in_variable: outputVar },
         } as StepDefinition);
       }
       current = current.getNextBlock();
@@ -213,6 +214,13 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           if (nested.length > 0) params[p.name] = nested;
           break;
         }
+        case "filter_expression_list": {
+          const filters = readFilterExpressionChain(block.getInputTargetBlock(fieldKey));
+          if (filters.length > 0) {
+            params.filter = { filter_expression: filters };
+          }
+          break;
+        }
         case "array": {
           const items: unknown[] = [];
           let itemBlock = block.getInputTargetBlock(fieldKey);
@@ -237,7 +245,24 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
   }
 
   let storeInMemory: Record<string, string> | undefined;
-  if (catalogEntry?.outputs && catalogEntry.outputs.length > 0) {
+
+  // First try to read custom store_in_memory from block.data (roundtrip fidelity)
+  if (block.data) {
+    try {
+      const blockData: unknown = JSON.parse(block.data);
+      if (blockData && typeof blockData === "object" && "store_in_memory" in blockData) {
+        const custom = (blockData as { store_in_memory: unknown }).store_in_memory;
+        if (custom && typeof custom === "object") {
+          storeInMemory = custom as Record<string, string>;
+        }
+      }
+    } catch {
+      // Invalid JSON in block.data — fall through to default
+    }
+  }
+
+  // Fallback: generate default store_in_memory from catalog outputs
+  if (!storeInMemory && catalogEntry?.outputs && catalogEntry.outputs.length > 0) {
     storeInMemory = {};
     for (const output of catalogEntry.outputs) {
       storeInMemory[output.name] = "$";
@@ -246,6 +271,24 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
 
   const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
+  // Post-process params for specific step types
+  if (stepType === "http_call_dataplane" && params.dataplane_url !== undefined) {
+    params.url = params.dataplane_url;
+    delete params.dataplane_url;
+  }
+  if (stepType === "query_catalog" && params.filter !== undefined) {
+    // If filter JSON is present, remove the flat filter_by/filter_value/operator
+    delete params.filter_by;
+    delete params.filter_value;
+    delete params.operator;
+  }
+  if (stepType === "query_catalog_with_filters" && params.filter !== undefined) {
+    // Filtered version always uses filter_expression_list, remove any flat leftovers
+    delete params.filter_by;
+    delete params.filter_value;
+    delete params.operator;
+  }
+
   return {
     type: runtimeStepType,
     description: description || undefined,
@@ -253,4 +296,34 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     expect: expect.length > 0 ? expect : undefined,
     store_in_memory: storeInMemory,
   };
+}
+
+interface FilterExpressionData {
+  operand_left: string;
+  operator: string;
+  operand_right: string;
+}
+
+function readFilterExpressionChain(block: Block | null): FilterExpressionData[] {
+  const expressions: FilterExpressionData[] = [];
+  let current = block;
+  while (current) {
+    if (current.type === "filter_expression") {
+      let operandLeft = current.getFieldValue("OPERAND_LEFT") || "";
+      if (operandLeft === "custom") {
+        operandLeft = current.getFieldValue("OPERAND_LEFT_CUSTOM") || "";
+      }
+      const operator = current.getFieldValue("OPERATOR") || "=";
+      const operandRight = readValueBlockAsString(current.getInputTargetBlock("OPERAND_RIGHT")) || "";
+      if (operandLeft && operandRight) {
+        expressions.push({
+          operand_left: operandLeft,
+          operator,
+          operand_right: operandRight,
+        });
+      }
+    }
+    current = current.getNextBlock();
+  }
+  return expressions;
 }

@@ -51,6 +51,9 @@ _logger = logging.getLogger(__name__)
 
 _TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
+# Pending jobs: job_id → Tck (execution deferred until SSE stream connects)
+_pending_jobs: dict[str, Tck] = {}
+
 streaming_router = APIRouter(prefix="/test-execution", tags=["streaming"])
 
 
@@ -70,16 +73,8 @@ def _get_event_buffer(request: Request) -> EventBuffer:
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.post("/run/yaml", status_code=202)
-async def run_yaml(
-    request: Request,
-    player: TestlabPlayer = Depends(_get_player),
-) -> JSONResponse:
-    """Execute a TCK from a raw YAML body.
-
-    Accepts ``Content-Type: application/x-yaml`` or ``text/yaml``.
-    Returns ``{"job_id": "...", "status": "queued"}``.
-    """
+async def _parse_and_execute_yaml(request: Request, player: TestlabPlayer) -> JSONResponse:
+    """Parse a YAML body, create a job, and launch background execution."""
     raw = await request.body()
     if not raw:
         raise HTTPException(400, "Request body must contain YAML content")
@@ -110,7 +105,7 @@ async def run_yaml(
 
     tck = Tck(definition)
     job = player.jobs.create(tck.name)
-    asyncio.create_task(_execute_tck_bg(player, tck, job.job_id))
+    _pending_jobs[job.job_id] = tck
 
     return JSONResponse(
         content={"job_id": job.job_id, "status": "queued"},
@@ -118,14 +113,45 @@ async def run_yaml(
     )
 
 
+@streaming_router.post("/run", status_code=202)
+async def run_test_yaml(
+    request: Request,
+    player: TestlabPlayer = Depends(_get_player),
+) -> JSONResponse:
+    """Execute a TCK from a raw YAML body.
+
+    Primary endpoint used by the IDE frontend.
+    Accepts ``Content-Type: application/x-yaml`` or ``text/yaml``.
+    Returns ``{"job_id": "...", "status": "queued"}``.
+    """
+    return await _parse_and_execute_yaml(request, player)
+
+
+@streaming_router.post("/run/yaml", status_code=202)
+async def run_yaml(
+    request: Request,
+    player: TestlabPlayer = Depends(_get_player),
+) -> JSONResponse:
+    """Execute a TCK from a raw YAML body (legacy alias for /run).
+
+    Accepts ``Content-Type: application/x-yaml`` or ``text/yaml``.
+    Returns ``{"job_id": "...", "status": "queued"}``.
+    """
+    return await _parse_and_execute_yaml(request, player)
+
+
 async def _execute_tck_bg(
     player: TestlabPlayer, tck: Tck, job_id: str,
 ) -> None:
-    """Run a TCK in the background, catching exceptions."""
+    """Run a TCK in the background, emitting failure events on exception."""
     try:
-        await player.run_test_case(tck)
-    except (RuntimeError, ValueError, OSError) as exc:
+        await player.run_tck(tck, job_id=job_id)
+    except (RuntimeError, ValueError, OSError, KeyError, TypeError) as exc:
         _logger.warning("Background execution failed for job %s: %s", job_id, exc)
+        player.monitor._emit(
+            "job.completed", job_id=job_id, status="FAILED", error=str(exc),
+        )
+        player.jobs.fail(job_id, str(exc))
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -157,6 +183,11 @@ async def stream_job_events(
             last_event_id = None
 
     queue = create_event_queue(player.monitor)
+
+    # Start execution NOW — after the queue is registered so no events are lost
+    tck = _pending_jobs.pop(job_id, None)
+    if tck is not None:
+        asyncio.create_task(_execute_tck_bg(player, tck, job_id))
 
     return StreamingResponse(
         sse_event_generator(queue, job_id, event_buffer, last_event_id),

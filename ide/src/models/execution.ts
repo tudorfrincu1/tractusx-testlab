@@ -33,10 +33,10 @@ export type JobStatus = "queued" | "running" | "waiting" | "paused" | "completed
 
 /** SSE event payload for individual step status changes. */
 export interface StepEvent {
-  step_index: number;
+  step_index?: number;
   step_name: string;
-  step_type: string;
-  phase: ExecutionPhase;
+  step_type?: string;
+  phase?: string;
   status: StepStatus;
   duration_s?: number;
   error?: string;

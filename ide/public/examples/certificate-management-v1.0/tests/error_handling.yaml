@@ -37,7 +37,7 @@ services:
 
 steps:
   # ── Catalog discovery ──────────────────────────────────────────────
-  - type: query_catalog
+  - type: query_catalog_with_filters
     description: Discover CCMAPI offer for error handling test
     params:
       service: provider_edc

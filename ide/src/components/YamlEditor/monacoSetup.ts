@@ -77,7 +77,7 @@ export function registerYamlCompletions(monaco: Monaco): import("monaco-editor")
       const stepTypes = [
         "create_asset", "delete_asset", "create_policy", "delete_policy",
         "create_contract_definition", "delete_contract_definition",
-        "query_catalog_by_asset_id", "query_catalog", "dsp_catalog_request",
+        "query_catalog_by_asset_id", "query_catalog", "query_catalog_with_filters", "dsp_catalog_request",
         "negotiate_contract", "transfer_data", "get_edr", "dataplane_call",
         "http_request", "do_dsp", "do_dsp_with_bpnl", "upload_backend_data",
         "sdk_call", "init_service", "stop_service", "await_callback",
