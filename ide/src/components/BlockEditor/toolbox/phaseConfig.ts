@@ -109,6 +109,7 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
         name: "Validation",
         colour: VALIDATION_COLOUR,
         blocks: [
+          "step_validate_path",
           "assert_equals",
           "assert_not_equals",
           "assert_contains",

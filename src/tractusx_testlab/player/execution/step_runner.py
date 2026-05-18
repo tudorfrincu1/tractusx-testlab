@@ -55,10 +55,10 @@ async def run_step(
         output = await step_instance.execute(params, context, step_def)
 
         assertion_results: list[AssertionResult] = []
-        if step_def.expect:
+        if step_def.validate:
             assertion_results = [
                 AssertionResult.model_validate(ar.model_dump())
-                for ar in AssertionEngine.evaluate(step_def.expect, output, context.variables)
+                for ar in AssertionEngine.evaluate(step_def.validate, output, context.variables)
             ]
 
         finished_at = datetime.now(timezone.utc)

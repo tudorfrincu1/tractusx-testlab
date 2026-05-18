@@ -58,18 +58,104 @@ export function requestOpenPathBuilder(req: PathBuilderRequest): void {
   _onOpenPathBuilder?.(req);
 }
 
-/** Parse a dot-notation path string into typed segments. */
-export function parsePathToSegments(path: string): PathSegment[] {
-  if (!path) return [];
-  return path.split(".").map((part) => {
-    const isIndex = /^\d+$/.test(part);
-    return { type: isIndex ? "index" : "key", value: part } as PathSegment;
-  });
+/** Characters that allow a key to use simple dot notation. */
+const SIMPLE_KEY_RE = /^[a-zA-Z_@][a-zA-Z0-9_\-@]*$/;
+
+/** Check whether a key can be represented with dot notation. */
+function isSimpleKey(key: string): boolean {
+  return SIMPLE_KEY_RE.test(key);
 }
 
-/** Assemble segments into a dot-notation path string. */
+/**
+ * Parse a path string (with bracket notation support) into typed segments.
+ *
+ * Supported notations:
+ * - `foo` / `.bar` — simple key (dot notation)
+ * - `[0]` — numeric index
+ * - `['complex.key']` — bracket-quoted key (single quotes)
+ */
+export function parsePathToSegments(path: string): PathSegment[] {
+  if (!path) return [];
+
+  const segments: PathSegment[] = [];
+  let i = 0;
+
+  while (i < path.length) {
+    if (path[i] === ".") {
+      i++; // skip the dot separator
+    }
+
+    if (i >= path.length) break;
+
+    if (path[i] === "[") {
+      i++; // skip '['
+      if (i < path.length && path[i] === "'") {
+        // Bracket-quoted key: ['...']
+        i++; // skip opening quote
+        let value = "";
+        while (i < path.length) {
+          if (path[i] === "'" && i + 1 < path.length && path[i + 1] === "]") {
+            break;
+          }
+          if (path[i] === "\\" && i + 1 < path.length) {
+            i++;
+            value += path[i];
+          } else {
+            value += path[i];
+          }
+          i++;
+        }
+        i += 2; // skip closing ']
+        segments.push({ type: "key", value });
+      } else {
+        // Numeric index: [0]
+        let value = "";
+        while (i < path.length && path[i] !== "]") {
+          value += path[i];
+          i++;
+        }
+        i++; // skip ']'
+        segments.push({ type: "index", value });
+      }
+    } else {
+      // Simple dot-notation key: read until next `.` or `[`
+      let value = "";
+      while (i < path.length && path[i] !== "." && path[i] !== "[") {
+        value += path[i];
+        i++;
+      }
+      if (value) {
+        const isIndex = /^\d+$/.test(value);
+        segments.push({ type: isIndex ? "index" : "key", value });
+      }
+    }
+  }
+
+  return segments;
+}
+
+/**
+ * Assemble segments into a path string using bracket notation for complex keys.
+ *
+ * Rules:
+ * - Index segments → `[N]`
+ * - Simple keys → `.key` (first segment omits the leading dot)
+ * - Complex keys (containing dots, colons, slashes, etc.) → `['key']`
+ */
 export function segmentsToPath(segments: PathSegment[]): string {
-  return segments.map((s) => s.value).join(".");
+  let result = "";
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (seg.type === "index") {
+      result += `[${seg.value}]`;
+    } else if (isSimpleKey(seg.value)) {
+      result += i === 0 ? seg.value : `.${seg.value}`;
+    } else {
+      const escaped = seg.value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      result += `['${escaped}']`;
+    }
+  }
+  return result;
 }
 
 /** Default segments shown on a new block. */

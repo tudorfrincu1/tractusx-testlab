@@ -184,6 +184,7 @@ function buildValidationCategory(blocks: readonly string[]): object {
   const colour = blockColors.assertion;
 
   const groups: { name: string; types: string[] }[] = [
+    { name: "Extract", types: ["step_validate_path"] },
     { name: "Equality", types: ["assert_equals", "assert_not_equals", "assert_contains", "assert_not_contains", "assert_matches"] },
     { name: "Schema", types: ["assert_schema", "assert_validates_schema"] },
     { name: "Comparison", types: ["assert_compare", "assert_between"] },

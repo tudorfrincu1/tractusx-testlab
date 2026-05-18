@@ -179,7 +179,7 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
 
           if (block.outputs && block.outputs.length > 0) {
             this.appendStatementInput("EXPECT")
-              .appendField("expect:")
+              .appendField("validate:")
               .setCheck("assertion");
           }
 

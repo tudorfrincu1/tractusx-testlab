@@ -26,13 +26,25 @@ name: push-certificate
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  Test CX-0135 PUSH mechanism: Certificate Provider pushes a certificate
-  to the Certificate Consumer via EDC data plane POST /companycertificate/push.
+  Test CX-0135 PUSH mechanism: push certificate to SUT and verify SUT sends
+  a feedback callback with correct relatedMessageId and valid certificateStatus.
 
 services:
   - name: provider_edc
-    type: connector_consumer
-    base_url: "@provider_address"
+    type: edc_connector_saturn
+    config:
+      base_url: "@provider_address"
+      dma_path: /management
+
+setup:
+  - type: mock_endpoint
+    description: Expose mock endpoint for SUT feedback callback
+    params:
+      id: "push_feedback_callback"
+      method: POST
+      path: "/companycertificate/status"
+      response_status: 200
+      response_body: {}
 
 steps:
   - type: query_catalog_with_filters
@@ -51,23 +63,23 @@ steps:
           - operand_left: "https://w3id.org/catenax/ontology/common#version"
             operator: "="
             operand_right: "3.0"
-    expect:
+    validate:
       - type: "NOT_NULL"
         output: datasets
-
-  - type: json_path_extract
-    description: Extract CCMAPI asset ID
-    params:
-      variable: "datasets"
-      path: "[0].@id"
-      store_in_variable: push_asset_id
-
-  - type: json_path_extract
-    description: Extract offer policy
-    params:
-      variable: "datasets"
-      path: "[0].odrl:hasPolicy"
-      store_in_variable: push_offer_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].@id"
+        store_in_variable: push_asset_id
+        validate:
+          - type: "NOT_NULL"
+            output: push_asset_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].odrl:hasPolicy"
+        store_in_variable: push_offer_id
+        validate:
+          - type: "NOT_NULL"
+            output: push_offer_id
 
   - type: negotiate
     description: Negotiate contract for push channel
@@ -133,7 +145,70 @@ steps:
           issuer:
             issuerName: "TÜV SÜD"
             issuerBpn: "BPNL133631123120"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200
+
+  - type: wait_for_call
+    description: Wait for SUT feedback callback with status acknowledgment
+    params:
+      endpoint_id: "push_feedback_callback"
+      timeout_s: "@sut_response_timeout"
+    store_in_memory:
+      feedback_body: "body"
+    validate:
+      - type: "EQUALS"
+        output: method
+        value: "POST"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.messageId"
+        operator: "matches_regex"
+        value: "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.context"
+        operator: "eq"
+        value: "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.sentDateTime"
+        operator: "not_null"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.senderBpn"
+        operator: "matches_regex"
+        value: "^BPNL[0-9A-Z]{12}$"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.receiverBpn"
+        operator: "eq"
+        value: "@consumer_bpn"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.relatedMessageId"
+        operator: "eq"
+        value: "urn:uuid:@push_message_id"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "header.version"
+        operator: "eq"
+        value: "3.1.0"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "content.certificateStatus"
+        operator: "one_of"
+        value:
+          - "RECEIVED"
+          - "ACCEPTED"
+          - "REJECTED"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "content.documentId"
+        operator: "eq"
+        value: "UUID--PUSH-001"
+      - type: "ASSERT_FIELD"
+        output: feedback_body
+        path: "content.locationBpns"
+        operator: "not_null"

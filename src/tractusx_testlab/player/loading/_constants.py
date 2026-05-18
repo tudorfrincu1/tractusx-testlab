@@ -26,7 +26,7 @@
 
 # --- YAML key names (avoids SDK syntax dependency) ---
 K_TYPE, K_NAME, K_VERSION, K_DESCRIPTION = "type", "name", "version", "description"
-K_KIND, K_PARAMS, K_EXPECT, K_SERVICES = "kind", "params", "expect", "services"
+K_KIND, K_PARAMS, K_EXPECT, K_SERVICES = "kind", "params", "validate", "services"
 K_VARIABLES, K_SETUP, K_STEPS, K_TEARDOWN = "variables", "setup", "steps", "teardown"
 K_OUTPUTS = "outputs"
 K_IMPORT, K_IMPORTS, K_TESTS = "import", "imports", "tests"

@@ -59,6 +59,11 @@ class Assertion(BaseModel):
     max: Optional[Any] = None
     operator: Optional[str] = None
     expected: Optional[Any] = None
+    json_path: Optional[str] = None
+    store_in_variable: Optional[str] = None
+    nested_validate: Optional[list["Assertion"]] = Field(
+        default=None, alias="validate"
+    )
 
     model_config = {"populate_by_name": True}
 
@@ -70,7 +75,7 @@ class StepDefinition(BaseModel):
     params: dict = Field(default_factory=dict)
     on_failure: FailurePolicy = FailurePolicy.ABORT
     timeout_s: Optional[float] = None
-    expect: list[Assertion] = Field(default_factory=list)
+    validate: list[Assertion] = Field(default_factory=list)
     store_in_memory: Optional[dict[str, str]] = None
     store_in_variable: Optional[str] = None
     if_condition: Optional[str] = Field(default=None, alias="if")

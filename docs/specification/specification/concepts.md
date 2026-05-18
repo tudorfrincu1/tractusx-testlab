@@ -141,7 +141,7 @@ sequenceDiagram
     P->>S: execute(resolved_params, context)
     S->>C: set("output_var", value)
     S-->>P: StepOutput
-    P->>A: evaluate(expect block, StepOutput)
+    P->>A: evaluate(validate block, StepOutput)
     A-->>P: list[AssertionResult]
     alt All hard assertions pass
         P->>M: Record step PASSED
@@ -806,7 +806,7 @@ flowchart TD
 | **Step** | An atomic, named unit of work within a test (e.g., "provision an asset", "negotiate a contract"). Implemented as a Python class registered in the Step Registry. |
 | **Step Type** | The identifier that maps a step in YAML to its Python implementation (e.g., `provision_asset`, `dataplane_call`). |
 | **Variable** | A named value declared in a test's `variables` block. Can have a default value or be marked `runtime: true` (must be provided at execution time). Steps produce output variables that subsequent steps can consume via `${var_name}` syntax. |
-| **Assertion** | An expected-result check attached to a step via the `expect` block. Evaluated after step execution against the step's output. |
+| **Assertion** | An expected-result check attached to a step via the `validate` block. Evaluated after step execution against the step's output. |
 | **Compiler** | The component that parses YAML tests, validates them against the Step Registry and declared variables, and stamps metadata. |
 | **Package (.tckpkg)** | A ZIP archive containing a manifest, compiled tests, and bundled assets (schemas, sample data). Portable, shareable, versionable. |
 | **Player** | The singleton async executor that loads packages or raw YAML, creates Jobs, executes tests step-by-step, evaluates assertions, and reports results. |

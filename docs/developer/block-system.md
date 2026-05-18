@@ -267,7 +267,7 @@ Rebuilds blocks from a model:
    - Creates the appropriate `step_{type}` block
    - Sets field values from params
    - Creates value blocks (string/number/boolean/variable_get) and connects them
-   - Attaches assertion chain if `expect` is present
+   - Attaches assertion chain if `validate` is present
 3. Renders all blocks
 4. Calls `refreshDropdownFields()` to update dynamic dropdown values
 

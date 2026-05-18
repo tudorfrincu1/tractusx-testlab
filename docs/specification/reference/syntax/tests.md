@@ -105,7 +105,7 @@ steps:
       consumer_api_key: "${consumer_api_key}"
       provider_bpn: "${provider_bpn}"
     on_failure: abort
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -119,7 +119,7 @@ steps:
 | `params` | `dict` | No | `{}` | Key-value parameters passed to the step handler. Supports `${var}` interpolation. |
 | `on_failure` | `string` | No | `"ABORT"` | Failure policy: `ABORT` (stop the test), `CONTINUE` (warn and proceed), `SKIP_REST` (skip remaining steps). |
 | `timeout_s` | `float` | No | — | Per-step timeout in seconds. |
-| `expect` | `list` | No | `[]` | [Assertions](assertions.md) to evaluate against the step result. |
+| `validate` | `list` | No | `[]` | [Assertions](assertions.md) to evaluate against the step result. |
 | `store_in_memory` | `dict` | No | — | Save values from the step result into the execution context. Keys are variable names; values are JSONPath expressions. |
 
 ### Storing Step Results
@@ -241,7 +241,7 @@ steps:
       headers:
         Accept: "application/json"
     on_failure: abort
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -259,7 +259,7 @@ steps:
     name: "Validate payload"
     params:
       payload: "${response_body}"
-    expect:
+    validate:
       - type: EXACT
         path: "manufacturerPartId"
         value: "MPN-001"

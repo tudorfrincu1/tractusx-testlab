@@ -69,7 +69,7 @@ steps:
       method: GET
     store_in_memory:
       status_code: "$"
-    expect:
+    validate:
       - output: status_code
         equals: 200
 ```

@@ -30,7 +30,7 @@ steps:
     inputs:
       method: GET
       url: http://localhost:8080/api/check/health
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
 ```
@@ -81,7 +81,7 @@ steps:
     inputs:
       dtr_url: "@mock_dtr_url"
       id_short: "MyTwin"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 201
 ```

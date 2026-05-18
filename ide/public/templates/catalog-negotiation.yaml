@@ -54,7 +54,7 @@ steps:
             operand_right: "@asset_type_filter"
     store_in_memory:
       catalog_datasets: "datasets"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200
@@ -77,7 +77,7 @@ steps:
       asset_id: "@asset_id"
     store_in_memory:
       negotiation_id: "negotiation_id"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200

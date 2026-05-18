@@ -139,7 +139,7 @@ export function registerYamlCompletions(monaco: Monaco): import("monaco-editor")
             '  name: "${2:Step name}"',
             "  params:",
             '    ${3:key}: "${4:value}"',
-            "  expect:",
+            "  validate:",
             "    - type: STATUS_CODE",
             "      value: 200",
             "      severity: HARD",

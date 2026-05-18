@@ -86,7 +86,7 @@ tests:
         params:
           method: GET
           url: "${provider_url}/api/check/health"
-        expect:
+        validate:
           - type: STATUS_CODE
             value: 200
             severity: HARD

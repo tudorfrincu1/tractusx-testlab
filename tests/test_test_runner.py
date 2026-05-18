@@ -101,7 +101,7 @@ class TestRunnerWithSteps:
                 Step(
                     type="register_twin",
                     name="Assert Noop",
-                    expect=[Assertion(type=AssertionType.STATUS_CODE, value=200)],
+                    validate=[Assertion(type=AssertionType.STATUS_CODE, value=200)],
                 ),
             ],
         )
@@ -118,7 +118,7 @@ class TestRunnerWithSteps:
                 Step(
                     type="register_twin",
                     name="Fail Step",
-                    expect=[
+                    validate=[
                         Assertion(
                             type=AssertionType.STATUS_CODE,
                             value=404,  # noop returns 200
@@ -143,7 +143,7 @@ class TestRunnerWithSteps:
                 Step(
                     type="register_twin",
                     name="Soft Fail",
-                    expect=[
+                    validate=[
                         Assertion(
                             type=AssertionType.STATUS_CODE,
                             value=404,

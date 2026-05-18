@@ -49,6 +49,7 @@ export const AssertionOperator = {
   LESS_OR_EQUAL: "LESS_OR_EQUAL",
   BETWEEN: "BETWEEN",
   ASSERT_FIELD: "ASSERT_FIELD",
+  JSON_PATH_EXTRACT: "json_path_extract",
 } as const;
 export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
 
@@ -105,6 +106,9 @@ export interface Assertion {
   path?: string;
   operator?: string;
   expected?: unknown;
+  json_path?: string;
+  store_in_variable?: string;
+  validate?: Assertion[];
 }
 
 export interface StepDefinition {
@@ -113,7 +117,7 @@ export interface StepDefinition {
   params: Record<string, unknown>;
   on_failure?: FailurePolicy;
   timeout_s?: number;
-  expect?: Assertion[];
+  validate?: Assertion[];
   store_in_memory?: Record<string, string>;
   if?: string;
 }

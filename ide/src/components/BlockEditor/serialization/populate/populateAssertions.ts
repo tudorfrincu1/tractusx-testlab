@@ -66,6 +66,7 @@ const LEGACY_KEY_TO_TYPE: Record<string, string> = {
   less_or_equal: AssertionOperator.LESS_OR_EQUAL,
   between: AssertionOperator.BETWEEN,
   assert_field: AssertionOperator.ASSERT_FIELD,
+  json_path_extract: AssertionOperator.JSON_PATH_EXTRACT,
 };
 
 /** Normalize a legacy compact assertion to the new typed format. */
@@ -93,7 +94,7 @@ function normalizeLegacy(raw: RawAssertion): RawAssertion {
 }
 
 /**
- * Reconstruct assertion blocks from a step's `expect` array and attach them
+ * Reconstruct assertion blocks from a step's `validate` array and attach them
  * to the step block's EXPECT input.
  * Supports both the new typed format ({ type, output, value/schema/min/max })
  * and the legacy compact format ({ output, operator_key: value }).
@@ -111,7 +112,7 @@ export function populateAssertions(
       const output = String(normalized.output ?? "");
       const assertType = String(normalized.type ?? "");
       if (!assertType) continue;
-      if (!output && assertType !== AssertionOperator.ASSERT_FIELD) continue;
+      if (!output && assertType !== AssertionOperator.ASSERT_FIELD && assertType !== AssertionOperator.JSON_PATH_EXTRACT) continue;
 
       const ab = createAssertionBlock(ws, assertType, output, normalized);
       if (ab) assertBlocks.push(ab);
@@ -189,6 +190,29 @@ function createAssertionBlock(
       setDropdownValue(ab, "OPERATOR", operator);
       if (a.expected !== undefined && a.expected !== "") {
         connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(a.expected)));
+      }
+      return ab;
+    }
+    case AssertionOperator.JSON_PATH_EXTRACT: {
+      const ab = makeBlock(ws, "step_json_path_extract");
+      // Override connection types to allow use inside assertion chains
+      ab.previousConnection?.setCheck("assertion");
+      ab.nextConnection?.setCheck("assertion");
+      setDropdownValue(ab, "PARAM_VARIABLE", output);
+      const jsonPath = typeof a.json_path === "string" ? a.json_path : "";
+      if (jsonPath) {
+        const jpb = makeBlock(ws, "value_json_path");
+        jpb.setFieldValue(jsonPath, "VALUE");
+        connectValue(ab, "PARAM_PATH", jpb);
+      }
+      const storeVar = typeof a.store_in_variable === "string" ? a.store_in_variable : "";
+      if (storeVar) {
+        connectValue(ab, "PARAM_STORE_IN_VARIABLE", createValueBlockFromString(ws, storeVar));
+      }
+      // Recursively populate nested assertions
+      const nested = a.validate;
+      if (Array.isArray(nested) && nested.length > 0) {
+        populateAssertions(ws, ab, nested as AssertionInput[]);
       }
       return ab;
     }

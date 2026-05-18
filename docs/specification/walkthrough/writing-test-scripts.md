@@ -115,7 +115,7 @@ steps:
         "asset:prop:name": "Walkthrough Test Asset"
         "asset:prop:contenttype": "application/json"
     on_failure: abort
-    expect:
+    validate:
       - type: CONTAINS
         value:
           asset_id: "${asset_id}"
@@ -129,7 +129,7 @@ steps:
       service: consumer                # ← Different managed service
       provider_bpn: "${provider_bpn}"
     on_failure: abort
-    expect:
+    validate:
       - type: CONTAINS
         value:
           "@type": "dcat:Catalog"
@@ -150,7 +150,7 @@ steps:
       offer_id: "${catalog_offer_id}"  # ← Output from previous step
     on_failure: abort
     timeout_s: 60
-    expect:
+    validate:
       - type: REGEX
         path: "contract_agreement_id"
         value: "^[a-zA-Z0-9-]+$"
@@ -188,7 +188,7 @@ steps:
       headers:
         Accept: "application/json"
     on_failure: abort
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -221,7 +221,7 @@ cleanup:
 1. **Services block** — Two managed SDK services (`provider` and `consumer`) are declared with OAuth2 credentials. They're initialized once before step execution.
 2. **Variables** — Runtime variables (no default) must be supplied when executing. Variables with defaults can be overridden.
 3. **Steps** — Each step references a managed service by name (`service: provider`). Steps produce output variables (e.g., `${catalog_offer_id}`, `${contract_agreement_id}`) that subsequent steps consume.
-4. **Assertions** — Each step has `expect` blocks with `hard` severity (failure = step failure) or `soft` severity (failure = warning only).
+4. **Assertions** — Each step has `validate` blocks with `hard` severity (failure = step failure) or `soft` severity (failure = warning only).
 5. **Cleanup** — Deletes provisioned resources regardless of test outcome.
 
 ---
@@ -272,7 +272,7 @@ steps:
       provider_bpn: "${provider_bpn}"
     on_failure: abort
     timeout_s: 180
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -283,7 +283,7 @@ steps:
     params:
       payload: "${submodel_payload}"    # ← Output from consume_submodel
     on_failure: abort
-    expect:
+    validate:
       - type: EXACT
         path: "valid"
         value: true
@@ -296,7 +296,7 @@ steps:
     params:
       payload: "${submodel_payload}"
     on_failure: continue
-    expect:
+    validate:
       - type: REGEX
         path: "catenaXId"
         value: "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"

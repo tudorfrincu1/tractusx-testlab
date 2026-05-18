@@ -32,7 +32,8 @@
       "blocks": [
         "function/generate_uuid.json",
         "function/generate_bpn.json",
-        "function/json_path_extract.json"
+        "function/json_path_extract.json",
+        "function/validate_path.json"
       ]
     },
     {
@@ -84,7 +85,6 @@
       "name": "Cleanup",
       "description": "Undo resources created during the test (assets, policies, shells)",
       "blocks": [
-        "cleanup/auto_cleanup.json",
         "cleanup/delete_asset.json",
         "cleanup/delete_policy.json",
         "cleanup/delete_shell.json"

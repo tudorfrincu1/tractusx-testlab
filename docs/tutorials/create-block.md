@@ -90,7 +90,7 @@ Create `ide/public/blocks/http/check_health.json`:
 | `label` | Yes | Human-readable name shown on the block in the editor. |
 | `description` | Yes | Tooltip text shown on hover. |
 | `params` | Yes | Array of input parameters rendered as fields on the block. |
-| `outputs` | No | Array of named outputs. If present, the block gets an `expect:` section and outputs are auto-stored via `store_in_memory`. |
+| `outputs` | No | Array of named outputs. If present, the block gets an `validate:` section and outputs are auto-stored via `store_in_memory`. |
 | `depends_on` | No | Array of block types that must exist in the workspace (shows a warning if missing). |
 
 **Parameter types:**

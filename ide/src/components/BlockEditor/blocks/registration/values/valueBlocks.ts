@@ -65,6 +65,9 @@ function resolveParentSourceVariable(block: Block): string | undefined {
           if (varName && varName !== "__NONE__") return String(varName);
         }
       }
+      // Check dropdown field (used by json_path_extract and similar blocks)
+      const dropdownVar = current.getFieldValue("PARAM_VARIABLE");
+      if (dropdownVar && dropdownVar !== "__NONE__") return String(dropdownVar);
       // Found a step block but no variable input — stop searching
       return undefined;
     }
@@ -135,8 +138,11 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
               ? { x: rect.right + 8, y: rect.top }
               : { x: 400, y: 300 };
             const currentPath = block.getFieldValue("VALUE") || "";
-            const segments: PathSegment[] = (block as BlockWithSegments).__segments
-              ?? parsePathToSegments(currentPath);
+            const storedSegments = (block as BlockWithSegments).__segments;
+            const segments: PathSegment[] =
+              (storedSegments && segmentsToPath(storedSegments) === currentPath)
+                ? storedSegments
+                : parsePathToSegments(currentPath);
             const sourceVariable = resolveParentSourceVariable(block);
             const sourceSchema = sourceVariable && catalog
               ? resolveVariableSchema(sourceVariable, block.workspace, catalog)

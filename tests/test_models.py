@@ -71,7 +71,7 @@ class TestModelsCreation:
                     type="create_asset",
                     name="Create Asset",
                     inputs={"name": "@asset_name"},
-                    expect=[
+                    validate=[
                         Assertion(type=AssertionType.STATUS_CODE, value=200),
                     ],
                 ),
@@ -80,7 +80,7 @@ class TestModelsCreation:
         assert test.name == "Full Test"
         assert len(test.connectors) == 2
         assert len(test.steps) == 1
-        assert test.steps[0].expect[0].type == AssertionType.STATUS_CODE
+        assert test.steps[0].validate[0].type == AssertionType.STATUS_CODE
 
     def test_assertion_defaults(self) -> None:
         assertion = Assertion(type=AssertionType.CONTAINS, value="data")
@@ -92,7 +92,7 @@ class TestModelsCreation:
         step = Step(type="http_request", name="GET Something")
         assert step.inputs == {}
         assert step.outputs == {}
-        assert step.expect == []
+        assert step.validate == []
         assert step.timeout == 30
 
     def test_mock_endpoint_defaults(self) -> None:
@@ -132,7 +132,7 @@ class TestModelsValidation:
                     "type": "http_request",
                     "name": "Request",
                     "inputs": {"url": "http://example.com"},
-                    "expect": [
+                    "validate": [
                         {"type": "STATUS_CODE", "value": 200},
                     ],
                 }
@@ -141,7 +141,7 @@ class TestModelsValidation:
         test = Test.model_validate(data)
         assert test.name == "Dict Test"
         assert len(test.steps) == 1
-        assert test.steps[0].expect[0].type == AssertionType.STATUS_CODE
+        assert test.steps[0].validate[0].type == AssertionType.STATUS_CODE
 
     def test_schema_alias(self) -> None:
         data = {"type": "SCHEMA", "schema": {"type": "object"}}

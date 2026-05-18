@@ -66,7 +66,7 @@ steps:
     store_in_memory:
       catalog_response: "."
     on_failure: ABORT
-    expect:
+    validate:
       - type: CONTAINS
         value:
           "@type": "dcat:Catalog"
@@ -147,7 +147,7 @@ steps:
       ack_response: "."
     on_failure: ABORT
     timeout_s: 30
-    expect:
+    validate:
       - type: CONTAINS
         value:
           status: "ACKNOWLEDGED"
@@ -165,7 +165,7 @@ steps:
 | `params.listener` | `string` | **Yes** | Name of the listener (from the `listen` block). |
 | `store_in_memory` | `dict` | No | Save values from the received payload. Use `"."` to store the entire body. |
 | `timeout_s` | `int` | No | Override the listener's default timeout. |
-| `expect` | `list` | No | [Assertions](assertions.md) applied to the received payload. |
+| `validate` | `list` | No | [Assertions](assertions.md) applied to the received payload. |
 
 ### Full Callback Example
 
@@ -232,7 +232,7 @@ steps:
       ack_response: "."
     on_failure: ABORT
     timeout_s: 30
-    expect:
+    validate:
       - type: CONTAINS
         value:
           status: "ACKNOWLEDGED"

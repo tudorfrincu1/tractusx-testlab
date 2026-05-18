@@ -136,7 +136,7 @@ def parse_step(raw: dict) -> StepDefinition:
         params=params,
         on_failure=FailurePolicy(raw[C.K_ON_FAILURE]) if C.K_ON_FAILURE in raw else FailurePolicy.ABORT,
         timeout_s=raw.get(C.K_TIMEOUT_S),
-        expect=expectations,
+        validate=expectations,
         store_in_memory=store_in_memory,
         store_in_variable=store_in_var,
         if_condition=raw.get(C.K_IF),

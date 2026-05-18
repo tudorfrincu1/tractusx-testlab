@@ -70,7 +70,7 @@ def _make_mock_context(**variables: Any) -> MagicMock:
 def _make_step_definition(**overrides: Any) -> Any:
     """Create a minimal StepDefinition for step execution tests."""
     from tractusx_sdk.extensions.testlab.models import StepDefinition
-    defaults = {"type": "test", "params": {}, "expect": []}
+    defaults = {"type": "test", "params": {}, "validate": []}
     defaults.update(overrides)
     return StepDefinition(**defaults)
 
@@ -120,7 +120,7 @@ class TestCompactAssertionParsing:
         # Act — collect all assertions from all steps via the builder
         all_assertions = []
         for step_raw in data.get("steps", []):
-            for expect_raw in step_raw.get("expect", []):
+            for expect_raw in step_raw.get("validate", []):
                 all_assertions.append(parse_assertion(expect_raw))
 
         # Assert — verify we got assertions and they have correct types

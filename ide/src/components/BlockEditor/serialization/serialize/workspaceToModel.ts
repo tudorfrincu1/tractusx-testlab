@@ -269,7 +269,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     }
   }
 
-  const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
+  const validate = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
   // Post-process params for specific step types
   if (stepType === "http_call_dataplane" && params.dataplane_url !== undefined) {
@@ -293,7 +293,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     type: runtimeStepType,
     description: description || undefined,
     params,
-    expect: expect.length > 0 ? expect : undefined,
+    validate: validate.length > 0 ? validate : undefined,
     store_in_memory: storeInMemory,
   };
 }

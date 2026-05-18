@@ -105,6 +105,16 @@ class AssertionEngine:
         output: Any,
         context_vars: dict,
     ) -> AssertionResult:
+        if assertion.type == AssertionType.JSON_PATH_EXTRACT:
+            from tractusx_testlab.steps._json_path_validation import (
+                evaluate_json_path_extract,
+            )
+            return evaluate_json_path_extract(
+                assertion, output, context_vars,
+                extract_actual_fn=AssertionEngine.extract_path,
+                evaluate_fn=AssertionEngine.evaluate,
+            )
+
         expected = AssertionEngine._resolve_expected(assertion, context_vars)
         actual = AssertionEngine._extract_actual(output, assertion.path)
 

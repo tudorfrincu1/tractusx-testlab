@@ -242,7 +242,7 @@ Test execution logs are written to the `logs/` directory with timestamps. Each s
 Add extra assertions to any step to inspect intermediate values:
 
 ```yaml
-expect:
+validate:
   - type: "ASSERT_FIELD"
     output: response_body
     path: "header.messageId"

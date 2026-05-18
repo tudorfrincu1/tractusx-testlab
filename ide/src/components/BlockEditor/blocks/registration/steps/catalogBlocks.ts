@@ -179,12 +179,16 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
 
           if (block.outputs && block.outputs.length > 0) {
             this.appendStatementInput("EXPECT")
-              .appendField("expect:")
+              .appendField("validate:")
               .setCheck("assertion");
           }
 
-          this.setPreviousStatement(true, "step");
-          this.setNextStatement(true, "step");
+          // json_path_extract can appear both as a step and inside assertion chains
+          const connectionTypes = block.type === "json_path_extract"
+            ? ["step", "assertion"]
+            : "step";
+          this.setPreviousStatement(true, connectionTypes);
+          this.setNextStatement(true, connectionTypes);
           this.setColour(categoryColor);
           // Tooltip suppressed — info icon handles description display
         },

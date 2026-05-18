@@ -235,13 +235,13 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     }
   }
 
-  const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
+  const validate = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
   return {
     type: runtimeStepType,
     description: description || undefined,
     params,
-    expect: expect.length > 0 ? expect : undefined,
+    validate: validate.length > 0 ? validate : undefined,
     store_in_memory: storeInMemory,
   };
 }

@@ -32,8 +32,10 @@ description: >
 
 services:
   - name: provider_edc
-    type: connector_consumer
-    base_url: "@provider_address"
+    type: edc_connector_saturn
+    config:
+      base_url: "@provider_address"
+      dma_path: /management
 
 setup:
   - type: import_variable
@@ -65,23 +67,31 @@ steps:
           - operand_left: "http://purl.org/dc/terms/subject"
             operator: "="
             operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
-    expect:
+    validate:
       - type: "NOT_NULL"
         output: datasets
-
-  - type: json_path_extract
-    description: Extract certificate asset ID
-    params:
-      variable: "datasets"
-      path: "[0].@id"
-      store_in_variable: cert_asset_id
-
-  - type: json_path_extract
-    description: Extract certificate offer policy
-    params:
-      variable: "datasets"
-      path: "[0].odrl:hasPolicy"
-      store_in_variable: cert_offer_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].@id"
+        store_in_variable: cert_asset_id
+        validate:
+          - type: "NOT_NULL"
+            output: cert_asset_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].odrl:hasPolicy"
+        store_in_variable: cert_offer_id
+        validate:
+          - type: "NOT_NULL"
+            output: cert_offer_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].properties.['https://admin-shell.io/aas/3/0/HasSemantics/semanticId']"
+        store_in_variable: semantic_id_value
+        validate:
+          - type: "EQUALS"
+            output: semantic_id_value
+            value: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
 
   - type: negotiate
     description: Negotiate contract for certificate asset
@@ -110,7 +120,7 @@ steps:
         Accept: "application/json"
     store_in_memory:
       certificate_json: "response_body"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200
@@ -124,15 +134,13 @@ steps:
         path: "certificateType"
         operator: "equals"
         expected: "@certificate_type"
-
-  - type: json_path_extract
-    description: Validate certificate type matches requested type
-    params:
-      variable: "certificate_json"
-      path: "certificateType"
-    expect:
-      - type: "EQUALS"
-        output: value
-        value: "@certificate_type"
+      - type: "json_path_extract"
+        output: certificate_json
+        json_path: "certificateType"
+        store_in_variable: certificate_type_value
+        validate:
+          - type: "EQUALS"
+            output: certificate_type_value
+            value: "@certificate_type"
 
 

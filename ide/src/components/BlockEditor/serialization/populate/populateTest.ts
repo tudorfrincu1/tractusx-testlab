@@ -204,8 +204,8 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           }
         }
 
-        if (step.expect && step.expect.length > 0) {
-          populateAssertions(ws, sb, step.expect);
+        if (step.validate && step.validate.length > 0) {
+          populateAssertions(ws, sb, step.validate);
         }
 
         blocks.push(sb);
