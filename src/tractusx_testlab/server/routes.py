@@ -201,7 +201,7 @@ async def pause_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -
     job = player.jobs.get(job_id)
     if job is None:
         raise HTTPException(404, f"Job '{job_id}' not found")
-    if str(job.status) != "RUNNING":
+    if job.status != JobStatus.RUNNING:
         raise HTTPException(409, f"Job '{job_id}' is not running (status: {job.status.value})")
     player.jobs.pause(job_id)
     return JSONResponse(content={"job_id": job_id, "status": "PAUSED"})
@@ -213,7 +213,7 @@ async def resume_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) 
     job = player.jobs.get(job_id)
     if job is None:
         raise HTTPException(404, f"Job '{job_id}' not found")
-    if str(job.status) != "PAUSED":
+    if job.status != JobStatus.PAUSED:
         raise HTTPException(409, f"Job '{job_id}' is not paused (status: {job.status.value})")
     player.jobs.resume(job_id)
     return JSONResponse(content={"job_id": job_id, "status": "RUNNING"})

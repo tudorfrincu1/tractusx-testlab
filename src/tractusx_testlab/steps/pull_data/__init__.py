@@ -22,32 +22,25 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Request data shortcut steps — registers all 3 step types."""
+"""Pull data shortcut steps — registers all 3 step types."""
 
 from __future__ import annotations
 
 from tractusx_testlab.scripting.registry import step
-from tractusx_testlab.steps.pull_data._constants import STEP_CONFIG, STEP_TYPES
+from tractusx_testlab.steps.pull_data._constants import (
+    STEP_PULL_DATA_FILTERED,
+    STEP_PULL_DATA_FILTERED_BY_POLICY,
+    STEP_PULL_DATA_FILTERED_FROM_PRECONDITION,
+    STEP_TYPES,
+)
 from tractusx_testlab.steps.pull_data._executor import (
-    RequestDataExecutor,
+    PullDataFiltered,
+    PullDataFilteredByPolicy,
+    PullDataFilteredFromPrecondition,
 )
 
-__all__ = ["STEP_TYPES", "RequestDataExecutor"]
+__all__ = ["STEP_TYPES"]
 
-
-def _register_all() -> None:
-    """Register all 3 pull_data step types with the step registry."""
-    for step_type, (catalog_strat, selection_strat) in STEP_CONFIG.items():
-        cls = type(
-            f"RequestData_{'_'.join(step_type.split('_')[2:])}",
-            (RequestDataExecutor,),
-            {
-                "__init__": lambda self, cs=catalog_strat, ss=selection_strat: (
-                    RequestDataExecutor.__init__(self, cs, ss)
-                ),
-            },
-        )
-        step(step_type)(cls)
-
-
-_register_all()
+step(STEP_PULL_DATA_FILTERED)(PullDataFiltered)
+step(STEP_PULL_DATA_FILTERED_BY_POLICY)(PullDataFilteredByPolicy)
+step(STEP_PULL_DATA_FILTERED_FROM_PRECONDITION)(PullDataFilteredFromPrecondition)

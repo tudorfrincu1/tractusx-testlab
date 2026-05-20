@@ -26,32 +26,17 @@
 
 from __future__ import annotations
 
-# -- Catalog strategy identifiers ---------------------------------------------
-CATALOG_MULTI_FILTER = "multi_filter"
+# -- Step type identifiers ----------------------------------------------------
+STEP_PULL_DATA_FILTERED = "pull_data_filtered"
+STEP_PULL_DATA_FILTERED_BY_POLICY = "pull_data_filtered_by_policy"
+STEP_PULL_DATA_FILTERED_FROM_PRECONDITION = "pull_data_filtered_from_precondition"
 
-# -- Selection strategy identifiers -------------------------------------------
-SELECT_BY_INDEX = "by_index"
-SELECT_BY_POLICY = "by_policy"
-SELECT_BY_PRECONDITION = "by_precondition"
-
-# -- Default values -----------------------------------------------------------
-DEFAULT_FILTER_KEY = "dct:type"
-DEFAULT_DATASET_INDEX = 0
-DEFAULT_TRANSFER_TYPE = "HttpData-PULL"
-DEFAULT_MAX_WAIT = 60
-DEFAULT_POLL_INTERVAL = 2
-
-# -- All 3 step type strings --------------------------------------------------
 STEP_TYPES: list[str] = [
-    "request_data_filtered",
-    "request_data_filtered_by_policy",
-    "pull_data_filtered_from_precondition",
+    STEP_PULL_DATA_FILTERED,
+    STEP_PULL_DATA_FILTERED_BY_POLICY,
+    STEP_PULL_DATA_FILTERED_FROM_PRECONDITION,
 ]
 
-# -- Step type → configuration mapping ----------------------------------------
-# Each entry: (catalog_strategy, selection_strategy)
-STEP_CONFIG: dict[str, tuple[str, str]] = {
-    "request_data_filtered": (CATALOG_MULTI_FILTER, SELECT_BY_INDEX),
-    "request_data_filtered_by_policy": (CATALOG_MULTI_FILTER, SELECT_BY_POLICY),
-    "pull_data_filtered_from_precondition": (CATALOG_MULTI_FILTER, SELECT_BY_PRECONDITION),
-}
+# -- Default values -----------------------------------------------------------
+DEFAULT_MAX_WAIT = 60
+DEFAULT_POLL_INTERVAL = 2

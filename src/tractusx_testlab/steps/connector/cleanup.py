@@ -87,7 +87,7 @@ class DeletePolicyStep(BaseStep):
         )
 
 
-@step("delete_contract_definition")
+@step("delete_contract_definition", aliases=["delete_contract_def"])
 class DeleteContractDefinitionStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
