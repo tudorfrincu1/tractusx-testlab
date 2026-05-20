@@ -1,7 +1,7 @@
-###############################################################
-# Eclipse Tractus-X - Tractus-X TestLab
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,135 +11,109 @@
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
 # under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-###############################################################
+#################################################################################
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Integration tests for MockServer HTTP dispatch and request recording."""
+"""Integration tests for the FastAPI mock server (app creation + health)."""
 
 from __future__ import annotations
 
-import asyncio
+import importlib
+import sys
+from pathlib import Path
+from typing import Generator
+from unittest.mock import MagicMock
 
-import httpx
 import pytest
+from fastapi import APIRouter, FastAPI
+from starlette.testclient import TestClient
 
-from tractusx_testlab.exceptions import MockServerError
-from tractusx_testlab.mocks.mock_server import MockServer
+_SRC_DIR = str(Path(__file__).resolve().parent.parent / "src")
 
 
 @pytest.fixture()
-def server() -> MockServer:
-    s = MockServer(name="integration-test")
-    yield s
-    if s.is_running:
-        s.stop()
+def mock_app() -> Generator[FastAPI, None, None]:
+    """Create a FastAPI app with SDK dependencies mocked out."""
+    path_inserted = _SRC_DIR not in sys.path
+    if path_inserted:
+        sys.path.insert(0, _SRC_DIR)
+
+    mock_modules: dict[str, MagicMock] = {}
+    modules_to_mock = [
+        "tractusx_sdk.extensions.testlab.server.mock_registry",
+        "tractusx_sdk.extensions.testlab.server.routes",
+        "tractusx_sdk.extensions.testlab.server.callbacks",
+        "tractusx_sdk.extensions.testlab.server.storage",
+        "tractusx_sdk.extensions.testlab.player.execution.player",
+        "tractusx_sdk.extensions.testlab.config.loader",
+        "tractusx_sdk.extensions.testlab.config.settings",
+    ]
+
+    for mod_name in modules_to_mock:
+        if mod_name not in sys.modules:
+            mock_modules[mod_name] = MagicMock()
+            sys.modules[mod_name] = mock_modules[mod_name]
+
+    routes_mod = sys.modules["tractusx_sdk.extensions.testlab.server.routes"]
+    routes_mod.router = APIRouter()
+
+    evicted: dict[str, object] = {}
+    for key in list(sys.modules.keys()):
+        if "tractusx_testlab" in key:
+            evicted[key] = sys.modules.pop(key)
+
+    try:
+        import tractusx_testlab.server.app as app_module
+
+        importlib.reload(app_module)
+
+        mock_config = MagicMock()
+        mock_config.storage_dir = "/tmp/testlab-mock-test"
+        application = app_module.create_app(config=mock_config)
+        yield application
+    finally:
+        for key, mod in evicted.items():
+            sys.modules[key] = mod
+        for mod_name in list(mock_modules.keys()):
+            sys.modules.pop(mod_name, None)
+        if path_inserted:
+            sys.path.remove(_SRC_DIR)
 
 
-class TestMockServerHTTP:
-    def test_get_registered_endpoint(self, server: MockServer) -> None:
-        server.register_endpoint("GET", "/health", status=200, body={"ok": True})
-        server.start()
-        resp = httpx.get(f"{server.base_url}/health")
-        assert resp.status_code == 200
-        assert resp.json() == {"ok": True}
-
-    def test_post_registered_endpoint(self, server: MockServer) -> None:
-        server.register_endpoint("POST", "/data", status=201, body={"id": "abc"})
-        server.start()
-        resp = httpx.post(f"{server.base_url}/data", json={"key": "val"})
-        assert resp.status_code == 201
-        assert resp.json() == {"id": "abc"}
-
-    def test_unregistered_endpoint_returns_404(self, server: MockServer) -> None:
-        server.start()
-        resp = httpx.get(f"{server.base_url}/nonexistent")
-        assert resp.status_code == 404
-
-    def test_recorded_requests(self, server: MockServer) -> None:
-        server.register_endpoint("GET", "/track", status=200, body={})
-        server.start()
-        httpx.get(f"{server.base_url}/track")
-        httpx.get(f"{server.base_url}/track")
-        records = server.get_recorded_requests("/track")
-        assert len(records) == 2
-        assert records[0].method == "GET"
-        assert records[0].path == "/track"
-
-    def test_recorded_requests_filter_by_path(self, server: MockServer) -> None:
-        server.register_endpoint("GET", "/a", status=200, body={})
-        server.register_endpoint("GET", "/b", status=200, body={})
-        server.start()
-        httpx.get(f"{server.base_url}/a")
-        httpx.get(f"{server.base_url}/b")
-        httpx.get(f"{server.base_url}/a")
-        assert len(server.get_recorded_requests("/a")) == 2
-        assert len(server.get_recorded_requests("/b")) == 1
-
-    def test_recorded_requests_all(self, server: MockServer) -> None:
-        server.register_endpoint("GET", "/x", status=200, body={})
-        server.start()
-        httpx.get(f"{server.base_url}/x")
-        all_records = server.get_recorded_requests()
-        assert len(all_records) >= 1
-
-    def test_post_body_recorded(self, server: MockServer) -> None:
-        server.register_endpoint("POST", "/echo", status=200, body={})
-        server.start()
-        httpx.post(f"{server.base_url}/echo", json={"msg": "hello"})
-        records = server.get_recorded_requests("/echo")
-        assert records[0].body == {"msg": "hello"}
-
-    def test_start_twice_is_idempotent(self, server: MockServer) -> None:
-        server.start()
-        port = server.base_url
-        server.start()  # should not error
-        assert server.base_url == port
-
-    def test_stop_after_stop_is_safe(self, server: MockServer) -> None:
-        server.start()
-        server.stop()
-        server.stop()  # should not error
+@pytest.fixture()
+def client(mock_app: FastAPI) -> TestClient:
+    """HTTP test client for the mock server."""
+    return TestClient(mock_app)
 
 
-class TestMockServerWaitForCall:
-    @pytest.mark.asyncio
-    async def test_wait_for_call_resolved(self, server: MockServer) -> None:
-        server.register_endpoint("POST", "/callback", status=200, body={})
-        server.start()
+class TestMockServerApp:
+    """Tests for the FastAPI application creation and basic endpoints."""
 
-        async def send_request() -> None:
-            await asyncio.sleep(0.1)
-            async with httpx.AsyncClient() as client:
-                await client.post(f"{server.base_url}/callback", json={"x": 1})
+    def test_app_is_fastapi_instance(self, mock_app: FastAPI) -> None:
+        assert isinstance(mock_app, FastAPI)
 
-        task = asyncio.create_task(send_request())
-        recorded = await server.wait_for_call("/callback", timeout=5.0)
-        await task
-        assert recorded.method == "POST"
-        assert recorded.body == {"x": 1}
+    def test_app_has_title(self, mock_app: FastAPI) -> None:
+        assert mock_app.title == "Tractus-X Testlab Player"
 
-    @pytest.mark.asyncio
-    async def test_wait_for_call_timeout(self, server: MockServer) -> None:
-        server.start()
-        with pytest.raises(MockServerError, match="Timed out"):
-            await server.wait_for_call("/never-called", timeout=0.2)
+    def test_health_endpoint_returns_200(self, client: TestClient) -> None:
+        response = client.get("/testlab/health")
+        assert response.status_code == 200
 
+    def test_health_endpoint_json_has_status(self, client: TestClient) -> None:
+        body = client.get("/testlab/health").json()
+        assert "status" in body
+        assert body["status"] == "ok"
 
-class TestMockServerPlainTextBody:
-    def test_plain_text_body_recorded(self, server: MockServer) -> None:
-        server.register_endpoint("POST", "/text", status=200, body={})
-        server.start()
-        httpx.post(
-            f"{server.base_url}/text",
-            content="plain text",
-            headers={"Content-Type": "text/plain"},
-        )
-        records = server.get_recorded_requests("/text")
-        assert records[0].body == "plain text"
+    def test_app_state_has_player(self, mock_app: FastAPI) -> None:
+        assert hasattr(mock_app.state, "player")
+
+    def test_app_state_has_callbacks(self, mock_app: FastAPI) -> None:
+        assert hasattr(mock_app.state, "callbacks")

@@ -46,19 +46,30 @@ CCM_DIR = Path(__file__).resolve().parent.parent / "ide" / "public" / "examples"
 CCM_TESTS_DIR = CCM_DIR / "tests"
 
 _CCM_TEST_FILES = {
-    "request_certificate.yaml": 5,
-    "validate_payload.yaml": 3,
-    "await_feedback_callback.yaml": 5,
-    "send_feedback.yaml": 9,
-    "expose_testlab_asset.yaml": 5,
+    "available_notification.yaml": 4,
+    "catalog_policy_validation.yaml": 1,
+    "certificate_asset_validation.yaml": 3,
+    "error_handling.yaml": 4,
+    "expose_testlab_asset.yaml": 4,
+    "push_certificate.yaml": 4,
+    "request_certificate.yaml": 3,
+    "send_feedback.yaml": 4,
+    "validate_payload.yaml": 2,
 }
 
 # All step types referenced across CCM YAML files
 _CCM_STEP_TYPES = [
-    "query_catalog", "extract_dataset", "negotiate", "initiate_transfer",
-    "http_call", "validate_semantic_schema", "json_path_extract",
-    "mock_endpoint", "wait_for_call", "generate_uuid", "send_notification",
-    "create_asset", "create_policy", "create_contract_def",
+    "create_asset", "create_contract_def", "create_policy",
+    "delete_asset", "delete_policy",
+    "export_variable", "generate_uuid", "http_call_dataplane",
+    "import_variable", "load_schema", "mock_endpoint",
+    "pull_data_filtered_from_precondition", "query_catalog_with_filters",
+    "wait_for_call",
+]
+
+# Step types used in YAML but not yet registered in the step registry
+_CCM_STEP_TYPES_UNREGISTERED = [
+    "delete_contract_def",
 ]
 
 def _make_mock_context(**variables: Any) -> MagicMock:
@@ -70,7 +81,7 @@ def _make_mock_context(**variables: Any) -> MagicMock:
 def _make_step_definition(**overrides: Any) -> Any:
     """Create a minimal StepDefinition for step execution tests."""
     from tractusx_sdk.extensions.testlab.models import StepDefinition
-    defaults = {"type": "test", "params": {}, "validate": []}
+    defaults = {"type": "test", "name": "test-step", "params": {}, "validate": []}
     defaults.update(overrides)
     return StepDefinition(**defaults)
 
@@ -105,7 +116,7 @@ class TestCcmIndexParsing:
         assert data["kind"] == "tck"
         assert data["name"] == "certificate-management"
         tests = data.get("tests", [])
-        assert len(tests) == 5, f"Expected 5 tests, got {len(tests)}"
+        assert len(tests) == 9, f"Expected 9 tests, got {len(tests)}"
         for entry in tests:
             assert "test" in entry, f"Each test entry must have a 'test' key, got {entry}"
 
