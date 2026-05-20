@@ -174,16 +174,16 @@ class TestQueryCatalogWithFiltersStep:
     """Tests for query_catalog_with_filters step."""
 
     @pytest.mark.asyncio
-    @patch("tractusx_testlab.steps.connector.catalog_filter.DspServiceFactory")
+    @patch("tractusx_testlab.steps.connector.catalog_filter._create_dsp_consumer")
     async def test_successful_catalog_query(
-        self, mock_factory: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_create: MagicMock, mock_context: MagicMock, definition: StepDefinition
     ) -> None:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"dcat:dataset": [{"@id": "asset-1"}]}
         mock_consumer = MagicMock()
         mock_consumer.request_catalog.return_value = mock_response
-        mock_factory.get_dsp_consumer_service.return_value = mock_consumer
+        mock_create.return_value = mock_consumer
 
         step = QueryCatalogWithFiltersStep()
         result = await step.execute(
@@ -194,15 +194,15 @@ class TestQueryCatalogWithFiltersStep:
         assert mock_context.variables["datasets"] == [{"@id": "asset-1"}]
 
     @pytest.mark.asyncio
-    @patch("tractusx_testlab.steps.connector.catalog_filter.DspServiceFactory")
+    @patch("tractusx_testlab.steps.connector.catalog_filter._create_dsp_consumer")
     async def test_catalog_error_returns_none_value(
-        self, mock_factory: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_create: MagicMock, mock_context: MagicMock, definition: StepDefinition
     ) -> None:
         mock_response = MagicMock()
         mock_response.status_code = 403
         mock_consumer = MagicMock()
         mock_consumer.request_catalog.return_value = mock_response
-        mock_factory.get_dsp_consumer_service.return_value = mock_consumer
+        mock_create.return_value = mock_consumer
 
         step = QueryCatalogWithFiltersStep()
         result = await step.execute(

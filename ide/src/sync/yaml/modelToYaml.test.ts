@@ -81,7 +81,7 @@ describe("modelToYaml", () => {
     const result = modelToYaml(model);
 
     expect(result).toContain("shared_variables:");
-    expect(result).not.toContain("variables:");
+    expect(result).not.toMatch(/^\s*variables:/m);
     expect(result).toContain("base_url:");
   });
 

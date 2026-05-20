@@ -224,45 +224,16 @@ class ServiceManager:
 
     @staticmethod
     def _create_dsp_consumer_service(service_definition: ServiceDefinition) -> Any:
-        from tractusx_sdk.dataspace.services.dsp import DspServiceFactory
+        from tractusx_testlab.steps.connector.consume import _DspConsumer
 
-        auth = service_definition.auth
-        params = service_definition.params or {}
-        version = params.get("version", defaults.DATASPACE_VERSION)
-
-        headers: dict[str, str] = {}
-        if auth.get("api_key"):
-            headers["x-api-key"] = auth["api_key"]
-        if auth.get("bearer_token"):
-            headers["Authorization"] = f"Bearer {auth['bearer_token']}"
-
-        return DspServiceFactory.get_dsp_consumer_service(
-            dataspace_version=version,
-            base_url=service_definition.base_url,
-            headers=headers or None,
-            timeout=params.get("timeout", 30.0),
-        )
+        return _DspConsumer(base_url=service_definition.base_url)
 
     @staticmethod
     def _create_dsp_provider_service(service_definition: ServiceDefinition) -> Any:
-        from tractusx_sdk.dataspace.services.dsp import DspServiceFactory
+        from tractusx_testlab.steps.connector.consume import _DspConsumer
 
-        auth = service_definition.auth
-        params = service_definition.params or {}
-        version = params.get("version", defaults.DATASPACE_VERSION)
-
-        headers: dict[str, str] = {}
-        if auth.get("api_key"):
-            headers["x-api-key"] = auth["api_key"]
-        if auth.get("bearer_token"):
-            headers["Authorization"] = f"Bearer {auth['bearer_token']}"
-
-        return DspServiceFactory.get_dsp_provider_service(
-            dataspace_version=version,
-            base_url=service_definition.base_url,
-            headers=headers or None,
-            timeout=params.get("timeout", 30.0),
-        )
+        # Provider service uses the same lightweight DSP client for now
+        return _DspConsumer(base_url=service_definition.base_url)
 
     # ------------------------------------------------------------------
     # Lifecycle

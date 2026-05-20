@@ -80,7 +80,7 @@ def _make_mock_context(**variables: Any) -> MagicMock:
 
 def _make_step_definition(**overrides: Any) -> Any:
     """Create a minimal StepDefinition for step execution tests."""
-    from tractusx_sdk.extensions.testlab.models import StepDefinition
+    from tractusx_testlab.models import StepDefinition
     defaults = {"type": "test", "name": "test-step", "params": {}, "validate": []}
     defaults.update(overrides)
     return StepDefinition(**defaults)

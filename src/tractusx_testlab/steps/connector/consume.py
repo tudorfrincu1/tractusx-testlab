@@ -29,7 +29,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.dataspace.services.dsp import DspServiceFactory
+import httpx
+
 from tractusx_sdk.dataspace.tools.dsp_tools import DspTools
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
@@ -46,18 +47,53 @@ from tractusx_testlab.syntax.context_vars import (
 )
 
 if TYPE_CHECKING:
-    from tractusx_sdk.dataspace.services.dsp.consumer import DspConsumerService
     from tractusx_testlab.player.execution.context import StepContext
 
 logger = logging.getLogger(__name__)
 
 
-def _create_dsp_consumer(protocol_url: str) -> "DspConsumerService":
+class _DspConsumer:
+    """Lightweight DSP protocol consumer for direct catalog/negotiation calls."""
+
+    _DSP_CONTEXT = {
+        "dspace": "https://w3id.org/dspace/2024/1/",
+        "odrl": "http://www.w3.org/ns/odrl/2/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+    }
+
+    def __init__(self, base_url: str) -> None:
+        self._base_url = base_url.rstrip("/")
+
+    def request_catalog(self, *, filter_expression: list[dict] | None = None) -> httpx.Response:
+        """POST a DSP catalog request to the provider."""
+        payload: dict = {"@context": self._DSP_CONTEXT, "@type": "dspace:CatalogRequestMessage"}
+        if filter_expression:
+            payload["filterExpression"] = filter_expression
+        return httpx.post(f"{self._base_url}/catalog/request", json=payload, timeout=30.0)
+
+    def initiate_negotiation(
+        self,
+        *,
+        offer: dict | str | None,
+        consumer_pid: str,
+        callback_address: str | None = None,
+    ) -> httpx.Response:
+        """POST a DSP negotiation request to the provider."""
+        payload: dict = {
+            "@context": self._DSP_CONTEXT,
+            "@type": "dspace:ContractNegotiationMessage",
+            "dspace:consumerPid": consumer_pid,
+        }
+        if offer:
+            payload["dspace:offer"] = offer
+        if callback_address:
+            payload["dspace:callbackAddress"] = callback_address
+        return httpx.post(f"{self._base_url}/negotiations/request", json=payload, timeout=30.0)
+
+
+def _create_dsp_consumer(protocol_url: str) -> _DspConsumer:
     """Create a lightweight DSP consumer for direct protocol calls."""
-    return DspServiceFactory.get_dsp_consumer_service(
-        dataspace_version=defaults.DATASPACE_VERSION,
-        base_url=protocol_url,
-    )
+    return _DspConsumer(base_url=protocol_url)
 
 
 @step("query_catalog")
