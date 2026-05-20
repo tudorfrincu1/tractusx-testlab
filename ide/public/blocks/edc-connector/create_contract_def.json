@@ -5,13 +5,14 @@
   "params": [
     { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service" },
     { "name": "contract_def_id", "type": "string", "required": false, "description": "Contract definition ID (auto-generated if omitted)" },
-    { "name": "access_policy_id", "type": "string", "required": true, "description": "ID of the access policy" },
-    { "name": "contract_policy_id", "type": "string", "required": true, "description": "ID of the contract policy" },
+    { "name": "access_policy_id", "type": "string", "required": true, "description": "ID of the access policy", "accepts": ["policy_id"] },
+    { "name": "contract_policy_id", "type": "string", "required": true, "description": "ID of the contract policy", "accepts": ["policy_id"] },
     { "name": "asset_selector", "type": "array", "item_type": "asset_criterion", "required": true, "description": "Criteria selecting which assets this contract covers" }
   ],
   "outputs": [
     {
       "name": "contract_def_id",
+      "class": "contract_def_id",
       "description": "ID of the created contract definition",
       "schema": { "type": "string" },
       "example": "contractdef-uuid-789"

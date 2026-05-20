@@ -8,6 +8,7 @@
   "outputs": [
     {
       "name": "bpn",
+      "class": "bpn",
       "description": "The generated BPN string",
       "schema": { "type": "string", "description": "Business Partner Number (e.g., BPNL000000000001)" },
       "example": "BPNL000000000001"

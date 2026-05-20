@@ -10,6 +10,7 @@
   "outputs": [
     {
       "name": "catalog",
+      "class": "catalog",
       "description": "The full catalog response",
       "schema": {
         "type": "object",
@@ -37,6 +38,7 @@
     },
     {
       "name": "datasets",
+      "class": "datasets",
       "description": "Array of datasets (offers) in the catalog",
       "schema": {
         "type": "array",

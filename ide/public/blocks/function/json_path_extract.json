@@ -3,13 +3,14 @@
   "label": "Extract JSON Path",
   "description": "Extract a value from a JSON variable using a dot-notation path.",
   "params": [
-    { "name": "variable", "type": "variable", "required": true, "description": "Source variable containing JSON" },
+    { "name": "variable", "type": "variable", "required": true, "description": "Source variable containing JSON", "accepts": ["response_body", "response_headers", "callback_payload", "catalog", "datasets", "shell_descriptor", "extracted_value"] },
     { "name": "path", "type": "json_path", "required": true, "description": "Dot-notation path (e.g., items.0.id)" },
     { "name": "store_in_variable", "type": "string", "required": false, "description": "Variable name to store the extracted value" }
   ],
   "outputs": [
     {
       "name": "value",
+      "class": "extracted_value",
       "description": "Extracted value",
       "schema": { "type": "unknown", "description": "Type depends on the extracted value — could be string, number, object, or array" },
       "example": "extracted-value"

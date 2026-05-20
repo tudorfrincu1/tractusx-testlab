@@ -1,13 +1,13 @@
 {
-  "type": "pull_data_filtered_from_precondition",
-  "label": "Obtain Data Exchange Authorization from Precondition",
-  "description": "Query catalog with filters, negotiate a contract matching a precondition-defined policy, initiate a PULL transfer, and return the EDR token and dataplane URL.",
+  "type": "pull_data_filtered_by_policy",
+  "label": "Obtain Data Exchange Authorization by Policy",
+  "description": "Query catalog with filters, negotiate a contract matching a specific policy, initiate a PULL transfer, and return the EDR token and dataplane URL.",
   "params": [
     { "name": "service", "type": "service_ref", "required": true, "description": "Consumer EDC connector service" },
     { "name": "counter_party_id", "type": "string", "required": true, "description": "BPN of the provider" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the provider connector" },
     { "name": "filters", "type": "filter_expression_list", "required": true, "description": "Filter expressions to narrow catalog results" },
-    { "name": "precondition_policy_var", "type": "string", "required": true, "description": "Name of context variable holding policies from a precondition step" },
+    { "name": "policies", "type": "array", "item_type": "odrl_policy", "required": true, "description": "ODRL policies the offer must match" },
     { "name": "max_wait", "type": "number", "required": false, "description": "Max seconds to wait for transfer completion", "default": 60 },
     { "name": "poll_interval", "type": "number", "required": false, "description": "Seconds between transfer status polls", "default": 1 }
   ],

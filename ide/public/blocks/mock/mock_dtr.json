@@ -1,5 +1,6 @@
 {
   "type": "mock_dtr",
+  "expect": false,
   "label": "Mock Digital Twin Registry",
   "description": "Expose a protocol-aware DTR mock that responds to AAS shell lookup/registration requests.",
   "template": true,

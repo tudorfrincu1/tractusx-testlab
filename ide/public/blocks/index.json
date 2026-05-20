@@ -55,9 +55,9 @@
           "name": "Obtain Data Exchange Authorization",
           "description": "Discover data in catalog, negotiate contract, and obtain EDR authorization for data exchange",
           "blocks": [
-            "edc-connector/shortcuts/request_data_filtered.json",
-            "edc-connector/shortcuts/request_data_filtered_by_policy.json",
-            "edc-connector/shortcuts/pull_data_filtered_from_precondition.json"
+            "edc-connector/shortcuts/pull_data_filtered.json",
+            "edc-connector/shortcuts/pull_data_filtered_by_policy.json",
+            "edc-connector/shortcuts/request_data_filtered_from_precondition.json"
           ]
         }
       ]

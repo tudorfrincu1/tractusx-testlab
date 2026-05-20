@@ -12,6 +12,7 @@
   "outputs": [
     {
       "name": "policy_id",
+      "class": "policy_id",
       "description": "ID of the created policy",
       "schema": { "type": "string" },
       "example": "policy-uuid-456"

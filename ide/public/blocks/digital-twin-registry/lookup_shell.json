@@ -9,6 +9,7 @@
   "outputs": [
     {
       "name": "shell_ids",
+      "class": "shell_ids",
       "description": "Array of matching shell IDs",
       "schema": {
         "type": "array",
@@ -18,6 +19,7 @@
     },
     {
       "name": "shell_descriptors",
+      "class": "shell_descriptor",
       "description": "Full shell descriptors for matches",
       "schema": {
         "type": "array",

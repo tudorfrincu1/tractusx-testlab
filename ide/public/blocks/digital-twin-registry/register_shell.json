@@ -12,12 +12,14 @@
   "outputs": [
     {
       "name": "shell_id",
+      "class": "shell_id",
       "description": "ID of the registered shell",
       "schema": { "type": "string" },
       "example": "shell-uuid-001"
     },
     {
       "name": "shell_descriptor",
+      "class": "shell_descriptor",
       "description": "Full shell descriptor as returned by the registry",
       "schema": {
         "type": "object",

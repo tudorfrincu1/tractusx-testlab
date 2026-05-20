@@ -3,7 +3,7 @@
   "label": "HTTP Call",
   "description": "Send a plain HTTP request to any URL.",
   "params": [
-    { "name": "url", "type": "string", "required": true, "description": "Full URL to call" },
+    { "name": "url", "type": "string", "required": true, "description": "Full URL to call", "accepts": ["url", "dataplane_url"] },
     { "name": "method", "type": "dropdown", "required": true, "description": "HTTP method", "options": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
     { "name": "body", "type": "json", "required": false, "description": "Request body (for POST/PUT/PATCH)" },
     { "name": "headers", "type": "json", "required": false, "description": "Additional request headers" },
@@ -12,18 +12,21 @@
   "outputs": [
     {
       "name": "status_code",
+      "class": "status_code",
       "description": "HTTP status code of the response",
       "schema": { "type": "number" },
       "example": 200
     },
     {
       "name": "response_body",
+      "class": "response_body",
       "description": "Response body",
       "schema": { "type": "object", "description": "Parsed JSON response body" },
       "example": { "result": "ok" }
     },
     {
       "name": "response_headers",
+      "class": "response_headers",
       "description": "Response headers",
       "schema": {
         "type": "object",

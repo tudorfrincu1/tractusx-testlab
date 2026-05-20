@@ -1,5 +1,6 @@
 {
   "type": "mock_discovery",
+  "expect": false,
   "label": "Mock Discovery Service",
   "description": "Expose a discovery service mock that returns configured BPN-to-EDC endpoint mappings.",
   "template": true,

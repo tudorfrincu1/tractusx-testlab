@@ -14,6 +14,7 @@
   "outputs": [
     {
       "name": "asset_id",
+      "class": "asset_id",
       "description": "ID of the created asset",
       "schema": { "type": "string" },
       "example": "asset-uuid-123"
