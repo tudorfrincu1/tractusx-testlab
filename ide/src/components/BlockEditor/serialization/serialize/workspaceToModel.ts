@@ -189,6 +189,11 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           if (val && val !== "__NONE__") params[p.name] = `@${val}`;
           break;
         }
+        case "text": {
+          const val = block.getFieldValue(fieldKey);
+          if (val) params[p.name] = String(val);
+          break;
+        }
         case "number": {
           const val = block.getFieldValue(fieldKey);
           if (val !== undefined && val !== null) params[p.name] = Number(val);
@@ -217,7 +222,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
         case "filter_expression_list": {
           const filters = readFilterExpressionChain(block.getInputTargetBlock(fieldKey));
           if (filters.length > 0) {
-            params.filter = { filter_expression: filters };
+            params[p.name] = filters;
           }
           break;
         }
@@ -282,8 +287,10 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     delete params.filter_value;
     delete params.operator;
   }
-  if (stepType === "query_catalog_with_filters" && params.filter !== undefined) {
-    // Filtered version always uses filter_expression_list, remove any flat leftovers
+  if (stepType === "query_catalog_with_filters" && params.filters !== undefined) {
+    // query_catalog_with_filters YAML uses nested filter.filter_expression format
+    params.filter = { filter_expression: params.filters };
+    delete params.filters;
     delete params.filter_by;
     delete params.filter_value;
     delete params.operator;

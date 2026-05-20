@@ -77,18 +77,8 @@ function buildPhaseAllowMap(
       }
     }
 
-    if (phase.blockGroups) {
-      for (const group of phase.blockGroups) {
-        for (const blockType of group.blocks) {
-          let phases = allowMap.get(blockType);
-          if (!phases) {
-            phases = new Set();
-            allowMap.set(blockType, phases);
-          }
-          phases.add(phaseInput);
-        }
-      }
-    }
+    // blockGroups are for toolbox display only — not for enforcement
+    // Value/utility blocks are never phase-restricted
   }
 
   return allowMap;
@@ -175,6 +165,9 @@ export function attachPhaseEnforcementListener(
     if (!block) return;
 
     if (UNRESTRICTED_BLOCK_TYPES.has(block.type)) return;
+
+    // Only enforce phases on step/import blocks — value/utility blocks follow their parent
+    if (!block.type.startsWith("step_") && !block.type.startsWith("import_")) return;
 
     const allowedPhases = phaseAllowMap.get(block.type);
     if (!allowedPhases) return;

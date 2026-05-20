@@ -28,7 +28,7 @@ import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
 import { blockIcon, ICON_VARIABLE } from "../../common/fields/icons";
 import { dynamicDropdown } from "../../common/fields/dropdownProviders";
-import { collectWorkspaceVariables } from "../../common/catalog/variableCollection";
+import { collectEnvironmentVariables, collectWorkspaceVariables } from "../../common/catalog/variableCollection";
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";
 import {
   defaultSegments,
@@ -57,10 +57,10 @@ function resolveParentSourceVariable(block: Block): string | undefined {
   let current: Block | null = block.getParent();
   while (current) {
     if (current.type.startsWith("step_")) {
-      // Search all inputs for a connected variable_get block
+      // Search all inputs for a connected variable_get or output_variable block
       for (const input of current.inputList) {
         const connected = input.connection?.targetBlock();
-        if (connected?.type === "variable_get") {
+        if (connected?.type === "variable_get" || connected?.type === "output_variable") {
           const varName = connected.getFieldValue("VAR_NAME");
           if (varName && varName !== "__NONE__") return String(varName);
         }
@@ -114,7 +114,6 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
       this.setHelpUrl();
-      this.setShadow(true);
       this.setCommentText("This is a string")
       this.setTooltip("A literal string value");
     },
@@ -166,6 +165,8 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
 
   Blockly.Blocks["value_api_path"] = {
     init(this: Block) {
+      // eslint-disable-next-line no-console
+      console.log(`[DEBUG value_api_path] init called`);
       const segs = defaultApiSegments();
       const path = segmentsToApiPath(segs);
       this.appendDummyInput()
@@ -201,6 +202,19 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     },
   };
 
+  Blockly.Blocks["value_regex"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("/")
+        .appendField(new Blockly.FieldTextInput(".*"), "VALUE")
+        .appendField("/");
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueRegex);
+      this.setCommentText("This is a regex pattern");
+      this.setTooltip("A regular expression pattern (e.g. ^urn:uuid:[0-9a-f]{8}$)");
+    },
+  };
+
   Blockly.Blocks["value_number"] = {
     init(this: Block) {
       this.appendDummyInput()
@@ -222,7 +236,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
           new Blockly.FieldDropdown(
             dynamicDropdown(
               (ws) => {
-                const vars = collectWorkspaceVariables(ws, catalog);
+                const vars = collectEnvironmentVariables(ws);
                 return vars.length > 0
                   ? vars.map((v): [string, string] => [v, v])
                   : [["(no variables)", "__NONE__"]];
@@ -234,7 +248,21 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         );
       this.setOutput(true, "param_value");
       this.setColour(blockColors.variableGet);
-      this.setTooltip("Reference a variable — uses @variable_name syntax");
+      this.setTooltip("Reference an environment/TCK variable — uses @variable_name syntax");
+    },
+  };
+
+  Blockly.Blocks["output_variable"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField(blockIcon(Blockly, ICON_VARIABLE))
+        .appendField("@")
+        .appendField(new Blockly.FieldLabel(""), "VAR_NAME");
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.variableGet);
+      this.setTooltip("Output variable — drag to use in another block");
+      this.setDeletable(true);
+      this.setMovable(true);
     },
   };
 

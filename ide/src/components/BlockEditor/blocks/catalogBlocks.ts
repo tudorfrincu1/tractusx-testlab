@@ -69,9 +69,11 @@ function registerSingleBlock(
       registerBlockParams(this, block, Blockly, catalog, serviceType);
 
       if (block.outputs && block.outputs.length > 0) {
-        this.appendStatementInput("EXPECT")
-          .appendField("validate:")
-          .setCheck("assertion");
+        if (block.expect !== false) {
+          this.appendStatementInput("EXPECT")
+            .appendField("validate:")
+            .setCheck("assertion");
+        }
       }
 
       this.setPreviousStatement(true, "step");
@@ -209,6 +211,15 @@ function registerBlockParams(
         self.appendStatementInput(fieldKey)
           .appendField(paramLabel)
           .setCheck("filter_expression");
+        break;
+
+      case "text":
+        self.appendDummyInput()
+          .appendField(paramLabel)
+          .appendField(
+            new Blockly.FieldTextInput(String(param.default ?? "")),
+            fieldKey
+          );
         break;
 
       default:

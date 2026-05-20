@@ -35,13 +35,14 @@ import {
   setDropdownValue,
   attachChain,
   connectValue,
-  createValueBlockFromString,
   toBlockValueString,
   createArrayItemBlocks,
 } from "../helpers";
 import { populateAssertions } from "./populateAssertions";
+import { populateFilterExpressions } from "./populateFilterExpressions";
 import { deserializePreconditionPolicyBlock } from "../serialize/preconditionSerializers";
 import { truncateJsonPreview } from "../../blocks";
+import { trackStepOutputs, createValueBlockWithOutputResolution, type StepOutputMap } from "./stepOutputTracker";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -55,6 +56,8 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
     block.setFieldValue(JSON.stringify(params ?? {}), "PARAMS_JSON");
     return block;
   };
+
+  const stepOutputs: StepOutputMap = new Map();
 
   const buildStepBlocks = (steps: Step[]): Block[] => {
     const blocks: Block[] = [];
@@ -142,6 +145,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
             case "endpoint_ref":
             case "service_ref":
             case "schema_path":
+            case "precondition_ref":
               setDropdownValue(sb, fieldKey, String(paramVal));
               break;
             case "variable": {
@@ -150,6 +154,9 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               setDropdownValue(sb, fieldKey, val);
               break;
             }
+            case "text":
+              sb.setFieldValue(String(paramVal), fieldKey);
+              break;
             case "number":
               sb.setFieldValue(Number(paramVal), fieldKey);
               break;
@@ -175,13 +182,19 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               }
               break;
             case "filter_expression_list": {
-              // paramVal is not used directly — read filter from effectiveParams.filter
-              const filterObj = effectiveParams.filter as Record<string, unknown> | undefined;
-              if (filterObj && typeof filterObj === "object") {
-                const expressions = filterObj.filter_expression;
-                if (Array.isArray(expressions)) {
-                  const filterBlocks = populateFilterExpressions(ws, expressions);
-                  attachChain(sb, fieldKey, filterBlocks);
+              // Direct array format (e.g. pull_data_filtered_from_precondition)
+              if (Array.isArray(paramVal)) {
+                const filterBlocks = populateFilterExpressions(ws, paramVal, stepOutputs);
+                attachChain(sb, fieldKey, filterBlocks);
+              } else {
+                // Nested format: effectiveParams.filter.filter_expression (query_catalog_with_filters)
+                const filterObj = effectiveParams.filter as Record<string, unknown> | undefined;
+                if (filterObj && typeof filterObj === "object") {
+                  const expressions = filterObj.filter_expression;
+                  if (Array.isArray(expressions)) {
+                    const filterBlocks = populateFilterExpressions(ws, expressions, stepOutputs);
+                    attachChain(sb, fieldKey, filterBlocks);
+                  }
                 }
               }
               break;
@@ -199,7 +212,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
               break;
             }
             default:
-              connectValue(sb, fieldKey, createValueBlockFromString(ws, toBlockValueString(paramVal)));
+              connectValue(sb, fieldKey, createValueBlockWithOutputResolution(ws, toBlockValueString(paramVal), stepOutputs));
               break;
           }
         }
@@ -208,6 +221,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           populateAssertions(ws, sb, step.validate);
         }
 
+        trackStepOutputs(sb, step, catalog, stepOutputs);
         blocks.push(sb);
       } catch (err) {
         const stepType = isTemplateStep(step) ? step.template : step.type;
@@ -247,48 +261,4 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
   if (script.teardown && script.teardown.length > 0) {
     attachChain(root, "TEARDOWN", buildStepBlocks(script.teardown));
   }
-}
-
-/** Map full URIs to the dropdown values used by the filter_expression block. */
-const URI_TO_DROPDOWN: Record<string, string> = {
-  "https://w3id.org/edc/v0.0.1/ns/type": "https://w3id.org/edc/v0.0.1/ns/type",
-  "http://purl.org/dc/terms/type": "https://w3id.org/edc/v0.0.1/ns/type",
-  "http://purl.org/dc/terms/subject": "http://purl.org/dc/terms/subject",
-  "https://w3id.org/catenax/ontology/common#version": "https://w3id.org/catenax/ontology/common#version",
-  "https://w3id.org/edc/v0.0.1/ns/id": "https://w3id.org/edc/v0.0.1/ns/id",
-  "'https://w3id.org/edc/v0.0.1/ns/id'": "https://w3id.org/edc/v0.0.1/ns/id",
-};
-
-interface FilterExpressionYaml {
-  operand_left?: string;
-  operator?: string;
-  operand_right?: string;
-}
-
-function populateFilterExpressions(ws: Workspace, expressions: unknown[]): Block[] {
-  const blocks: Block[] = [];
-  for (const raw of expressions) {
-    if (!raw || typeof raw !== "object") continue;
-    const expr = raw as FilterExpressionYaml;
-    const fb = makeBlock(ws, "filter_expression");
-
-    const rawLeft = expr.operand_left || "";
-    const mappedLeft = URI_TO_DROPDOWN[rawLeft];
-    if (mappedLeft) {
-      setDropdownValue(fb, "OPERAND_LEFT", mappedLeft);
-    } else {
-      setDropdownValue(fb, "OPERAND_LEFT", "custom");
-      fb.setFieldValue(rawLeft, "OPERAND_LEFT_CUSTOM");
-    }
-
-    if (expr.operator) {
-      setDropdownValue(fb, "OPERATOR", expr.operator);
-    }
-    if (expr.operand_right !== undefined) {
-      connectValue(fb, "OPERAND_RIGHT", createValueBlockFromString(ws, toBlockValueString(expr.operand_right)));
-    }
-
-    blocks.push(fb);
-  }
-  return blocks;
 }

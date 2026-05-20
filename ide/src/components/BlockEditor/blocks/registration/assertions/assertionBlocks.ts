@@ -254,6 +254,7 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
             ["not equals", "not_equals"],
             ["contains", "contains"],
             ["not contains", "not_contains"],
+            ["one of", "one_of"],
             ["greater than", "greater_than"],
             ["less than", "less_than"],
             ["matches", "matches"],

@@ -32,7 +32,7 @@ import type { AggregatedVariable, TestSummary } from "./selectors/selectors";
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
 export interface ActiveFile {
-  type: "tck" | "test" | "schema";
+  type: "tck" | "test" | "schema" | "preconditions" | "environment";
   name: string;
 }
 

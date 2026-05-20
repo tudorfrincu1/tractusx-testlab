@@ -169,7 +169,7 @@ function buildInputsCategory(blocks: readonly string[], variables: string[]): ob
   const colour = blockColors.valueString;
 
   const literalValues: object[] = [];
-  for (const t of ["value_string", "value_number", "value_boolean", "value_json", "key_value_pair"]) {
+  for (const t of ["value_string", "value_regex", "value_number", "value_boolean", "value_json", "value_list", "key_value_pair"]) {
     if (blocks.includes(t)) literalValues.push({ kind: "block", type: t });
   }
 

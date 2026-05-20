@@ -38,6 +38,36 @@ import {
 /** Raw assertion object from YAML — may be new typed format or legacy compact format. */
 type RawAssertion = Record<string, unknown>;
 
+/** Create a value_regex block for regex pattern values. */
+function createRegexValueBlock(ws: Workspace, pattern: string): Block {
+  const rb = makeBlock(ws, "value_regex");
+  rb.setFieldValue(pattern, "VALUE");
+  return rb;
+}
+
+/** Create the appropriate value block for an assert_field EXPECTED input. */
+function createAssertFieldValueBlock(ws: Workspace, operator: string, value: unknown): Block {
+  if (operator === "matches_regex") {
+    return createRegexValueBlock(ws, toBlockValueString(value));
+  }
+  if (operator === "one_of" && Array.isArray(value)) {
+    return createValueListBlock(ws, value);
+  }
+  return createValueBlockFromString(ws, toBlockValueString(value));
+}
+
+/** Create a value_list block populated with list_item blocks for each element. */
+function createValueListBlock(ws: Workspace, items: unknown[]): Block {
+  const listBlock = makeBlock(ws, "value_list");
+  const itemBlocks: Block[] = items.map((item) => {
+    const ib = makeBlock(ws, "list_item");
+    ib.setFieldValue(String(item ?? ""), "VALUE");
+    return ib;
+  });
+  attachChain(listBlock, "ITEMS", itemBlocks);
+  return listBlock;
+}
+
 /** Assertion input — accepts both typed Assertion objects and raw YAML objects. */
 type AssertionInput = Assertion | RawAssertion;
 
@@ -88,7 +118,7 @@ function normalizeLegacy(raw: RawAssertion): RawAssertion {
     return { type: typedType, output };
   }
   if (typedType === AssertionOperator.ASSERT_FIELD) {
-    return { type: typedType, output, path: raw.path, operator: raw.operator, expected: raw.expected };
+    return { type: typedType, output, path: raw.path, operator: raw.operator, expected: raw.value ?? raw.expected };
   }
   return { type: typedType, output, value: val };
 }
@@ -188,8 +218,10 @@ function createAssertionBlock(
       if (path) ab.setFieldValue(path, "PATH");
       const operator = typeof a.operator === "string" ? a.operator : "equals";
       setDropdownValue(ab, "OPERATOR", operator);
-      if (a.expected !== undefined && a.expected !== "") {
-        connectValue(ab, "EXPECTED", createValueBlockFromString(ws, toBlockValueString(a.expected)));
+      const expectedVal = a.value ?? a.expected;
+      if (expectedVal !== undefined && expectedVal !== "") {
+        const valueBlock = createAssertFieldValueBlock(ws, operator, expectedVal);
+        connectValue(ab, "EXPECTED", valueBlock);
       }
       return ab;
     }

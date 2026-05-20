@@ -35,8 +35,11 @@ export const blockColors = {
   variableDef: "#5B21B6",
   variableGet: "#5B21B6",
   valueString: "#1E293B",
+  valueRegex: "#7E22CE",
   valueJsonPath: "#0E7490",
   valueApiPath: "#1E40AF",
+  valueList: "#1E40AF",
+  listItem: "#1E3A5F",
   storeOutput: "#5B21B6",
 
   /** Core block types */

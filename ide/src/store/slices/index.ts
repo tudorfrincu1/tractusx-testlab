@@ -28,6 +28,8 @@ export type { GraphMode, OnModelChange } from "./useTestLabStore";
 export { useProjectStore } from "./useProjectStore";
 export type { AggregatedVariable, TestSummary, ActiveFile, SchemaFile, ProjectState } from "./useProjectStore";
 
+export { useEnvironmentStore } from "./useEnvironmentStore";
+
 export { useCompileStore } from "./useCompileStore";
 export type { CompileStatus } from "./useCompileStore";
 

@@ -40,11 +40,11 @@ const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
 /** Read a value block's content as a plain string (or @variable reference). */
 export function readValueBlockAsString(block: Block | null): string | undefined {
   if (!block) return undefined;
-  if (block.type === "variable_get") {
+  if (block.type === "variable_get" || block.type === "output_variable") {
     const v = block.getFieldValue("VAR_NAME") || "";
     return v && v !== "__NONE__" ? `@${v}` : undefined;
   }
-  if (block.type === "value_string") {
+  if (block.type === "value_string" || block.type === "value_regex") {
     return block.getFieldValue("VALUE") || undefined;
   }
   if (block.type === "value_json_path") {
@@ -72,6 +72,18 @@ export function toBlockValueString(value: unknown): string {
 }
 
 export function readValueBlockAsUnknown(block: Block | null): unknown {
+  if (!block) return undefined;
+  if (block.type === "value_list") {
+    const items: string[] = [];
+    let current = block.getInputTargetBlock("ITEMS");
+    while (current) {
+      if (current.type === "list_item") {
+        items.push(current.getFieldValue("VALUE") || "");
+      }
+      current = current.getNextBlock();
+    }
+    return items;
+  }
   const rawValue = readValueBlockAsString(block);
   if (rawValue === undefined) return undefined;
   if (rawValue.startsWith("@")) return rawValue;
@@ -91,6 +103,7 @@ export function readValueBlockAsUnknown(block: Block | null): unknown {
 export function makeBlock(ws: Workspace, type: string): Block {
   const b = ws.newBlock(type);
   (b as unknown as { initSvg: () => void }).initSvg();
+  (b as unknown as { render: () => void }).render();
   return b;
 }
 
@@ -168,13 +181,14 @@ export function readAssertionChain(block: Block | null): Assertion[] {
     if (current.type === "assert_field") {
       const path = current.getFieldValue("PATH") || "";
       const operator = current.getFieldValue("OPERATOR") || "equals";
-      const expected = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+      const expectedRaw = readValueBlockAsUnknown(current.getInputTargetBlock("EXPECTED"));
+      const expected = expectedRaw !== undefined ? expectedRaw : "";
       assertions.push({
         type: AssertionOperator.ASSERT_FIELD,
         output: "",
         path,
         operator,
-        expected,
+        value: expected,
       });
       current = current.getNextBlock();
       continue;

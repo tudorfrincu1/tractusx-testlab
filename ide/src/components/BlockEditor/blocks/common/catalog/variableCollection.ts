@@ -128,3 +128,40 @@ export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockC
 
   return Array.from(vars).sort((a, b) => a.localeCompare(b));
 }
+
+/**
+ * Collects only environment/TCK variables — excludes step outputs.
+ * Returns variables from: TCK variables, test variables, import_variable blocks, variable_def blocks.
+ */
+export function collectEnvironmentVariables(workspace: Workspace): string[] {
+  const vars = new Set<string>();
+
+  const { tck, tests } = useProjectStore.getState();
+  if (tck?.variables) {
+    for (const varName of Object.keys(tck.variables)) {
+      vars.add(varName);
+    }
+  }
+
+  if (tests) {
+    for (const script of tests.values()) {
+      if (script.variables) {
+        for (const varName of Object.keys(script.variables)) {
+          vars.add(varName);
+        }
+      }
+    }
+  }
+
+  for (const b of workspace.getBlocksByType("variable_def", false)) {
+    const name = b.getFieldValue("VAR_NAME");
+    if (name) vars.add(name);
+  }
+
+  for (const b of workspace.getBlocksByType("import_variable", false)) {
+    const varName = b.getFieldValue("OUTPUT_VAR");
+    if (varName) vars.add(varName);
+  }
+
+  return Array.from(vars).sort((a, b) => a.localeCompare(b));
+}

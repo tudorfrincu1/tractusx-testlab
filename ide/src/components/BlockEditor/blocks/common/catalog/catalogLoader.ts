@@ -31,11 +31,13 @@ export interface BlockCatalogParam {
   description: string;
   default?: unknown;
   options?: string[];
+  accepts?: string[];
 }
 
 export interface BlockCatalogOutput {
   name: string;
   description: string;
+  class?: string;
   schema?: Record<string, unknown>;
   example?: unknown;
 }
@@ -47,6 +49,7 @@ export interface BlockCatalogEntry {
   template?: boolean;
   container?: boolean;
   custom_registration?: boolean;
+  expect?: boolean;
   params: BlockCatalogParam[];
   outputs?: BlockCatalogOutput[];
   depends_on?: string[];

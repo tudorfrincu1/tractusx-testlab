@@ -28,6 +28,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { TopBar, StatusBar, NotificationBar, EditorPanels } from "./components/Layout";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
 import { TckDashboard } from "./components/TckDashboard";
+import { PreconditionsPanel } from "./components/PreconditionsPanel/PreconditionsPanel";
+import { EnvironmentEditor } from "./components/EnvironmentEditor";
 import { WelcomeScreen } from "./components/WelcomeScreen/WelcomeScreen";
 import { useTestLabStore } from "./store/slices/useTestLabStore";
 import { useProjectStore, type ActiveFile } from "./store/slices/useProjectStore";
@@ -142,11 +144,22 @@ export default function App() {
                 Explorer
               </div>
             )}
-            {isTck ? (
+            {isTck && (
               <div className="app__tck-wrapper">
                 <TckDashboard />
               </div>
-            ) : (
+            )}
+            {activeFile?.type === "preconditions" && (
+              <div className="app__tck-wrapper">
+                <PreconditionsPanel />
+              </div>
+            )}
+            {activeFile?.type === "environment" && (
+              <div className="app__tck-wrapper">
+                <EnvironmentEditor />
+              </div>
+            )}
+            {!isTck && activeFile?.type !== "preconditions" && activeFile?.type !== "environment" && (
               <EditorPanels autoSave={autoSave} onAutoSaveChange={setAutoSave} />
             )}
           </>

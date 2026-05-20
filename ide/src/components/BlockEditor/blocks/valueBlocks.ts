@@ -102,7 +102,6 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
       this.setHelpUrl();
-      this.setShadow(true);
       this.setCommentText("This is a string")
       this.setTooltip("A literal string value");
     },
@@ -251,6 +250,29 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJson);
       this.setTooltip("A raw JSON object — click ✏ to edit");
+    },
+  };
+
+  Blockly.Blocks["value_list"] = {
+    init(this: Block) {
+      this.appendDummyInput().appendField("[ list ]");
+      this.appendStatementInput("ITEMS").setCheck("list_item");
+      this.setOutput(true, "param_value");
+      this.setColour(blockColors.valueList);
+      this.setTooltip("A list of values — stack list items inside");
+    },
+  };
+
+  Blockly.Blocks["list_item"] = {
+    init(this: Block) {
+      this.appendDummyInput()
+        .appendField("\"")
+        .appendField(new Blockly.FieldTextInput(""), "VALUE")
+        .appendField("\"");
+      this.setPreviousStatement(true, "list_item");
+      this.setNextStatement(true, "list_item");
+      this.setColour(blockColors.listItem);
+      this.setTooltip("A single item in a value list");
     },
   };
 }

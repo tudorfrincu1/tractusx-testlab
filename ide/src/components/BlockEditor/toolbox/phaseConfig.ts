@@ -95,9 +95,12 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
         colour: INPUT_COLOUR,
         blocks: [
           "value_string",
+          "value_regex",
           "value_number",
           "value_boolean",
           "value_json",
+          "value_list",
+          "list_item",
           "key_value_pair",
           "value_json_path",
           "value_api_path",

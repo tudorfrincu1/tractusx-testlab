@@ -26,13 +26,26 @@
 import type { Workspace } from "blockly";
 import { useServiceStore } from "../../../../../store/slices/useServiceStore";
 import { useProjectStore } from "../../../../../store/slices/useProjectStore";
+import type { BlockCatalog } from "../catalog/catalogLoader";
+import type { TypedVariable } from "../catalog/typedVariableCollection";
+import { collectTypedUpstreamVariables, collectTypedWorkspaceVariables } from "../catalog/typedVariableCollection";
 
 /** Collect all mock endpoint IDs defined in the workspace (for Wait block dropdown) */
 export function collectMockEndpointIds(workspace: Workspace): Array<[string, string]> {
   const ids: Array<[string, string]> = [];
   for (const block of workspace.getAllBlocks(false)) {
     if (block.type.startsWith("step_mock_")) {
-      const id = block.getFieldValue("PARAM_ID");
+      // id param is a value input (not a field) — read the connected block
+      const idInput = block.getInput("PARAM_ID");
+      const connectedBlock = idInput?.connection?.targetBlock() ?? null;
+      let id: string | undefined;
+      if (connectedBlock) {
+        if (connectedBlock.type === "value_string") {
+          id = connectedBlock.getFieldValue("VALUE") || undefined;
+        } else if (connectedBlock.type === "variable_get" || connectedBlock.type === "output_variable") {
+          id = connectedBlock.getFieldValue("VAR_NAME") || undefined;
+        }
+      }
       if (id) ids.push([id, id]);
     }
   }
@@ -140,6 +153,82 @@ export function dynamicDropdown(
         : currentVal;
       options.unshift([label, currentVal]);
     }
+    return options;
+  };
+}
+
+const SEPARATOR_OPTION: [string, string] = ["─────────────", "__SEP__"];
+
+/**
+ * Creates a dynamic dropdown that filters variables by class compatibility.
+ * Compatible variables appear first, then a separator, then incompatible ones with ⚠️ prefix.
+ * When `accepts` is undefined, shows all variables (backward compatible).
+ */
+export function typedVariableDropdown(
+  catalog: BlockCatalog,
+  accepts?: string[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): (this: any) => Array<[string, string]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function (this: any): Array<[string, string]> {
+    const block = this.getSourceBlock?.();
+    const ws = block?.workspace;
+    if (!ws || ws.isClearing || ws.disposed) {
+      const cur = this.getValue?.() ?? "";
+      if (cur && cur !== "__NONE__" && cur !== "__SEP__") return [[cur, cur]];
+      return [["(no variables)", "__NONE__"]];
+    }
+
+    const typedVars: TypedVariable[] = block
+      ? collectTypedUpstreamVariables(block, catalog)
+      : collectTypedWorkspaceVariables(ws, catalog);
+
+    if (typedVars.length === 0) {
+      return [["(no variables)", "__NONE__"]];
+    }
+
+    if (!accepts || accepts.length === 0) {
+      return typedVars.map((v): [string, string] => [v.name, v.name]);
+    }
+
+    const acceptSet = new Set(accepts);
+    const compatible: Array<[string, string]> = [];
+    const incompatible: Array<[string, string]> = [];
+
+    for (const v of typedVars) {
+      if (acceptSet.has(v.class)) {
+        compatible.push([v.name, v.name]);
+      } else {
+        incompatible.push([`[!] ${v.name} (${v.class})`, v.name]);
+      }
+    }
+
+    const options: Array<[string, string]> = [];
+    if (compatible.length > 0) {
+      options.push(...compatible);
+    }
+    if (incompatible.length > 0) {
+      if (compatible.length > 0) {
+        options.push(SEPARATOR_OPTION);
+      }
+      options.push(...incompatible);
+    }
+
+    if (options.length === 0) {
+      return [["(no variables)", "__NONE__"]];
+    }
+
+    // Preserve current value if it's not in the options
+    const currentVal = this.getValue?.() ?? "";
+    if (
+      currentVal &&
+      currentVal !== "__NONE__" &&
+      currentVal !== "__SEP__" &&
+      !options.some(([, val]) => val === currentVal)
+    ) {
+      options.unshift([currentVal, currentVal]);
+    }
+
     return options;
   };
 }

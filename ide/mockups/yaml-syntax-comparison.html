@@ -1,0 +1,1004 @@
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ See the NOTICE file(s) distributed with this work for additional
+ information regarding copyright ownership.
+
+ This program and the accompanying materials are made available under the
+ terms of the Apache License, Version 2.0 which is available at
+ https://www.apache.org/licenses/LICENSE-2.0.
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations
+ under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TestLab YAML Syntax v2 — GitHub Actions-inspired</title>
+<style>
+  :root {
+    --bg: #1e1e2e;
+    --surface: #282840;
+    --surface-alt: #1a1a2e;
+    --border: #3a3a5c;
+    --text: #cdd6f4;
+    --text-muted: #9399b2;
+    --accent: #89b4fa;
+    --keyword: #cba6f7;
+    --key: #89dceb;
+    --string: #a6e3a1;
+    --number: #89dceb;
+    --variable: #fab387;
+    --env-variable: #5eead4;
+    --validate-kw: #74c7ec;
+    --store-kw: #94e2d5;
+    --uses-kw: #f38ba8;
+    --name-kw: #89b4fa;
+    --with-kw: #cba6f7;
+    --class-kw: #c4a7e7;
+    --comment: #6c7086;
+    --badge-testlab: #f38ba8;
+    --badge-gha: #a6e3a1;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+
+  header .subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  header .version-badge {
+    display: inline-block;
+    margin-top: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+
+  section {
+    margin-bottom: 3rem;
+  }
+
+  section h2 {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section h2 .section-num {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+  }
+
+  section > p {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .code-block {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    margin-bottom: 1rem;
+  }
+
+  .code-block .kw-uses { color: var(--uses-kw); font-weight: 600; }
+  .code-block .kw-name { color: var(--name-kw); font-weight: 600; }
+  .code-block .kw-with { color: var(--with-kw); font-weight: 600; }
+  .code-block .kw-validate { color: var(--validate-kw); font-weight: 600; }
+  .code-block .kw-store { color: var(--store-kw); font-weight: 600; }
+  .code-block .kw-top { color: var(--keyword); font-weight: 600; }
+  .code-block .kw-class { color: var(--class-kw); font-weight: 600; }
+  .code-block .key { color: var(--key); }
+  .code-block .str { color: var(--string); }
+  .code-block .num { color: var(--number); }
+  .code-block .var { color: var(--variable); font-weight: 500; }
+  .code-block .env { color: var(--env-variable); font-weight: 500; }
+  .code-block .cmt { color: var(--comment); font-style: italic; }
+
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+
+  .ref-table th {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .ref-table td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .ref-table tr:last-child td { border-bottom: none; }
+
+  .ref-table .kw-cell {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ref-table .origin-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .ref-table .origin-gha {
+    background: rgba(166, 227, 161, 0.15);
+    color: var(--badge-gha);
+  }
+
+  .ref-table .origin-testlab {
+    background: rgba(243, 139, 168, 0.15);
+    color: var(--badge-testlab);
+  }
+
+  .ref-table .example-code {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .migration-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    margin-top: 1rem;
+  }
+
+  .migration-grid .old {
+    text-align: right;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .migration-grid .arrow {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+
+  .migration-grid .new {
+    color: var(--string);
+    font-weight: 500;
+  }
+
+  .migration-grid .header {
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    opacity: 1;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    margin-bottom: 2.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .migration-side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+  .before-panel .panel-header, .after-panel .panel-header { padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px 8px 0 0; }
+  .before-panel .panel-header { background: rgba(243,139,168,0.15); color: #f38ba8; border: 1px solid rgba(243,139,168,0.3); border-bottom: none; }
+  .after-panel .panel-header { background: rgba(166,227,161,0.15); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.3); border-bottom: none; }
+  .before-panel .code-block { border-radius: 0 0 8px 8px; opacity: 0.65; border-top: none; }
+  .after-panel .code-block { border-radius: 0 0 8px 8px; border-top: none; }
+  .migration-rules { list-style: none; counter-reset: rule; margin: 1.5rem 0; padding: 0; }
+  .migration-rules li { counter-increment: rule; padding: 0.6rem 1rem 0.6rem 3.2rem; margin-bottom: 0.4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; position: relative; }
+  .migration-rules li::before { content: counter(rule); position: absolute; left: 1rem; top: 0.6rem; width: 1.5rem; height: 1.5rem; background: var(--accent); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
+  .migration-rules li code { font-family: var(--font-mono); background: var(--surface-alt); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
+  .migration-rules li .old-kw { color: #f38ba8; text-decoration: line-through; }
+  .migration-rules li .new-kw { color: #a6e3a1; font-weight: 600; }
+  .section-subtitle { font-size: 1rem; color: var(--text); font-weight: 600; margin: 2rem 0 0.5rem; }
+  .note-box { background: rgba(196,167,231,0.08); border: 1px solid rgba(196,167,231,0.3); border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.85rem; color: var(--text-muted); }
+  .note-box strong { color: var(--class-kw); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>TestLab YAML Syntax v2</h1>
+    <p class="subtitle">GitHub Actions-inspired — refined for Tractus-X dataspace testing</p>
+    <span class="version-badge">syntax-version: 2.0</span>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--uses-kw)"></div> uses:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--name-kw)"></div> name:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--with-kw)"></div> with:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--validate-kw)"></div> validate:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--store-kw)"></div> outputs:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--class-kw)"></div> type:/class:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--variable)"></div> ${{ vars.x }}</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--env-variable)"></div> ${{ env.x }}</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--string)"></div> strings</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--number)"></div> numbers</div>
+  </div>
+
+  <!-- Section 1: Step Syntax -->
+  <section>
+    <h2><span class="section-num">§1</span> Step Syntax</h2>
+    <p>Each step follows a consistent structure: identify → label → configure → validate → capture.</p>
+    <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-name">name:</span> <span class="str">Send notification to SUT</span>
+    <span class="kw-with">with:</span>
+      <span class="key">method:</span> <span class="str">POST</span>
+      <span class="key">dataplane_url:</span> <span class="var">${{ vars.dataplane_url }}</span>
+      <span class="key">path:</span> <span class="str">"/companycertificate/available"</span>
+      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>
+      <span class="key">body:</span>
+        <span class="key">header:</span>
+          <span class="key">messageId:</span> <span class="str">"urn:uuid:<span class="var">${{ vars.avail_message_id }}</span>"</span>
+          <span class="key">senderBpn:</span> <span class="env">${{ env.consumer_bpn }}</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="key">type:</span> <span class="str">EQUALS</span>
+        <span class="key">output:</span> <span class="str">status_code</span>
+        <span class="key">value:</span> <span class="num">200</span>
+      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
+        <span class="key">output:</span> <span class="str">response_body</span></div>
+  </section>
+
+  <!-- Section 2: Syntax Reference -->
+  <section>
+    <h2><span class="section-num">§2</span> Syntax Reference</h2>
+    <p>Each keyword has a clear purpose and origin. TestLab extends GitHub Actions vocabulary with domain-specific testing primitives.</p>
+    <table class="ref-table">
+      <thead>
+        <tr><th>Keyword</th><th>Meaning</th><th>Origin</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">uses:</td>
+          <td>Identifies which step type to execute (like an action reference)</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">uses: mock_endpoint</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--name-kw)">name:</td>
+          <td>Human-readable label for the step</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">name: Send notification to SUT</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--with-kw)">with:</td>
+          <td>Input parameters passed to the step</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">with: { method: POST, path: "/..." }</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--validate-kw)">validate:</td>
+          <td>Assertions to run after step execution</td>
+          <td><span class="origin-badge origin-testlab">TestLab</span></td>
+          <td class="example-code">validate: [{ type: EQUALS, output: status_code, value: 200 }]</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--variable)">${{ vars.x }}</td>
+          <td>Local variable reference — resolves to values produced by previous steps (outputs)</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">${{ vars.edr_token }}</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--env-variable)">${{ env.x }}</td>
+          <td>Environment variable reference — resolves to external configuration (connector addresses, BPNs, timeouts)</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">${{ env.provider_address }}</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--store-kw)">outputs:</td>
+          <td>Declares step outputs. Each entry declares <code>type:</code> (data type) and <code>class:</code> (semantic type). Replaces the old store_in_memory keyword.</td>
+          <td><span class="origin-badge origin-testlab">TestLab</span></td>
+          <td class="example-code">outputs: { token: { type: string, class: auth_token } }</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--class-kw)">type:</td>
+          <td>Data type of the output variable (string, number, boolean, object, array)</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">type: string</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--class-kw)">class:</td>
+          <td>Semantic type annotation for a variable — enables IDE dropdown filtering and type-safe connections between steps</td>
+          <td><span class="origin-badge origin-testlab">TestLab + ADR-0009</span></td>
+          <td class="example-code">class: uuid | url | bpn | auth_token</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--key)">service:</td>
+          <td>References a service defined in the TCK <code>env.services</code> by name</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span> <span class="origin-badge origin-testlab">adapted</span></td>
+          <td class="example-code">service: provider_edc</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--env-variable)">env:</td>
+          <td>Environment configuration block — contains <code>variables</code> (with typed classes) and <code>services</code> available to all tests</td>
+          <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
+          <td class="example-code">env: { variables: {...}, services: [...] }</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--validate-kw)">preconditions:</td>
+          <td>Reusable policies and contracts, referenced by ID in tests</td>
+          <td><span class="origin-badge origin-testlab">TestLab</span></td>
+          <td class="example-code">preconditions: [{ id: ccmapi_usage_policy, uses: policy }]</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      <strong>Functions:</strong> Steps with no <code>with:</code> inputs that auto-generate typed outputs. For example, <code>generate_uuid</code> produces a variable with <code style="color:var(--class-kw)">class: uuid</code> automatically. Functions are pure generators — no configuration needed.
+    </div>
+  </section>
+
+  <!-- Section 3: Full Example -->
+  <section>
+    <h2><span class="section-num">§3</span> Full Example</h2>
+    <p>A complete test file with setup, typed variable outputs, and validation — services are inherited from the TCK definition file (§5).</p>
+    <div class="code-block"><span class="kw-top">kind:</span> <span class="str">test</span>
+<span class="kw-top">name:</span> <span class="str">available-notification</span>
+<span class="kw-top">version:</span> <span class="str">"1.0"</span>
+
+<span class="kw-top">setup:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">mock_endpoint</span>
+    <span class="kw-name">name:</span> <span class="str">Expose mock endpoint for certificate pull</span>
+    <span class="kw-with">with:</span>
+      <span class="key">id:</span> <span class="str">"avail_cert_pull"</span>
+      <span class="key">method:</span> <span class="str">GET</span>
+      <span class="key">path:</span> <span class="str">"/api/v1/companycertificate/available"</span>
+      <span class="key">response_status:</span> <span class="num">200</span>
+      <span class="key">response_body:</span>
+        <span class="key">businessPartnerNumber:</span> <span class="env">${{ env.provider_bpn }}</span>
+        <span class="key">certificateType:</span> <span class="env">${{ env.certificate_type }}</span>
+
+<span class="kw-top">steps:</span>
+  <span class="cmt"># Function step — no inputs, auto-generates a typed output</span>
+  - <span class="kw-uses">uses:</span> <span class="str">generate_uuid</span>
+    <span class="kw-name">name:</span> <span class="str">Generate notification message ID</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">avail_message_id:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">uuid</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-name">name:</span> <span class="str">Discover notification endpoint</span>
+    <span class="kw-with">with:</span>
+      <span class="key">service:</span> <span class="str">provider_edc</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
+      <span class="key">counter_party_address:</span> <span class="env">${{ env.provider_address }}</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
+        <span class="key">output:</span> <span class="str">edr_token</span>
+      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
+        <span class="key">output:</span> <span class="str">dataplane_url</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+      <span class="key">dataplane_url:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">dataplane_url</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-name">name:</span> <span class="str">Send available notification</span>
+    <span class="kw-with">with:</span>
+      <span class="key">method:</span> <span class="str">POST</span>
+      <span class="key">dataplane_url:</span> <span class="var">${{ vars.dataplane_url }}</span>
+      <span class="key">path:</span> <span class="str">"/companycertificate/available"</span>
+      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="key">type:</span> <span class="str">EQUALS</span>
+        <span class="key">output:</span> <span class="str">status_code</span>
+        <span class="key">value:</span> <span class="num">200</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">wait_for_call</span>
+    <span class="kw-name">name:</span> <span class="str">Wait for SUT to pull certificate</span>
+    <span class="kw-with">with:</span>
+      <span class="key">endpoint_id:</span> <span class="str">"avail_cert_pull"</span>
+      <span class="key">timeout_s:</span> <span class="env">${{ env.sut_response_timeout }}</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="key">type:</span> <span class="str">EQUALS</span>
+        <span class="key">output:</span> <span class="str">method</span>
+        <span class="key">value:</span> <span class="str">"GET"</span></div>
+  </section>
+
+  <!-- Section 4: Migration -->
+  <section>
+    <h2><span class="section-num">§4</span> Migration from v1 to v2</h2>
+    <p>Complete guide for migrating existing TestLab YAML files to the new GitHub Actions-inspired syntax.</p>
+    <!-- 4a: Quick Reference Grid -->
+    <h3 class="section-subtitle">Quick Reference</h3>
+    <div class="migration-grid">
+      <span class="header">v1 (current)</span>
+      <span></span>
+      <span class="header">v2 (new)</span>
+
+      <span class="old">type: http_call_dataplane</span>
+      <span class="arrow">→</span>
+      <span class="new">uses: http_call_dataplane</span>
+
+      <span class="old">description: "Send notification"</span>
+      <span class="arrow">→</span>
+      <span class="new">name: Send notification</span>
+
+      <span class="old">params:</span>
+      <span class="arrow">→</span>
+      <span class="new">with:</span>
+
+      <span class="old">@step_output</span>
+      <span class="arrow">→</span>
+      <span class="new">${{ vars.step_output }}</span>
+
+      <span class="old">@config_value</span>
+      <span class="arrow">→</span>
+      <span class="new">${{ env.config_value }}</span>
+
+      <span class="old">store_in_memory: { key: "value" }</span>
+      <span class="arrow">→</span>
+      <span class="new">outputs: { key: { class: type } }</span>
+
+      <span class="old">services: (top-level)</span>
+      <span class="arrow">→</span>
+      <span class="new">env: { services: [...] }</span>
+
+      <span class="old">validate:</span>
+      <span class="arrow">→</span>
+      <span class="new">validate: <span style="color:var(--text-muted);text-decoration:none;font-style:italic">(unchanged)</span></span>
+    </div>
+    <!-- 4b: Migration Rules -->
+    <h3 class="section-subtitle">Migration Rules</h3>
+    <ol class="migration-rules">
+      <li>Replace <code class="old-kw">type:</code> with <code class="new-kw">uses:</code> on every step</li>
+      <li>Replace <code class="old-kw">description:</code> with <code class="new-kw">name:</code></li>
+      <li>Replace <code class="old-kw">params:</code> with <code class="new-kw">with:</code></li>
+      <li>Replace <code class="old-kw">@variable_name</code> with <code class="new-kw">${{ vars.variable_name }}</code> when it comes from a previous step's <code>outputs</code></li>
+      <li>Replace <code class="old-kw">@variable_name</code> with <code class="new-kw">${{ env.variable_name }}</code> when it comes from external configuration (connector addresses, BPNs, timeouts)</li>
+      <li>Remove quotes from validation type values: <code class="old-kw">"EQUALS"</code> → <code class="new-kw">EQUALS</code></li>
+      <li>In services: replace <code class="old-kw">type:</code> with <code class="new-kw">uses:</code> and <code class="old-kw">config:</code> with <code class="new-kw">with:</code></li>
+      <li>Move <code class="old-kw">services:</code> from top-level into <code class="new-kw">env: { services: [...] }</code></li>
+      <li>Rename keyword: <code class="old-kw">store_in_memory:</code> → <code class="new-kw">outputs:</code> and add type annotations: <code class="new-kw">outputs: { key: { class: &lt;type&gt; } }</code> per ADR-0009</li>
+      <li>Add <code class="new-kw">class:</code> to each <code>env.variables</code> entry to declare its semantic type</li>
+    </ol>
+    <!-- 4c: Steps Side-by-Side -->
+    <h3 class="section-subtitle">Steps — Before &amp; After</h3>
+    <div class="migration-side-by-side">
+      <div class="before-panel">
+        <div class="panel-header">v1 (current)</div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="key">type:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="key">description:</span> <span class="str">Discover notification endpoint</span>
+    <span class="key">params:</span>
+      <span class="key">service:</span> <span class="str">provider_edc</span>
+      <span class="key">counter_party_id:</span> <span class="str">"@provider_bpn"</span>
+      <span class="key">counter_party_address:</span> <span class="str">"@provider_address"</span>
+    <span class="key">validate:</span>
+      - <span class="key">type:</span> <span class="str">"NOT_NULL"</span>
+        <span class="key">output:</span> <span class="str">edr_token</span>
+    <span class="key">store_in_memory:</span>
+      <span class="key">edr_token:</span> <span class="str">"edr_token"</span>
+      <span class="key">dataplane_url:</span> <span class="str">"dataplane_url"</span></div>
+      </div>
+      <div class="after-panel">
+        <div class="panel-header">v2 (new)</div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-name">name:</span> <span class="str">Discover notification endpoint</span>
+    <span class="kw-with">with:</span>
+      <span class="key">service:</span> <span class="str">provider_edc</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
+      <span class="key">counter_party_address:</span> <span class="env">${{ env.provider_address }}</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
+        <span class="key">output:</span> <span class="str">edr_token</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+      <span class="key">dataplane_url:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">dataplane_url</span></div>
+      </div>
+    </div>
+
+    <!-- 4d: Services Side-by-Side -->
+    <h3 class="section-subtitle">Services — Before &amp; After</h3>
+    <div class="migration-side-by-side">
+      <div class="before-panel">
+        <div class="panel-header">v1 (current)</div>
+        <div class="code-block"><span class="kw-top">services:</span>
+  - <span class="key">name:</span> <span class="str">provider_edc</span>
+    <span class="key">type:</span> <span class="str">edc_connector_saturn</span>
+    <span class="key">config:</span>
+      <span class="key">base_url:</span> <span class="str">"@provider_address"</span>
+      <span class="key">dma_path:</span> <span class="str">/management</span></div>
+      </div>
+      <div class="after-panel">
+        <div class="panel-header">v2 (new)</div>
+        <div class="code-block"><span class="kw-top">env:</span>
+  <span class="key">services:</span>
+    - <span class="kw-name">name:</span> <span class="str">provider_edc</span>
+      <span class="kw-uses">uses:</span> <span class="str">edc_connector_saturn</span>
+      <span class="kw-with">with:</span>
+        <span class="key">base_url:</span> <span class="env">${{ env.provider_address }}</span>
+        <span class="key">dma_path:</span> <span class="str">/management</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: TCK Definition File -->
+  <section>
+    <h2><span class="section-num">§5</span> TCK Definition File</h2>
+    <p>The TCK file defines the test suite context: environment variables (with typed classes), shared services, and preconditions. Individual test files inherit this context.</p>
+    <div class="code-block"><span class="kw-top">kind:</span> <span class="str">tck</span>
+<span class="kw-top">name:</span> <span class="str">certificate-management</span>
+<span class="kw-top">version:</span> <span class="str">"1.0"</span>
+<span class="kw-top">description:</span> <span class="str">&gt;</span>
+  <span class="str">Validate CCMAPI certificate management per CX-0135 v3.1.0</span>
+
+<span class="key">author:</span> <span class="str">Certificate Management Expert Group</span>
+<span class="key">standards:</span>
+  - <span class="key">id:</span> <span class="str">CX-0135</span>
+    <span class="key">version:</span> <span class="str">v3.1.0</span>
+<span class="key">tags:</span>
+  - <span class="str">CCM</span>
+
+<span class="kw-top">env:</span>
+  <span class="cmt"># Variables — available as ${{ env.variable_name }}</span>
+  <span class="key">variables:</span>
+    <span class="key">provider_address:</span>
+      <span class="kw-class">class:</span> <span class="str">url</span>
+      <span class="key">description:</span> <span class="str">Provider EDC DSP endpoint</span>
+      <span class="key">required:</span> <span class="num">true</span>
+    <span class="key">provider_bpn:</span>
+      <span class="kw-class">class:</span> <span class="str">bpn</span>
+      <span class="key">description:</span> <span class="str">Provider BPNL</span>
+      <span class="key">required:</span> <span class="num">true</span>
+    <span class="key">consumer_bpn:</span>
+      <span class="kw-class">class:</span> <span class="str">bpn</span>
+      <span class="key">description:</span> <span class="str">Consumer BPNL (TestLab company)</span>
+      <span class="key">required:</span> <span class="num">true</span>
+    <span class="key">certificate_type:</span>
+      <span class="kw-class">class:</span> <span class="str">string</span>
+      <span class="key">description:</span> <span class="str">Certificate type to request</span>
+      <span class="key">default:</span> <span class="str">"iso9001"</span>
+    <span class="key">sut_response_timeout:</span>
+      <span class="kw-class">class:</span> <span class="str">number</span>
+      <span class="key">description:</span> <span class="str">Seconds to wait for SUT response</span>
+      <span class="key">default:</span> <span class="num">300</span>
+
+  <span class="cmt"># Services — available by name in steps (service: provider_edc)</span>
+  <span class="key">services:</span>
+    - <span class="kw-name">name:</span> <span class="str">provider_edc</span>
+      <span class="kw-uses">uses:</span> <span class="str">edc_connector_saturn</span>
+      <span class="kw-with">with:</span>
+        <span class="key">base_url:</span> <span class="env">${{ env.provider_address }}</span>
+        <span class="key">dma_path:</span> <span class="str">/management</span>
+
+    - <span class="kw-name">name:</span> <span class="str">testlab_edc</span>
+      <span class="kw-uses">uses:</span> <span class="str">edc_connector_saturn</span>
+      <span class="kw-with">with:</span>
+        <span class="key">base_url:</span> <span class="env">${{ env.testlab_management_url }}</span>
+        <span class="key">dma_path:</span> <span class="str">/management</span>
+
+<span class="cmt"># Preconditions — reusable policies/contracts</span>
+<span class="kw-top">preconditions:</span>
+  - <span class="key">id:</span> <span class="str">ccmapi_usage_policy</span>
+    <span class="kw-uses">uses:</span> <span class="str">policy</span>
+    <span class="kw-name">name:</span> <span class="str">CX-0135 ODRL usage policy</span>
+    <span class="kw-with">with:</span>
+      <span class="key">dataspace_version:</span> <span class="str">saturn</span>
+      <span class="key">policy_type:</span> <span class="str">usage</span>
+      <span class="key">permissions:</span>
+        - <span class="key">action:</span> <span class="str">use</span>
+          <span class="key">constraints:</span>
+            - <span class="key">left_operand:</span> <span class="str">UsagePurpose</span>
+              <span class="key">operator:</span> <span class="str">eq</span>
+              <span class="key">right_operand:</span> <span class="str">"cx.ccm.base:1"</span>
+
+<span class="cmt"># Test suite</span>
+<span class="kw-top">tests:</span>
+  - <span class="key">test:</span> <span class="str">tests/request_certificate.yaml</span>
+    <span class="kw-name">name:</span> <span class="str">Request certificate with full header envelope</span>
+  - <span class="key">test:</span> <span class="str">tests/available_notification.yaml</span>
+    <span class="kw-name">name:</span> <span class="str">Send available notification</span></div>
+  </section>
+
+  <!-- Section 6: Variable Reference Alternatives -->
+  <section>
+    <h2><span class="section-num">§6</span> Variable Reference Alternatives — Choose Your Style</h2>
+    <p>Four approaches to referencing variables and declaring outputs. Compare syntax, verbosity, and scope visibility to pick the best fit for TestLab.</p>
+
+    <style>
+      .alt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1.5rem 0; }
+      .alt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; }
+      .alt-card.current-proposal { border-color: var(--accent); box-shadow: 0 0 12px rgba(137,180,250,0.15); }
+      .alt-card-header { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
+      .alt-card-header h3 { font-size: 0.85rem; color: var(--text); margin: 0; flex: 1; }
+      .alt-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+      .alt-badge-gha { background: rgba(166,227,161,0.15); color: var(--badge-gha); }
+      .alt-badge-testlab { background: rgba(243,139,168,0.15); color: var(--badge-testlab); }
+      .alt-badge-current { background: rgba(137,180,250,0.2); color: var(--accent); }
+      .alt-card .code-block { margin: 0; border: none; border-radius: 0; font-size: 0.75rem; line-height: 1.6; padding: 0.75rem 1rem; }
+      .alt-props { padding: 0.6rem 1rem; font-size: 0.75rem; border-top: 1px solid var(--border); }
+      .alt-props dt { color: var(--text-muted); display: inline; } .alt-props dd { display: inline; color: var(--text); margin: 0 1rem 0 0.3rem; font-family: var(--font-mono); font-size: 0.7rem; }
+      .alt-props .stars { color: #f9e2af; font-style: normal; }
+      .alt-cross { padding: 0.5rem 1rem 0.75rem; border-top: 1px solid var(--border); }
+      .alt-cross summary { font-size: 0.72rem; color: var(--text-muted); cursor: pointer; font-weight: 600; }
+      .alt-cross .code-block { font-size: 0.7rem; padding: 0.5rem 0.75rem; margin-top: 0.4rem; line-height: 1.5; }
+      .alt-select-btn { display: block; width: calc(100% - 2rem); margin: 0.5rem 1rem 0.75rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-alt); color: var(--text-muted); font-size: 0.75rem; cursor: pointer; text-align: center; transition: all 0.15s; }
+      .alt-select-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(137,180,250,0.08); }
+      .alt-select-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(137,180,250,0.12); font-weight: 600; }
+      .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 2rem; }
+      .cmp-table th { text-align: left; padding: 0.6rem 0.75rem; background: var(--surface); color: var(--accent); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.72rem; }
+      .cmp-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+      .cmp-table tr:last-child td { border-bottom: none; }
+      .cmp-table code { font-family: var(--font-mono); font-size: 0.7rem; background: var(--surface-alt); padding: 0.1rem 0.35rem; border-radius: 3px; }
+      .cmp-table .stars { color: #f9e2af; }
+      @media (max-width: 700px) { .alt-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="alt-grid">
+      <!-- Card A -->
+      <div class="alt-card">
+        <div class="alt-card-header">
+          <h3>A: Full GitHub Actions</h3>
+          <span class="alt-badge alt-badge-gha">GHA Standard</span>
+        </div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="key">id:</span> <span class="str">discover</span>
+    <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-with">with:</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-with">with:</span>
+      <span class="key">edr_token:</span> <span class="var">${{ steps.discover.outputs.edr_token }}</span></div>
+        <div class="alt-props">
+          <dl>
+            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">${{ steps.discover.outputs.edr_token }}</code></dd><br/>
+            <dt>Char count:</dt><dd>45</dd>
+            <dt>Scope visible:</dt><dd>Yes (explicit step.id)</dd><br/>
+            <dt>Requires id:</dt><dd>Yes</dd>
+            <dt>Readability:</dt><dd><span class="stars">★★☆☆☆</span></dd><br/>
+            <dt>Precedent:</dt><dd>GitHub Actions</dd>
+          </dl>
+        </div>
+        <details class="alt-cross"><summary>Cross-test imports</summary>
+          <div class="code-block"><span class="kw-top">exports:</span>
+  <span class="key">agreement_id:</span> <span class="var">${{ steps.negotiate.outputs.agreement_id }}</span>
+
+<span class="cmt"># consuming test</span>
+<span class="kw-top">needs:</span>
+  - <span class="str">setup-negotiation</span></div>
+        </details>
+        <button class="alt-select-btn" onclick="selectAlt(this,'A')">Select A</button>
+      </div>
+
+      <!-- Card B -->
+      <div class="alt-card current-proposal">
+        <div class="alt-card-header">
+          <h3>B: Flat ${{ vars }}</h3>
+          <span class="alt-badge alt-badge-gha">GHA-inspired</span>
+          <span class="alt-badge alt-badge-current">current proposal</span>
+        </div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-with">with:</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-with">with:</span>
+      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span></div>
+        <div class="alt-props">
+          <dl>
+            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">${{ vars.edr_token }}</code></dd><br/>
+            <dt>Char count:</dt><dd>22</dd>
+            <dt>Scope visible:</dt><dd>Yes (vars vs env)</dd><br/>
+            <dt>Requires id:</dt><dd>No</dd>
+            <dt>Readability:</dt><dd><span class="stars">★★★☆☆</span></dd><br/>
+            <dt>Precedent:</dt><dd>GHA-inspired</dd>
+          </dl>
+        </div>
+        <details class="alt-cross"><summary>Cross-test imports</summary>
+          <div class="code-block"><span class="kw-top">exports:</span>
+  <span class="key">agreement_id:</span> <span class="var">${{ steps.negotiate.outputs.agreement_id }}</span>
+
+<span class="cmt"># consuming test</span>
+<span class="kw-top">needs:</span>
+  - <span class="str">setup-negotiation</span></div>
+        </details>
+        <button class="alt-select-btn selected" onclick="selectAlt(this,'B')">✓ Selected (B)</button>
+      </div>
+
+      <!-- Card C -->
+      <div class="alt-card">
+        <div class="alt-card-header">
+          <h3>C: @ Simple</h3>
+          <span class="alt-badge alt-badge-testlab">AD-3 Decision</span>
+        </div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-with">with:</span>
+      <span class="key">counter_party_id:</span> <span class="var">@provider_bpn</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-with">with:</span>
+      <span class="key">edr_token:</span> <span class="var">@edr_token</span></div>
+        <div class="alt-props">
+          <dl>
+            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">@edr_token</code></dd><br/>
+            <dt>Char count:</dt><dd>10</dd>
+            <dt>Scope visible:</dt><dd>No (flat)</dd><br/>
+            <dt>Requires id:</dt><dd>No</dd>
+            <dt>Readability:</dt><dd><span class="stars">★★★★★</span></dd><br/>
+            <dt>Precedent:</dt><dd>Unique (AD-3)</dd>
+          </dl>
+        </div>
+        <details class="alt-cross"><summary>Cross-test imports</summary>
+          <div class="code-block"><span class="kw-top">exports:</span>
+  - <span class="str">agreement_id</span>
+
+<span class="kw-top">needs:</span>
+  - <span class="str">setup-negotiation</span>
+<span class="cmt"># then just use @agreement_id</span></div>
+        </details>
+        <button class="alt-select-btn" onclick="selectAlt(this,'C')">Select C</button>
+      </div>
+
+      <!-- Card D -->
+      <div class="alt-card">
+        <div class="alt-card-header">
+          <h3>D: @ Scoped</h3>
+          <span class="alt-badge alt-badge-testlab">Hybrid</span>
+        </div>
+        <div class="code-block"><span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+    <span class="kw-with">with:</span>
+      <span class="key">counter_party_id:</span> <span class="env">@env.provider_bpn</span>
+    <span class="kw-store">outputs:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-with">with:</span>
+      <span class="key">edr_token:</span> <span class="var">@vars.edr_token</span></div>
+        <div class="alt-props">
+          <dl>
+            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">@vars.edr_token</code></dd><br/>
+            <dt>Char count:</dt><dd>16</dd>
+            <dt>Scope visible:</dt><dd>Yes (vars vs env)</dd><br/>
+            <dt>Requires id:</dt><dd>No</dd>
+            <dt>Readability:</dt><dd><span class="stars">★★★★☆</span></dd><br/>
+            <dt>Precedent:</dt><dd>Unique (evolved)</dd>
+          </dl>
+        </div>
+        <details class="alt-cross"><summary>Cross-test imports</summary>
+          <div class="code-block"><span class="kw-top">exports:</span>
+  - <span class="str">agreement_id</span>
+
+<span class="kw-top">needs:</span>
+  - <span class="str">setup-negotiation</span>
+<span class="cmt"># use @imports.agreement_id or just @agreement_id</span></div>
+        </details>
+        <button class="alt-select-btn" onclick="selectAlt(this,'D')">Select D</button>
+      </div>
+    </div>
+
+    <!-- Comparison Summary Table -->
+    <h3 class="section-subtitle">Comparison Summary</h3>
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Aspect</th><th>A: Full GHA</th><th>B: Flat ${{ vars }}</th><th>C: @ Simple</th><th>D: @ Scoped</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Ref for <code>edr_token</code></td><td><code style="color:var(--variable)">${{ steps.discover.outputs.edr_token }}</code></td><td><code style="color:var(--variable)">${{ vars.edr_token }}</code></td><td><code style="color:var(--variable)">@edr_token</code></td><td><code style="color:var(--variable)">@vars.edr_token</code></td></tr>
+        <tr><td>Char count</td><td>45</td><td>22</td><td>10</td><td>16</td></tr>
+        <tr><td>Scope visible?</td><td>Yes (explicit step)</td><td>Yes (vars vs env)</td><td>No (flat)</td><td>Yes (vars vs env)</td></tr>
+        <tr><td>Requires <code>id:</code>?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+        <tr><td>Non-dev readability</td><td><span class="stars">★★☆☆☆</span></td><td><span class="stars">★★★☆☆</span></td><td><span class="stars">★★★★★</span></td><td><span class="stars">★★★★☆</span></td></tr>
+        <tr><td>Industry precedent</td><td>GitHub Actions</td><td>GHA-inspired</td><td>Unique (AD-3)</td><td>Unique (evolved)</td></tr>
+        <tr><td>Output keyword</td><td><code>outputs:</code></td><td><code>outputs:</code></td><td><code>outputs:</code></td><td><code>outputs:</code></td></tr>
+      </tbody>
+    </table>
+
+    <script>
+      function selectAlt(btn, id) {
+        document.querySelectorAll('.alt-select-btn').forEach(b => { b.classList.remove('selected'); b.textContent = 'Select ' + b.textContent.replace(/^[✓ ]*Selected \(|\)$/g,'').replace(/^Select /,''); });
+        btn.classList.add('selected');
+        btn.textContent = '✓ Selected (' + id + ')';
+      }
+    </script>
+  </section>
+
+  <!-- Section 7: Syntax Coloring Guide -->
+  <section>
+    <h2><span class="section-num">§7</span> Syntax Coloring Guide</h2>
+    <p>Definitive reference for how each token type is colored in the IDE YAML preview and Monaco editor.</p>
+
+    <!-- Color Palette -->
+    <h3 class="section-subtitle">Color Palette</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:1.2rem;margin:1rem 0 2rem;padding:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--uses-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">uses:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--uses-kw)">#f38ba8</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--name-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">name:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--name-kw)">#89b4fa</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--with-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">with:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--with-kw)">#cba6f7</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--validate-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">validate:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--validate-kw)">#74c7ec</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--store-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">outputs:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--store-kw)">#94e2d5</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--class-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">class:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--class-kw)">#c4a7e7</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--variable);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">${{ vars }}</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--variable)">#fab387</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--env-variable);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">${{ env }}</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--env-variable)">#5eead4</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--keyword);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">top-level</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--keyword)">#cba6f7</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--key);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">keys</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--key)">#89dceb</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--string);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">strings</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--string)">#a6e3a1</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--number);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">numbers</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--number)">#89dceb</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--comment);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">comments</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--comment)">#6c7086</div></div>
+    </div>
+
+    <!-- Detailed Token Table -->
+    <h3 class="section-subtitle">Token Reference</h3>
+    <table class="ref-table">
+      <thead><tr><th style="width:28px"></th><th>Category</th><th>Hex</th><th>Applies To</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><div class="legend-swatch" style="background:var(--uses-kw)"></div></td><td>Step identifier</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--uses-kw)">#f38ba8</td><td><code>uses:</code> keyword &amp; value</td><td class="example-code" style="color:var(--uses-kw)">uses: http_call_dataplane</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--name-kw)"></div></td><td>Step label</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--name-kw)">#89b4fa</td><td><code>name:</code> keyword</td><td class="example-code" style="color:var(--name-kw)">name: Send notification</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--with-kw)"></div></td><td>Parameters block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--with-kw)">#cba6f7</td><td><code>with:</code> keyword</td><td class="example-code" style="color:var(--with-kw)">with:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--validate-kw)"></div></td><td>Validation block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--validate-kw)">#74c7ec</td><td><code>validate:</code> keyword</td><td class="example-code" style="color:var(--validate-kw)">validate:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--store-kw)"></div></td><td>Outputs block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--store-kw)">#94e2d5</td><td><code>outputs:</code> keyword</td><td class="example-code" style="color:var(--store-kw)">outputs:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--class-kw)"></div></td><td>Type/Class annotation</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--class-kw)">#c4a7e7</td><td><code>type:</code> and <code>class:</code> declarations</td><td class="example-code" style="color:var(--class-kw)">type: string &nbsp; class: auth_token</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--variable)"></div></td><td>Local variable ref</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--variable)">#fab387</td><td><code>${{ vars.x }}</code> references</td><td class="example-code" style="color:var(--variable)">${{ vars.edr_token }}</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--env-variable)"></div></td><td>Environment ref</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--env-variable)">#5eead4</td><td><code>${{ env.x }}</code> references</td><td class="example-code" style="color:var(--env-variable)">${{ env.provider_bpn }}</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--keyword)"></div></td><td>Top-level keywords</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--keyword)">#cba6f7</td><td><code>kind:</code>, <code>version:</code>, <code>steps:</code>, <code>env:</code>, <code>tests:</code></td><td class="example-code" style="color:var(--keyword)">steps:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--key)"></div></td><td>Keys (params)</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--key)">#89dceb</td><td>Field names inside blocks</td><td class="example-code" style="color:var(--key)">method: path: timeout_s:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--string)"></div></td><td>String values</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--string)">#a6e3a1</td><td>Quoted/unquoted literals</td><td class="example-code" style="color:var(--string)">"POST" /management</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--number)"></div></td><td>Number values</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--number)">#89dceb</td><td>Numeric literals</td><td class="example-code" style="color:var(--number)">200 300 60</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--comment)"></div></td><td>Comments</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--comment)">#6c7086</td><td>YAML comments</td><td class="example-code" style="color:var(--comment)"># consuming test</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--variable)"></div></td><td>Booleans</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--variable)">#fab387</td><td><code>true</code>, <code>false</code></td><td class="example-code" style="color:var(--variable)">required: true</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Annotated Live Example -->
+    <h3 class="section-subtitle">Annotated Example</h3>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Each numbered badge maps to a token category. Colors show exactly how the IDE renders every token.</p>
+    <div class="code-block"><span class="cmt"># ① = uses (rose)  ② = string (green)  ③ = name (blue)  ④ = with (purple)</span>
+<span class="cmt"># ⑤ = key (sky)  ⑥ = variable (peach)  ⑦ = env (teal)  ⑧ = validate (cyan)</span>
+<span class="cmt"># ⑨ = number (sky)  ⑩ = outputs (teal)  ⑪ = type/class (soft purple)</span>
+
+<span class="kw-top">steps:</span>
+  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>          <span class="cmt"># ① + ②</span>
+    <span class="kw-name">name:</span> <span class="str">Send available notification</span>  <span class="cmt"># ③ + ②</span>
+    <span class="kw-with">with:</span>                                     <span class="cmt"># ④</span>
+      <span class="key">method:</span> <span class="str">POST</span>                         <span class="cmt"># ⑤ + ②</span>
+      <span class="key">dataplane_url:</span> <span class="var">${{ vars.dataplane_url }}</span>  <span class="cmt"># ⑤ + ⑥</span>
+      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>        <span class="cmt"># ⑤ + ⑥</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span> <span class="cmt"># ⑤ + ⑦</span>
+    <span class="kw-validate">validate:</span>                                 <span class="cmt"># ⑧</span>
+      - <span class="key">type:</span> <span class="str">EQUALS</span>                       <span class="cmt"># ⑤ + ②</span>
+        <span class="key">output:</span> <span class="str">status_code</span>                <span class="cmt"># ⑤ + ②</span>
+        <span class="key">value:</span> <span class="num">200</span>                          <span class="cmt"># ⑤ + ⑨</span>
+    <span class="kw-store">outputs:</span>                                   <span class="cmt"># ⑩</span>
+      <span class="key">edr_token:</span>                               <span class="cmt"># ⑤</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>                       <span class="cmt"># ⑪ + ②</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>                   <span class="cmt"># ⑪ + ②</span></div>
+
+    <!-- Monaco Token Mapping -->
+    <h3 class="section-subtitle">Monaco Token Mapping</h3>
+    <div class="note-box">
+      <strong>Implementation note:</strong> These categories map to Monaco Editor custom token types for the TestLab YAML language.
+    </div>
+    <table class="ref-table">
+      <thead><tr><th>Monaco Token</th><th>Category</th><th>CSS Variable</th></tr></thead>
+      <tbody>
+        <tr><td class="kw-cell" style="color:var(--keyword)">keyword</td><td>Top-level keywords, <code>uses:</code>, <code>with:</code>, <code>validate:</code>, <code>outputs:</code></td><td style="font-family:var(--font-mono);font-size:.78rem">--keyword, --uses-kw, --with-kw, --validate-kw, --store-kw</td></tr>
+        <tr><td class="kw-cell" style="color:var(--class-kw)">type</td><td>Type/Class annotation values (<code>type:</code> and <code>class:</code>)</td><td style="font-family:var(--font-mono);font-size:.78rem">--class-kw</td></tr>
+        <tr><td class="kw-cell" style="color:var(--string)">string</td><td>String literals</td><td style="font-family:var(--font-mono);font-size:.78rem">--string</td></tr>
+        <tr><td class="kw-cell" style="color:var(--number)">number</td><td>Numeric literals</td><td style="font-family:var(--font-mono);font-size:.78rem">--number</td></tr>
+        <tr><td class="kw-cell" style="color:var(--variable)">variable</td><td><code>${{ vars.x }}</code> references</td><td style="font-family:var(--font-mono);font-size:.78rem">--variable</td></tr>
+        <tr><td class="kw-cell" style="color:var(--env-variable)">variable.env</td><td><code>${{ env.x }}</code> references</td><td style="font-family:var(--font-mono);font-size:.78rem">--env-variable</td></tr>
+        <tr><td class="kw-cell" style="color:var(--comment)">comment</td><td>YAML comments</td><td style="font-family:var(--font-mono);font-size:.78rem">--comment</td></tr>
+        <tr><td class="kw-cell" style="color:var(--key)">property</td><td>Keys / field names</td><td style="font-family:var(--font-mono);font-size:.78rem">--key</td></tr>
+        <tr><td class="kw-cell" style="color:var(--name-kw)">tag</td><td>Step label (<code>name:</code>)</td><td style="font-family:var(--font-mono);font-size:.78rem">--name-kw</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>

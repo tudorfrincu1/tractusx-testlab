@@ -22,6 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
+export * from "./environment";
 export * from "./execution";
 export * from "./schema";
 export * from "./validator";

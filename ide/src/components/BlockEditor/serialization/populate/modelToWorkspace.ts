@@ -58,6 +58,15 @@ export function populateWorkspaceFromModel(
     }
   }
 
+  // Pass 1b: Force-render connected value blocks so their FieldTextInput
+  // fields resize correctly. Without shadow mode, these blocks need an
+  // explicit render call to calculate text field width after setFieldValue.
+  for (const block of ws.getAllBlocks(false)) {
+    if (block.outputConnection?.targetConnection) {
+      (block as unknown as { render: () => void }).render();
+    }
+  }
+
   // Pass 2: Re-apply all dropdown values that were queued during block
   // creation. Now that every block exists and is rendered, getOptions()
   // returns the full list and the values will stick.

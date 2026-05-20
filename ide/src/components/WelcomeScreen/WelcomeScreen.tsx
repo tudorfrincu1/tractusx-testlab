@@ -121,6 +121,7 @@ export function WelcomeScreen() {
         if (activeModel) {
           useTestLabStore.getState().loadModel(activeModel);
         }
+        useProjectStore.getState().saveToLocalStorage();
       }
     } catch {
       // Example not available

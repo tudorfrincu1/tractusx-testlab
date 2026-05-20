@@ -25,6 +25,7 @@
 
 import { useRef, useState } from "react";
 import { useProjectStore } from "../../../store/slices/useProjectStore";
+import { useTestLabStore } from "../../../store/slices/useTestLabStore";
 import { yamlToModel } from "../../../sync";
 import { importProjectZip, importExampleFolder } from "../../../store/project/projectIO";
 import { ExportDialog } from "../../ExportDialog/ExportDialog";
@@ -39,12 +40,13 @@ import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import TuneIcon from "@mui/icons-material/Tune";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import { ToolbarButton } from "./TopBarButtons";
 import { TopBarExampleMenu } from "./TopBarExampleMenu";
 import { ExecuteButton } from "../../ExecutionControls/ExecuteButton";
 import { CompileButton } from "../../ExecutionControls/CompileButton";
 import { BackendSettings } from "../../ExecutionControls/BackendSettings";
-import { VariableEditorDialog } from "../../VariableEditorDialog";
+
 import { useAutoCompile } from "../../../hooks/useAutoCompile";
 import "../../ExecutionControls/ExecutionControls.css";
 import "./TopBar.css";
@@ -59,7 +61,7 @@ export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showNewProjectConfirm, setShowNewProjectConfirm] = useState(false);
-  const [showVarDialog, setShowVarDialog] = useState(false);
+
 
   useAutoCompile();
 
@@ -104,6 +106,11 @@ export function TopBar() {
           activeFile: { type: "tck", name: "index" },
           dirty: new Map(),
         });
+
+        const activeModel = useProjectStore.getState().getActiveModel();
+        if (activeModel) {
+          useTestLabStore.getState().loadModel(activeModel);
+        }
         useProjectStore.getState().saveToLocalStorage();
       }
     } else {
@@ -134,6 +141,12 @@ export function TopBar() {
           dirty: new Map(),
           workspaceStates: {},
         });
+
+        const activeModel = useProjectStore.getState().getActiveModel();
+        if (activeModel) {
+          useTestLabStore.getState().loadModel(activeModel);
+        }
+        useProjectStore.getState().saveToLocalStorage();
       }
     } catch {
       // Example not available or parse error
@@ -167,7 +180,7 @@ export function TopBar() {
           {projectName}
           {isAnyDirty() ? " •" : ""}
         </span>
-        {activeFile && (
+        {activeFile && activeFile.type !== "preconditions" && activeFile.type !== "environment" && (
           <span
             className={`topbar__active-file topbar__active-file--${
               activeFile.type === "tck" ? "tck" : activeFile.type === "schema" ? "schema" : "other"
@@ -215,9 +228,15 @@ export function TopBar() {
           active={activeFile?.type === "tck" && activeFile?.name === "index"}
         />
         <ToolbarButton
-          label="Variables"
+          label="Environment"
           icon={<TuneIcon sx={{ fontSize: 14 }} />}
-          onClick={() => setShowVarDialog(true)}
+          onClick={() => useProjectStore.setState({ activeFile: { type: "environment", name: "config" } })}
+          active={activeFile?.type === "environment"}
+        />
+        <ToolbarButton
+          label="Preconditions"
+          icon={<SecurityOutlinedIcon sx={{ fontSize: 14 }} />}
+          onClick={() => useProjectStore.setState({ activeFile: { type: "preconditions", name: "root" } })}
         />
         <div className="execution-divider" />
         <ToolbarButton
@@ -255,7 +274,7 @@ export function TopBar() {
       </div>
       )}
       {showExportDialog && <ExportDialog onClose={() => setShowExportDialog(false)} />}
-      {showVarDialog && <VariableEditorDialog onClose={() => setShowVarDialog(false)} />}
+
       {showNewProjectConfirm && (
         <ConfirmDialog
           title="Create New Project"

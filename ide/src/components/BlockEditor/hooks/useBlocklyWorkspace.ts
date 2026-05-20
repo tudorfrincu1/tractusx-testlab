@@ -33,11 +33,12 @@ import {
   collectWorkspaceVariables,
   cleanupOrphanBlocks,
 } from "../config/blockDefinitions";
+import { registerSpawnOutputsContextMenu } from "../blocks/common/contextMenu/spawnOutputsMenu";
+import { attachOutputVariableBlocks } from "../blocks/common/outputDispenser";
 import { createWorkspaceOptions } from "../config/workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "../sync/workspaceListeners";
 import { attachServiceAutoDeclareListener } from "../sync/serviceAutoDeclare";
 import { attachPhaseEnforcementListener } from "../sync/phaseEnforcement";
-import type { ScriptDefinition } from "../../../models/schema";
 import { isTest } from "../../../models/schema";
 
 /** Dispose every block chained to a statement input on `root`. */
@@ -105,6 +106,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
         });
       }
 
+      registerSpawnOutputsContextMenu(Blockly, catalog);
+
       // Override field rect colours — Blockly applies these as inline SVG attributes
       const renderer = ws.getRenderer();
       const constants = renderer.getConstants();
@@ -140,6 +143,8 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
       }
 
       isUpdatingFromStore.current = false;
+
+      attachOutputVariableBlocks(Blockly, ws);
 
       attachModelSyncListener(ws, catalog, modelKind, setModelFromBlocks, {
         isUpdatingFromStore,
@@ -183,9 +188,10 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
     };
   }, [setModelFromBlocks, modelKind]);
 
+  // Model→workspace sync: repopulate blocks when YAML editor changes the model
   useEffect(() => {
     if (!ready) return;
-    if (lastEditSource !== "yaml" && lastEditSource !== "load") return;
+    if (lastEditSource !== "yaml") return;
     if (!workspaceRef.current || !catalogRef.current) return;
 
     if (pendingUpdateRef.current) {
@@ -199,13 +205,11 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
 
     try {
       if (isTest(model)) {
-        const script = model as ScriptDefinition;
         const rootBlock = ws.getBlocksByType("test_root", false)[0];
         if (rootBlock) {
-          rootBlock.setFieldValue(script.name || "my_test", "NAME");
-          rootBlock.setFieldValue(script.version || "1.0", "VERSION");
-          rootBlock.setFieldValue(script.description || "", "DESCRIPTION");
-
+          rootBlock.setFieldValue(model.name || "my_test", "NAME");
+          rootBlock.setFieldValue(model.version || "1.0", "VERSION");
+          rootBlock.setFieldValue(model.description || "", "DESCRIPTION");
           for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
             disposeStatementChain(rootBlock, input);
           }
@@ -213,10 +217,7 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
         }
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.debug("[BlocklyWorkspace] sync from model failed:", err);
-      }
+      console.warn("[useBlocklyWorkspace] Failed to sync model to workspace:", err);
     }
 
     isUpdatingFromStore.current = false;

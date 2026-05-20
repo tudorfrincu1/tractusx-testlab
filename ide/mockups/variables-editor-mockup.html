@@ -1,0 +1,1599 @@
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Catena-X Automotive Network e.V.
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestLab IDE — Environment Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.editor-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #333;
+}
+
+.editor-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.editor-header .subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-left: auto;
+}
+
+/* Sections */
+.section {
+  background: #242424;
+  border-radius: 10px;
+  border: 1px solid #333;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.section-header:hover {
+  background: #2a2a2a;
+}
+
+.section-header .chevron {
+  font-size: 10px;
+  color: #888;
+  transition: transform 0.2s ease;
+  width: 16px;
+}
+
+.section-header .chevron.open {
+  transform: rotate(90deg);
+}
+
+.section-header h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ccc;
+}
+
+.section-header .count {
+  font-size: 11px;
+  color: #888;
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.add-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #555;
+  color: #aaa;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-btn:hover {
+  border-color: #FFD700;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.section-body {
+  padding: 0 18px 18px;
+}
+
+.section.collapsed .section-body {
+  display: none;
+}
+
+/* Service Cards */
+.service-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.service-card {
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  border-left: 3px solid var(--service-color);
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.service-card:hover {
+  border-color: #555;
+  border-left-color: var(--service-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.service-card-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.service-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--service-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid var(--service-color);
+  opacity: 0.9;
+}
+
+.service-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-name {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFD700;
+  margin-bottom: 4px;
+}
+
+.service-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-type {
+  background: rgba(255,255,255,0.06);
+  color: var(--service-color);
+  border: 1px solid color-mix(in srgb, var(--service-color) 30%, transparent);
+}
+
+.badge-role {
+  background: rgba(255, 215, 0, 0.08);
+  color: #e8c547;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.service-url {
+  font-size: 11px;
+  color: #888;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.service-url .var-ref {
+  color: #89b4fa;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+.service-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.service-status.configured {
+  background: #a6e3a1;
+  box-shadow: 0 0 4px rgba(166, 227, 161, 0.4);
+}
+
+.service-status.empty {
+  background: #555;
+}
+
+.service-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.service-card:hover .service-delete {
+  opacity: 1;
+}
+
+.service-delete:hover {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
+/* Service Edit Form */
+.service-edit {
+  display: none;
+  padding: 0 16px 16px;
+  border-top: 1px solid #3a3a3a;
+  margin-top: 0;
+}
+
+.service-card.expanded .service-edit {
+  display: block;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-group input,
+.form-group select {
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #e0e0e0;
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.form-group input.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.form-hint {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Variables Table — Postman-style */
+.variables-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.variables-table thead th {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 8px;
+  text-align: left;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.variables-table tbody tr {
+  transition: background 0.1s ease;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.variables-table tbody tr:hover {
+  background: #2d2d2d;
+}
+
+.variables-table tbody tr.disabled {
+  opacity: 0.45;
+}
+
+.variables-table tbody tr.empty-row {
+  opacity: 0.6;
+}
+
+.variables-table tbody tr.empty-row:hover {
+  opacity: 1;
+  background: #2d2d2d;
+}
+
+.variables-table td {
+  padding: 6px 8px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* Checkbox */
+.var-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #FFD700;
+  cursor: pointer;
+}
+
+/* Inline inputs — invisible until focused */
+.var-input {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 5px 6px;
+  color: #e0e0e0;
+  font-size: 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.var-input:hover {
+  border-color: #444;
+}
+
+.var-input:focus {
+  border-color: #FFD700;
+  background: #1e1e1e;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.var-input.name-input {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-weight: 500;
+  color: #FFD700;
+}
+
+.var-input.desc-input {
+  color: #999;
+}
+
+.var-input.desc-input::placeholder {
+  color: #555;
+}
+
+.var-input.value-input {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #a6adc8;
+}
+
+.var-input.value-input.not-editable {
+  color: #555;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Type select — looks like text until hovered */
+.var-type-select {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #e0e0e0;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-width: 120px;
+}
+
+.var-type-select:hover {
+  border-color: #444;
+  background: #2a2a2a;
+}
+
+.var-type-select:focus {
+  border-color: #FFD700;
+  background: #1e1e1e;
+}
+
+/* Type cell — flex container for two dropdowns */
+.type-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Type badge display (shown inside the select-wrapper) */
+.type-badge-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.var-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  pointer-events: none;
+}
+
+.var-badge.input { background: #1e3a5f; color: #89b4fa; border: 1px solid rgba(137, 180, 250, 0.2); }
+.var-badge.manual { background: #5f3a1e; color: #fab387; border: 1px solid rgba(250, 179, 135, 0.2); }
+.var-badge.generated { background: #1e4a4a; color: #94e2d5; border: 1px solid rgba(148, 226, 213, 0.2); }
+
+/* Secondary function dropdown */
+.var-func-select {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #94e2d5;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-width: 100px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394e2d5' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+}
+
+.var-func-select:hover {
+  border-color: #444;
+  background: #2a2a2a;
+}
+
+.var-func-select:focus {
+  border-color: #94e2d5;
+  background: #1e1e1e;
+}
+
+/* Secret lock icon */
+.secret-toggle {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.secret-toggle:hover { color: #FFD700; background: rgba(255, 215, 0, 0.08); }
+.secret-toggle.active { color: #FFD700; }
+
+/* Value reveal button */
+.reveal-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-left: 2px;
+  text-transform: lowercase;
+}
+
+.reveal-btn:hover { color: #aaa; }
+
+.value-cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Delete button — only on hover */
+.var-delete {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.1s, color 0.15s, background 0.15s;
+}
+
+.variables-table tbody tr:hover .var-delete {
+  opacity: 1;
+}
+
+.var-delete:hover {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
+/* YAML Preview */
+.yaml-preview {
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+  padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #a6adc8;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.yaml-preview .key { color: #89b4fa; }
+.yaml-preview .str { color: #a6e3a1; }
+.yaml-preview .var { color: #cba6f7; }
+.yaml-preview .comment { color: #585b70; font-style: italic; }
+.yaml-preview .num { color: #fab387; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 32px 20px;
+  color: #666;
+}
+
+.empty-state .icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  font-size: 13px;
+}
+
+.empty-state button {
+  margin-top: 12px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.empty-state button:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #FFD700;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Toolbar mockup */
+.toolbar-mockup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.toolbar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+}
+.toolbar-btn {
+  background: none;
+  border: 1px solid #444;
+  color: #aaa;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+.toolbar-btn:hover { border-color: #666; color: #ddd; }
+.toolbar-btn.active {
+  border-color: #FFD700;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.08);
+}
+.toolbar-right { display: flex; align-items: center; gap: 4px; }
+
+/* Required Service Cards */
+.svc-card {
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.svc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+  background: #262626;
+}
+
+.svc-card-header .svc-card-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFD700;
+}
+
+.svc-card-header .svc-card-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.svc-card-header .svc-card-toggle label {
+  font-size: 11px;
+  color: #888;
+}
+
+.svc-card-body {
+  padding: 16px;
+}
+
+.svc-card-body .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.svc-card-body .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.svc-card-body .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.svc-card-body .form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.svc-card-body .form-group input,
+.svc-card-body .form-group select {
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.svc-card-body .form-group input:focus,
+.svc-card-body .form-group select:focus {
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.svc-card-body .form-group input.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.svc-card.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Field with variable toggle */
+.field-with-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-with-toggle input,
+.field-with-toggle select {
+  flex: 1;
+}
+
+.field-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.field-toggle-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 16px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch.active {
+  background: rgba(137, 180, 250, 0.3);
+  border-color: #89b4fa;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: #888;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch.active::after {
+  left: 18px;
+  background: #89b4fa;
+}
+
+.svc-card .auth-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+}
+
+.svc-card .auto-hint {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Services sub-headers */
+.services-subheader {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 14px 4px;
+  border-bottom: 1px solid #333;
+}
+
+.additional-hint {
+  font-size: 11px;
+  color: #555;
+  padding: 12px 14px;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div class="editor-container">
+  <div class="toolbar-mockup">
+    <div class="toolbar-left">
+      <span class="toolbar-title">TestLab IDE</span>
+    </div>
+    <div class="toolbar-right">
+      <button class="toolbar-btn">Run</button>
+      <button class="toolbar-btn active">Environment</button>
+      <button class="toolbar-btn">Settings</button>
+    </div>
+  </div>
+
+  <div class="editor-header">
+    <h1>Environment</h1>
+    <span class="subtitle">test_environment.yaml</span>
+  </div>
+
+  <!-- Services Section -->
+  <div class="section" id="services-section">
+    <div class="section-header" onclick="toggleSection('services-section')">
+      <span class="chevron open">&#9654;</span>
+      <h2>Services</h2>
+      <span class="count" id="services-count">2</span>
+    </div>
+    <div class="section-body">
+      <div class="services-subheader">Internal</div>
+      <div id="internal-services"></div>
+      <div class="services-subheader">External</div>
+      <div id="external-services"></div>
+      <div class="services-subheader" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>Additional</span>
+        <button class="add-btn" onclick="addAdditionalService()">+ Add Service</button>
+      </div>
+      <div id="additional-services"></div>
+    </div>
+  </div>
+
+  <!-- Variables Section -->
+  <div class="section" id="variables-section">
+    <div class="section-header" onclick="toggleSection('variables-section')">
+      <span class="chevron open">&#9654;</span>
+      <h2>Variables</h2>
+      <span class="count" id="variables-count">9</span>
+    </div>
+    <div class="section-body">
+      <table class="variables-table" id="variables-table">
+        <thead>
+          <tr>
+            <th style="width:30px"></th>
+            <th style="width:180px">Name</th>
+            <th style="width:250px">Type</th>
+            <th>Value</th>
+            <th style="width:220px">Description</th>
+            <th style="width:60px"></th>
+          </tr>
+        </thead>
+        <tbody id="variables-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- YAML Preview Section -->
+  <div class="section" id="yaml-section">
+    <div class="section-header" onclick="toggleSection('yaml-section')">
+      <span class="chevron open">&#9654;</span>
+      <h2>YAML Preview</h2>
+      <span class="count">generated</span>
+    </div>
+    <div class="section-body">
+      <div class="yaml-preview" id="yaml-preview"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Service type configuration
+const SERVICE_TYPES = {
+  edc_connector_saturn: { label: 'EDC Connector (Saturn)', icon: '\u2B21', color: '#89b4fa', iconBg: '#1e3050', hasRole: true, fields: ['dma_path'] },
+  edc_connector_jupiter: { label: 'EDC Connector (Jupiter)', icon: '\u2B21', color: '#a6e3a1', iconBg: '#1e3b2b', hasRole: true, fields: ['dma_path'] },
+  dtr: { label: 'Digital Twin Registry', icon: '\u25C8', color: '#89dceb', iconBg: '#1e3b40', hasRole: false, fields: ['api_path'] },
+  discovery_finder: { label: 'Discovery Finder', icon: '\u25C9', color: '#cba6f7', iconBg: '#2d1f4e', hasRole: false, fields: ['search_path'] }
+};
+
+const TYPE_CATEGORIES = [
+  { value: 'input', label: 'input', badge: 'input' },
+  { value: 'manual', label: 'manual', badge: 'manual' },
+  { value: 'function', label: 'function', badge: 'generated' }
+];
+
+const GENERATOR_FUNCTIONS = [
+  { value: 'uuid_v4', label: 'uuid_v4', description: 'Generate UUID v4' },
+  { value: 'get_participant_bpn', label: 'get_participant_bpn', description: 'Get TestLab BPN' },
+  { value: 'timestamp_iso', label: 'timestamp_iso', description: 'ISO timestamp' },
+  { value: 'random_string', label: 'random_string', description: 'Random string' }
+];
+
+let requiredServices = {
+  internal: [
+    { 
+      name: 'testlab_connector', 
+      version: 'saturn', 
+      enabled: true, 
+      description: 'TestLab EDC Connector',
+      base_url: 'https://testlab-edc.local',
+      management_path: '/management',
+      auth_type: 'oauth2',
+      api_key: '',
+      auth_header: 'X-Api-Key',
+      token_url: 'https://testlab-auth.local/token',
+      client_id: 'testlab-client',
+      client_secret: ''
+    }
+  ],
+  external: [
+    { 
+      name: 'counter_party_connector', 
+      version: 'saturn', 
+      enabled: true, 
+      description: 'SUT EDC Connector (System Under Test)',
+      base_url: '@provider_address',
+      dsp_path: '/api/v1/dsp/2025-1'
+    }
+  ]
+};
+
+let additionalServices = [];
+let nextAdditionalId = 1;
+
+let variables = [
+  { name: 'provider_address', type: 'input', kind: 'string', default: '', description: 'Provider EDC management URL', enabled: true, secret: false },
+  { name: 'provider_bpn', type: 'input', kind: 'string', default: '', description: 'Provider BPNL', enabled: true, secret: false },
+  { name: 'location_bpns', type: 'input', kind: 'string', default: '', description: 'Site BPN (BPNS)', enabled: true, secret: false },
+  { name: 'certificate_type', type: 'input', kind: 'string', default: 'ISO_9001', description: 'Certificate type to request', enabled: true, secret: false },
+  { name: 'sut_response_timeout', type: 'input', kind: 'string', default: '300', description: 'SUT timeout in seconds', enabled: true, secret: false },
+  { name: 'otp_code', type: 'manual', kind: 'string', default: '', description: 'Enter OTP from authenticator', enabled: true, secret: true },
+  { name: 'cert_asset_id', type: 'uuid_v4', kind: 'string', default: '', description: 'Auto-generated asset ID', enabled: true, secret: false },
+  { name: 'policy_id', type: 'uuid_v4', kind: 'string', default: '', description: 'Policy definition ID', enabled: true, secret: false },
+  { name: 'consumer_bpn', type: 'get_participant_bpn', kind: 'string', default: '', description: 'TestLab participant BPN', enabled: true, secret: false }
+];
+
+let revealedSecrets = {};
+
+function toggleSecretField(inputId) {
+  var input = document.getElementById(inputId);
+  var toggle = input.parentElement.querySelector('.toggle-switch');
+  if (input.type === 'password') {
+    input.type = 'text';
+    toggle.classList.add('active');
+  } else {
+    input.type = 'password';
+    toggle.classList.remove('active');
+  }
+}
+
+function toggleSection(id) {
+  const section = document.getElementById(id);
+  section.classList.toggle('collapsed');
+  const chevron = section.querySelector('.chevron');
+  chevron.classList.toggle('open');
+}
+
+function buildFieldWithToggle(serviceType, serviceIndex, fieldName, currentValue) {
+  var isVarMode = (currentValue || '').startsWith('@');
+  var activeClass = isVarMode ? ' active' : '';
+  var toggleCall = 'toggleFieldMode(\'' + serviceType + '\', ' + serviceIndex + ', \'' + fieldName + '\')';
+  var toggleBtn = '<div class="field-toggle-wrapper"><span class="field-toggle-label">VAR</span><div class="toggle-switch' + activeClass + '" onclick="' + toggleCall + '"></div></div>';
+
+  if (isVarMode) {
+    var enabledVars = variables.filter(function(v) { return v.enabled; });
+    var selectedVar = currentValue.substring(1);
+    var options = enabledVars.map(function(v) {
+      var sel = v.name === selectedVar ? ' selected' : '';
+      return '<option value="' + escapeHtml(v.name) + '"' + sel + '>' + escapeHtml(v.name) + '</option>';
+    }).join('');
+    var onchangeExpr = 'update' + (serviceType === 'internal' ? 'Internal' : 'External') + 'Field(' + serviceIndex + ', \'' + fieldName + '\', \'@\' + this.value)';
+    return '<div class="field-with-toggle"><select class="mono" onchange="' + onchangeExpr + '">' + options + '</select>' + toggleBtn + '</div>';
+  } else {
+    var onchangeExpr = 'update' + (serviceType === 'internal' ? 'Internal' : 'External') + 'Field(' + serviceIndex + ', \'' + fieldName + '\', this.value)';
+    return '<div class="field-with-toggle"><input type="text" class="mono" value="' + escapeHtml(currentValue) + '" onchange="' + onchangeExpr + '">' + toggleBtn + '</div>';
+  }
+}
+
+function toggleFieldMode(serviceType, serviceIndex, fieldName) {
+  var svc = requiredServices[serviceType][serviceIndex];
+  var currentVal = svc[fieldName] || '';
+  if (currentVal.startsWith('@')) {
+    svc[fieldName] = '';
+  } else {
+    var firstVar = variables.filter(function(v) { return v.enabled; })[0];
+    svc[fieldName] = firstVar ? '@' + firstVar.name : '@';
+  }
+  renderRequiredServices();
+  updateYamlPreview();
+}
+
+function renderRequiredServices() {
+  var internalContainer = document.getElementById('internal-services');
+  var externalContainer = document.getElementById('external-services');
+
+  internalContainer.innerHTML = requiredServices.internal.map(function(svc, i) {
+    var disabledClass = svc.enabled ? '' : ' disabled';
+    var checkedAttr = svc.enabled ? ' checked' : '';
+    var authFields = '';
+    if (svc.auth_type === 'oauth2') {
+      authFields = '<div class="auth-section"><div class="form-grid">' +
+        '<div class="form-group"><label>Token URL</label><input type="text" class="mono" value="' + escapeHtml(svc.token_url) + '" onchange="updateInternalField(' + i + ', \'token_url\', this.value)"></div>' +
+        '<div class="form-group"><label>Client ID</label><input type="text" class="mono" value="' + escapeHtml(svc.client_id) + '" onchange="updateInternalField(' + i + ', \'client_id\', this.value)"></div>' +
+        '<div class="form-group full-width"><label>Client Secret</label><div class="field-with-toggle"><input type="password" class="mono" value="' + escapeHtml(svc.client_secret) + '" id="internal-client-secret-' + i + '" onchange="updateInternalField(' + i + ', \'client_secret\', this.value)" placeholder="••••••••"><div class="field-toggle-wrapper"><div class="toggle-switch" onclick="toggleSecretField(\'internal-client-secret-' + i + '\')" title="Show/Hide"></div></div></div></div>' +
+      '</div></div>';
+    } else {
+      authFields = '<div class="auth-section"><div class="form-grid">' +
+        '<div class="form-group"><label>Auth Header</label><input type="text" class="mono" value="' + escapeHtml(svc.auth_header || 'X-Api-Key') + '" onchange="updateInternalField(' + i + ', \'auth_header\', this.value)" placeholder="X-Api-Key"></div>' +
+        '<div class="form-group"><label>API Key</label><div class="field-with-toggle"><input type="password" class="mono" value="' + escapeHtml(svc.api_key) + '" id="internal-api-key-' + i + '" onchange="updateInternalField(' + i + ', \'api_key\', this.value)" placeholder="Enter API key"><div class="field-toggle-wrapper"><div class="toggle-switch" onclick="toggleSecretField(\'internal-api-key-' + i + '\')" title="Show/Hide"></div></div></div></div>' +
+      '</div></div>';
+    }
+    return '<div class="svc-card' + disabledClass + '">' +
+      '<div class="svc-card-header">' +
+        '<span class="svc-card-name">' + escapeHtml(svc.name) + '</span>' +
+        '<div class="svc-card-toggle">' +
+          '<label>Enabled</label>' +
+          '<input type="checkbox" class="var-checkbox"' + checkedAttr + ' onchange="toggleInternalService(' + i + ', this.checked)">' +
+        '</div>' +
+      '</div>' +
+      '<div class="svc-card-body">' +
+        '<div class="form-grid">' +
+          '<div class="form-group"><label>Version</label>' +
+            '<select onchange="updateInternalField(' + i + ', \'version\', this.value)">' +
+              '<option value="saturn"' + (svc.version === 'saturn' ? ' selected' : '') + '>Saturn (DSP 2025-1)</option>' +
+              '<option value="jupiter"' + (svc.version === 'jupiter' ? ' selected' : '') + '>Jupiter (DSP 2024)</option>' +
+            '</select></div>' +
+          '<div class="form-group"><label>Base URL</label>' + buildFieldWithToggle('internal', i, 'base_url', svc.base_url) + '</div>' +
+          '<div class="form-group"><label>Management Path</label><input type="text" class="mono" value="' + escapeHtml(svc.management_path) + '" onchange="updateInternalField(' + i + ', \'management_path\', this.value)"></div>' +
+          '<div class="form-group"><label>Auth Type</label>' +
+            '<select onchange="updateInternalAuthType(' + i + ', this.value)">' +
+              '<option value="api_key"' + (svc.auth_type === 'api_key' ? ' selected' : '') + '>API Key</option>' +
+              '<option value="oauth2"' + (svc.auth_type === 'oauth2' ? ' selected' : '') + '>OAuth 2.0</option>' +
+            '</select></div>' +
+        '</div>' +
+        authFields +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  externalContainer.innerHTML = requiredServices.external.map(function(svc, i) {
+    var disabledClass = svc.enabled ? '' : ' disabled';
+    var checkedAttr = svc.enabled ? ' checked' : '';
+    return '<div class="svc-card' + disabledClass + '">' +
+      '<div class="svc-card-header">' +
+        '<span class="svc-card-name">' + escapeHtml(svc.name) + '</span>' +
+        '<div class="svc-card-toggle">' +
+          '<label>Enabled</label>' +
+          '<input type="checkbox" class="var-checkbox"' + checkedAttr + ' onchange="toggleExternalService(' + i + ', this.checked)">' +
+        '</div>' +
+      '</div>' +
+      '<div class="svc-card-body">' +
+        '<div class="form-grid">' +
+          '<div class="form-group"><label>Dataspace Version</label>' +
+            '<select onchange="updateExternalDspPath(' + i + ', this.value)">' +
+              '<option value="saturn"' + (svc.version === 'saturn' ? ' selected' : '') + '>Saturn (DSP 2025-1)</option>' +
+              '<option value="jupiter"' + (svc.version === 'jupiter' ? ' selected' : '') + '>Jupiter (DSP 2024)</option>' +
+            '</select></div>' +
+          '<div class="form-group"><label>Base URL</label>' + buildFieldWithToggle('external', i, 'base_url', svc.base_url) + '</div>' +
+          '<div class="form-group full-width"><label>DSP Path</label>' + buildFieldWithToggle('external', i, 'dsp_path', svc.dsp_path) + '<span class="auto-hint">Auto-configured from version. Override if needed.</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleInternalService(index, checked) {
+  requiredServices.internal[index].enabled = checked;
+  renderServices();
+}
+
+function toggleExternalService(index, checked) {
+  requiredServices.external[index].enabled = checked;
+  renderServices();
+}
+
+function updateInternalField(index, field, value) {
+  requiredServices.internal[index][field] = value;
+  updateYamlPreview();
+}
+
+function updateInternalAuthType(index, value) {
+  requiredServices.internal[index].auth_type = value;
+  renderServices();
+}
+
+function updateExternalField(index, field, value) {
+  requiredServices.external[index][field] = value;
+  updateYamlPreview();
+}
+
+function updateExternalDspPath(index, version) {
+  var svc = requiredServices.external[index];
+  svc.version = version;
+  svc.dsp_path = version === 'saturn' ? '/api/v1/dsp/2025-1' : '/api/v1/dsp';
+  renderServices();
+}
+
+function getEnabledServicesCount() {
+  var count = 0;
+  requiredServices.internal.forEach(function(s) { if (s.enabled) count++; });
+  requiredServices.external.forEach(function(s) { if (s.enabled) count++; });
+  additionalServices.forEach(function(s) { if (s.enabled !== false) count++; });
+  return count;
+}
+
+function renderServices() {
+  renderRequiredServices();
+  renderAdditionalServices();
+  document.getElementById('services-count').textContent = getEnabledServicesCount();
+  updateYamlPreview();
+}
+
+function renderAdditionalServices() {
+  var container = document.getElementById('additional-services');
+
+  if (additionalServices.length === 0) {
+    container.innerHTML = '<div class="additional-hint">Add services for edge-case test scenarios</div>';
+    return;
+  }
+
+  container.innerHTML = additionalServices.map(function(svc) {
+    var typeCfg = SERVICE_TYPES[svc.type] || SERVICE_TYPES.edc_connector_saturn;
+    var isConfigured = svc.url && svc.url.length > 0;
+    var roleHtml = svc.role ? '<span class="badge badge-role">' + escapeHtml(svc.role) + '</span>' : '';
+    var typeFields = typeCfg.fields || [];
+
+    var fieldsHtml = typeFields.map(function(field) {
+      return '<div class="form-group"><label>' + escapeHtml(field.replace(/_/g, ' ')) + '</label><input type="text" class="mono" value="' + escapeHtml(svc[field] || '') + '" onchange="updateAdditionalService(' + svc.id + ', \'' + field + '\', this.value)" placeholder="/' + escapeHtml(field.replace(/_/g, '/')) + '"></div>';
+    }).join('');
+
+    var roleField = typeCfg.hasRole ? '<div class="form-group"><label>Role</label><select onchange="updateAdditionalService(' + svc.id + ', \'role\', this.value)"><option value="provider"' + (svc.role === 'provider' ? ' selected' : '') + '>Provider</option><option value="consumer"' + (svc.role === 'consumer' ? ' selected' : '') + '>Consumer</option></select></div>' : '';
+
+    var urlWidthClass = typeCfg.hasRole ? '' : ' full-width';
+
+    var typeOptions = Object.keys(SERVICE_TYPES).map(function(k) {
+      return '<option value="' + k + '"' + (k === svc.type ? ' selected' : '') + '>' + SERVICE_TYPES[k].label + '</option>';
+    }).join('');
+
+    return '<div class="service-card" id="svc-' + svc.id + '" style="--service-color: ' + typeCfg.color + '; --service-icon-bg: ' + typeCfg.iconBg + '">' +
+      '<div class="service-card-summary" onclick="toggleServiceCard(' + svc.id + ')">' +
+        '<div class="service-icon">' + typeCfg.icon + '</div>' +
+        '<div class="service-info">' +
+          '<div class="service-name">' + escapeHtml(svc.name) + '</div>' +
+          '<div class="service-meta"><span class="badge badge-type">' + escapeHtml(typeCfg.label) + '</span>' + roleHtml + '</div>' +
+          '<div class="service-url">URL: <span class="var-ref">' + escapeHtml(svc.url || '\u2014') + '</span></div>' +
+        '</div>' +
+        '<div class="service-status ' + (isConfigured ? 'configured' : 'empty') + '" title="' + (isConfigured ? 'Configured' : 'Not configured') + '"></div>' +
+      '</div>' +
+      '<button class="service-delete" onclick="event.stopPropagation(); deleteAdditionalService(' + svc.id + ')" title="Delete service">\u2715</button>' +
+      '<div class="service-edit"><div class="form-grid">' +
+        '<div class="form-group"><label>Name</label><input type="text" class="mono" value="' + escapeHtml(svc.name) + '" onchange="updateAdditionalService(' + svc.id + ', \'name\', this.value)"></div>' +
+        '<div class="form-group"><label>Type</label><select onchange="updateAdditionalService(' + svc.id + ', \'type\', this.value); renderServices();">' + typeOptions + '</select></div>' +
+        roleField +
+        '<div class="form-group' + urlWidthClass + '"><label>URL Binding</label><input type="text" class="mono" value="' + escapeHtml(svc.url) + '" onchange="updateAdditionalService(' + svc.id + ', \'url\', this.value)" placeholder="@variable_name"><span class="form-hint">Use @variable to bind to environment variable</span></div>' +
+        fieldsHtml +
+      '</div></div></div>';
+  }).join('');
+}
+
+function toggleServiceCard(id) {
+  var card = document.getElementById('svc-' + id);
+  card.classList.toggle('expanded');
+}
+
+function updateAdditionalService(id, field, value) {
+  var svc = additionalServices.find(function(s) { return s.id === id; });
+  if (svc) {
+    svc[field] = value;
+    if (field === 'type') {
+      var cfg = SERVICE_TYPES[value];
+      if (!cfg.hasRole) svc.role = '';
+    }
+    updateYamlPreview();
+  }
+}
+
+function deleteAdditionalService(id) {
+  additionalServices = additionalServices.filter(function(s) { return s.id !== id; });
+  renderServices();
+}
+
+function addAdditionalService() {
+  additionalServices.push({
+    id: nextAdditionalId++,
+    name: 'new_service',
+    type: 'edc_connector_saturn',
+    role: 'consumer',
+    url: '',
+    dma_path: '/management'
+  });
+  renderServices();
+  setTimeout(function() {
+    var card = document.getElementById('svc-' + (nextAdditionalId - 1));
+    if (card) card.classList.add('expanded');
+  }, 50);
+}
+
+function isFunction(type) {
+  return GENERATOR_FUNCTIONS.some(function(f) { return f.value === type; });
+}
+
+function getTypeCategory(type) {
+  if (type === 'input') return 'input';
+  if (type === 'manual') return 'manual';
+  return 'function';
+}
+
+function getBadgeClass(type) {
+  var cat = getTypeCategory(type);
+  var catObj = TYPE_CATEGORIES.find(function(c) { return c.value === cat; });
+  return catObj ? catObj.badge : 'input';
+}
+
+function isValueEditable(type) {
+  return type === 'input';
+}
+
+function buildTypeCell(type, index, isEmpty) {
+  var category = getTypeCategory(type);
+  var badgeClass = getBadgeClass(type);
+
+  var primaryOnchange = isEmpty
+    ? 'onchange="updateEmptyRowCategory(this.value)"'
+    : 'onchange="updateVarCategory(' + index + ', this.value)"';
+
+  var html = '<div class="type-cell">';
+  html += '<div class="type-badge-wrapper"><select class="var-type-select" ' + primaryOnchange + '>';
+  TYPE_CATEGORIES.forEach(function(cat) {
+    html += '<option value="' + cat.value + '"' + (cat.value === category ? ' selected' : '') + '>' + cat.label + '</option>';
+  });
+  html += '</select>';
+  html += '<span class="var-badge ' + badgeClass + '">' + badgeClass + '</span></div>';
+
+  if (category === 'function') {
+    var funcValue = isFunction(type) ? type : GENERATOR_FUNCTIONS[0].value;
+    var secondaryOnchange = isEmpty
+      ? 'onchange="updateEmptyRowFunc(this.value)"'
+      : 'onchange="updateVarFunc(' + index + ', this.value)"';
+    html += '<select class="var-func-select" ' + secondaryOnchange + '>';
+    GENERATOR_FUNCTIONS.forEach(function(fn) {
+      html += '<option value="' + fn.value + '"' + (fn.value === funcValue ? ' selected' : '') + '>' + fn.label + '</option>';
+    });
+    html += '</select>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function buildValueCell(v, index, isEmpty) {
+  if (isEmpty) {
+    return '<input class="var-input value-input" placeholder="value" onchange="handleEmptyRowCommit()" data-field="default">';
+  }
+  if (v.secret && !revealedSecrets[index]) {
+    var eyeClosed2 = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    return '<span class="value-cell">' +
+      '<span class="secret-dots">\u2022\u2022\u2022\u2022\u2022</span>' +
+      '<button class="reveal-btn" onclick="toggleReveal(' + index + ')" title="Reveal value">[show]</button>' +
+      '<button class="secret-toggle active" onclick="toggleSecret(' + index + ')" title="Toggle secret">' + eyeClosed2 + '</button>' +
+      '</span>';
+  }
+  if (!isValueEditable(v.type)) {
+    return '<input class="var-input value-input not-editable" value="\u2014" disabled>';
+  }
+  var val = v.secret && revealedSecrets[index] ? escapeHtml(v.default) : escapeHtml(v.default);
+  var revealBtn = v.secret ? '<button class="reveal-btn" onclick="toggleReveal(' + index + ')" title="Hide value">[hide]</button>' : '';
+  var eyeOpen = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var eyeClosed = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  var secretIcon = v.secret ? eyeClosed : eyeOpen;
+  var secretBtn = '<button class="secret-toggle' + (v.secret ? ' active' : '') + '" onclick="toggleSecret(' + index + ')" title="Toggle secret">' + secretIcon + '</button>';
+  return '<span class="value-cell"><input class="var-input value-input" value="' + val + '" onchange="updateVar(' + index + ', \'default\', this.value)">' + revealBtn + secretBtn + '</span>';
+}
+
+function renderVariables() {
+  var tbody = document.getElementById('variables-tbody');
+  document.getElementById('variables-count').textContent = variables.length;
+
+  var rows = variables.map(function(v, i) {
+    var disabledClass = v.enabled ? '' : ' disabled';
+    var checkedAttr = v.enabled ? ' checked' : '';
+    return '<tr class="' + disabledClass + '">' +
+      '<td><input type="checkbox" class="var-checkbox"' + checkedAttr + ' onchange="toggleVarEnabled(' + i + ', this.checked)"></td>' +
+      '<td><input class="var-input name-input" value="' + escapeHtml(v.name) + '" onchange="updateVar(' + i + ', \'name\', this.value)"></td>' +
+      '<td>' + buildTypeCell(v.type, i, false) + '</td>' +
+      '<td>' + buildValueCell(v, i, false) + '</td>' +
+      '<td><input class="var-input desc-input" value="' + escapeHtml(v.description) + '" placeholder="Add description..." onchange="updateVar(' + i + ', \'description\', this.value)"></td>' +
+      '<td class="var-actions">' +
+        '<button class="var-delete" onclick="deleteVariable(' + i + ')" title="Delete">\u2715</button>' +
+      '</td>' +
+      '</tr>';
+  }).join('');
+
+  // Empty row for adding new variables
+  rows += '<tr class="empty-row">' +
+    '<td><input type="checkbox" class="var-checkbox" disabled style="opacity:0.3"></td>' +
+    '<td><input class="var-input name-input" placeholder="variable_name" id="empty-row-name" onblur="handleEmptyRowCommit()"></td>' +
+    '<td>' + buildTypeCell(emptyRowCategory === 'function' ? emptyRowFunc : emptyRowCategory, -1, true) + '</td>' +
+    '<td><input class="var-input value-input" placeholder="value" id="empty-row-value"></td>' +
+    '<td><input class="var-input desc-input" placeholder="Add description..." id="empty-row-desc"></td>' +
+    '<td></td>' +
+    '</tr>';
+
+  tbody.innerHTML = rows;
+  updateYamlPreview();
+}
+
+function updateVar(index, field, value) {
+  variables[index][field] = value;
+  updateYamlPreview();
+}
+
+function updateVarCategory(index, category) {
+  if (category === 'input' || category === 'manual') {
+    variables[index].type = category;
+  } else {
+    variables[index].type = GENERATOR_FUNCTIONS[0].value;
+  }
+  if (!isValueEditable(variables[index].type)) {
+    variables[index].default = '';
+  }
+  renderVariables();
+}
+
+function updateVarFunc(index, funcName) {
+  variables[index].type = funcName;
+  variables[index].default = '';
+  renderVariables();
+}
+
+var emptyRowCategory = 'input';
+var emptyRowFunc = GENERATOR_FUNCTIONS[0].value;
+
+function updateEmptyRowCategory(value) {
+  emptyRowCategory = value;
+  // Preserve user input while re-rendering to show/hide secondary dropdown
+  var nameEl = document.getElementById('empty-row-name');
+  var valEl = document.getElementById('empty-row-value');
+  var descEl = document.getElementById('empty-row-desc');
+  var savedName = nameEl ? nameEl.value : '';
+  var savedVal = valEl ? valEl.value : '';
+  var savedDesc = descEl ? descEl.value : '';
+  renderVariables();
+  var nameEl2 = document.getElementById('empty-row-name');
+  var valEl2 = document.getElementById('empty-row-value');
+  var descEl2 = document.getElementById('empty-row-desc');
+  if (nameEl2) nameEl2.value = savedName;
+  if (valEl2) valEl2.value = savedVal;
+  if (descEl2) descEl2.value = savedDesc;
+}
+
+function updateEmptyRowFunc(value) {
+  emptyRowFunc = value;
+}
+
+function toggleVarEnabled(index, checked) {
+  variables[index].enabled = checked;
+  renderVariables();
+}
+
+function toggleSecret(index) {
+  variables[index].secret = !variables[index].secret;
+  renderVariables();
+}
+
+function toggleReveal(index) {
+  revealedSecrets[index] = !revealedSecrets[index];
+  renderVariables();
+}
+
+function handleEmptyRowCommit() {
+  var nameInput = document.getElementById('empty-row-name');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) return;
+
+  var valueInput = document.getElementById('empty-row-value');
+  var descInput = document.getElementById('empty-row-desc');
+
+  var type;
+  if (emptyRowCategory === 'function') {
+    type = emptyRowFunc;
+  } else {
+    type = emptyRowCategory;
+  }
+
+  variables.push({
+    name: name,
+    type: type,
+    kind: 'string',
+    default: valueInput ? valueInput.value : '',
+    description: descInput ? descInput.value : '',
+    enabled: true,
+    secret: false
+  });
+
+  emptyRowCategory = 'input';
+  emptyRowFunc = GENERATOR_FUNCTIONS[0].value;
+
+  renderVariables();
+}
+
+function deleteVariable(index) {
+  variables.splice(index, 1);
+  delete revealedSecrets[index];
+  renderVariables();
+}
+
+function updateYamlPreview() {
+  var preview = document.getElementById('yaml-preview');
+  var yaml = '';
+
+  yaml += s('comment', '# Auto-generated environment configuration') + '\n\n';
+  yaml += s('key', 'services') + ':\n';
+
+  yaml += s('comment', '  # Internal') + '\n';
+  requiredServices.internal.forEach(function(svc) {
+    if (!svc.enabled) {
+      yaml += '  ' + s('comment', '# - name: ' + svc.name) + '\n';
+      yaml += '  ' + s('comment', '#   type: edc_connector_' + svc.version) + '\n';
+      return;
+    }
+    yaml += '  - ' + s('key', 'name') + ': ' + s('str', svc.name) + '\n';
+    yaml += '    ' + s('key', 'type') + ': ' + s('str', 'edc_connector_' + svc.version) + '\n';
+    yaml += '    ' + s('key', 'base_url') + ': ' + s('str', '"' + svc.base_url + '"') + '\n';
+    yaml += '    ' + s('key', 'management_path') + ': ' + s('str', svc.management_path) + '\n';
+    yaml += '    ' + s('key', 'auth') + ':\n';
+    yaml += '      ' + s('key', 'type') + ': ' + s('str', svc.auth_type) + '\n';
+    if (svc.auth_type === 'oauth2') {
+      yaml += '      ' + s('key', 'token_url') + ': ' + s('str', '"' + svc.token_url + '"') + '\n';
+      yaml += '      ' + s('key', 'client_id') + ': ' + s('str', svc.client_id) + '\n';
+    } else {
+      yaml += '      ' + s('key', 'header') + ': ' + s('str', (svc.auth_header || 'X-Api-Key')) + '\n';
+      yaml += '      ' + s('key', 'key') + ': ' + s('str', '"***"') + '\n';
+    }
+  });
+
+  yaml += s('comment', '  # External') + '\n';
+  requiredServices.external.forEach(function(svc) {
+    if (!svc.enabled) {
+      yaml += '  ' + s('comment', '# - name: ' + svc.name) + '\n';
+      yaml += '  ' + s('comment', '#   type: edc_connector_' + svc.version) + '\n';
+      return;
+    }
+    yaml += '  - ' + s('key', 'name') + ': ' + s('str', svc.name) + '\n';
+    yaml += '    ' + s('key', 'type') + ': ' + s('str', 'edc_connector_' + svc.version) + '\n';
+    yaml += '    ' + s('key', 'base_url') + ': ' + s('var', '"' + svc.base_url + '"') + '\n';
+    yaml += '    ' + s('key', 'dsp_path') + ': ' + s('str', svc.dsp_path) + '\n';
+  });
+
+  if (additionalServices.length > 0) {
+    yaml += s('comment', '  # Additional') + '\n';
+    additionalServices.forEach(function(svc) {
+      var typeCfg = SERVICE_TYPES[svc.type];
+      yaml += '  - ' + s('key', 'name') + ': ' + s('str', svc.name) + '\n';
+      yaml += '    ' + s('key', 'type') + ': ' + s('str', svc.type) + '\n';
+      if (typeCfg && typeCfg.hasRole && svc.role) {
+        yaml += '    ' + s('key', 'role') + ': ' + s('str', svc.role) + '\n';
+      }
+      yaml += '    ' + s('key', 'url') + ': ' + s('var', svc.url || '""') + '\n';
+      if (typeCfg) {
+        typeCfg.fields.forEach(function(f) {
+          if (svc[f]) yaml += '    ' + s('key', f) + ': ' + s('str', svc[f]) + '\n';
+        });
+      }
+      yaml += '\n';
+    });
+  }
+
+  yaml += '\n' + s('key', 'variables') + ':\n';
+  variables.forEach(function(v) {
+    if (!v.enabled) {
+      yaml += '  ' + s('comment', '# ' + v.name + ': { type: ' + v.type + ' }') + '\n';
+      return;
+    }
+    yaml += '  - ' + s('key', 'name') + ': ' + s('str', v.name) + '\n';
+    yaml += '    ' + s('key', 'type') + ': ' + s('str', v.type) + '\n';
+    yaml += '    ' + s('key', 'kind') + ': ' + s('str', 'string') + '\n';
+    if (v.default) {
+      yaml += '    ' + s('key', 'default') + ': ' + s('str', v.default) + '\n';
+    }
+    if (v.secret) {
+      yaml += '    ' + s('key', 'secret') + ': ' + s('num', 'true') + '\n';
+    }
+    yaml += '    ' + s('key', 'description') + ': ' + s('str', v.description) + '\n';
+  });
+
+  preview.innerHTML = yaml;
+}
+
+function s(cls, text) {
+  return '<span class="' + cls + '">' + escapeHtml(text) + '</span>';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Initialize
+renderServices();
+renderVariables();
+</script>
+</body>
+</html>

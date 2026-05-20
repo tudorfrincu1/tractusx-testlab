@@ -37,7 +37,14 @@ export {
 export { collectWorkspaceVariables } from "./catalog/variableCollection";
 
 export {
+  type TypedVariable,
+  collectTypedUpstreamVariables,
+  collectTypedWorkspaceVariables,
+} from "./catalog/typedVariableCollection";
+
+export {
   dynamicDropdown,
+  typedVariableDropdown,
   collectMockEndpointIds,
   collectServiceRefs,
   collectSchemaVariables,
@@ -69,3 +76,5 @@ export {
   ICON_SCHEMA,
   ICON_INFO,
 } from "./fields/icons";
+
+export { attachOutputVariableBlocks } from "./outputDispenser";

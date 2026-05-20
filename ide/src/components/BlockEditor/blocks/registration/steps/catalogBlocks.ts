@@ -25,18 +25,19 @@
 
 import type { Block, WorkspaceSvg } from "blockly";
 import type * as BlocklyType from "blockly";
-import { blockColors, getCategoryColor } from "../../../config/blockColors";
+import { getCategoryColor } from "../../../config/blockColors";
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";
-import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT, ICON_JSON } from "../../common/fields/icons";
-import {
-  dynamicDropdown,
-  collectMockEndpointIds,
-  collectServiceRefs,
-  collectSchemaPaths,
-  collectPreconditionRefs,
-} from "../../common/fields/dropdownProviders";
-import { collectWorkspaceVariables } from "../../common/catalog/variableCollection";
+import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT } from "../../common/fields/icons";
 import { createInfoIconField } from "../../common/fields/infoIconField";
+import { generateStepId } from "../../common/stepIdGenerator";
+import { registerParamField } from "./registerParamField";
+
+function classIdToLabel(classId: string): string {
+  return classId
+    .split("_")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   for (const category of catalog) {
@@ -56,144 +57,49 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
             .appendField(block.label)
             .appendField(createInfoIconField(Blockly, block.description));
 
+          this.appendDummyInput("STEP_ID_ROW")
+            .appendField("id:")
+            .appendField(new Blockly.FieldTextInput(generateStepId(block.type, this.workspace)), "STEP_ID");
+
           this.appendDummyInput()
             .appendField("description:")
             .appendField(new Blockly.FieldTextInput(""), "DESCRIPTION");
 
+          if (block.params.length > 0) {
+            this.appendDummyInput("INPUTS_HEADER")
+              .appendField("\u2500\u2500\u2500 inputs \u2500\u2500\u2500");
+          }
+
           for (const param of block.params) {
             const fieldKey = `PARAM_${param.name.toUpperCase()}`;
             const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
-
-            switch (param.type) {
-              case "dropdown":
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      (param.options || []).map((o: string): [string, string] => [o, o])
-                    ),
-                    fieldKey
-                  );
-                break;
-
-              case "number":
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldNumber(
-                      typeof param.default === "number" ? param.default : 0,
-                      -Infinity,
-                      Infinity,
-                      0
-                    ),
-                    fieldKey
-                  );
-                break;
-
-              case "json":
-                this.appendValueInput(fieldKey)
-                  .appendField(blockIcon(Blockly, ICON_JSON))
-                  .appendField(paramLabel)
-                  .setCheck("param_value");
-                break;
-
-              case "array":
-                this.appendStatementInput(fieldKey)
-                  .appendField(blockIcon(Blockly, ICON_JSON))
-                  .appendField(paramLabel)
-                  .setCheck(param.item_type ?? "key_value");
-                break;
-
-              case "endpoint_ref":
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      dynamicDropdown((ws) => collectMockEndpointIds(ws)) as () => Array<[string, string]>
-                    ),
-                    fieldKey
-                  );
-                break;
-
-              case "service_ref": {
-                const catServiceType = category.service_type;
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      dynamicDropdown((ws) => collectServiceRefs(ws, catServiceType)) as () => Array<[string, string]>
-                    ),
-                    fieldKey
-                  );
-                break;
-              }
-
-              case "precondition_ref": {
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      dynamicDropdown((ws) => collectPreconditionRefs(ws)) as () => Array<[string, string]>
-                    ),
-                    fieldKey
-                  );
-                break;
-              }
-
-              case "schema_path":
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      dynamicDropdown(() => collectSchemaPaths()) as () => Array<[string, string]>
-                    ),
-                    fieldKey
-                  );
-                break;
-
-              case "variable":
-                this.appendDummyInput()
-                  .appendField(paramLabel)
-                  .appendField(
-                    new Blockly.FieldDropdown(
-                      dynamicDropdown(
-                        (ws) => {
-                          const vars = collectWorkspaceVariables(ws, catalog);
-                          return vars.length > 0
-                            ? vars.map((v): [string, string] => [v, v])
-                            : [["(no variables)", "__NONE__"]];
-                        },
-                        "(no variables)"
-                      ) as () => Array<[string, string]>
-                    ),
-                    fieldKey
-                  );
-                break;
-
-              case "steps":
-                this.appendStatementInput(fieldKey)
-                  .appendField(paramLabel)
-                  .setCheck("step");
-                break;
-
-              case "filter_expression_list":
-                this.appendStatementInput(fieldKey)
-                  .appendField(paramLabel)
-                  .setCheck("filter_expression");
-                break;
-
-              default:
-                this.appendValueInput(fieldKey)
-                  .appendField(paramLabel)
-                  .setCheck("param_value");
-                break;
-            }
+            registerParamField(this, Blockly, param, fieldKey, paramLabel, catalog, category.service_type);
           }
 
           if (block.outputs && block.outputs.length > 0) {
-            this.appendStatementInput("EXPECT")
-              .appendField("validate:")
-              .setCheck("assertion");
+            if (block.expect !== false) {
+              this.appendStatementInput("EXPECT")
+                .appendField("validate:")
+                .setCheck("assertion");
+            }
+
+            // Spacer before outputs section
+            this.appendDummyInput("OUTPUTS_SPACER")
+              .appendField(" ");
+
+            // Divider + hint before outputs
+            this.appendDummyInput("OUTPUTS_HEADER")
+              .appendField("\u2500\u2500\u2500 output variables (drag to use) \u2500\u2500\u2500");
+
+            for (const output of block.outputs) {
+              const inputName = `OUT_${output.name.toUpperCase()}`;
+              const label = output.class
+                ? classIdToLabel(output.class) + ":"
+                : classIdToLabel(output.name) + ":";
+              this.appendValueInput(inputName)
+                .appendField(label)
+                .setCheck("param_value");
+            }
           }
 
           // json_path_extract can appear both as a step and inside assertion chains
@@ -253,6 +159,11 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
                 .appendField("description:")
                 .appendField(new Blockly.FieldTextInput(""), "DESCRIPTION");
 
+              if (block.params.length > 0) {
+                this.appendDummyInput("INPUTS_HEADER")
+                  .appendField("\u2500\u2500\u2500 inputs \u2500\u2500\u2500");
+              }
+
               for (const param of block.params) {
                 const fieldKey = `PARAM_${param.name.toUpperCase()}`;
                 const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
@@ -260,9 +171,29 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
               }
 
               if (block.outputs && block.outputs.length > 0) {
-                this.appendStatementInput("EXPECT")
-                  .appendField("validate:")
-                  .setCheck("assertion");
+                if (block.expect !== false) {
+                  this.appendStatementInput("EXPECT")
+                    .appendField("validate:")
+                    .setCheck("assertion");
+                }
+
+                // Spacer before outputs section
+                this.appendDummyInput("OUTPUTS_SPACER")
+                  .appendField(" ");
+
+                // Divider + hint before outputs
+                this.appendDummyInput("OUTPUTS_HEADER")
+                  .appendField("\u2500\u2500\u2500 output variables (drag to use) \u2500\u2500\u2500");
+
+                for (const output of block.outputs) {
+                  const inputName = `OUT_${output.name.toUpperCase()}`;
+                  const label = output.class
+                    ? classIdToLabel(output.class) + ":"
+                    : classIdToLabel(output.name) + ":";
+                  this.appendValueInput(inputName)
+                    .appendField(label)
+                    .setCheck("param_value");
+                }
               }
 
               this.setPreviousStatement(true, "step");
@@ -273,124 +204,5 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
         }
       }
     }
-  }
-}
-
-function registerParamField(
-  self: Block,
-  Blockly: typeof BlocklyType,
-  param: { name: string; type: string; required?: boolean; options?: string[]; default?: unknown; item_type?: string },
-  fieldKey: string,
-  paramLabel: string,
-  catalog: BlockCatalog,
-  serviceType?: string,
-): void {
-  switch (param.type) {
-    case "dropdown":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            (param.options || []).map((o: string): [string, string] => [o, o])
-          ),
-          fieldKey
-        );
-      break;
-    case "number":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldNumber(
-            typeof param.default === "number" ? param.default : 0,
-            -Infinity, Infinity, 0
-          ),
-          fieldKey
-        );
-      break;
-    case "json":
-      self.appendValueInput(fieldKey)
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField(paramLabel)
-        .setCheck("param_value");
-      break;
-    case "array":
-      self.appendStatementInput(fieldKey)
-        .appendField(blockIcon(Blockly, ICON_JSON))
-        .appendField(paramLabel)
-        .setCheck(param.item_type ?? "key_value");
-      break;
-    case "endpoint_ref":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectMockEndpointIds(ws)) as () => Array<[string, string]>
-          ),
-          fieldKey
-        );
-      break;
-    case "service_ref":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectServiceRefs(ws, serviceType)) as () => Array<[string, string]>
-          ),
-          fieldKey
-        );
-      break;
-    case "schema_path":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown(() => collectSchemaPaths()) as () => Array<[string, string]>
-          ),
-          fieldKey
-        );
-      break;
-    case "variable":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown(
-              (ws) => {
-                const vars = collectWorkspaceVariables(ws, catalog);
-                return vars.length > 0
-                  ? vars.map((v): [string, string] => [v, v])
-                  : [["(no variables)", "__NONE__"]];
-              },
-              "(no variables)"
-            ) as () => Array<[string, string]>
-          ),
-          fieldKey
-        );
-      break;
-    case "steps":
-      self.appendStatementInput(fieldKey)
-        .appendField(paramLabel)
-        .setCheck("step");
-      break;
-    case "filter_expression_list":
-      self.appendStatementInput(fieldKey)
-        .appendField(paramLabel)
-        .setCheck("filter_expression");
-      break;
-    case "precondition_ref":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectPreconditionRefs(ws)) as () => Array<[string, string]>
-          ),
-          fieldKey
-        );
-      break;
-    default:
-      self.appendValueInput(fieldKey)
-        .appendField(paramLabel)
-        .setCheck("param_value");
-      break;
   }
 }
