@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TestLab Policy Schema Index",
+  "description": "Maps dataspace versions to their policy schema files",
+  "versions": {
+    "jupiter": {
+      "schema": "policies/jupiter/policy-schema.json",
+      "label": "Jupiter (EDC v0.8–v0.10)",
+      "source": "https://w3id.org/catenax/policy (cx-odrl-profile)"
+    },
+    "saturn": {
+      "schema": "policies/saturn/policy-schema.json",
+      "label": "Saturn (EDC v0.11+, DSP 2025-1)",
+      "source": "https://w3id.org/catenax/2025/9/policy/schema/policy-schema.json (CX-0152)"
+    }
+  }
+}

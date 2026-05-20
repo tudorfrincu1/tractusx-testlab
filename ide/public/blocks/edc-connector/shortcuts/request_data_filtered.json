@@ -1,0 +1,21 @@
+{
+  "type": "request_data_filtered",
+  "label": "Obtain Data Exchange Authorization",
+  "description": "Query catalog with filters, negotiate a contract for the matching offer, initiate a PULL transfer, and return the EDR token and dataplane URL.",
+  "params": [
+    { "name": "service", "type": "service_ref", "required": true, "description": "Consumer EDC connector service" },
+    { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the provider connector" },
+    { "name": "filters", "type": "filter_expression_list", "required": true, "description": "Filter expressions to narrow catalog results" },
+    { "name": "dataset_index", "type": "number", "required": false, "description": "Which dataset to select (default: first match)", "default": 0 },
+    { "name": "transfer_type", "type": "dropdown", "required": false, "description": "Transfer type", "options": ["HttpData-PULL", "HttpData-PUSH"], "default": "HttpData-PULL" }
+  ],
+  "outputs": [
+    { "name": "catalog", "description": "Full catalog response object", "schema": { "type": "object" } },
+    { "name": "datasets", "description": "Raw catalog datasets matching the filters", "schema": { "type": "array" } },
+    { "name": "asset_id", "description": "Resolved asset ID from catalog", "schema": { "type": "string" } },
+    { "name": "negotiation_id", "description": "Contract negotiation ID", "schema": { "type": "string" } },
+    { "name": "transfer_process_id", "description": "Transfer process ID", "schema": { "type": "string" } },
+    { "name": "edr_token", "description": "EDR authorization token for dataplane calls", "schema": { "type": "string" } },
+    { "name": "dataplane_url", "description": "Dataplane public API endpoint URL", "schema": { "type": "string" } }
+  ]
+}

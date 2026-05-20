@@ -1,0 +1,1096 @@
+<!--
+ Eclipse Tractus-X - Tractus-X TestLab
+
+ Copyright (c) 2026 Contributors to the Eclipse Foundation
+
+ See the NOTICE file(s) distributed with this work for additional
+ information regarding copyright ownership.
+
+ This program and the accompanying materials are made available under the
+ terms of the Apache License, Version 2.0 which is available at
+ https://www.apache.org/licenses/LICENSE-2.0.
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ License for the specific language governing permissions and limitations
+ under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+<!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestLab IDE — Preconditions Configurator (Schema-Driven)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #1a1a1a;
+  --bg-surface: #242424;
+  --bg-elevated: #2d2d2d;
+  --bg-card: #2a2a2a;
+  --text: #e0e0e0;
+  --text-muted: #999;
+  --text-bright: #fff;
+  --accent: #FFD700;
+  --accent-hover: #FFC107;
+  --info: #89b4fa;
+  --success: #a6e3a1;
+  --danger: #f38ba8;
+  --schema: #94e2d5;
+  --schema-bg: #1b3b3b;
+  --border: #404040;
+  --border-hover: #555;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --transition: 0.2s ease;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 52px; padding: 0 24px; background: var(--bg-surface); border-bottom: 1px solid var(--border);
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.back-link {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-muted); text-decoration: none; font-size: 13px; transition: color 0.15s;
+}
+.back-link:hover { color: var(--accent); }
+.topbar-title { font-size: 15px; font-weight: 600; color: var(--text-bright); }
+
+.btn-primary {
+  background: var(--accent); color: #1a1a1a; border: none; padding: 8px 16px;
+  border-radius: var(--radius); font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost {
+  background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+  padding: 8px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; transition: all 0.15s;
+}
+.btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+.btn-danger {
+  background: transparent; color: var(--danger); border: 1px solid var(--danger);
+  padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.btn-danger:hover { background: var(--danger); color: #1a1a1a; }
+
+.main { display: flex; height: calc(100vh - 52px - 48px); }
+
+/* Left Panel */
+.left-panel {
+  width: 30%; min-width: 280px; max-width: 380px;
+  background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column;
+}
+.search-box { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.search-input {
+  width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.precondition-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.group-header { padding: 8px 16px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.precondition-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s;
+}
+.precondition-item:hover { background: var(--bg-elevated); }
+.precondition-item.active { background: var(--bg-elevated); border-left-color: var(--accent); }
+
+.item-icon {
+  width: 28px; height: 28px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.item-icon.policy { background: #3b2d6b; color: #b39ddb; }
+.item-content { flex: 1; min-width: 0; }
+.item-id { font-size: 13px; font-weight: 500; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.badge-access { background: #1b3a4d; color: var(--info); }
+.badge-usage { background: #2d3b1b; color: var(--success); }
+.item-desc { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Right Panel */
+.right-panel { flex: 1; overflow-y: auto; padding: 28px 36px; display: flex; flex-direction: column; gap: 24px; }
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.detail-header-left { flex: 1; }
+.detail-id {
+  font-size: 22px; font-weight: 700; color: var(--text-bright); background: transparent;
+  border: none; border-bottom: 2px solid transparent; outline: none; width: 100%; padding: 2px 0; transition: border-color 0.15s;
+}
+.detail-id:focus { border-bottom-color: var(--accent); }
+.detail-badges { display: flex; align-items: center; gap: 8px; margin-top: 8px; position: relative; flex-wrap: wrap; }
+
+.type-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+.type-badge.policy { background: #3b2d6b; color: #b39ddb; }
+.type-badge.saturn { background: #1b3a4d; color: var(--info); }
+.type-badge.jupiter { background: #2d3b1b; color: var(--success); }
+.schema-badge {
+  font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 600;
+  background: var(--schema-bg); color: var(--schema); display: inline-flex; align-items: center; gap: 4px;
+}
+
+.usage-link { font-size: 12px; color: var(--info); cursor: pointer; text-decoration: underline dotted; margin-left: 4px; }
+.detail-actions { display: flex; gap: 8px; }
+
+.description-field {
+  width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-size: 13px;
+  resize: vertical; min-height: 60px; outline: none; font-family: inherit; transition: border-color 0.15s;
+}
+.description-field:focus { border-color: var(--accent); }
+
+.section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.toggle-row { display: flex; align-items: center; gap: 24px; margin-bottom: 12px; }
+.toggle-label { font-size: 13px; color: var(--text); min-width: 120px; font-weight: 500; }
+.pill-group { display: flex; background: var(--bg-elevated); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.pill { padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: var(--text-muted); border: none; background: transparent; }
+.pill.active { background: var(--accent); color: #1a1a1a; }
+.pill:hover:not(.active) { color: var(--text); background: var(--bg); }
+
+/* Schema Info */
+.schema-info-panel {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin-top: 12px; transition: all var(--transition);
+}
+.schema-info-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+.schema-info-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--schema); display: flex; align-items: center; gap: 6px; }
+.schema-info-toggle { font-size: 11px; color: var(--text-muted); transition: transform var(--transition); }
+.schema-info-toggle.collapsed { transform: rotate(-90deg); }
+.schema-info-body {
+  margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+  font-size: 12px; transition: max-height var(--transition), opacity var(--transition); max-height: 300px; opacity: 1; overflow: hidden;
+}
+.schema-info-body.collapsed { max-height: 0; opacity: 0; margin-top: 0; }
+.schema-field-label { color: var(--text-muted); font-weight: 500; }
+.schema-field-value { color: var(--text); font-family: 'SF Mono', monospace; font-size: 11px; }
+.schema-field-value.supported { color: var(--success); }
+.schema-field-value.not-supported { color: var(--text-muted); font-style: italic; }
+.schema-link { font-size: 11px; color: var(--schema); cursor: pointer; text-decoration: underline dotted; grid-column: 1 / -1; margin-top: 4px; }
+
+/* Permission cards */
+.permission-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.permission-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.permission-action-row { display: flex; align-items: center; gap: 10px; }
+.permission-action-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.select-field { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; color: var(--text); font-size: 12px; outline: none; cursor: pointer; }
+.select-field:focus { border-color: var(--accent); }
+
+.locked-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+  background: rgba(148, 226, 213, 0.08); border: 1px solid rgba(148, 226, 213, 0.25);
+  border-radius: var(--radius); font-size: 12px; font-weight: 600; color: var(--schema); cursor: default;
+}
+.locked-chip .lock-icon { font-size: 10px; opacity: 0.7; }
+
+.remove-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: var(--radius); transition: all 0.15s; }
+.remove-btn:hover { color: var(--danger); background: rgba(243, 139, 168, 0.1); }
+
+.constraints-table { width: 100%; border-collapse: collapse; }
+.constraints-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); text-align: left; padding: 4px 8px 8px; }
+.constraints-table td { padding: 4px 4px; }
+.constraint-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 10px; color: var(--text); font-size: 12px; outline: none;
+  font-family: 'SF Mono', 'Fira Code', monospace; transition: border-color 0.15s;
+}
+.constraint-input:focus { border-color: var(--accent); }
+.constraint-input.variable { color: var(--accent); font-weight: 600; }
+.select-field.variable { color: var(--accent); font-weight: 600; border-color: var(--accent); background: rgba(255, 215, 0, 0.05); }
+.constraint-input.warning { border-color: var(--danger); }
+.constraint-warning { font-size: 10px; color: var(--danger); margin-top: 2px; display: none; }
+.constraint-warning.visible { display: block; }
+.constraint-delete { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 4px; transition: all 0.15s; }
+.constraint-delete:hover { color: var(--danger); background: rgba(243, 139, 168, 0.1); }
+
+.right-operand-cell { display: flex; gap: 4px; align-items: center; }
+.right-operand-cell .right-operand-mode { flex: 1; min-width: 0; }
+.right-operand-cell .right-operand-mode:not(:only-child) { flex: 0 0 38%; }
+.right-operand-cell .right-operand-value { flex: 1; min-width: 0; }
+
+.left-operand-cell { display: flex; gap: 4px; align-items: center; }
+.left-operand-cell .constraint-operand-select { flex: 1; min-width: 0; }
+.left-operand-cell .constraint-operand-select:not(:only-child) { flex: 0 0 38%; }
+.left-operand-cell .constraint-operand-custom { flex: 1; min-width: 0; }
+
+.add-constraint-btn { background: transparent; border: 1px dashed var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; margin-top: 8px; transition: all 0.15s; }
+.add-constraint-btn:hover { border-color: var(--accent); color: var(--accent); }
+.add-permission-btn { background: transparent; border: 1px dashed var(--border); color: var(--text-muted); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; width: 100%; transition: all 0.15s; }
+.add-permission-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Animated sections */
+.section-animated { overflow: hidden; transition: max-height 0.2s ease, opacity 0.2s ease, padding 0.2s ease, margin 0.2s ease; max-height: 600px; opacity: 1; }
+.section-animated.hidden { max-height: 0; opacity: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-color: transparent; }
+
+/* YAML Preview */
+.preview-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.preview-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+.preview-header-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+.validation-indicator { font-size: 12px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+.validation-indicator.valid { color: var(--success); }
+.validation-indicator.invalid { color: var(--danger); }
+.preview-toggle { font-size: 12px; color: var(--text-muted); }
+.preview-body { padding: 16px 20px; max-height: 280px; overflow-y: auto; }
+.yaml-output { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 12px; line-height: 1.6; white-space: pre; color: var(--text); }
+.yaml-key { color: var(--info); }
+.yaml-string { color: var(--success); }
+.yaml-variable { color: var(--accent); font-weight: 600; }
+
+/* Footer */
+.footer { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 36px; background: var(--bg-surface); border-top: 1px solid var(--border); }
+.footer-left { display: flex; gap: 10px; }
+.footer-timestamp { font-size: 12px; color: var(--text-muted); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.visible { display: flex; }
+.modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; width: 400px; max-width: 90vw; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--text-bright); margin-bottom: 20px; }
+.modal-options { display: flex; flex-direction: column; gap: 10px; }
+.modal-option { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+.modal-option:hover { border-color: var(--accent); }
+.modal-option-icon { width: 36px; height: 36px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.modal-option-text { flex: 1; }
+.modal-option-title { font-size: 14px; font-weight: 600; color: var(--text-bright); }
+.modal-option-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.modal-cancel { margin-top: 16px; text-align: center; }
+.modal-cancel-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.modal-cancel-btn:hover { color: var(--text); }
+
+.delete-confirm { display: none; background: rgba(243,139,168,0.05); border: 1px solid var(--danger); border-radius: var(--radius); padding: 12px 16px; margin-top: 8px; }
+.delete-confirm.visible { display: block; }
+.delete-confirm-text { font-size: 13px; color: var(--danger); margin-bottom: 10px; }
+.delete-confirm-actions { display: flex; gap: 8px; }
+
+.usage-tooltip { display: none; position: absolute; top: 100%; left: 0; margin-top: 8px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 12px; color: var(--text); z-index: 100; min-width: 240px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); line-height: 1.7; }
+.usage-tooltip.visible { display: block; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="#" class="back-link">← Back to Test Suite</a>
+    <div class="topbar-title">Preconditions — certificate-management v0.0.1</div>
+  </div>
+  <button class="btn-primary" id="addPreconditionBtn">+ Add Precondition</button>
+</div>
+
+<div class="main">
+  <div class="left-panel">
+    <div class="search-box">
+      <input type="text" class="search-input" placeholder="Search preconditions..." id="searchInput">
+    </div>
+    <div class="precondition-list" id="preconditionList">
+      <div class="group-header">Policies (2)</div>
+      <div class="precondition-item active" data-id="ccmapi_access_policy">
+        <div class="item-icon policy">P</div>
+        <div class="item-content">
+          <div class="item-id">ccmapi_access_policy</div>
+          <div class="item-meta">
+            <span class="badge badge-access">access</span>
+            <span class="item-desc">BPN-based access control</span>
+          </div>
+        </div>
+      </div>
+      <div class="precondition-item" data-id="ccmapi_usage_policy">
+        <div class="item-icon policy">P</div>
+        <div class="item-content">
+          <div class="item-id">ccmapi_usage_policy</div>
+          <div class="item-meta">
+            <span class="badge badge-usage">usage</span>
+            <span class="item-desc">Usage purpose + framework</span>
+          </div>
+        </div>
+      </div>
+      <div class="group-header">Assets (0)</div>
+      <div class="group-header">Contract Definitions (0)</div>
+    </div>
+  </div>
+
+  <div class="right-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <input type="text" class="detail-id" value="ccmapi_access_policy" id="detailIdInput">
+        <div class="detail-badges">
+          <span class="type-badge policy">Policy</span>
+          <span class="type-badge saturn" id="versionBadge">Saturn</span>
+          <span class="schema-badge" id="schemaBadge">◆ CX-0152 (Saturn)</span>
+          <span class="usage-link" id="usageLink">Used by 8 tests</span>
+          <div class="usage-tooltip" id="usageTooltip">
+            <strong>Referenced in:</strong><br>
+            • test_create_asset_with_access<br>
+            • test_negotiate_contract<br>
+            • test_transfer_data<br>
+            • test_verify_access_control<br>
+            • test_bpn_restriction<br>
+            • test_policy_enforcement<br>
+            • test_catalog_filter<br>
+            • test_contract_lifecycle
+          </div>
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-ghost" id="duplicateBtn">Duplicate</button>
+        <button class="btn-danger" id="deleteBtn">Delete</button>
+      </div>
+    </div>
+
+    <div class="delete-confirm" id="deleteConfirm">
+      <div class="delete-confirm-text">⚠ Are you sure? This precondition is used by 8 tests.</div>
+      <div class="delete-confirm-actions">
+        <button class="btn-danger" onclick="document.getElementById('deleteConfirm').classList.remove('visible')">Yes, Delete</button>
+        <button class="btn-ghost" onclick="document.getElementById('deleteConfirm').classList.remove('visible')">Cancel</button>
+      </div>
+    </div>
+
+    <textarea class="description-field" id="descriptionField" placeholder="Description (optional)...">BPN-based access control policy. Restricts data access to specified business partner numbers.</textarea>
+
+    <div class="section">
+      <div class="section-title">Configuration</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Policy Type</span>
+        <div class="pill-group" data-field="policyType">
+          <button class="pill active" data-value="access">Access</button>
+          <button class="pill" data-value="usage">Usage</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Dataspace Version</span>
+        <div class="pill-group" data-field="dsVersion">
+          <button class="pill" data-value="jupiter">Jupiter</button>
+          <button class="pill active" data-value="saturn">Saturn</button>
+        </div>
+      </div>
+      <div class="schema-info-panel" id="schemaInfoPanel">
+        <div class="schema-info-header" id="schemaInfoToggle">
+          <span class="schema-info-title">◆ Schema Details</span>
+          <span class="schema-info-toggle" id="schemaInfoArrow">▼</span>
+        </div>
+        <div class="schema-info-body" id="schemaInfoBody">
+          <span class="schema-field-label">Schema</span>
+          <span class="schema-field-value" id="schemaName">CX-0152</span>
+          <span class="schema-field-label">Allowed Actions</span>
+          <span class="schema-field-value" id="schemaActions">access, use</span>
+          <span class="schema-field-label">Allowed Operators</span>
+          <span class="schema-field-value" id="schemaOperators">eq, neq, in, isPartOf, isAllOf, isAnyOf, isNoneOf</span>
+          <span class="schema-field-label">Left Operands</span>
+          <span class="schema-field-value" id="schemaOperands">Free text (with suggestions)</span>
+          <span class="schema-field-label">Prohibitions</span>
+          <span class="schema-field-value supported" id="schemaProhibitions">Supported</span>
+          <span class="schema-field-label">Obligations</span>
+          <span class="schema-field-value supported" id="schemaObligations">Supported</span>
+          <span class="schema-link" id="schemaViewLink">View full schema specification →</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="permissionsSection">
+      <div class="section-title">Permissions</div>
+      <div id="permissionCards"></div>
+      <button class="add-permission-btn" id="addPermissionBtn">+ Add Permission</button>
+    </div>
+
+    <div class="section section-animated hidden" id="prohibitionsSection">
+      <div class="section-title">Prohibitions</div>
+      <div id="prohibitionCards"></div>
+      <button class="add-permission-btn" id="addProhibitionBtn">+ Add Prohibition</button>
+    </div>
+
+    <div class="section section-animated hidden" id="obligationsSection">
+      <div class="section-title">Obligations</div>
+      <div id="obligationCards"></div>
+      <button class="add-permission-btn" id="addObligationBtn">+ Add Obligation</button>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-header" id="previewToggle">
+        <span class="preview-header-title">
+          YAML Preview
+          <span class="validation-indicator valid" id="validationIndicator">✓ Valid</span>
+        </span>
+        <span class="preview-toggle" id="previewToggleIcon">▼</span>
+      </div>
+      <div class="preview-body" id="previewBody">
+        <div class="yaml-output" id="yamlOutput"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-left">
+    <button class="btn-primary" id="saveBtn">Save Changes</button>
+    <button class="btn-ghost" id="discardBtn">Discard</button>
+  </div>
+  <span class="footer-timestamp">Last saved: 2 minutes ago</span>
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">Add Precondition</div>
+    <div class="modal-options">
+      <div class="modal-option" onclick="closeModal()">
+        <div class="modal-option-icon" style="background:#3b2d6b;color:#b39ddb;">P</div>
+        <div class="modal-option-text">
+          <div class="modal-option-title">Policy</div>
+          <div class="modal-option-desc">Access or usage policy definition</div>
+        </div>
+      </div>
+      <div class="modal-option" onclick="closeModal()">
+        <div class="modal-option-icon" style="background:#1b3b2d;color:#a6e3a1;">A</div>
+        <div class="modal-option-text">
+          <div class="modal-option-title">Asset</div>
+          <div class="modal-option-desc">Data asset registration</div>
+        </div>
+      </div>
+      <div class="modal-option" onclick="closeModal()">
+        <div class="modal-option-icon" style="background:#3b2d1b;color:#fab387;">C</div>
+        <div class="modal-option-text">
+          <div class="modal-option-title">Contract Definition</div>
+          <div class="modal-option-desc">Link asset + policy into a contract</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-cancel">
+      <button class="modal-cancel-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+// ─── Constraint Registries (Schema-Driven) ──────────────────────────────────
+const SATURN_CONSTRAINTS = {
+  access_permission: {
+    FrameworkAgreement: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['DataExchangeGovernance:1.0'] } },
+    Membership: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['active'] } },
+    BusinessPartnerNumber: { operators: ['isAnyOf', 'isNoneOf'], rightOperand: { type: 'pattern', placeholder: 'BPNL000000000000' } },
+    BusinessPartnerGroup: { operators: ['isAnyOf', 'isNoneOf'], rightOperand: { type: 'custom', placeholder: 'Group name...' } }
+  },
+  usage_permission: {
+    FrameworkAgreement: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['DataExchangeGovernance:1.0'] } },
+    Membership: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['active'] } },
+    BusinessPartnerNumber: { operators: ['isAnyOf', 'isNoneOf'], rightOperand: { type: 'pattern', placeholder: 'BPNL000000000000' } },
+    BusinessPartnerGroup: { operators: ['isAnyOf', 'isNoneOf'], rightOperand: { type: 'custom', placeholder: 'Group name...' } },
+    UsagePurpose: { operators: ['isAnyOf'], rightOperand: { type: 'selectOrCustom', values: ['cx.ccm.base:1','cx.core.industrycore:1','cx.core.qualityNotifications:1','cx.core.digitalTwinRegistry:1','cx.pcf.base:1','cx.quality.base:1','cx.dcm.base:1','cx.puris.base:1','cx.circular.dpp:1','cx.circular.smc:1','cx.circular.marketplace:1','cx.circular.materialaccounting:1','cx.bpdm.gate.upload:1','cx.bpdm.gate.download:1','cx.bpdm.pool:1','cx.bpdm.poolAll:1','cx.bpdm.vas.countryrisk:1','cx.logistics.base:1','cx.core.legalRequirementForThirdparty:1'], placeholder: 'Custom purpose...' } },
+    ContractReference: { operators: ['isAllOf'], rightOperand: { type: 'custom', placeholder: 'Contract reference...' } },
+    AffiliatesRegion: { operators: ['isAnyOf'], rightOperand: { type: 'select', values: ['cx.region.all:1','cx.region.europe:1','cx.region.northAmerica:1','cx.region.southAmerica:1','cx.region.africa:1','cx.region.asia:1','cx.region.oceania:1','cx.region.antarctica:1'] } },
+    AffiliatesBpnl: { operators: ['isAnyOf'], rightOperand: { type: 'pattern', placeholder: 'BPNL000000000000' } }
+  },
+  usage_prohibition: {
+    AffiliatesRegion: { operators: ['isAnyOf'], rightOperand: { type: 'select', values: ['cx.region.all:1','cx.region.europe:1','cx.region.northAmerica:1','cx.region.southAmerica:1','cx.region.africa:1','cx.region.asia:1','cx.region.oceania:1','cx.region.antarctica:1'] } },
+    AffiliatesBpnl: { operators: ['isAnyOf'], rightOperand: { type: 'pattern', placeholder: 'BPNL000000000000' } },
+    UsageRestriction: { operators: ['isAllOf'], rightOperand: { type: 'select', values: ['cx.thirdParty.forbidden:1','cx.manipulation.forbidden:1','cx.derivations.forbidden:1','cx.extraordinaryAnalytics.forbidden:1','cx.dataProviderRemoval.forbidden:1'] } }
+  },
+  usage_obligation: {
+    DataProvisioningEndDurationDays: { operators: ['eq'], rightOperand: { type: 'number', placeholder: '365' } },
+    DataProvisioningEndDate: { operators: ['eq'], rightOperand: { type: 'date', placeholder: '2027-01-01T00:00:00Z' } }
+  }
+};
+
+const JUPITER_CONSTRAINTS = {
+  all: {
+    FrameworkAgreement: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['DataExchangeGovernance:1.0'] } },
+    Membership: { operators: ['eq'], rightOperand: { type: 'fixed', values: ['active'] } },
+    ContractReference: { operators: ['eq'], rightOperand: { type: 'custom', placeholder: 'Contract ref...' } },
+    UsagePurpose: { operators: ['eq'], rightOperand: { type: 'selectOrCustom', values: ['cx.ccm.base:1','cx.core.industrycore:1','cx.core.qualityNotifications:1','cx.pcf.base:1','cx.quality.base:1','cx.dcm.base:1','cx.puris.base:1','cx.circular.dpp:1','cx.circular.smc:1','cx.core.digitalTwinRegistry:1','cx.bpdm.pool:1','cx.bpdm.gate.upload:1','cx.bpdm.gate.download:1'], placeholder: 'Custom purpose...' } },
+    BusinessPartnerNumber: { operators: ['eq'], rightOperand: { type: 'pattern', placeholder: 'BPNL000000000000' } }
+  }
+};
+
+const AVAILABLE_VARIABLES = [
+  '@provider_address', '@provider_bpn', '@consumer_bpn', '@certificate_type',
+  '@location_bpns', '@testlab_management_url', '@testlab_dsp_url',
+  '@testlab_mock_base_url', '@sut_response_timeout'
+];
+
+// ─── Schema Definitions ─────────────────────────────────────────────────────
+const SCHEMAS = {
+  jupiter: {
+    schemaLabel: 'cx-odrl-profile (Jupiter)',
+    allowedActions: { access: ['use'], usage: ['use'] },
+    supportsProhibitions: false,
+    supportsObligations: false
+  },
+  saturn: {
+    schemaLabel: 'CX-0152 (Saturn)',
+    allowedActions: { access: ['access'], usage: ['use'] },
+    supportsProhibitions: true,
+    supportsObligations: true
+  }
+};
+
+const preconditions = {
+  ccmapi_access_policy: { id: 'ccmapi_access_policy', type: 'policy', policyType: 'access', dsVersion: 'saturn', description: 'BPN-based access control policy. Restricts data access to specified business partner numbers.', permissions: [{ action: 'access', constraints: [{ left: 'BusinessPartnerNumber', operator: 'isAnyOf', right: '@provider_bpn' }] }], prohibitions: [], obligations: [] },
+  ccmapi_usage_policy: { id: 'ccmapi_usage_policy', type: 'policy', policyType: 'usage', dsVersion: 'saturn', description: 'Usage policy requiring purpose declaration and framework agreement.', permissions: [{ action: 'use', constraints: [{ left: 'UsagePurpose', operator: 'isAnyOf', right: 'cx.ccm.base:1' }, { left: 'FrameworkAgreement', operator: 'eq', right: 'DataExchangeGovernance:1.0' }] }], prohibitions: [{ action: 'use', constraints: [{ left: 'UsageRestriction', operator: 'isAllOf', right: 'cx.thirdParty.forbidden:1' }] }], obligations: [{ action: 'use', constraints: [{ left: 'DataProvisioningEndDurationDays', operator: 'eq', right: '365' }] }] }
+};
+
+let activeId = 'ccmapi_access_policy';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getCurrentVersion() {
+  return document.querySelector('[data-field="dsVersion"] .pill.active')?.dataset.value || 'saturn';
+}
+function getActivePolicyType() {
+  return document.querySelector('[data-field="policyType"] .pill.active')?.dataset.value || 'access';
+}
+function getActiveSchema() { return SCHEMAS[getCurrentVersion()]; }
+function getSchemaAction(schema, policyType) {
+  return (schema.allowedActions[policyType] || ['use'])[0];
+}
+
+function getConstraintsForContext(ruleType) {
+  var version = getCurrentVersion();
+  if (version === 'jupiter') return JUPITER_CONSTRAINTS.all;
+  var policyType = getActivePolicyType();
+  var key = policyType + '_' + ruleType;
+  return SATURN_CONSTRAINTS[key] || {};
+}
+
+function getConstraintDef(leftOperand, ruleType) {
+  var registry = getConstraintsForContext(ruleType);
+  return registry[leftOperand] || null;
+}
+
+// ─── Left Operand ───────────────────────────────────────────────────────────
+function buildLeftOperandField(ruleType, value) {
+  var registry = getConstraintsForContext(ruleType);
+  var operands = Object.keys(registry);
+  var isKnown = operands.includes(value);
+  var opts = operands.map(function(op) {
+    return '<option value="' + op + '"' + (op === value ? ' selected' : '') + '>' + op + '</option>';
+  }).join('');
+  if (!isKnown && value) {
+    opts += '<option value="' + escapeHtml(value) + '" selected>' + escapeHtml(value) + ' ⚠</option>';
+  }
+  return '<div class="left-operand-cell"><select class="select-field constraint-operand-select" data-rule-type="' + ruleType + '" onchange="onLeftOperandChange(this)">' + opts + '</select></div>';
+}
+
+function readLeftOperand(row) {
+  var cell = row.querySelector('.left-operand-cell');
+  if (!cell) return '';
+  var sel = cell.querySelector('.constraint-operand-select');
+  return sel ? sel.value : '';
+}
+
+// ─── Operator Field ─────────────────────────────────────────────────────────
+function buildOperatorField(leftOperand, ruleType, selectedOp) {
+  var def = getConstraintDef(leftOperand, ruleType);
+  if (!def) return '<span class="locked-chip"><span class="lock-icon">🔒</span> eq</span>';
+  var ops = def.operators;
+  if (ops.length === 1) {
+    return '<span class="locked-chip"><span class="lock-icon">🔒</span> ' + escapeHtml(ops[0]) + '</span>';
+  }
+  var validOp = ops.includes(selectedOp) ? selectedOp : ops[0];
+  return '<select class="select-field" style="width:100%" onchange="updateYamlPreview()">' +
+    ops.map(function(op) { return '<option value="' + op + '"' + (op === validOp ? ' selected' : '') + '>' + op + '</option>'; }).join('') +
+    '</select>';
+}
+
+// ─── Right Operand ──────────────────────────────────────────────────────────
+function buildRightOperandField(leftOperand, ruleType, rightValue) {
+  var def = getConstraintDef(leftOperand, ruleType);
+  if (!def) return '<div class="right-operand-cell"><input type="text" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue) + '" placeholder="Value..."></div>';
+  var ro = def.rightOperand;
+  var isVar = rightValue && rightValue.startsWith('@');
+
+  if (ro.type === 'fixed') {
+    var fixedVal = ro.values[0];
+    return '<div class="right-operand-cell"><span class="locked-chip"><span class="lock-icon">🔒</span> ' + escapeHtml(fixedVal) + '</span>' +
+      '<input type="hidden" class="right-operand-value" value="' + escapeHtml(fixedVal) + '"></div>';
+  }
+
+  if (ro.type === 'selectOrCustom') {
+    if (isVar) {
+      var varOptsSOC = AVAILABLE_VARIABLES.map(function(v) {
+        return '<option value="' + escapeHtml(v) + '"' + (v === rightValue ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+      }).join('');
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__select__">Select value...</option><option value="__custom__">Custom</option><option value="__variable__" selected>Variable (@)</option></select>' +
+        '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOptsSOC + '</select></div>';
+    }
+    var isKnownVal = ro.values.includes(rightValue);
+    if (!isKnownVal && rightValue && !isVar) {
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__select__">Select value...</option><option value="__custom__" selected>Custom</option><option value="__variable__">Variable (@)</option></select>' +
+        '<input type="text" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue) + '" placeholder="' + escapeHtml(ro.placeholder || 'Custom value...') + '" oninput="updateYamlPreview()"></div>';
+    }
+    var selValSOC = ro.values.includes(rightValue) ? rightValue : (ro.values[0] || '');
+    var selOptsSOC = ro.values.map(function(v) {
+      return '<option value="' + escapeHtml(v) + '"' + (v === selValSOC ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+    }).join('');
+    return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+      '<option value="__select__" selected>Select value...</option><option value="__custom__">Custom</option><option value="__variable__">Variable (@)</option></select>' +
+      '<select class="select-field right-operand-value" onchange="updateYamlPreview()">' + selOptsSOC + '</select></div>';
+  }
+
+  if (ro.type === 'select') {
+    if (isVar) {
+      var varOpts = AVAILABLE_VARIABLES.map(function(v) {
+        return '<option value="' + escapeHtml(v) + '"' + (v === rightValue ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+      }).join('');
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__select__">Select value...</option><option value="__variable__" selected>Variable (@)</option></select>' +
+        '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOpts + '</select></div>';
+    }
+    var selVal = ro.values.includes(rightValue) ? rightValue : (rightValue ? rightValue : '');
+    var selOpts = ro.values.map(function(v) {
+      return '<option value="' + escapeHtml(v) + '"' + (v === selVal ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+    }).join('');
+    return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+      '<option value="__select__" selected>Select value...</option><option value="__variable__">Variable (@)</option></select>' +
+      '<select class="select-field right-operand-value" onchange="updateYamlPreview()">' + selOpts + '</select></div>';
+  }
+
+  if (ro.type === 'pattern' || ro.type === 'custom') {
+    if (isVar) {
+      var varOpts2 = AVAILABLE_VARIABLES.map(function(v) {
+        return '<option value="' + escapeHtml(v) + '"' + (v === rightValue ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+      }).join('');
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__text__">Text</option><option value="__variable__" selected>Variable (@)</option></select>' +
+        '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOpts2 + '</select></div>';
+    }
+    return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+      '<option value="__text__" selected>Text</option><option value="__variable__">Variable (@)</option></select>' +
+      '<input type="text" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue || '') + '" placeholder="' + escapeHtml(ro.placeholder) + '"></div>';
+  }
+
+  if (ro.type === 'number') {
+    if (isVar) {
+      var varOpts3 = AVAILABLE_VARIABLES.map(function(v) {
+        return '<option value="' + escapeHtml(v) + '"' + (v === rightValue ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+      }).join('');
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__number__">Number</option><option value="__variable__" selected>Variable (@)</option></select>' +
+        '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOpts3 + '</select></div>';
+    }
+    return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+      '<option value="__number__" selected>Number</option><option value="__variable__">Variable (@)</option></select>' +
+      '<input type="number" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue || '') + '" placeholder="' + escapeHtml(ro.placeholder) + '"></div>';
+  }
+
+  if (ro.type === 'date') {
+    if (isVar) {
+      var varOpts4 = AVAILABLE_VARIABLES.map(function(v) {
+        return '<option value="' + escapeHtml(v) + '"' + (v === rightValue ? ' selected' : '') + '>' + escapeHtml(v) + '</option>';
+      }).join('');
+      return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+        '<option value="__date__">Date</option><option value="__variable__" selected>Variable (@)</option></select>' +
+        '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOpts4 + '</select></div>';
+    }
+    return '<div class="right-operand-cell"><select class="select-field right-operand-mode" onchange="onRightOperandModeChange(this)">' +
+      '<option value="__date__" selected>Date</option><option value="__variable__">Variable (@)</option></select>' +
+      '<input type="text" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue || '') + '" placeholder="' + escapeHtml(ro.placeholder) + '"></div>';
+  }
+
+  return '<div class="right-operand-cell"><input type="text" class="constraint-input right-operand-value" value="' + escapeHtml(rightValue || '') + '" placeholder="Value..."></div>';
+}
+
+// ─── Interaction Handlers ───────────────────────────────────────────────────
+function onLeftOperandChange(sel) {
+  var row = sel.closest('tr');
+  var ruleType = sel.dataset.ruleType || 'permission';
+  var leftVal = sel.value;
+  var def = getConstraintDef(leftVal, ruleType);
+  var opCell = row.querySelector('td:nth-child(2)');
+  opCell.innerHTML = buildOperatorField(leftVal, ruleType, def ? def.operators[0] : 'eq');
+  var rightTd = row.querySelector('td:nth-child(3)');
+  var defaultRight = (def && def.rightOperand.type === 'fixed') ? def.rightOperand.values[0] : '';
+  rightTd.innerHTML = buildRightOperandField(leftVal, ruleType, defaultRight);
+  attachListeners();
+  updateYamlPreview();
+}
+
+function onRightOperandModeChange(sel) {
+  var cell = sel.closest('.right-operand-cell');
+  var existing = cell.querySelector('.right-operand-value');
+  if (existing) existing.remove();
+  var mode = sel.value;
+  var row = sel.closest('tr');
+  var leftVal = readLeftOperand(row);
+  var ruleType = row.querySelector('.constraint-operand-select')?.dataset.ruleType || 'permission';
+  var def = getConstraintDef(leftVal, ruleType);
+
+  if (mode === '__variable__') {
+    var varOpts = AVAILABLE_VARIABLES.map(function(v) {
+      return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>';
+    }).join('');
+    sel.insertAdjacentHTML('afterend', '<select class="select-field variable right-operand-value" onchange="updateYamlPreview()">' + varOpts + '</select>');
+  } else if (mode === '__custom__') {
+    var ph5 = (def && def.rightOperand.placeholder) || 'Custom purpose...';
+    sel.insertAdjacentHTML('afterend', '<input type="text" class="constraint-input right-operand-value" value="" placeholder="' + escapeHtml(ph5) + '" oninput="updateYamlPreview()">');
+  } else if (mode === '__select__' && def && (def.rightOperand.type === 'select' || def.rightOperand.type === 'selectOrCustom')) {
+    var selOpts = def.rightOperand.values.map(function(v) {
+      return '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>';
+    }).join('');
+    sel.insertAdjacentHTML('afterend', '<select class="select-field right-operand-value" onchange="updateYamlPreview()">' + selOpts + '</select>');
+  } else if (mode === '__number__') {
+    var ph = (def && def.rightOperand.placeholder) || '';
+    sel.insertAdjacentHTML('afterend', '<input type="number" class="constraint-input right-operand-value" value="" placeholder="' + escapeHtml(ph) + '">');
+  } else {
+    var ph2 = (def && def.rightOperand.placeholder) || 'Value...';
+    sel.insertAdjacentHTML('afterend', '<input type="text" class="constraint-input right-operand-value" value="" placeholder="' + escapeHtml(ph2) + '">');
+  }
+  attachListeners();
+  updateYamlPreview();
+}
+
+function readRightOperand(row) {
+  var rightCell = row.querySelector('.right-operand-cell');
+  if (!rightCell) return '';
+  var hidden = rightCell.querySelector('input[type="hidden"].right-operand-value');
+  if (hidden) return hidden.value;
+  var valEl = rightCell.querySelector('input.right-operand-value') || rightCell.querySelector('select.right-operand-value');
+  return valEl ? valEl.value : '';
+}
+
+function readOperator(row) {
+  var opCell = row.querySelector('td:nth-child(2)');
+  var sel = opCell.querySelector('.select-field');
+  if (sel) return sel.value;
+  var chip = opCell.querySelector('.locked-chip');
+  if (chip) return chip.textContent.replace('🔒', '').trim();
+  return 'eq';
+}
+
+function buildActionField(schema, policyType) {
+  var action = getSchemaAction(schema, policyType);
+  return '<span class="locked-chip"><span class="lock-icon">🔒</span> ' + action + '</span>';
+}
+
+// ─── Rendering ──────────────────────────────────────────────────────────────
+function renderConstraintRow(ruleType, c) {
+  var leftField = buildLeftOperandField(ruleType, c.left);
+  var opField = buildOperatorField(c.left, ruleType, c.operator);
+  var rightField = buildRightOperandField(c.left, ruleType, c.right);
+  return '<tr>' +
+    '<td>' + leftField + '</td>' +
+    '<td>' + opField + '</td>' +
+    '<td>' + rightField + '</td>' +
+    '<td><button class="constraint-delete" onclick="this.closest(\'tr\').remove(); updateYamlPreview();">×</button></td>' +
+    '</tr>';
+}
+
+function renderRuleCard(schema, rule, idx, prefix, ruleType) {
+  var policyType = getActivePolicyType();
+  var rows = rule.constraints.map(function(c) { return renderConstraintRow(ruleType, c); }).join('');
+  return '<div class="permission-card" data-rule-prefix="' + prefix + '" data-rule-idx="' + idx + '" data-rule-type="' + ruleType + '">' +
+    '<div class="permission-header"><div class="permission-action-row">' +
+    '<span class="permission-action-label">Action:</span>' + buildActionField(schema, policyType) +
+    '</div><button class="remove-btn" onclick="this.closest(\'.permission-card\').remove(); updateYamlPreview();" title="Remove">×</button></div>' +
+    '<table class="constraints-table"><thead><tr><th style="width:32%">Left Operand</th><th style="width:18%">Operator</th><th style="width:38%">Right Operand</th><th style="width:12%"></th></tr></thead>' +
+    '<tbody id="constraints-' + prefix + '-' + idx + '">' + rows + '</tbody></table>' +
+    '<button class="add-constraint-btn" onclick="addConstraint(\'' + prefix + '\', ' + idx + ', \'' + ruleType + '\')">+ Add Constraint</button></div>';
+}
+
+function renderPermissionCard(schema, perm, idx) { return renderRuleCard(schema, perm, idx, 'perm', 'permission'); }
+function renderProhibitionCard(schema, item, idx) { return renderRuleCard(schema, item, idx, 'prohib', 'prohibition'); }
+function renderObligationCard(schema, item, idx) { return renderRuleCard(schema, item, idx, 'oblig', 'obligation'); }
+
+function renderDetail(id) {
+  var data = preconditions[id];
+  if (!data) return;
+  document.getElementById('detailIdInput').value = data.id;
+  document.getElementById('descriptionField').value = data.description;
+  document.querySelector('[data-field="policyType"]').querySelectorAll('.pill').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.value === data.policyType);
+  });
+  document.querySelector('[data-field="dsVersion"]').querySelectorAll('.pill').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.value === data.dsVersion);
+  });
+  updateSchemaUI();
+  var schema = getActiveSchema();
+  document.getElementById('permissionCards').innerHTML = data.permissions.map(function(perm, idx) { return renderPermissionCard(schema, perm, idx); }).join('');
+  document.getElementById('prohibitionCards').innerHTML = (data.prohibitions || []).map(function(item, idx) { return renderProhibitionCard(schema, item, idx); }).join('');
+  document.getElementById('obligationCards').innerHTML = (data.obligations || []).map(function(item, idx) { return renderObligationCard(schema, item, idx); }).join('');
+  attachListeners();
+  updateYamlPreview();
+}
+
+function updateSchemaUI() {
+  var schema = getActiveSchema();
+  var policyType = getActivePolicyType();
+  var version = getCurrentVersion();
+  var registry = getConstraintsForContext('permission');
+
+  var vb = document.getElementById('versionBadge');
+  vb.textContent = version.charAt(0).toUpperCase() + version.slice(1);
+  vb.className = 'type-badge ' + version;
+  document.getElementById('schemaBadge').textContent = '◆ ' + schema.schemaLabel;
+
+  document.getElementById('schemaName').textContent = schema.schemaLabel;
+  document.getElementById('schemaActions').textContent = schema.allowedActions[policyType].join(', ');
+
+  var allOps = new Set();
+  Object.values(registry).forEach(function(def) { def.operators.forEach(function(op) { allOps.add(op); }); });
+  document.getElementById('schemaOperators').textContent = Array.from(allOps).join(', ') || 'eq';
+
+  var opEl = document.getElementById('schemaOperands');
+  opEl.textContent = Object.keys(registry).join(', ') || 'None';
+  opEl.className = 'schema-field-value';
+
+  var prEl = document.getElementById('schemaProhibitions');
+  prEl.textContent = schema.supportsProhibitions ? 'Supported' : 'Not supported';
+  prEl.className = 'schema-field-value ' + (schema.supportsProhibitions ? 'supported' : 'not-supported');
+
+  var obEl = document.getElementById('schemaObligations');
+  obEl.textContent = schema.supportsObligations ? 'Supported' : 'Not supported';
+  obEl.className = 'schema-field-value ' + (schema.supportsObligations ? 'supported' : 'not-supported');
+
+  var showProhib = schema.supportsProhibitions && policyType === 'usage';
+  var showOblig = schema.supportsObligations && policyType === 'usage';
+  document.getElementById('prohibitionsSection').classList.toggle('hidden', !showProhib);
+  document.getElementById('obligationsSection').classList.toggle('hidden', !showOblig);
+}
+
+function addConstraint(prefix, idx, ruleType) {
+  var registry = getConstraintsForContext(ruleType);
+  var operands = Object.keys(registry);
+  var defaultLeft = operands[0] || '';
+  var def = registry[defaultLeft];
+  var defaultRight = (def && def.rightOperand.type === 'fixed') ? def.rightOperand.values[0] : '';
+  var tbody = document.getElementById('constraints-' + prefix + '-' + idx);
+  var row = document.createElement('tr');
+  row.innerHTML =
+    '<td>' + buildLeftOperandField(ruleType, defaultLeft) + '</td>' +
+    '<td>' + buildOperatorField(defaultLeft, ruleType, def ? def.operators[0] : 'eq') + '</td>' +
+    '<td>' + buildRightOperandField(defaultLeft, ruleType, defaultRight) + '</td>' +
+    '<td><button class="constraint-delete" onclick="this.closest(\'tr\').remove(); updateYamlPreview();">×</button></td>';
+  tbody.appendChild(row);
+  attachListeners();
+  updateYamlPreview();
+}
+
+function attachListeners() {
+  document.querySelectorAll('.right-operand-value').forEach(function(input) {
+    input.removeEventListener('input', onInputChange);
+    input.addEventListener('input', onInputChange);
+  });
+  document.querySelectorAll('.constraint-input').forEach(function(input) {
+    input.removeEventListener('input', onInputChange);
+    input.addEventListener('input', onInputChange);
+  });
+}
+
+function onInputChange() { updateYamlPreview(); }
+
+// ─── YAML Preview ───────────────────────────────────────────────────────────
+function updateYamlPreview() {
+  var id = document.getElementById('detailIdInput').value;
+  var policyType = getActivePolicyType();
+  var schema = getActiveSchema();
+  var version = getCurrentVersion();
+  var schemaAction = getSchemaAction(schema, policyType);
+
+  function collectRulesFromContainer(containerId, action) {
+    var rules = [];
+    document.querySelectorAll(containerId + ' .permission-card').forEach(function(card) {
+      var constraints = [];
+      card.querySelectorAll('tbody tr').forEach(function(row) {
+        var left = readLeftOperand(row);
+        var operator = readOperator(row);
+        var right = readRightOperand(row);
+        if (left) constraints.push({ left: left, operator: operator, right: right });
+      });
+      rules.push({ action: action, constraints: constraints });
+    });
+    return rules;
+  }
+
+  var permissions = collectRulesFromContainer('#permissionCards', schemaAction);
+  var prohibitions = collectRulesFromContainer('#prohibitionCards', schemaAction);
+  var obligations = collectRulesFromContainer('#obligationCards', schemaAction);
+
+  var ind = document.getElementById('validationIndicator');
+  ind.textContent = '✓ Valid';
+  ind.className = 'validation-indicator valid';
+
+  var y = '';
+  y += h('- id: ','key') + h(id,'string') + '\n';
+  y += h('  type: ','key') + h('policy','string') + '\n';
+  y += h('  policy_type: ','key') + h(policyType,'string') + '\n';
+  y += h('  dataspace_version: ','key') + h(version,'string') + '\n';
+
+  function renderRulesYaml(sectionKey, rules) {
+    var out = '';
+    if (rules.length === 0) return out;
+    out += h('  ' + sectionKey + ':','key') + '\n';
+    rules.forEach(function(rule) {
+      out += h('    - action: ','key') + h(rule.action,'string') + '\n';
+      if (rule.constraints.length > 0) {
+        out += h('      constraints:','key') + '\n';
+        rule.constraints.forEach(function(c) {
+          out += h('        - left_operand: ','key') + h(c.left,'string') + '\n';
+          out += h('          operator: ','key') + h(c.operator,'string') + '\n';
+          out += h('          right_operand: ','key');
+          out += (c.right && c.right.startsWith('@'))
+            ? '<span class="yaml-variable">' + escapeHtml(c.right) + '</span>\n'
+            : h(c.right || '','string') + '\n';
+        });
+      }
+    });
+    return out;
+  }
+
+  y += renderRulesYaml('permissions', permissions);
+  y += renderRulesYaml('prohibitions', prohibitions);
+  y += renderRulesYaml('obligations', obligations);
+  document.getElementById('yamlOutput').innerHTML = y;
+}
+
+function h(text, type) {
+  var e = escapeHtml(text);
+  if (type === 'key') return '<span class="yaml-key">' + e + '</span>';
+  if (type === 'string') return '<span class="yaml-string">' + e + '</span>';
+  return e;
+}
+
+// ─── Event Listeners ────────────────────────────────────────────────────────
+document.querySelectorAll('.pill-group').forEach(function(group) {
+  group.querySelectorAll('.pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      group.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+      pill.classList.add('active');
+      var schema = getActiveSchema();
+      var policyType = getActivePolicyType();
+      updateSchemaUI();
+      var current = collectPermissions(schema, policyType);
+      document.getElementById('permissionCards').innerHTML = current.map(function(perm, idx) { return renderPermissionCard(schema, perm, idx); }).join('');
+      var curProhibs = collectProhibitions(schema, policyType);
+      document.getElementById('prohibitionCards').innerHTML = curProhibs.map(function(item, idx) { return renderProhibitionCard(schema, item, idx); }).join('');
+      var curObligs = collectObligations(schema, policyType);
+      document.getElementById('obligationCards').innerHTML = curObligs.map(function(item, idx) { return renderObligationCard(schema, item, idx); }).join('');
+      attachListeners();
+      updateYamlPreview();
+    });
+  });
+});
+
+function collectRulesFrom(containerId, schema, policyType) {
+  var rules = [];
+  document.querySelectorAll(containerId + ' .permission-card').forEach(function(card) {
+    var constraints = [];
+    card.querySelectorAll('tbody tr').forEach(function(row) {
+      var left = readLeftOperand(row);
+      var operator = readOperator(row);
+      var right = readRightOperand(row);
+      if (left || right) constraints.push({ left: left, operator: operator, right: right });
+    });
+    rules.push({ action: getSchemaAction(schema, policyType), constraints: constraints });
+  });
+  return rules;
+}
+
+function collectPermissions(schema, policyType) {
+  var perms = collectRulesFrom('#permissionCards', schema, policyType);
+  return perms.length > 0 ? perms : [{ action: getSchemaAction(schema, policyType), constraints: [] }];
+}
+function collectProhibitions(schema, policyType) { return collectRulesFrom('#prohibitionCards', schema, policyType); }
+function collectObligations(schema, policyType) { return collectRulesFrom('#obligationCards', schema, policyType); }
+
+document.querySelectorAll('.precondition-item').forEach(function(item) {
+  item.addEventListener('click', function() {
+    document.querySelectorAll('.precondition-item').forEach(function(i) { i.classList.remove('active'); });
+    item.classList.add('active');
+    activeId = item.dataset.id;
+    renderDetail(activeId);
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  var q = e.target.value.toLowerCase();
+  document.querySelectorAll('.precondition-item').forEach(function(item) {
+    item.style.display = (item.dataset.id || '').includes(q) ? 'flex' : 'none';
+  });
+});
+
+document.getElementById('addPreconditionBtn').addEventListener('click', function() {
+  document.getElementById('addModal').classList.add('visible');
+});
+function closeModal() { document.getElementById('addModal').classList.remove('visible'); }
+
+document.getElementById('deleteBtn').addEventListener('click', function() {
+  document.getElementById('deleteConfirm').classList.toggle('visible');
+});
+
+var usageLink = document.getElementById('usageLink');
+var usageTooltip = document.getElementById('usageTooltip');
+usageLink.addEventListener('mouseenter', function() { usageTooltip.classList.add('visible'); });
+usageLink.addEventListener('mouseleave', function() { usageTooltip.classList.remove('visible'); });
+
+var previewOpen = true;
+document.getElementById('previewToggle').addEventListener('click', function() {
+  previewOpen = !previewOpen;
+  document.getElementById('previewBody').style.display = previewOpen ? 'block' : 'none';
+  document.getElementById('previewToggleIcon').textContent = previewOpen ? '▼' : '▶';
+});
+
+var schemaInfoOpen = true;
+document.getElementById('schemaInfoToggle').addEventListener('click', function() {
+  schemaInfoOpen = !schemaInfoOpen;
+  document.getElementById('schemaInfoBody').classList.toggle('collapsed', !schemaInfoOpen);
+  document.getElementById('schemaInfoArrow').classList.toggle('collapsed', !schemaInfoOpen);
+});
+
+document.getElementById('addPermissionBtn').addEventListener('click', function() {
+  var schema = getActiveSchema();
+  var policyType = getActivePolicyType();
+  var cards = document.getElementById('permissionCards');
+  var idx = cards.children.length;
+  cards.insertAdjacentHTML('beforeend', renderPermissionCard(schema, { action: getSchemaAction(schema, policyType), constraints: [] }, idx));
+  updateYamlPreview();
+});
+
+document.getElementById('addProhibitionBtn').addEventListener('click', function() {
+  var schema = getActiveSchema();
+  var policyType = getActivePolicyType();
+  var cards = document.getElementById('prohibitionCards');
+  var idx = cards.children.length;
+  cards.insertAdjacentHTML('beforeend', renderProhibitionCard(schema, { action: getSchemaAction(schema, policyType), constraints: [] }, idx));
+  updateYamlPreview();
+});
+
+document.getElementById('addObligationBtn').addEventListener('click', function() {
+  var schema = getActiveSchema();
+  var policyType = getActivePolicyType();
+  var cards = document.getElementById('obligationCards');
+  var idx = cards.children.length;
+  cards.insertAdjacentHTML('beforeend', renderObligationCard(schema, { action: getSchemaAction(schema, policyType), constraints: [] }, idx));
+  updateYamlPreview();
+});
+
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('select-field') || e.target.classList.contains('constraint-operand-select')) updateYamlPreview();
+});
+
+renderDetail(activeId);
+</script>
+</body>
+</html>

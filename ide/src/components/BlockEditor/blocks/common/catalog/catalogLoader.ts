@@ -53,21 +53,47 @@ export interface BlockCatalogEntry {
   dataspace_version?: string;
 }
 
+export interface BlockCatalogShortcutSubcategory {
+  name: string;
+  blocks: BlockCatalogEntry[];
+}
+
+export interface BlockCatalogShortcutGroup {
+  name: string;
+  description?: string;
+  blocks: BlockCatalogEntry[];
+  subcategories?: BlockCatalogShortcutSubcategory[];
+}
+
 export interface BlockCatalogCategory {
   name: string;
   description?: string;
   service_type?: string;
   dataspace_version?: string;
   blocks: BlockCatalogEntry[];
+  shortcuts?: BlockCatalogShortcutGroup[];
 }
 
 export type BlockCatalog = BlockCatalogCategory[];
+
+interface BlockIndexShortcutSubcategory {
+  name: string;
+  blocks: string[];
+}
+
+interface BlockIndexShortcutGroup {
+  name: string;
+  description?: string;
+  blocks?: string[];
+  subcategories?: BlockIndexShortcutSubcategory[];
+}
 
 interface BlockIndexCategory {
   name: string;
   description?: string;
   service_type?: string;
   blocks: string[];
+  shortcuts?: BlockIndexShortcutGroup[];
 }
 
 interface BlockIndex {
@@ -93,11 +119,43 @@ export async function loadBlockCatalog(): Promise<BlockCatalog> {
               return resp.json() as Promise<BlockCatalogEntry>;
             })
           );
+
+          let shortcuts: BlockCatalogShortcutGroup[] | undefined;
+          if (cat.shortcuts) {
+            shortcuts = await Promise.all(
+              cat.shortcuts.map(async (group) => {
+                if (group.subcategories) {
+                  const subcategories = await Promise.all(
+                    group.subcategories.map(async (sub) => {
+                      const subBlocks = await Promise.all(
+                        sub.blocks.map(async (path) => {
+                          const resp = await fetch(`${base}blocks/${path}`);
+                          return resp.json() as Promise<BlockCatalogEntry>;
+                        })
+                      );
+                      return { name: sub.name, blocks: subBlocks };
+                    })
+                  );
+                  const allBlocks = subcategories.flatMap((s) => s.blocks);
+                  return { name: group.name, description: group.description, blocks: allBlocks, subcategories };
+                }
+                const groupBlocks = await Promise.all(
+                  (group.blocks ?? []).map(async (path) => {
+                    const resp = await fetch(`${base}blocks/${path}`);
+                    return resp.json() as Promise<BlockCatalogEntry>;
+                  })
+                );
+                return { name: group.name, description: group.description, blocks: groupBlocks };
+              })
+            );
+          }
+
           return {
             name: cat.name,
             description: cat.description,
             service_type: cat.service_type,
             blocks,
+            shortcuts,
           };
         })
       );
@@ -117,6 +175,13 @@ export function findCatalogEntry(stepType: string, catalog: BlockCatalog): Block
     for (const b of cat.blocks) {
       if (b.type === stepType) return b;
     }
+    if (cat.shortcuts) {
+      for (const group of cat.shortcuts) {
+        for (const b of group.blocks) {
+          if (b.type === stepType) return b;
+        }
+      }
+    }
   }
   return null;
 }
@@ -134,6 +199,17 @@ export function findOutputSchema(
       for (const output of block.outputs ?? []) {
         if (output.name === variableName && output.schema) {
           return output.schema;
+        }
+      }
+    }
+    if (cat.shortcuts) {
+      for (const group of cat.shortcuts) {
+        for (const block of group.blocks) {
+          for (const output of block.outputs ?? []) {
+            if (output.name === variableName && output.schema) {
+              return output.schema;
+            }
+          }
         }
       }
     }

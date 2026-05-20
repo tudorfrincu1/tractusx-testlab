@@ -2,15 +2,6 @@
   "version": "3.0",
   "categories": [
     {
-      "name": "Precondition",
-      "description": "Define preconditions that must be in place before test execution",
-      "blocks": [
-        "precondition/precondition_asset_config.json",
-        "precondition/precondition_policy_config.json",
-        "precondition/precondition_contract_config.json"
-      ]
-    },
-    {
       "name": "Mock",
       "description": "Define endpoints we expose that the SUT will call",
       "blocks": [
@@ -58,6 +49,17 @@
         "edc-connector/create_asset.json",
         "edc-connector/create_policy.json",
         "edc-connector/create_contract_def.json"
+      ],
+      "shortcuts": [
+        {
+          "name": "Obtain Data Exchange Authorization",
+          "description": "Discover data in catalog, negotiate contract, and obtain EDR authorization for data exchange",
+          "blocks": [
+            "edc-connector/shortcuts/request_data_filtered.json",
+            "edc-connector/shortcuts/request_data_filtered_by_policy.json",
+            "edc-connector/shortcuts/pull_data_filtered_from_precondition.json"
+          ]
+        }
       ]
     },
     {
@@ -77,17 +79,6 @@
       "blocks": [
         "http/http_call.json",
         "http/http_call_dataplane.json"
-      ]
-    },
-
-
-    {
-      "name": "Cleanup",
-      "description": "Undo resources created during the test (assets, policies, shells)",
-      "blocks": [
-        "cleanup/delete_asset.json",
-        "cleanup/delete_policy.json",
-        "cleanup/delete_shell.json"
       ]
     }
   ]

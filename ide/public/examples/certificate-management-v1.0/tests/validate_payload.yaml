@@ -54,67 +54,59 @@ setup:
       store_in_variable: bpc_schema
 
 steps:
-  - type: query_catalog_with_filters
-    description: Discover certificate Submodel asset in provider catalog
+  # ── Catalog → Negotiate → Transfer (shortcut) ─────────────────────
+  - type: pull_data_filtered_from_precondition
+    description: Discover certificate Submodel asset and obtain dataplane credentials
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
-      filter:
-        filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
-          - operand_left: "http://purl.org/dc/terms/subject"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+      precondition_policy: ccmapi_usage_policy
+      filters:
+        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
+        - operand_left: "http://purl.org/dc/terms/subject"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+      transfer_type: "HttpData-PULL"
     validate:
       - type: "NOT_NULL"
         output: datasets
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].@id"
-        store_in_variable: cert_asset_id
-        validate:
-          - type: "NOT_NULL"
-            output: cert_asset_id
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].odrl:hasPolicy"
-        store_in_variable: cert_offer_id
-        validate:
-          - type: "NOT_NULL"
-            output: cert_offer_id
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].properties.['https://admin-shell.io/aas/3/0/HasSemantics/semanticId']"
-        store_in_variable: semantic_id_value
-        validate:
-          - type: "EQUALS"
-            output: semantic_id_value
-            value: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+      - type: "NOT_NULL"
+        output: asset_id
+      - type: "NOT_NULL"
+        output: negotiation_id
+      - type: "NOT_NULL"
+        output: transfer_process_id
+      - type: "NOT_NULL"
+        output: edr_token
+      - type: "NOT_NULL"
+        output: dataplane_url
+    store_in_memory:
+      catalog: "catalog"
+      datasets: "datasets"
+      asset_id: "asset_id"
+      negotiation_id: "negotiation_id"
+      transfer_process_id: "transfer_process_id"
+      edr_token: "edr_token"
+      dataplane_url: "dataplane_url"
 
-  - type: negotiate
-    description: Negotiate contract for certificate asset
+  - type: json_path_extract
+    description: Verify Submodel semantic ID
     params:
-      service: provider_edc
-      counter_party_address: "@provider_address"
-      offer_id: "@cert_offer_id"
-      asset_id: "@cert_asset_id"
-      store_in_variable: cert_agreement_id
-
-  - type: initiate_transfer
-    description: Get dataplane credentials for certificate
-    params:
-      service: provider_edc
-      agreement_id: "@cert_agreement_id"
-      asset_id: "@cert_asset_id"
-      transfer_type: "HttpData-PULL"
+      input: "@datasets"
+      json_path: "[0].['https://admin-shell.io/aas/3/0/HasSemantics/semanticId']"
+      store_in_variable: semantic_id_value
+    validate:
+      - type: "EQUALS"
+        output: semantic_id_value
+        value: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
 
   - type: http_call_dataplane
     description: Fetch certificate payload via data plane
     params:
       method: GET
-      url: "@data_address/companycertificate/@document_id"
+      url: "@dataplane_url/companycertificate/@document_id"
       edr_token: "@edr_token"
       headers:
         Accept: "application/json"

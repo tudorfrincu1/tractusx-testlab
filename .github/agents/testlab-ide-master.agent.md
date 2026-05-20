@@ -1,5 +1,5 @@
 ---
-description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests, debugging frontend issues. Use the `debug-ide` skill for systematic bug diagnosis and resolution. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor, debug, fix, troubleshoot."
+description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests, debugging frontend issues. Use the `debug-ide` skill for systematic bug diagnosis and resolution. Use the `build-from-mockup` skill to translate HTML mockups into production React components. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor, debug, fix, troubleshoot, mockup, build."
 tools: [read, edit, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
@@ -99,6 +99,15 @@ This is non-negotiable. You MUST:
 - **CSS**: plain CSS only (BEM or modules), CSS custom properties for theming, responsive + accessible by default
 - **Testing**: Arrange-Act-Assert, one concept per test, descriptive names, React Testing Library for behavior tests, mock Blockly workspace
 
+## Skills
+
+| Skill | When to Use |
+|-------|-------------|
+| `debug-ide` | Systematic bug diagnosis: Reproduce → Diagnose → Fix → Verify |
+| `build-from-mockup` | Translate an HTML mockup from `ide/mockups/` into production React components, hooks, CSS, and types |
+| `document-knowledge` | Persist patterns, gotchas, anti-patterns, lessons, and fixes in `.github/kb/ide-kb.md` |
+| `create-ide-mockup` | Create standalone HTML mockups to prototype UI features before implementation |
+
 ## Constraints
 
 - DO NOT hardcode block definitions, dropdown options, or category lists in TypeScript
@@ -130,6 +139,7 @@ Run this checklist after every implementation. Fix any failures before deliverin
 4. **Compilation**: `cd ide && npx tsc --noEmit && npx vite build` — must succeed
 5. **Debug**: use `debug-ide` skill for systematic diagnosis (Reproduce → Diagnose → Fix → Verify)
 6. **Knowledge**: use `document-knowledge` skill to persist patterns (PAT), gotchas (GOTCHA), anti-patterns (ANTI), lessons (LESSON), fixes (FIX), API quirks (API) in `.github/kb/ide-kb.md`
+7. **Build from mockup**: use `build-from-mockup` skill when translating an HTML mockup from `ide/mockups/` into production React components. Decompose the mockup into organized components, hooks, CSS, and types — matching the visual design pixel-for-pixel.
 
 ## How to Split Oversized Files
 

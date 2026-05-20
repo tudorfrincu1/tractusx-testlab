@@ -1,9 +1,0 @@
-{
-  "type": "delete_asset",
-  "label": "Delete Asset",
-  "description": "Delete a specific EDC asset created during the test.",
-  "params": [
-    { "name": "asset_id", "type": "string", "required": true, "description": "ID of the asset to delete (reference to a create_asset output)" }
-  ],
-  "outputs": []
-}

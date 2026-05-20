@@ -75,6 +75,37 @@ variables:
     description: Seconds to wait for SUT to negotiate and pull data from TestLab
     default: 300
 
+# Policy action semantics per dataspace version:
+#   saturn: access_policy uses "access" action, usage_policy uses "use" action (per CX-0152)
+#   jupiter: both policies use "use" action only
+preconditions:
+  - id: ccmapi_access_policy
+    type: policy
+    description: BPN-based access policy allowing consumer to see CCMAPI offers
+    dataspace_version: "saturn"
+    policy_type: access
+    permissions:
+      - action: access
+        constraints:
+          - left_operand: BusinessPartnerNumber
+            operator: eq
+            right_operand: "@consumer_bpn"
+
+  - id: ccmapi_usage_policy
+    type: policy
+    description: Expected CX-0135 ODRL usage policy for CCMAPI assets
+    dataspace_version: "saturn"
+    policy_type: usage
+    permissions:
+      - action: use
+        constraints:
+          - left_operand: UsagePurpose
+            operator: eq
+            right_operand: "cx.ccm.base:1"
+          - left_operand: FrameworkAgreement
+            operator: eq
+            right_operand: "DataExchangeGovernance:1.0"
+
 tests:
   - test: tests/catalog_policy_validation.yaml
     description: Validate CCMAPI asset uniqueness and mandatory policy constraints

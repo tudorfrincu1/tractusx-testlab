@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "urn:tractusx:testlab:policy:jupiter",
+  "title": "Jupiter Policy Schema (cx-odrl-profile)",
+  "description": "Policy constraint rules for Jupiter dataspace (EDC v0.8–v0.10). Source: https://raw.githubusercontent.com/catenax-eV/cx-odrl-profile/main/profile.ttl",
+  "type": "object",
+  "properties": {
+    "policy_type": { "enum": ["access", "usage"] },
+    "permissions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "prohibitions": { "maxItems": 0 },
+    "obligations": { "maxItems": 0 }
+  },
+  "required": ["policy_type", "permissions"],
+  "$defs": {
+    "permission": {
+      "type": "object",
+      "properties": {
+        "action": { "const": "use" },
+        "constraints": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/constraint" }
+        }
+      },
+      "required": ["action", "constraints"]
+    },
+    "constraint": {
+      "oneOf": [
+        { "$ref": "#/$defs/framework_agreement_constraint" },
+        { "$ref": "#/$defs/membership_constraint" },
+        { "$ref": "#/$defs/contract_reference_constraint" },
+        { "$ref": "#/$defs/usage_purpose_constraint" },
+        { "$ref": "#/$defs/business_partner_number_constraint" }
+      ]
+    },
+    "framework_agreement_constraint": {
+      "type": "object",
+      "properties": {
+        "left_operand": { "const": "FrameworkAgreement" },
+        "operator": { "const": "eq" },
+        "right_operand": { "const": "DataExchangeGovernance:1.0" }
+      },
+      "additionalProperties": false
+    },
+    "membership_constraint": {
+      "type": "object",
+      "properties": {
+        "left_operand": { "const": "Membership" },
+        "operator": { "const": "eq" },
+        "right_operand": { "const": "active" }
+      },
+      "additionalProperties": false
+    },
+    "contract_reference_constraint": {
+      "type": "object",
+      "properties": {
+        "left_operand": { "const": "ContractReference" },
+        "operator": { "const": "eq" },
+        "right_operand": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "business_partner_number_constraint": {
+      "type": "object",
+      "properties": {
+        "left_operand": { "const": "BusinessPartnerNumber", "$comment": "Namespace: https://w3id.org/tractusx/v0.0.1/ns/ (tx:BusinessPartnerNumber)" },
+        "operator": { "const": "eq" },
+        "right_operand": {
+          "type": "string",
+          "pattern": "^BPNL[0-9A-Z]{12}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "usage_purpose_constraint": {
+      "type": "object",
+      "properties": {
+        "left_operand": { "const": "UsagePurpose" },
+        "operator": { "const": "eq" },
+        "right_operand": {
+          "type": "string",
+          "$comment": "Known standardized values listed below, but custom individual purposes are allowed per cx-odrl-profile. Source: https://raw.githubusercontent.com/catenax-eV/cx-odrl-profile/main/profile.ttl",
+          "examples": [
+            "cx.core.legalRequirementForThirdparty:1",
+            "cx.core.industrycore:1",
+            "cx.core.qualityNotifications:1",
+            "cx.core.digitalTwinRegistry:1",
+            "cx.pcf.base:1",
+            "cx.quality.base:1",
+            "cx.dcm.base:1",
+            "cx.puris.base:1",
+            "cx.circular.dpp:1",
+            "cx.circular.smc:1",
+            "cx.circular.marketplace:1",
+            "cx.circular.materialaccounting:1",
+            "cx.bpdm.gate.upload:1",
+            "cx.bpdm.gate.download:1",
+            "cx.bpdm.pool:1",
+            "cx.bpdm.vas.dataquality.upload:1",
+            "cx.bpdm.vas.dataquality.download:1",
+            "cx.bpdm.vas.countryrisk:1",
+            "cx.bpdm.vas.bdv.upload:1",
+            "cx.bpdm.vas.bdv.download:1",
+            "cx.bpdm.vas.fpd.upload:1",
+            "cx.bpdm.vas.fpd.download:1",
+            "cx.bpdm.vas.swd.upload:1",
+            "cx.bpdm.vas.swd.download:1",
+            "cx.bpdm.vas.nps.upload:1",
+            "cx.bpdm.vas.nps.download:1"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

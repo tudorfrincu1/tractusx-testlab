@@ -131,7 +131,7 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
     colour: PHASE_COLOUR,
     categories: ["Cleanup", "HTTP"],
     blockGroups: [
-      { name: "Export", colour: VARIABLE_COLOUR, blocks: ["export_variable"] },
+      { name: "Export", colour: "#059669", blocks: ["export_variable"] },
     ],
   },
 ];

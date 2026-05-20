@@ -72,6 +72,12 @@ You are working on `tractusx-testlab` documentation:
 - Class diagrams for module relationships
 - Keep diagrams simple — max 10-12 nodes
 
+## Skills
+
+| Skill | When to Use |
+|-------|-------------|
+| `document-knowledge` | Persist documentation patterns, gotchas, and lessons learned |
+
 ## Constraints
 
 - DO NOT invent features or behaviors — verify against actual code

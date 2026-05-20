@@ -36,6 +36,13 @@
 - **Decision**: Every source file (Python, TypeScript, Markdown docs) must stay under 300 lines. Split into modules when approaching the limit.
 - **Rationale**: Keeps files readable, reviewable, and focused on a single responsibility.
 
+### AD-5: Typed variable class system for block I/O
+- **Date**: 2026-05-19
+- **Status**: Proposed (ADR-0009)
+- **Decision**: Block outputs declare a `class` (semantic type). Block inputs declare `accepts` (list of compatible classes). The IDE filters dropdowns by class compatibility. A class registry at `ide/public/blocks/classes.json` is the canonical taxonomy. Both fields are optional for backward compatibility.
+- **Rationale**: Unfiltered variable dropdowns cause user errors. Typing makes block contracts explicit and enables auto-link improvements.
+- **Consequences**: One-time migration of all block JSONs. Taxonomy must be maintained. "Show all" override prevents over-constraining.
+
 ---
 
 ## Established Patterns
@@ -95,6 +102,10 @@
 
 ### RISK-4: YAML variable reference errors
 - Using `${var}` instead of `@var` in YAML generates no parse error but produces wrong runtime behavior. Always verify variable syntax in acceptance criteria.
+
+### RISK-5: Block catalog class taxonomy drift
+- **Date**: 2026-05-19
+- As new blocks are added, contributors may forget to assign `class`/`accepts` fields or use non-registry classes. CI validation should check all outputs reference valid classes from `ide/public/blocks/classes.json`.
 
 ---
 

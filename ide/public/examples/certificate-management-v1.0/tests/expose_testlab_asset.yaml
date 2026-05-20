@@ -145,62 +145,47 @@ setup:
 steps:
   # --- Phase 2: Send AVAILABLE notification to SUT through EDC protocol ---
 
-  - type: query_catalog_with_filters
+  # ── Catalog → Negotiate → Transfer (shortcut) ─────────────────────
+  - type: request_data_filtered_from_precondition
     description: >
-      Discover the SUT's CCMAPI notification endpoint in its catalog. Per CX-0135,
-      the notification MUST be sent through the dataspace protocol — not directly.
+      Discover the SUT's CCMAPI notification endpoint and obtain dataplane
+      credentials for sending the AVAILABLE notification.
     params:
       service: sut_edc
       counter_party_address: "@provider_address"
-      filter:
-        filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
-          - operand_left: "http://purl.org/dc/terms/subject"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
-          - operand_left: "https://w3id.org/catenax/ontology/common#version"
-            operator: "="
-            operand_right: "3.0"
+      precondition_policy: ccmapi_usage_policy
+      filters:
+        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
+        - operand_left: "http://purl.org/dc/terms/subject"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+        - operand_left: "https://w3id.org/catenax/ontology/common#version"
+          operator: "="
+          operand_right: "3.0"
+      transfer_type: "HttpData-PULL"
     validate:
       - type: "NOT_NULL"
         output: datasets
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].@id"
-        store_in_variable: sut_notif_asset_id
-        validate:
-          - type: "NOT_NULL"
-            output: sut_notif_asset_id
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].odrl:hasPolicy"
-        store_in_variable: sut_notif_offer_id
-        validate:
-          - type: "NOT_NULL"
-            output: sut_notif_offer_id
-
-  - type: negotiate
-    description: >
-      Negotiate a contract with the SUT's EDC for access to its notification
-      endpoint. This establishes the agreement needed for data transfer.
-    params:
-      service: sut_edc
-      counter_party_address: "@provider_address"
-      offer_id: "@sut_notif_offer_id"
-      asset_id: "@sut_notif_asset_id"
-      store_in_variable: sut_notif_agreement_id
-
-  - type: initiate_transfer
-    description: >
-      Start an HttpData-PULL transfer to obtain EDR token and data_address.
-      These credentials authorize the dataplane call to the SUT's notification API.
-    params:
-      service: sut_edc
-      agreement_id: "@sut_notif_agreement_id"
-      asset_id: "@sut_notif_asset_id"
-      transfer_type: "HttpData-PULL"
+      - type: "NOT_NULL"
+        output: asset_id
+      - type: "NOT_NULL"
+        output: negotiation_id
+      - type: "NOT_NULL"
+        output: transfer_process_id
+      - type: "NOT_NULL"
+        output: edr_token
+      - type: "NOT_NULL"
+        output: dataplane_url
+    store_in_memory:
+      catalog: "catalog"
+      datasets: "datasets"
+      asset_id: "asset_id"
+      negotiation_id: "negotiation_id"
+      transfer_process_id: "transfer_process_id"
+      edr_token: "edr_token"
+      dataplane_url: "dataplane_url"
 
   - type: generate_uuid
     description: Generate unique message ID for the AVAILABLE notification
@@ -214,7 +199,7 @@ steps:
       certificate data is available to pull from TestLab's catalog.
     params:
       method: POST
-      url: "@data_address/companycertificate/available"
+      url: "@dataplane_url/companycertificate/available"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"

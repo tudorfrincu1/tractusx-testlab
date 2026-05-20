@@ -53,11 +53,7 @@ export function getActiveDataspaceVersions(): Set<string> {
 /** EDC block ordering with label separators. */
 const EDC_CONSUMER_BLOCKS = ["step_query_catalog", "step_query_catalog_with_filters", "step_negotiate", "step_initiate_transfer"];
 const EDC_PROVIDER_BLOCKS = ["step_create_asset", "step_create_policy", "step_create_contract_def"];
-const EDC_STRUCTURE_BLOCKS = [
-  "filter_expression", "asset_criterion",
-  "odrl_permission", "odrl_prohibition", "odrl_obligation",
-  "odrl_logical_constraint", "odrl_constraint",
-];
+const EDC_STRUCTURE_BLOCKS = ["filter_expression", "asset_criterion", "odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_logical_constraint", "odrl_constraint"];
 
 /** Build the EDC Connector category with nested sub-categories. */
 function buildEdcConnectorCategory(
@@ -89,12 +85,38 @@ function buildEdcConnectorCategory(
   const structureContents = EDC_STRUCTURE_BLOCKS
     .map((t) => ({ kind: "block", type: t }));
 
+  // Add shortcut blocks to the consumer category
+  if (cat.shortcuts && cat.shortcuts.length > 0) {
+    const shortcutBlocks: object[] = [];
+    for (const group of cat.shortcuts) {
+      if (group.subcategories && group.subcategories.length > 0) {
+        for (const sub of group.subcategories) {
+          for (const b of sub.blocks) {
+            if (!b.dataspace_version || activeVersions.size === 0 || activeVersions.has(b.dataspace_version)) {
+              shortcutBlocks.push({ kind: "block", type: `step_${b.type}` });
+            }
+          }
+        }
+      } else if (group.blocks) {
+        for (const b of group.blocks) {
+          if (!b.dataspace_version || activeVersions.size === 0 || activeVersions.has(b.dataspace_version)) {
+            shortcutBlocks.push({ kind: "block", type: `step_${b.type}` });
+          }
+        }
+      }
+    }
+    if (shortcutBlocks.length > 0) {
+      consumerContents.push({ kind: "sep", gap: "12" });
+      consumerContents.push(...shortcutBlocks);
+    }
+  }
+
   const subCategories: object[] = [];
   if (consumerContents.length > 0) {
     subCategories.push({ kind: "category", name: "Data Consumer", colour, contents: consumerContents });
   }
   if (providerContents.length > 0) {
-    subCategories.push({ kind: "category", name: "Data Provider", colour, contents: providerContents });
+    subCategories.push({ kind: "category", name: "Data Provider (Internal Use)", colour, contents: providerContents });
   }
   if (structureContents.length > 0) {
     subCategories.push({ kind: "category", name: "Data Structures", colour, contents: structureContents });
@@ -240,6 +262,9 @@ function buildPhaseGroups(catalog: BlockCatalog, variables: string[]): object[] 
       }
     }
     if (children.length > 0) {
+      if (phases.length > 0) {
+        phases.push({ kind: "sep" });
+      }
       phases.push({
         kind: "category",
         name: phase.name,

@@ -61,64 +61,45 @@ setup:
       response_body: {}
 
 steps:
-  - type: query_catalog_with_filters
-    description: Find CCMAPI endpoint in provider catalog
+  # ── Catalog → Negotiate → Transfer (shortcut) ─────────────────────
+  - type: pull_data_filtered_from_precondition
+    description: Find CCMAPI endpoint and obtain dataplane credentials
     params:
       service: provider_edc
       counter_party_address: "@provider_address"
-      filter:
-        filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
-          - operand_left: "http://purl.org/dc/terms/subject"
-            operator: "="
-            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
-          - operand_left: "https://w3id.org/catenax/ontology/common#version"
-            operator: "="
-            operand_right: "3.0"
-    store_in_memory:
-      notification_datasets: "datasets"
-    validate:
-      - type: "NOT_NULL"
-        output: datasets
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].@id"
-        store_in_variable: notification_asset_id
-        validate:
-          - type: "NOT_NULL"
-            output: notification_asset_id
-      - type: "json_path_extract"
-        output: datasets
-        json_path: "[0].odrl:hasPolicy"
-        store_in_variable: notification_offer_id
-        validate:
-          - type: "NOT_NULL"
-            output: notification_offer_id
-
-  - type: negotiate
-    description: Negotiate contract for notification channel
-    params:
-      service: provider_edc
-      counter_party_address: "@provider_address"
-      offer_id: "@notification_offer_id"
-      asset_id: "@notification_asset_id"
-      store_in_variable: notification_agreement_id
-    validate:
-      - type: "NOT_NULL"
-        output: agreement_id
-
-  - type: initiate_transfer
-    description: Initiate transfer for dataplane access
-    params:
-      service: provider_edc
-      agreement_id: "@notification_agreement_id"
-      asset_id: "@notification_asset_id"
+      precondition_policy: ccmapi_usage_policy
+      filters:
+        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
+        - operand_left: "http://purl.org/dc/terms/subject"
+          operator: "="
+          operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+        - operand_left: "https://w3id.org/catenax/ontology/common#version"
+          operator: "="
+          operand_right: "3.0"
       transfer_type: "HttpData-PULL"
+    validate:
+      - type: "NOT_NULL"
+        output: datasets
+      - type: "NOT_NULL"
+        output: asset_id
+      - type: "NOT_NULL"
+        output: negotiation_id
+      - type: "NOT_NULL"
+        output: transfer_process_id
+      - type: "NOT_NULL"
+        output: edr_token
+      - type: "NOT_NULL"
+        output: dataplane_url
     store_in_memory:
-      notification_dataplane_url: "data_address"
-      notification_edr_token: "edr_token"
+      catalog: "catalog"
+      datasets: "datasets"
+      asset_id: "asset_id"
+      negotiation_id: "negotiation_id"
+      transfer_process_id: "transfer_process_id"
+      edr_token: "edr_token"
+      dataplane_url: "dataplane_url"
 
   - type: generate_uuid
     description: Generate feedback message ID
@@ -129,8 +110,8 @@ steps:
     description: Send CX-0135 status notification to provider via dataplane
     params:
       method: POST
-      url: "@notification_dataplane_url/companycertificate/status"
-      edr_token: "@notification_edr_token"
+      url: "@dataplane_url/companycertificate/status"
+      edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"
       body:

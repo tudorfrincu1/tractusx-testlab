@@ -213,6 +213,12 @@ After each session, update `.github/kb/architect-kb.md` with any new:
 5. Suggest fix approaches with trade-offs
 ```
 
+## Skills
+
+| Skill | When to Use |
+|-------|-------------|
+| `document-knowledge` | Persist architectural decisions, patterns, risks, and lessons in `.github/kb/architect-kb.md` |
+
 ## Constraints
 
 - **NEVER write, edit, or generate code** — you plan and analyze only

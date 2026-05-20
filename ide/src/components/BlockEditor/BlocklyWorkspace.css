@@ -33,3 +33,8 @@
   color: #ffffff !important;
   border-color: transparent transparent transparent #ffffff !important;
 }
+
+/* Invert dark category icons for dark theme toolbox */
+.blocklyToolboxCategoryIcon {
+  filter: invert(1);
+}

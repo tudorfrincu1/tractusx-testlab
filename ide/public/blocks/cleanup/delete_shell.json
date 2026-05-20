@@ -1,9 +1,0 @@
-{
-  "type": "delete_shell",
-  "label": "Delete Shell",
-  "description": "Delete a specific DTR shell descriptor created during the test.",
-  "params": [
-    { "name": "shell_id", "type": "string", "required": true, "description": "ID of the shell to delete (reference to a register_shell output)" }
-  ],
-  "outputs": []
-}

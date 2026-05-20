@@ -89,7 +89,7 @@ steps:
         description: "Asset must have aas:semanticId matching BPC v3.1.0"
       - type: "json_path_extract"
         output: datasets
-        json_path: "[0].properties.dct:certificateType"
+        json_path: "[0].['dct:certificateType']"
         store_in_variable: cert_type_prop
         validate:
           - type: "NOT_NULL"
@@ -97,7 +97,7 @@ steps:
             description: "Asset must declare dct:certificateType property"
       - type: "json_path_extract"
         output: datasets
-        json_path: "[0].properties.dct:enclosedSites"
+        json_path: "[0].['dct:enclosedSites']"
         store_in_variable: enclosed_sites_prop
         validate:
           - type: "NOT_NULL"
