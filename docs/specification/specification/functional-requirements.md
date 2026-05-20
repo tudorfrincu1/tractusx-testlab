@@ -38,7 +38,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-ASSERT-01 | Each step MAY declare an `expect` block containing a list of assertions to evaluate against the step's output. | Must |
+| FR-ASSERT-01 | Each step MAY declare an `validate` block containing a list of assertions to evaluate against the step's output. | Must |
 | FR-ASSERT-02 | Assertions SHALL support the following types: `exact` (deep equality), `schema` (JSON Schema validation), `contains` (subset match), `regex` (pattern match), `status_code` (HTTP status comparison). | Must |
 | FR-ASSERT-03 | Each assertion SHALL declare a `severity`: `hard` (assertion failure = step failure) or `soft` (assertion failure = warning, step still passes). | Must |
 | FR-ASSERT-04 | Expected values SHALL be sourceable from three origins via the `source` field: `inline` (value embedded directly in YAML), `file` (loaded from a file path, resolved relative to `.tckpkg` assets or local filesystem), `variable` (value is a `${var}` reference resolved from context). Default: `inline`. | Must |
@@ -76,7 +76,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | FR-PLAY-03 | On loading a `.tckpkg`, the Player SHALL verify the SHA-256 checksum and emit a warning if the SDK version in the manifest differs from the running SDK version. It SHALL NOT hard-fail on SDK version mismatch. | Must |
 | FR-PLAY-04 | The Player SHALL execute scripts asynchronously using `asyncio`. | Must |
 | FR-PLAY-05 | For each script, the Player SHALL create an isolated `StepContext` initialized with the script's `dataspace_version`, declared variable defaults, and any provided `runtime_vars`. The context SHALL also hold a reference to the parent `Job`. | Must |
-| FR-PLAY-06 | Steps SHALL be executed sequentially in declared order. For each step, the Player SHALL: (1) resolve `${var}` references from the context, (2) look up the step implementation from the registry by `(step_type, dataspace_version)`, (3) execute with `asyncio.wait_for(timeout)`, (4) evaluate assertions from the `expect` block, (5) record the `StepResult` in the Monitor. | Must |
+| FR-PLAY-06 | Steps SHALL be executed sequentially in declared order. For each step, the Player SHALL: (1) resolve `${var}` references from the context, (2) look up the step implementation from the registry by `(step_type, dataspace_version)`, (3) execute with `asyncio.wait_for(timeout)`, (4) evaluate assertions from the `validate` block, (5) record the `StepResult` in the Monitor. | Must |
 | FR-PLAY-07 | Step implementations SHALL write output variables into `StepContext` (e.g., `context.set("asset_id", created_id)`). These variables become available to subsequent steps via `${var}` references. Steps MAY also write to job memory via `context.job.memory.set(key, value)` for cross-script persistence. | Must |
 | FR-PLAY-08 | On step failure, the Player SHALL respect the step's `on_failure` policy: `abort` (stop immediately, run cleanup), `continue` (proceed to next step), `skip_rest` (skip remaining steps, run cleanup). | Must |
 | FR-PLAY-09 | Cleanup steps SHALL always execute regardless of prior step outcomes. | Must |

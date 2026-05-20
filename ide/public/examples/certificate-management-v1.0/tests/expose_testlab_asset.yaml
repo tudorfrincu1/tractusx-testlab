@@ -26,37 +26,52 @@ name: expose-testlab-asset
 version: "1.0"
 dataspace_version: "saturn"
 description: >
-  TestLab registers a CCMAPI-type asset in its own EDC connector, exposes a mock
-  data endpoint with CX-0135 compliant certificate payload, and waits for the SUT
-  to discover, negotiate, and pull data.
+  Tests the PULL scenario of CX-0135: TestLab exposes a certificate asset via its
+  own EDC, then sends an AVAILABLE notification to the SUT through the dataspace
+  protocol (catalog → negotiate → transfer → dataplane). The SUT must then discover
+  TestLab's catalog, negotiate, and pull the certificate data.
 
 services:
   - name: testlab_edc
-    type: connector_provider
-    base_url: "@testlab_management_url"
+    type: edc_connector_saturn
+    config:
+      base_url: "@testlab_management_url"
+      dma_path: /management
+
+  - name: sut_edc
+    type: edc_connector_saturn
+    config:
+      base_url: "@provider_address"
+      dma_path: /management
 
 setup:
+  # --- Phase 1: Make certificate data available in TestLab's EDC ---
+
   - type: create_asset
-    description: Register CCMAPI asset in TestLab EDC
+    description: >
+      Register a CCMAPI-typed asset in TestLab's EDC. This is what the SUT will
+      discover and pull from after receiving the AVAILABLE notification.
     params:
       service: testlab_edc
-      name: "TestLab CCMAPI Endpoint"
-      description: "CCMAPI data endpoint for SUT consumer testing"
+      name: "TestLab CCMAPI Certificate Data"
+      description: "CX-0135 compliant certificate data endpoint hosted by TestLab"
       base_url: "@testlab_mock_base_url/api/v1/companycertificate"
       content_type: "application/json"
       properties:
         dct:type:
           "@id": "https://w3id.org/catenax/taxonomy#CCMAPI"
         dct:subject:
-          "@id": "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          "@id": "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementApi"
         cx-common:version: "3.0"
       store_in_variable: testlab_asset_id
-    expect:
+    validate:
       - type: "NOT_NULL"
         output: asset_id
 
   - type: create_policy
-    description: Create usage policy with CX-0135 constraints
+    description: >
+      Create a usage policy that restricts access to the SUT's BPN with the
+      required framework agreement and usage purpose per CX-0135.
     params:
       service: testlab_edc
       permissions:
@@ -72,12 +87,14 @@ setup:
               operator: "isAnyOf"
               rightOperand: "cx.ccm.base:1"
       store_in_variable: testlab_policy_id
-    expect:
+    validate:
       - type: "NOT_NULL"
         output: policy_id
 
   - type: create_contract_def
-    description: Create contract definition linking asset to policy
+    description: >
+      Bind the asset to the policy so it appears in TestLab's catalog when the
+      SUT queries for CCMAPI assets.
     params:
       service: testlab_edc
       access_policy_id: "@testlab_policy_id"
@@ -87,41 +104,155 @@ setup:
           operator: "="
           operandRight: "@testlab_asset_id"
       store_in_variable: testlab_contract_def_id
-    expect:
+    validate:
       - type: "NOT_NULL"
         output: contract_def_id
 
   - type: mock_endpoint
-    description: Expose mock CCMAPI data endpoint with CX-0135 certificate payload
+    description: >
+      Expose mock data endpoint that serves the full BusinessPartnerCertificate
+      payload. This is the actual data the SUT will pull after transfer.
     params:
-      id: "ccmapi_data_source"
+      id: "ccmapi_certificate_data"
       method: GET
       path: "/api/v1/companycertificate"
       response_status: 200
       response_body:
         businessPartnerNumber: "@provider_bpn"
-        certificateType: "iso9001"
-        registrationNumber: "CERT-2024-001"
+        certificateType: "@certificate_type"
+        registrationNumber: "CERT-EXPOSE-001"
         enclosedSites:
-          - enclosedSiteBpn: "BPNS000000000001"
-        validFrom: "2024-01-01"
-        validTo: "2027-01-01"
+          - enclosedSiteBpn: "@location_bpns"
+        validFrom: "2026-01-01"
+        validUntil: "2028-12-31"
         trustLevel: "none"
+        document:
+          documentID: "testlab-cert-expose-001"
+          creationDate: "2026-01-01T00:00:00Z"
+          contentType: "application/pdf"
+          contentBase64: "iVBORw0KGgoAAAANSUhEUgA="
+        validator:
+          validatorName: "TÜV SÜD"
+          validatorBpn: "BPNL133631123120"
+        type:
+          certificateVersion: "2015"
+          certificateType: "@certificate_type"
+        areaOfApplication: "Quality Management"
+        issuer:
+          issuerName: "TÜV SÜD"
+          issuerBpn: "BPNL133631123120"
 
 steps:
-  - type: wait_for_call
-    description: Wait for SUT to discover, negotiate, and pull data
+  # --- Phase 2: Send AVAILABLE notification to SUT through EDC protocol ---
+
+  - type: query_catalog_with_filters
+    description: >
+      Discover the SUT's CCMAPI notification endpoint in its catalog. Per CX-0135,
+      the notification MUST be sent through the dataspace protocol — not directly.
     params:
-      endpoint_id: "ccmapi_data_source"
+      service: sut_edc
+      counter_party_address: "@provider_address"
+      filter:
+        filter_expression:
+          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
+          - operand_left: "http://purl.org/dc/terms/subject"
+            operator: "="
+            operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          - operand_left: "https://w3id.org/catenax/ontology/common#version"
+            operator: "="
+            operand_right: "3.0"
+    validate:
+      - type: "NOT_NULL"
+        output: datasets
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].@id"
+        store_in_variable: sut_notif_asset_id
+        validate:
+          - type: "NOT_NULL"
+            output: sut_notif_asset_id
+      - type: "json_path_extract"
+        output: datasets
+        json_path: "[0].odrl:hasPolicy"
+        store_in_variable: sut_notif_offer_id
+        validate:
+          - type: "NOT_NULL"
+            output: sut_notif_offer_id
+
+  - type: negotiate
+    description: >
+      Negotiate a contract with the SUT's EDC for access to its notification
+      endpoint. This establishes the agreement needed for data transfer.
+    params:
+      service: sut_edc
+      counter_party_address: "@provider_address"
+      offer_id: "@sut_notif_offer_id"
+      asset_id: "@sut_notif_asset_id"
+      store_in_variable: sut_notif_agreement_id
+
+  - type: initiate_transfer
+    description: >
+      Start an HttpData-PULL transfer to obtain EDR token and data_address.
+      These credentials authorize the dataplane call to the SUT's notification API.
+    params:
+      service: sut_edc
+      agreement_id: "@sut_notif_agreement_id"
+      asset_id: "@sut_notif_asset_id"
+      transfer_type: "HttpData-PULL"
+
+  - type: generate_uuid
+    description: Generate unique message ID for the AVAILABLE notification
+    params:
+      store_in_variable: avail_msg_id
+
+  - type: http_call_dataplane
+    description: >
+      Send the AVAILABLE notification to the SUT via its dataplane. The @data_address
+      and @edr_token come from the transfer process above. This tells the SUT that
+      certificate data is available to pull from TestLab's catalog.
+    params:
+      method: POST
+      url: "@data_address/companycertificate/available"
+      edr_token: "@edr_token"
+      headers:
+        Content-Type: "application/json"
+      body:
+        header:
+          messageId: "urn:uuid:@avail_msg_id"
+          context: "CompanyCertificateManagement-CCMAPI-Available:1.0.0"
+          sentDateTime: "2026-01-01T00:00:00Z"
+          senderBpn: "@consumer_bpn"
+          receiverBpn: "@provider_bpn"
+          relatedMessageId: "urn:uuid:@avail_msg_id"
+          version: "3.1.0"
+          senderFeedbackUrl: "@testlab_dsp_url"
+        content:
+          documentId: "testlab-cert-expose-001"
+          certificateType: "@certificate_type"
+          locationBpns:
+            - "@location_bpns"
+    validate:
+      - type: "EQUALS"
+        output: status_code
+        value: 200
+
+  # --- Phase 3: Wait for SUT to pull certificate data from TestLab ---
+
+  - type: wait_for_call
+    description: >
+      After receiving the AVAILABLE notification, the SUT must discover TestLab's
+      CCMAPI asset in its catalog (via @testlab_dsp_url), negotiate, transfer, and
+      pull the certificate data. This wait proves the SUT completed the full flow.
+    params:
+      endpoint_id: "ccmapi_certificate_data"
       method: GET
       timeout_s: "@sut_response_timeout"
-      store_in_variable: sut_request_body
-    expect:
+    validate:
       - type: "EQUALS"
         output: method
         value: "GET"
-      - type: "NOT_NULL"
-        output: body
 
 teardown:
   - type: delete_asset
@@ -131,12 +262,12 @@ teardown:
       asset_id: "@testlab_asset_id"
 
   - type: delete_policy
-    description: Remove access policy from TestLab EDC
+    description: Remove usage policy from TestLab EDC
     params:
       service: testlab_edc
       policy_id: "@testlab_policy_id"
 
-  - type: delete_contract_definition
+  - type: delete_contract_def
     description: Remove contract definition from TestLab EDC
     params:
       service: testlab_edc

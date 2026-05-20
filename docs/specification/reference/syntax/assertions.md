@@ -19,7 +19,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Assertions
 
-Assertions validate step responses against expected values. Each step can declare one or more assertions in its `expect` list.
+Assertions validate step responses against expected values. Each step can declare one or more assertions in its `validate` list.
 
 ---
 
@@ -42,7 +42,7 @@ Expected values can be expressed in four equivalent ways:
 ### 1. Inline YAML (structured, native)
 
 ```yaml
-expect:
+validate:
   - type: EXACT
     value:
       catenaXId: "urn:uuid:123"
@@ -52,7 +52,7 @@ expect:
 ### 2. Inline JSON (pasted from an API response or spec document)
 
 ```yaml
-expect:
+validate:
   - type: EXACT
     value: >
       {"catenaXId": "urn:uuid:123", "status": "active"}
@@ -61,7 +61,7 @@ expect:
 ### 3. From File (bundled in `.tckpkg` assets)
 
 ```yaml
-expect:
+validate:
   - type: SCHEMA
     source: FILE
     path: "schemas/serial-part-3.0.json"
@@ -70,7 +70,7 @@ expect:
 ### 4. From Variable (output of a previous step)
 
 ```yaml
-expect:
+validate:
   - type: EXACT
     source: VARIABLE
     value: "${expected_response}"
@@ -83,7 +83,7 @@ expect:
 Assertions can target specific fields using the `path` property with dot-notation and bracket indexing:
 
 ```yaml
-expect:
+validate:
   # Assert on a specific top-level field
   - type: EXACT
     path: "catenaXId"
@@ -191,7 +191,7 @@ steps:
     #   "isSystemHealthy": true
     # }
 
-    expect:
+    validate:
       # 1. Check HTTP status code
       - type: STATUS_CODE
         value: 200
@@ -249,7 +249,7 @@ steps:
     #   ]
     # }
 
-    expect:
+    validate:
       # Find the dataset for 'asset-serial-part', then find its 'USE' offer
       - type: EXACT
         path: "datasets[assetId='asset-serial-part'].offers[permission='USE'].policyId"
@@ -275,7 +275,7 @@ steps:
     #   ]
     # }
 
-    expect:
+    validate:
       # By numeric ID (unquoted — type-coerced)
       - type: EXACT
         path: "results[id=101].status"
@@ -314,7 +314,7 @@ steps:
 | `SOFT` | The mismatch is **logged** as a warning, but the step is still considered passed. |
 
 ```yaml
-expect:
+validate:
   - type: EXACT
     path: "status"
     value: "active"
@@ -331,7 +331,7 @@ expect:
 
 ## See Also
 
-- [Tests](tests.md) — step definitions and `expect` within steps
+- [Tests](tests.md) — step definitions and `validate` within steps
 - [Advanced Steps](advanced-steps.md) — assertions on `sdk_call` and async callbacks
 
 ---

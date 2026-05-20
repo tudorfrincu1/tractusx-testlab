@@ -60,7 +60,7 @@ steps:
   - type: create_asset
     params:
       asset_id: "test-asset-001"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD

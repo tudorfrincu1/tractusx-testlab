@@ -206,6 +206,16 @@ export function useWorkspaceInit(
         selectStep(block ? resolveStepIdentifier(block) : null);
       });
 
+      // Force Blockly to recalculate dimensions after inject.
+      // The async catalog load means the container may have settled its layout
+      // before inject ran, so Blockly's initial metrics can be stale.
+      Blockly.svgResize(ws);
+      requestAnimationFrame(() => {
+        if (!disposed && workspaceRef.current) {
+          Blockly.svgResize(workspaceRef.current);
+        }
+      });
+
       setReady(true);
     })();
 
@@ -247,6 +257,10 @@ export function useWorkspaceInit(
     const ws = workspaceRef.current;
     const container = containerRef.current;
     if (!ws || !container) return;
+
+    // Immediate resize to catch cases where the container already has its
+    // final dimensions (ResizeObserver only fires on subsequent changes).
+    Blockly.svgResize(ws);
 
     const observer = new ResizeObserver(() => {
       Blockly.svgResize(ws);

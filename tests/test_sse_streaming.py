@@ -99,7 +99,7 @@ def _make_event_queue(
 
 
 class TestYamlSubmission:
-    """POST /testlab/test-execution/run/yaml endpoint tests."""
+    """POST /testlab/test-execution/run endpoint tests."""
 
     @pytest.mark.asyncio
     async def test_run_yaml_returns_job_id(
@@ -117,7 +117,7 @@ class TestYamlSubmission:
         ):
             parser_cls.return_value.parse_script_from_dict.return_value = mock_def
             response = await client.post(
-                "/testlab/test-execution/run/yaml",
+                "/testlab/test-execution/run",
                 content=b"name: my-test\nsteps: []",
             )
 
@@ -131,7 +131,7 @@ class TestYamlSubmission:
         self, client: AsyncClient,
     ) -> None:
         response = await client.post(
-            "/testlab/test-execution/run/yaml",
+            "/testlab/test-execution/run",
             content=b"{{invalid: yaml: : :",
         )
         assert response.status_code == 400
@@ -140,7 +140,7 @@ class TestYamlSubmission:
     async def test_run_yaml_rejects_empty_body(
         self, client: AsyncClient,
     ) -> None:
-        response = await client.post("/testlab/test-execution/run/yaml", content=b"")
+        response = await client.post("/testlab/test-execution/run", content=b"")
         assert response.status_code == 400
 
 

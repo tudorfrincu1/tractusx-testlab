@@ -145,10 +145,10 @@ Variables flow through two mechanisms:
 
 ### Assertions
 
-Each step can include `expect` blocks with four assertion types:
+Each step can include `validate` blocks with four assertion types:
 
 ```yaml
-expect:
+validate:
   - output: status_code
     equals: 200              # exact match
   - output: request_id

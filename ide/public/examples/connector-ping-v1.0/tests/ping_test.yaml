@@ -43,7 +43,7 @@ steps:
             operand_right: "%"
     store_in_memory:
       catalog_datasets: "datasets"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200

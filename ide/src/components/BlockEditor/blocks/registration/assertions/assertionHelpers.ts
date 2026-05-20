@@ -26,6 +26,7 @@
 import type { Block } from "blockly";
 import { findCatalogEntry, type BlockCatalog } from "../../common/catalog/catalogLoader";
 import type { PathSegment } from "../../path/core/pathBuilder";
+import { jsonToSchema } from "../../path/core/jsonToSchema";
 
 /** Pencil icon as SVG data URI for the path edit button. */
 export const ICON_EDIT_PENCIL = `data:image/svg+xml,${encodeURIComponent(
@@ -53,7 +54,24 @@ export function resolveParentStepSchema(
   const stepType = parent.type.replace(/^step_/, "");
   const entry = findCatalogEntry(stepType, catalog);
   if (!entry?.outputs || entry.outputs.length === 0) return undefined;
-  return entry.outputs[0].schema;
+  const output = entry.outputs[0];
+  const schema = output.schema;
+
+  // If schema has navigable structure, use it directly
+  if (schema && hasNavigableStructure(schema)) return schema;
+
+  // Fall back to generating schema from the example value
+  if (output.example !== undefined) return jsonToSchema(output.example);
+
+  return schema;
+}
+
+/** Check if a schema has properties or items that SchemaTree can render. */
+function hasNavigableStructure(schema: Record<string, unknown>): boolean {
+  const type = schema["type"] as string | undefined;
+  if (type === "object" && schema["properties"]) return true;
+  if (type === "array" && schema["items"]) return true;
+  return false;
 }
 
 /** Collect output names from the parent step block's catalog entry. */

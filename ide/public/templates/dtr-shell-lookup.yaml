@@ -51,7 +51,7 @@ steps:
     store_in_memory:
       shell_descriptors: "response_body"
       response_body: "response_body"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200

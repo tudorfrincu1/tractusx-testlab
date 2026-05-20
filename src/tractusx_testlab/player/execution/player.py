@@ -102,9 +102,21 @@ class TestlabPlayer:
         self,
         tck: Tck,
         runtime_vars: Optional[dict] = None,
+        job_id: Optional[str] = None,
     ) -> TckResult:
-        """Execute a loaded Tck object."""
-        job = self._jobs.create(tck.name)
+        """Execute a loaded Tck object.
+
+        Args:
+            tck: The TCK to execute.
+            runtime_vars: Optional runtime variable overrides.
+            job_id: If provided, reuse an existing job instead of creating a new one.
+        """
+        if job_id:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise ValueError(f"Job '{job_id}' not found in job manager")
+        else:
+            job = self._jobs.create(tck.name)
         if runtime_vars:
             job.runtime_vars = runtime_vars
 
@@ -145,10 +157,18 @@ class TestlabPlayer:
     # ------------------------------------------------------------------
 
     def _create_job_monitor(self, job_logger: StructuredLogger) -> ExecutionMonitor:
-        """Create a monitor for a job, propagating player-level callbacks."""
+        """Create a monitor for a job, dynamically forwarding to player-level callbacks."""
         monitor = ExecutionMonitor(job_logger)
-        for callback in self._monitor._callbacks:
-            monitor.add_callback(callback)
+
+        def _forward_to_player(event: str, payload: dict) -> None:
+            """Forward events to all current player-level callbacks (dynamic lookup)."""
+            for cb in self._monitor._callbacks:
+                try:
+                    cb(event, payload)
+                except (RuntimeError, TypeError, ValueError):
+                    pass
+
+        monitor.add_callback(_forward_to_player)
         return monitor
 
     def _ensure_callback_manager(self) -> None:

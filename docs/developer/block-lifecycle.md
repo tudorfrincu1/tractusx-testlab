@@ -130,7 +130,7 @@ flowchart LR
     - `service` (service_ref dropdown) → `params.service: "testbed"`
     - `counter_party_address` (value_string) → `params.counter_party_address: "@counter_party_address"`
     - `filter` (key_value_pair chain) → `params.filter: { ... }`
-4. Reads the EXPECT chain (assertion blocks) → `expect: [...]`
+4. Reads the EXPECT chain (assertion blocks) → `validate: [...]`
 5. **Auto-generates `store_in_memory`** from the catalog's `outputs` array:
     - `catalog` → `store_in_memory.catalog: "$"`
     - `datasets` → `store_in_memory.datasets: "$"`
@@ -152,7 +152,7 @@ steps:
     store_in_memory:
       catalog: "$"
       datasets: "$"
-    expect:
+    validate:
       - output: status_code
         equals: 200
       - output: datasets
@@ -265,7 +265,7 @@ class QueryCatalogStep(BaseStep):
 |----------|--------|---------|
 | `params` | YAML `params:` section, with `@variables` resolved | `{"service": "testbed", "counter_party_address": "https://...", "filter": {...}}` |
 | `context` | Runtime `StepContext` | Provides `get_consumer_service()`, `get_provider_service()`, `get_aas_service()`, `set_variable()`, `get_variable()` |
-| `definition` | Full `StepDefinition` model | Includes `expect`, `store_in_memory`, `on_failure`, `timeout_s` |
+| `definition` | Full `StepDefinition` model | Includes `validate`, `store_in_memory`, `on_failure`, `timeout_s` |
 
 **What the executor returns:**
 
@@ -278,7 +278,7 @@ class QueryCatalogStep(BaseStep):
 After execution, the runtime:
 
 1. Evaluates `store_in_memory`: stores `value["catalog"]` as variable `catalog`, etc.
-2. Evaluates `expect`: runs each assertion against the output
+2. Evaluates `validate`: runs each assertion against the output
 3. Records the result as a `StepResult` with pass/fail status
 
 ---
@@ -485,7 +485,7 @@ tractusx_sdk.dataspace.services.connector.BaseConnectorService
   → returns to QueryCatalogStep
   → step wraps in StepOutput(value=catalog_dict)
   → runtime stores value in memory as "catalog" and "datasets"
-  → runtime evaluates assertions (expect: status_code equals 200)
+  → runtime evaluates assertions (validate: status_code equals 200)
   → records StepResult with pass/fail
 ```
 

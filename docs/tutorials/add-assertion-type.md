@@ -100,6 +100,6 @@ elif assertion_type == "my_check":
 ## Step 5 — Verify
 
 1. Reload the IDE — the new assertion block should appear in the "Assertions" toolbox category
-2. Drag it under a step's `expect:` section
+2. Drag it under a step's `validate:` section
 3. Check the YAML preview — it should serialize as `my_check: <value>`
 4. Run `pytest` to verify the Python assertion engine handles it correctly

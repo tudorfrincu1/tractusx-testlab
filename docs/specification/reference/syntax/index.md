@@ -102,7 +102,7 @@ A minimal test and the TCK that runs it:
         name: "Create test asset"
         params:
           asset_id: "test-asset-001"
-        expect:
+        validate:
           - type: STATUS_CODE
             value: 200
             severity: HARD

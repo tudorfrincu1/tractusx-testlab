@@ -63,13 +63,23 @@ class ExecutionMonitor:
     def on_script_started(self, job_id: str, script_name: str, index: int) -> None:
         self._emit("script.started", job_id=job_id, script=script_name, index=index)
 
-    def on_step_started(self, job_id: str, step_index: int, step_type: str) -> None:
-        self._emit("step.started", job_id=job_id, step_index=step_index, step_type=step_type)
+    def on_step_started(self, job_id: str, step_index: int, step_type: str, step_name: str = "", phase: str = "main") -> None:
+        self._emit(
+            "step.started",
+            job_id=job_id,
+            step_index=step_index,
+            step_name=step_name,
+            step_type=step_type,
+            phase=phase,
+            status="running",
+        )
 
     def on_step_completed(self, job_id: str, result: StepResult) -> None:
         payload: dict[str, Any] = {
             "job_id": job_id,
             "step_name": result.step_name,
+            "step_type": result.step_type,
+            "phase": result.phase.value.lower(),
             "status": result.status.value,
             "duration_s": result.duration_s,
         }

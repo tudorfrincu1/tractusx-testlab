@@ -43,7 +43,7 @@ steps:
       counter_party_id: "@counter_party_id"
     store_in_memory:
       transfer_process_id: "transfer_process_id"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200
@@ -73,7 +73,7 @@ steps:
     store_in_memory:
       edr_token: "authorization"
       data_address: "endpoint"
-    expect:
+    validate:
       - type: "EQUALS"
         output: status_code
         value: 200

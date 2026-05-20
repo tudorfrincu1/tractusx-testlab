@@ -1,13 +1,11 @@
 {
-  "type": "query_catalog",
-  "label": "Query Catalog",
-  "description": "Send a catalog request to the connector and retrieve available offers.",
+  "type": "query_catalog_with_filters",
+  "label": "Query Catalog (Filtered)",
+  "description": "Send a catalog request with multiple filter expressions to narrow results.",
   "params": [
     { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service to query" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
-    { "name": "filter_by", "type": "string", "required": false, "description": "Property to filter by (e.g. dct:type)" },
-    { "name": "filter_value", "type": "string", "required": false, "description": "Value to match against the filter property" },
-    { "name": "operator", "type": "string", "required": false, "description": "Comparison operator (default: =)" }
+    { "name": "filters", "type": "filter_expression_list", "required": false, "description": "Filter expressions to narrow catalog results" }
   ],
   "outputs": [
     {

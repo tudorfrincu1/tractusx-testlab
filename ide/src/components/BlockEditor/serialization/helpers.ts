@@ -180,6 +180,25 @@ export function readAssertionChain(block: Block | null): Assertion[] {
       continue;
     }
 
+    // step_json_path_extract uses PARAM_VARIABLE not OUTPUT — handle before the output guard
+    if (current.type === "step_json_path_extract") {
+      const variable = current.getFieldValue("PARAM_VARIABLE") || "";
+      const pathBlock = current.getInputTargetBlock("PARAM_PATH");
+      const jsonPath = pathBlock ? (pathBlock.getFieldValue("VALUE") || "") : "";
+      const storeInVariable = readValueBlockAsString(current.getInputTargetBlock("PARAM_STORE_IN_VARIABLE")) || "";
+      const nestedAssertions = readAssertionChain(current.getInputTargetBlock("EXPECT"));
+      const entry: Assertion = {
+        type: AssertionOperator.JSON_PATH_EXTRACT,
+        output: variable,
+        json_path: jsonPath,
+        store_in_variable: storeInVariable,
+      };
+      if (nestedAssertions.length > 0) entry.validate = nestedAssertions;
+      assertions.push(entry);
+      current = current.getNextBlock();
+      continue;
+    }
+
     const output = current.getFieldValue("OUTPUT") || "";
     if (!output || output === "__NONE__") {
       current = current.getNextBlock();

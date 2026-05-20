@@ -91,10 +91,11 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       const exportVar = current.getFieldValue("EXPORT_VAR") || "";
       const outputVar = current.getFieldValue("OUTPUT_VAR") || exportVar;
       if (file && file !== "__NONE__" && exportVar && exportVar !== "__NONE__") {
+        const testName = file.replace(/^tests\//, "").replace(/\.yaml$/, "");
         steps.push({
           type: "import_variable",
-          description: `Import ${exportVar}`,
-          params: { file, export: exportVar, variable: outputVar },
+          description: `Import ${exportVar} from ${testName}`,
+          params: { test: testName, select: exportVar, store_in_variable: outputVar },
         } as StepDefinition);
       }
       current = current.getNextBlock();
@@ -234,13 +235,13 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
     }
   }
 
-  const expect = readAssertionChain(block.getInputTargetBlock("EXPECT"));
+  const validate = readAssertionChain(block.getInputTargetBlock("EXPECT"));
 
   return {
     type: runtimeStepType,
     description: description || undefined,
     params,
-    expect: expect.length > 0 ? expect : undefined,
+    validate: validate.length > 0 ? validate : undefined,
     store_in_memory: storeInMemory,
   };
 }

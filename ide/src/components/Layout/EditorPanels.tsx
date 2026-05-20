@@ -74,9 +74,10 @@ export function EditorPanels({ autoSave, onAutoSaveChange }: EditorPanelsProps) 
   const setShowValidation = useTestLabStore((s) => s.setShowValidation);
   const storeErrors = useTestLabStore((s) => s.errors);
 
+  const isConnected = useExecutionStore((s) => s.isConnected);
   const isExecuting = useExecutionStore((s) => s.isExecuting);
   const jobStatus = useExecutionStore((s) => s.jobStatus);
-  const showExecutionPanel = isExecuting || jobStatus !== null;
+  const showExecutionPanel = isConnected && (isExecuting || jobStatus !== null);
 
   useEffect(() => {
     const ws = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg | null;

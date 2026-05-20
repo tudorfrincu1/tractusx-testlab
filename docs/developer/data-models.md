@@ -90,7 +90,7 @@ interface StepDefinition {
   type: string;                            // Step type from catalog (e.g., "create_asset")
   name: string;                            // Display name
   params: Record<string, unknown>;         // Step-specific inputs
-  expect?: Assertion[];                    // Validation rules
+  validate?: Assertion[];                    // Validation rules
   store_in_memory?: Record<string, string>;// { varName: JSONPath or "$" }
   on_failure?: FailurePolicy;              // "ABORT" | "CONTINUE" | "SKIP_REST"
   timeout_s?: number;

@@ -76,20 +76,22 @@ variables:
     default: 300
 
 tests:
+  - test: tests/catalog_policy_validation.yaml
+    description: Validate CCMAPI asset uniqueness and mandatory policy constraints
   - test: tests/request_certificate.yaml
-    description: Query provider catalog for CCMAPI offer and request certificate
+    description: Request certificate with full header envelope + enum validation
   - test: tests/validate_payload.yaml
-    description: Fetch and validate certificate payload against BusinessPartnerCertificate semantic model v3.1.0
-  - test: tests/await_feedback_callback.yaml
-    description: Listen for inbound provider feedback callback on /companycertificate/status
-  - test: tests/send_feedback.yaml
-    description: Send CCMAPI feedback notification to provider and await acknowledgment
-  - test: tests/expose_testlab_asset.yaml
-    description: Register a CCMAPI asset in TestLab EDC, expose mock data, and verify SUT consumer behavior
+    description: Pull certificate Submodel and validate against schema + asset properties
   - test: tests/push_certificate.yaml
-    description: Push certificate to SUT via EDC data plane (CX-0135 PUSH mechanism)
+    description: Push certificate and verify SUT sends feedback callback
   - test: tests/available_notification.yaml
-    description: Send certificate availability notification to SUT (CX-0135 AVAILABLE mechanism)
+    description: Send available notification and verify SUT pulls certificate
+  - test: tests/send_feedback.yaml
+    description: Send feedback notification with envelope validation
+  - test: tests/expose_testlab_asset.yaml
+    description: Expose TestLab as provider and verify SUT consumer behavior
+  - test: tests/certificate_asset_validation.yaml
+    description: Validate certificate Submodel asset properties in catalog
   - test: tests/error_handling.yaml
-    description: Verify CX-0135 error handling and REJECTED status flow
+    description: Test business rejection and malformed payload handling
 

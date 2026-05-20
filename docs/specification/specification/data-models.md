@@ -66,7 +66,7 @@ classDiagram
         +dict params
         +FailurePolicy on_failure = ABORT
         +float timeout_s?
-        +list~Assertion~ expect?
+        +list~Assertion~ validate?
     }
 
     class ScriptDefinition {
@@ -142,7 +142,7 @@ classDiagram
     ScriptDefinition --> "*" StepDefinition : steps
     ScriptDefinition --> "*" StepDefinition : cleanup
     ScriptDefinition --> "*" ServiceDefinition : services
-    StepDefinition --> "*" Assertion : expect
+    StepDefinition --> "*" Assertion : validate
     TckDefinition --> "*" ScriptDefinition : tests
     TckDefinition --> "*" VariableDefinition : shared_variables
     TckDefinition --> "*" ImportDefinition : imports

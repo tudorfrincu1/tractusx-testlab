@@ -280,12 +280,12 @@ html, body, #root {
 /* Flyout blocks */
 .blocklyFlyout .blocklyDraggable > .blocklyPath {
   filter: none !important;
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .blocklyFlyout .blocklyDraggable:hover > .blocklyPath {
   opacity: 1;
-  filter: brightness(1.1) !important;
+  filter: brightness(1.15) !important;
 }
 
 /* Scrollbar in workspace */

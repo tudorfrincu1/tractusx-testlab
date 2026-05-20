@@ -149,7 +149,7 @@ steps:
     name: Bad Request
     inputs:
       url: "http://127.0.0.1:1/nonexistent"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
 """
@@ -165,7 +165,7 @@ name: Noop Test
 steps:
   - type: register_twin
     name: Register
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD

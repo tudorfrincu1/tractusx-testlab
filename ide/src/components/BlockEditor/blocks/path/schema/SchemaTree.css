@@ -109,12 +109,9 @@
   flex-shrink: 0;
 }
 
-.schema-badge-string { background: rgba(6, 214, 160, 0.15); color: #06d6a0; }
 .schema-badge-object { background: rgba(179, 136, 255, 0.15); color: #b388ff; }
 .schema-badge-array { background: rgba(244, 162, 97, 0.15); color: #f4a261; }
-.schema-badge-number { background: rgba(72, 202, 228, 0.15); color: #48cae4; }
-.schema-badge-boolean { background: rgba(255, 209, 102, 0.15); color: #ffd166; }
-.schema-badge-unknown { background: rgba(136, 136, 136, 0.15); color: #888; }
+.schema-badge-value { background: rgba(170, 170, 170, 0.15); color: #aaa; }
 
 .schema-tree-empty {
   color: #9898aa;

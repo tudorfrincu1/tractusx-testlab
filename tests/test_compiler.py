@@ -60,7 +60,7 @@ steps:
   - type: create_asset
     inputs:
       name: "@part_id"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -98,7 +98,7 @@ class TestCompileYaml:
         assert len(test.mocks) == 1
         assert len(test.steps) == 1
         assert test.steps[0].type == "create_asset"
-        assert test.steps[0].expect[0].type.value == "STATUS_CODE"
+        assert test.steps[0].validate[0].type.value == "STATUS_CODE"
 
     def test_compile_invalid_yaml_raises(self) -> None:
         with pytest.raises(CompilationError, match="Invalid YAML"):

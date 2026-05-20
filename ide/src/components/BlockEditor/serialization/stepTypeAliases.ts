@@ -26,11 +26,13 @@
 const RUNTIME_TO_CATALOG_STEP_TYPE: Record<string, string> = {
   http_request: "http_call",
   dataplane_call: "http_call_dataplane",
+  delete_contract_definition: "delete_contract_def",
 };
 
 const CATALOG_TO_RUNTIME_STEP_TYPE: Record<string, string> = {
   http_call: "http_request",
   http_call_dataplane: "dataplane_call",
+  delete_contract_def: "delete_contract_definition",
 };
 
 export function toCatalogStepType(runtimeType: string): string {

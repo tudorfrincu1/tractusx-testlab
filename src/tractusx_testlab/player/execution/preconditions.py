@@ -61,7 +61,7 @@ async def execute_precondition_steps(
 
     for step_idx, step_def in enumerate(script.definition.preconditions):
         step_name = f"{script.name}[precondition:{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, f"precondition:{step_def.type}")
+        monitor.on_step_started(job_id, step_idx, step_def.type, step_name=step_name, phase="precondition")
         jobs.set_current_step(job_id, step_name)
 
         if not ConditionEvaluator.should_run(

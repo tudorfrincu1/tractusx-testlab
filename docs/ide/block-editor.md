@@ -74,7 +74,7 @@ Blocks snap together like puzzle pieces:
 
 - **Step blocks** connect vertically — the bottom of one step connects to the top of the next
 - **Value blocks** connect horizontally — plug them into input slots on step blocks
-- **Assertion blocks** chain inside a step's `expect:` section
+- **Assertion blocks** chain inside a step's `validate:` section
 
 ### Auto-linking
 

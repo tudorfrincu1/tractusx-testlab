@@ -92,7 +92,7 @@ export async function checkBackendHealth(
   }
 }
 
-/** Response from POST /testlab/test-execution/run/yaml */
+/** Response from POST /testlab/test-execution/run */
 export interface SubmitResponse {
   job_id: string;
   status: string;
@@ -106,7 +106,7 @@ export async function submitTestYaml(
   backendUrl: string,
   yaml: string,
 ): Promise<SubmitResponse> {
-  const res = await fetch(`${backendUrl}/testlab/test-execution/run/yaml`, {
+  const res = await fetch(`${backendUrl}/testlab/test-execution/run`, {
     method: "POST",
     headers: { "Content-Type": "application/x-yaml" },
     body: yaml,

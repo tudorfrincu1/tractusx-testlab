@@ -178,7 +178,7 @@ flowchart TD
 
 See the **[Architecture Guide](ccm-architecture-guide.md)** for the full internal sequence. In summary:
 
-1. The IDE converts the workspace to YAML and sends `POST /testlab/test-execution/run/yaml`
+1. The IDE converts the workspace to YAML and sends `POST /testlab/test-execution/run`
 2. The backend parses YAML into a `Tck` object and topologically sorts scripts by dependencies
 3. For each script: resolve `@variables` → execute steps → evaluate assertions → store outputs
 4. The IDE receives real-time SSE events (`step.started`, `step.completed`, `step.failed`)
@@ -242,7 +242,7 @@ Test execution logs are written to the `logs/` directory with timestamps. Each s
 Add extra assertions to any step to inspect intermediate values:
 
 ```yaml
-expect:
+validate:
   - type: "ASSERT_FIELD"
     output: response_body
     path: "header.messageId"

@@ -96,7 +96,7 @@ Create `ide/public/blocks/http/check_health.json`:
 | `label` | Yes | Human-readable name shown on the block in the editor. |
 | `description` | Yes | Tooltip text shown on hover. |
 | `params` | Yes | Array of input parameters rendered as fields on the block. |
-| `outputs` | No | Array of named outputs. If present, the block gets an `expect:` section and outputs are auto-stored via `store_in_memory`. |
+| `outputs` | No | Array of named outputs. If present, the block gets an `validate:` section and outputs are auto-stored via `store_in_memory`. |
 | `depends_on` | No | Array of block types that must exist in the workspace (shows a warning if missing). |
 
 **Parameter types:**
@@ -551,7 +551,7 @@ elif assertion_type == "my_check":
 ### Step 5 — Verify
 
 1. Reload the IDE — the new assertion block should appear in the "Assertions" toolbox category
-2. Drag it under a step's `expect:` section
+2. Drag it under a step's `validate:` section
 3. Check the YAML preview — it should serialize as `my_check: <value>`
 4. Run `pytest` to verify the Python assertion engine handles it correctly
 
@@ -605,7 +605,7 @@ steps:
       method: GET
     store_in_memory:
       status_code: "$"
-    expect:
+    validate:
       - output: status_code
         equals: 200
 ```

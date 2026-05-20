@@ -75,6 +75,7 @@ class AssertionType(str, enum.Enum):
     LESS_OR_EQUAL = "LESS_OR_EQUAL"
     BETWEEN = "BETWEEN"
     ASSERT_FIELD = "ASSERT_FIELD"
+    JSON_PATH_EXTRACT = "json_path_extract"
 
 
 class AssertionSeverity(str, enum.Enum):

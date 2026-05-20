@@ -148,23 +148,23 @@ function validateStep(
     });
   }
 
-  for (const assertion of step.expect ?? []) {
+  for (const assertion of step.validate ?? []) {
     if (!assertion.output) {
       errors.push({
-        path: `${path}.expect`,
+        path: `${path}.validate`,
         message: "Assertion must specify an output field",
         severity: "error",
       });
     }
     if (!assertion.type) {
       errors.push({
-        path: `${path}.expect`,
+        path: `${path}.validate`,
         message: "Assertion must specify a type",
         severity: "error",
       });
     } else if (!Object.values(AssertionOperator).includes(assertion.type as AssertionOperator)) {
       errors.push({
-        path: `${path}.expect`,
+        path: `${path}.validate`,
         message: `Invalid assertion type: ${assertion.type}`,
         severity: "error",
       });

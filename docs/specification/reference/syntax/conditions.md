@@ -97,7 +97,7 @@ steps:
     params:
       method: GET
       url: "${provider_base_url}/api/check/health"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
 
@@ -165,7 +165,7 @@ steps:
     params:
       method: GET
       url: "${provider_base_url}/api/check/health"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: SOFT
@@ -307,7 +307,7 @@ steps:
 
 ## Combining with Other Step Fields
 
-The `if` condition works alongside all other step fields — `on_failure`, `expect`, `store_in_memory`, `timeout_s`:
+The `if` condition works alongside all other step fields — `on_failure`, `validate`, `store_in_memory`, `timeout_s`:
 
 ```yaml
 steps:
@@ -326,7 +326,7 @@ steps:
     timeout_s: 30
     params:
       base_url: "${provider_base_url}"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: HARD
@@ -368,7 +368,7 @@ steps:
     params:
       method: GET
       url: "${provider_base_url}/api/check/health"
-    expect:
+    validate:
       - type: STATUS_CODE
         value: 200
         severity: SOFT
@@ -456,7 +456,7 @@ For the complete list of step fields, see [Tests — Steps](tests.md#steps).
 ## See Also
 
 - [Tests](tests.md) — step definitions, variables, and cleanup
-- [Assertions](assertions.md) — validating step results with `expect`
+- [Assertions](assertions.md) — validating step results with `validate`
 - [Dependencies & Outputs](dependencies-and-outputs.md) — inter-test dependencies and output sharing
 
 ---

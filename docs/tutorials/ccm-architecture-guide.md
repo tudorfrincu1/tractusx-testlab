@@ -83,7 +83,7 @@ sequenceDiagram
 ### IDE → Backend handoff
 
 1. `ExecuteButton.handleExecute()` converts the Blockly workspace to YAML via `modelToYaml()`
-2. `useExecutionStore.execute(yaml)` sends `POST /testlab/test-execution/run/yaml`
+2. `useExecutionStore.execute(yaml)` sends `POST /testlab/test-execution/run`
 3. The backend returns HTTP 202 with a `job_id`
 4. The IDE opens an SSE stream at `GET /testlab/test-execution/{job_id}/stream`
 5. The backend emits `step.started`, `step.completed`, and `step.failed` events

@@ -100,7 +100,7 @@ steps:
       base_url: "@asset_url"
     store_in_memory:
       asset_id: "$"
-    expect:
+    validate:
       - output: asset_id
         not_null: true
 ```
@@ -146,7 +146,7 @@ Linear step-by-step visualization with phase groupings.
   label: string,          // Step name
   stepType: string,       // Category key for color
   color: string,          // Hex from theme
-  hasAssertions: boolean, // Has expect[] entries
+  hasAssertions: boolean, // Has validate[] entries
   storesMemory: boolean,  // Has store_in_memory
   conditional: boolean,   // Has if: condition
   serviceName?: string    // Service reference

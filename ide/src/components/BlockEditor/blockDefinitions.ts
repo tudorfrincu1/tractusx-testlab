@@ -41,6 +41,7 @@ import {
   registerUtilityBlocks,
   registerAssertionBlocks,
   registerAuthBlocks,
+  registerFilterExpressionBlock,
   collectWorkspaceVariables,
 } from "./blocks";
 import { buildToolbox } from "./toolbox/toolboxBuilder";
@@ -63,5 +64,6 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
   registerUtilityBlocks(Blockly, catalog);
   registerAuthBlocks(Blockly);
   registerAssertionBlocks(Blockly, catalog);
+  registerFilterExpressionBlock(Blockly);
   registerCatalogBlocks(Blockly, catalog);
 }

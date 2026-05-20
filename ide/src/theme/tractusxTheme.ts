@@ -92,6 +92,7 @@ export const stepCategoryMap: Record<string, keyof typeof theme.stepColors> = {
   delay: "flow",
   log: "flow",
   query_catalog: "edc",
+  query_catalog_with_filters: "edc",
   negotiate: "edc",
   initiate_transfer: "edc",
   create_asset: "edc",

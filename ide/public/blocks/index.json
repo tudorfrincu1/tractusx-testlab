@@ -32,7 +32,8 @@
       "blocks": [
         "function/generate_uuid.json",
         "function/generate_bpn.json",
-        "function/json_path_extract.json"
+        "function/json_path_extract.json",
+        "function/validate_path.json"
       ]
     },
     {
@@ -50,6 +51,8 @@
       "service_type": "edc_connector",
       "blocks": [
         "edc-connector/query_catalog.json",
+        "edc-connector/query_catalog_with_filters.json",
+        "edc-connector/filter_expression.json",
         "edc-connector/negotiate.json",
         "edc-connector/initiate_transfer.json",
         "edc-connector/create_asset.json",
@@ -82,7 +85,6 @@
       "name": "Cleanup",
       "description": "Undo resources created during the test (assets, policies, shells)",
       "blocks": [
-        "cleanup/auto_cleanup.json",
         "cleanup/delete_asset.json",
         "cleanup/delete_policy.json",
         "cleanup/delete_shell.json"

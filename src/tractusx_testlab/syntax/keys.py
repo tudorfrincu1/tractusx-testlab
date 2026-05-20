@@ -50,7 +50,7 @@ OUTPUTS = "outputs"
 # -- Step fields --------------------------------------------------------------
 ALLOW_SDK_CALLS = "allow_sdk_calls"
 PARAMS = "params"
-EXPECT = "expect"
+EXPECT = "validate"
 ON_FAILURE = "on_failure"
 TIMEOUT_S = "timeout_s"
 STORE_IN_MEMORY = "store_in_memory"

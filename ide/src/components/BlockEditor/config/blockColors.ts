@@ -34,7 +34,7 @@ export const blockColors = {
   /** Variable system */
   variableDef: "#5B21B6",
   variableGet: "#5B21B6",
-  valueString: "#000000",
+  valueString: "#1E293B",
   valueJsonPath: "#0E7490",
   valueApiPath: "#1E40AF",
   storeOutput: "#5B21B6",

@@ -41,7 +41,7 @@ export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockC
       }
 
       if (step.type === "import_variable") {
-        const importedVar = step.params?.variable;
+        const importedVar = step.params?.store_in_variable || step.params?.variable;
         if (typeof importedVar === "string" && importedVar) {
           vars.add(importedVar);
         }

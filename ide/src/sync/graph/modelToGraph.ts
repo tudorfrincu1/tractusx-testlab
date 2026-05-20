@@ -140,7 +140,7 @@ function buildStepGraph(script: ScriptDefinition, mode: GraphMode): GraphData {
             label: step.description || step.type,
             stepType: step.type,
             color: getStepColor(step.type),
-            hasAssertions: (step.expect?.length ?? 0) > 0,
+            hasAssertions: (step.validate?.length ?? 0) > 0,
             storesMemory: !!step.store_in_memory,
             conditional: !!step.if,
             serviceName: mode === "dataflow" ? getStepService(step) : undefined,

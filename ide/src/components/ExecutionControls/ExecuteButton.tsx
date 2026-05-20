@@ -46,15 +46,14 @@ export function ExecuteButton() {
   const pause = useExecutionStore((s) => s.pause);
   const resume = useExecutionStore((s) => s.resume);
   const hasProject = useProjectStore((s) => s.hasProject);
-  const getActiveModel = useProjectStore((s) => s.getActiveModel);
+  const tck = useProjectStore((s) => s.tck);
   const compileStatus = useCompileStore((s) => s.compileStatus);
 
   const handleExecute = useCallback(() => {
-    const model = getActiveModel();
-    if (!model) return;
-    const yaml = modelToYaml(model);
+    if (!tck) return;
+    const yaml = modelToYaml(tck);
     execute(yaml);
-  }, [getActiveModel, execute]);
+  }, [tck, execute]);
 
   const handlePause = useCallback(() => { pause(); }, [pause]);
   const handleResume = useCallback(() => { resume(); }, [resume]);

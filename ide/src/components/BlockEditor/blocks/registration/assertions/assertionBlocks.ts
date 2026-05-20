@@ -232,8 +232,11 @@ export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: Bl
               ? { x: rect.right + 8, y: rect.top }
               : { x: 400, y: 300 };
             const currentPath = block.getFieldValue("PATH") || "";
-            const segments: PathSegment[] = (block as unknown as BlockWithSegments).__segments
-              ?? parsePathToSegments(currentPath);
+            const storedSegments = (block as unknown as BlockWithSegments).__segments;
+            const segments: PathSegment[] =
+              (storedSegments && segmentsToPath(storedSegments) === currentPath)
+                ? storedSegments
+                : parsePathToSegments(currentPath);
             const sourceSchema = resolveParentStepSchema(block, catalog);
             requestOpenPathBuilder({
               blockId: block.id,

@@ -26,6 +26,7 @@
 import type { Workspace } from "blockly";
 import type { BlockCatalog, BlockCatalogOutput } from "../../common/catalog/catalogLoader";
 import { findCatalogEntry } from "../../common/catalog/catalogLoader";
+import { jsonToSchema } from "../core/jsonToSchema";
 
 /**
  * Find the catalog output entry that produces `variableName` by scanning
@@ -40,7 +41,8 @@ function findOutputForVariable(
     .filter((b) => b.type.startsWith("step_"));
 
   for (const block of stepBlocks) {
-    const entry = findCatalogEntry(block.type, catalog);
+    const stepType = block.type.slice(5); // strip "step_" prefix
+    const entry = findCatalogEntry(stepType, catalog);
     if (!entry?.outputs) continue;
     const match = entry.outputs.find((o) => o.name === variableName);
     if (match) return match;
@@ -54,7 +56,24 @@ export function resolveVariableSchema(
   workspace: Workspace,
   catalog: BlockCatalog,
 ): Record<string, unknown> | undefined {
-  return findOutputForVariable(variableName, workspace, catalog)?.schema;
+  const output = findOutputForVariable(variableName, workspace, catalog);
+  if (!output) return undefined;
+
+  const schema = output.schema;
+  if (schema && hasNavigableStructure(schema)) return schema;
+
+  // Fall back to generating a schema from the example value
+  if (output.example !== undefined) return jsonToSchema(output.example);
+
+  return schema;
+}
+
+/** Check if a schema has properties or items that SchemaTree can render. */
+function hasNavigableStructure(schema: Record<string, unknown>): boolean {
+  const type = schema["type"] as string | undefined;
+  if (type === "object" && schema["properties"]) return true;
+  if (type === "array" && schema["items"]) return true;
+  return false;
 }
 
 /** Resolve a variable name to its source block's output example value. */

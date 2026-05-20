@@ -90,7 +90,7 @@ def parse_step(raw: dict) -> StepDefinition:
         params=params,
         on_failure=FailurePolicy(raw[keys.ON_FAILURE]) if keys.ON_FAILURE in raw else FailurePolicy.ABORT,
         timeout_s=raw.get(keys.TIMEOUT_S),
-        expect=expectations,
+        validate=expectations,
         store_in_memory=store_in_memory,
         store_in_variable=store_in_var,
         if_condition=raw.get(keys.IF),

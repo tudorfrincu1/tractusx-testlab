@@ -55,10 +55,10 @@ async def run_step(
         output = await step_instance.execute(params, context, step_def)
 
         assertion_results: list[AssertionResult] = []
-        if step_def.expect:
+        if step_def.validate:
             assertion_results = [
                 AssertionResult.model_validate(ar.model_dump())
-                for ar in AssertionEngine.evaluate(step_def.expect, output, context.variables)
+                for ar in AssertionEngine.evaluate(step_def.validate, output, context.variables)
             ]
 
         finished_at = datetime.now(timezone.utc)
@@ -143,7 +143,7 @@ async def execute_setup_steps(
     for step_idx, step_def in enumerate(script.definition.setup):
         await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[setup:{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, f"setup:{step_def.type}")
+        monitor.on_step_started(job_id, step_idx, step_def.type, step_name=step_name, phase="setup")
         jobs.set_current_step(job_id, step_name)
 
         if not ConditionEvaluator.should_run(
@@ -198,7 +198,7 @@ async def execute_main_steps(
     for step_idx, step_def in enumerate(script.definition.steps):
         await jobs.get_pause_event(job_id).wait()
         step_name = f"{script.name}[{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, step_def.type)
+        monitor.on_step_started(job_id, step_idx, step_def.type, step_name=step_name, phase="main")
         jobs.set_current_step(job_id, step_name)
 
         if not ConditionEvaluator.should_run(
@@ -246,7 +246,7 @@ async def execute_teardown_steps(
     teardown_results: list[StepResult] = []
     for step_idx, step_def in enumerate(script.definition.teardown):
         teardown_name = f"{script.name}[teardown:{step_idx}]:{step_def.type}"
-        monitor.on_step_started(job_id, step_idx, f"teardown:{step_def.type}")
+        monitor.on_step_started(job_id, step_idx, step_def.type, step_name=teardown_name, phase="cleanup")
 
         step_cls = StepRegistry.get(step_def.type, script.definition.version)
         if step_cls:
