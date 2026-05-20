@@ -50,6 +50,7 @@ Each ADR follows the [Michael Nygard format](https://cognitect.com/blog/2011/11/
 | [0006](ADR-0006-service-auto-declaration-on-block-drop.md) | Service Auto-Declaration on Block Drop | Accepted |
 | [0007](ADR-0007-precondition-execution-logs-model.md) | Precondition Execution Logs Model | Accepted |
 | [0008](ADR-0008-test-case-to-tck-rename.md) | Test-Case to TCK Rename | Accepted |
+| [0009](ADR-0009-typed-variable-class-system.md) | Typed Variable Class System | Proposed |
 
 ## Creating a New ADR
 

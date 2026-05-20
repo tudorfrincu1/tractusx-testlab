@@ -197,6 +197,7 @@ nav:
       - ADR-0006 Service Auto-Declaration: developer/decision-records/ADR-0006-service-auto-declaration-on-block-drop.md
       - ADR-0007 Precondition Logs Model: developer/decision-records/ADR-0007-precondition-execution-logs-model.md
       - ADR-0008 TCK Rename: developer/decision-records/ADR-0008-test-case-to-tck-rename.md
+      - ADR-0009 Typed Variable Class System: developer/decision-records/ADR-0009-typed-variable-class-system.md
   - Contributing:
     - Guidelines: contributing/index.md
 
