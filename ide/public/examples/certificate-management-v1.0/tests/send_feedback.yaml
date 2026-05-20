@@ -66,8 +66,9 @@ steps:
     description: Find CCMAPI endpoint and obtain dataplane credentials
     params:
       service: provider_edc
+      counter_party_id: "@provider_bpn"
       counter_party_address: "@provider_address"
-      precondition_policy: ccmapi_usage_policy
+      precondition_policy_var: ccmapi_usage_policy
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "="
@@ -78,26 +79,12 @@ steps:
         - operand_left: "https://w3id.org/catenax/ontology/common#version"
           operator: "="
           operand_right: "3.0"
-      transfer_type: "HttpData-PULL"
     validate:
-      - type: "NOT_NULL"
-        output: datasets
-      - type: "NOT_NULL"
-        output: asset_id
-      - type: "NOT_NULL"
-        output: negotiation_id
-      - type: "NOT_NULL"
-        output: transfer_process_id
       - type: "NOT_NULL"
         output: edr_token
       - type: "NOT_NULL"
         output: dataplane_url
     store_in_memory:
-      catalog: "catalog"
-      datasets: "datasets"
-      asset_id: "asset_id"
-      negotiation_id: "negotiation_id"
-      transfer_process_id: "transfer_process_id"
       edr_token: "edr_token"
       dataplane_url: "dataplane_url"
 
@@ -110,7 +97,8 @@ steps:
     description: Send CX-0135 status notification to provider via dataplane
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/status"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/status"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"

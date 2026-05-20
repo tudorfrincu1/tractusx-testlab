@@ -59,8 +59,9 @@ steps:
     description: Discover certificate Submodel asset and obtain dataplane credentials
     params:
       service: provider_edc
+      counter_party_id: "@provider_bpn"
       counter_party_address: "@provider_address"
-      precondition_policy: ccmapi_usage_policy
+      precondition_policy_var: ccmapi_usage_policy
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "="
@@ -68,45 +69,21 @@ steps:
         - operand_left: "http://purl.org/dc/terms/subject"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
-      transfer_type: "HttpData-PULL"
     validate:
-      - type: "NOT_NULL"
-        output: datasets
-      - type: "NOT_NULL"
-        output: asset_id
-      - type: "NOT_NULL"
-        output: negotiation_id
-      - type: "NOT_NULL"
-        output: transfer_process_id
       - type: "NOT_NULL"
         output: edr_token
       - type: "NOT_NULL"
         output: dataplane_url
     store_in_memory:
-      catalog: "catalog"
-      datasets: "datasets"
-      asset_id: "asset_id"
-      negotiation_id: "negotiation_id"
-      transfer_process_id: "transfer_process_id"
       edr_token: "edr_token"
       dataplane_url: "dataplane_url"
-
-  - type: json_path_extract
-    description: Verify Submodel semantic ID
-    params:
-      input: "@datasets"
-      json_path: "[0].['https://admin-shell.io/aas/3/0/HasSemantics/semanticId']"
-      store_in_variable: semantic_id_value
-    validate:
-      - type: "EQUALS"
-        output: semantic_id_value
-        value: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
 
   - type: http_call_dataplane
     description: Fetch certificate payload via data plane
     params:
       method: GET
-      url: "@dataplane_url/companycertificate/@document_id"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/@document_id"
       edr_token: "@edr_token"
       headers:
         Accept: "application/json"

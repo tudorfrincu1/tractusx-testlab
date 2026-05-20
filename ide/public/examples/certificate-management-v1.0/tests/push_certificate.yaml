@@ -44,7 +44,6 @@ setup:
       method: POST
       path: "/companycertificate/status"
       response_status: 200
-      response_body: {}
 
 steps:
   # ── Catalog → Negotiate → Transfer (shortcut) ─────────────────────
@@ -96,7 +95,8 @@ steps:
     description: Push certificate to SUT via data plane
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/push"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/push"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"

@@ -146,7 +146,7 @@ steps:
   # --- Phase 2: Send AVAILABLE notification to SUT through EDC protocol ---
 
   # ── Catalog → Negotiate → Transfer (shortcut) ─────────────────────
-  - type: request_data_filtered_from_precondition
+  - type: pull_data_filtered_from_precondition
     description: >
       Discover the SUT's CCMAPI notification endpoint and obtain dataplane
       credentials for sending the AVAILABLE notification.
@@ -199,7 +199,8 @@ steps:
       certificate data is available to pull from TestLab's catalog.
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/available"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/available"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"

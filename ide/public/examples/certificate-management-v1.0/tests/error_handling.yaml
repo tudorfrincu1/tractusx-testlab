@@ -90,7 +90,8 @@ steps:
       REJECTED with proper CX-0135 header envelope
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/request"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/request"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"
@@ -151,7 +152,8 @@ steps:
       HTTP 500 indicating server-side validation failure
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/request"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/request"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"

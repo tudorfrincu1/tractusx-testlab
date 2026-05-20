@@ -91,7 +91,8 @@ steps:
     description: POST certificate request to CCMAPI endpoint via data plane
     params:
       method: POST
-      url: "@dataplane_url/companycertificate/request"
+      dataplane_url: "@dataplane_url"
+      path: "/companycertificate/request"
       edr_token: "@edr_token"
       headers:
         Content-Type: "application/json"
