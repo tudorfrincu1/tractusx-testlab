@@ -1,0 +1,320 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eclipse-tractusx.github.io/tractusx-testlab/schemas/tck-manifest.schema.json",
+  "title": "TestLab TCK Manifest (kind: tck)",
+  "description": "JSON Schema for TestLab YAML Syntax v2 TCK manifest files. Licensed under Apache-2.0. See https://www.apache.org/licenses/LICENSE-2.0",
+  "type": "object",
+  "required": ["kind", "name", "version", "env", "tests"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "tck",
+      "description": "Document type identifier. Must be 'tck' for TCK manifests."
+    },
+    "name": {
+      "type": "string",
+      "description": "Unique identifier for this TCK. Used in logs and package manifests.",
+      "examples": ["connector-certification", "certificate-management"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the TCK.",
+      "examples": ["1.0", "2.1.0"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the TCK purpose."
+    },
+    "author": {
+      "type": "string",
+      "description": "Author or team responsible for this TCK."
+    },
+    "standards": {
+      "type": "array",
+      "description": "List of standards this TCK validates against.",
+      "items": {
+        "$ref": "#/definitions/standard"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags for categorization and filtering.",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["CCM", "EDC", "saturn"]]
+    },
+    "env": {
+      "$ref": "#/definitions/env",
+      "description": "Environment block defining variables, services, and schemas inherited by all tests."
+    },
+    "preconditions": {
+      "type": "array",
+      "description": "Steps executed before any test. Their returns are visible to all tests.",
+      "items": {
+        "$ref": "#/definitions/step"
+      }
+    },
+    "tests": {
+      "type": "array",
+      "description": "Ordered list of test file references to execute.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/testReference"
+      }
+    }
+  },
+  "definitions": {
+    "standard": {
+      "type": "object",
+      "description": "A standard reference with ID and version.",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Standard identifier (e.g., CX-0135).",
+          "examples": ["CX-0135", "CX-0152"]
+        },
+        "version": {
+          "type": "string",
+          "description": "Standard version.",
+          "examples": ["v3.1.0", "v1.0"]
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "description": "Environment configuration inherited by all tests in this TCK.",
+      "additionalProperties": false,
+      "properties": {
+        "variables": {
+          "type": "object",
+          "description": "Map of variable definitions available as ${{ env.x }} in all tests.",
+          "additionalProperties": {
+            "$ref": "#/definitions/variableDefinition"
+          }
+        },
+        "services": {
+          "type": "array",
+          "description": "List of service definitions available to steps via the 'service' parameter.",
+          "items": {
+            "$ref": "#/definitions/serviceDefinition"
+          }
+        },
+        "schemas": {
+          "type": "object",
+          "description": "Map of schema imports. Keys are schema names, values define the file path.",
+          "additionalProperties": {
+            "$ref": "#/definitions/schemaImport"
+          }
+        }
+      },
+      "required": ["variables"]
+    },
+    "variableDefinition": {
+      "type": "object",
+      "description": "A variable definition with class, acquisition type, and optional default.",
+      "required": ["class", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "class": {
+          "type": "string",
+          "description": "Semantic class of this variable (from the class registry).",
+          "examples": ["url", "bpn", "string", "integer", "uuid"]
+        },
+        "type": {
+          "type": "string",
+          "description": "How the variable value is acquired at runtime.",
+          "enum": ["input", "manual", "function"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this variable's purpose."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this variable must be supplied at runtime.",
+          "default": false
+        },
+        "default": {
+          "description": "Default value if not supplied at runtime. Can be any type."
+        },
+        "secret": {
+          "type": "boolean",
+          "description": "Whether this variable contains sensitive data. Secrets are masked in logs and excluded from exports.",
+          "default": false
+        },
+        "generator": {
+          "type": "string",
+          "description": "Generator function name. Required when type is 'function'.",
+          "enum": ["uuid_v4", "timestamp_iso", "random_string", "get_participant_bpn"]
+        }
+      },
+      "if": {
+        "properties": { "type": { "const": "function" } }
+      },
+      "then": {
+        "required": ["class", "type", "generator"]
+      }
+    },
+    "serviceDefinition": {
+      "type": "object",
+      "description": "A service definition that steps can reference by name.",
+      "required": ["name", "uses", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Service identifier used in step 'with' blocks.",
+          "examples": ["provider", "consumer", "testlab_connector"]
+        },
+        "uses": {
+          "type": "string",
+          "description": "Service type from the service type registry.",
+          "enum": ["edc_connector", "mock_server", "dtr", "discovery_finder"]
+        },
+        "role": {
+          "type": "string",
+          "description": "Relationship of this service to the test: internal (TestLab-owned), external (SUT), or additional (supporting infrastructure).",
+          "enum": ["internal", "external", "additional"]
+        },
+        "version": {
+          "type": "string",
+          "description": "Dataspace protocol version. Required for edc_connector.",
+          "enum": ["saturn", "jupiter"],
+          "examples": ["saturn", "jupiter"]
+        },
+        "with": {
+          "type": "object",
+          "description": "Configuration parameters for the service. Supports ${{ env.x }} interpolation.",
+          "additionalProperties": true
+        },
+        "auth": {
+          "$ref": "#/definitions/serviceAuth",
+          "description": "Authentication configuration for connecting to this service."
+        }
+      }
+    },
+    "serviceAuth": {
+      "type": "object",
+      "description": "Authentication configuration for a service.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Authentication mechanism.",
+          "enum": ["none", "api_key", "oauth2"]
+        },
+        "api_key": {
+          "type": "string",
+          "description": "API key value or ${{ env.x }} reference. Used when type is 'api_key'."
+        },
+        "token_url": {
+          "type": "string",
+          "description": "OAuth2 token endpoint URL. Required when type is 'oauth2'."
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth2 client ID. Required when type is 'oauth2'."
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "OAuth2 client secret. Required when type is 'oauth2'."
+        }
+      },
+      "additionalProperties": false
+    },
+    "schemaImport": {
+      "type": "object",
+      "description": "A schema import referencing an external schema file.",
+      "required": ["file"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Relative file path to the schema YAML file.",
+          "examples": ["schemas/asset.yaml", "schemas/policy.yaml"]
+        }
+      }
+    },
+    "testReference": {
+      "type": "object",
+      "description": "A reference to a test file with an optional human-readable name.",
+      "required": ["test"],
+      "additionalProperties": false,
+      "properties": {
+        "test": {
+          "type": "string",
+          "description": "Relative file path to the test YAML file.",
+          "examples": ["tests/create-asset.yaml", "tests/negotiate-contract.yaml"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional human-readable name for this test reference."
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "description": "A step definition representing a single operation in the test flow.",
+      "required": ["uses", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable step identifier. Must be unique within the file.",
+          "pattern": "^[a-z][a-z0-9_]{0,49}$",
+          "examples": ["create_asset_1", "negotiate_2"]
+        },
+        "uses": {
+          "type": "string",
+          "description": "Step type in namespace/action format.",
+          "examples": ["edc/create_asset", "http/call", "mock/wait_for_call", "util/generate_uuid"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable label for logs and reports."
+        },
+        "with": {
+          "type": "object",
+          "description": "Input parameters passed to the step handler. Supports ${{ }} interpolation.",
+          "additionalProperties": true
+        },
+        "returns": {
+          "type": "object",
+          "description": "Typed output declarations. Keys are output variable names.",
+          "additionalProperties": {
+            "$ref": "#/definitions/returnDefinition"
+          }
+        },
+        "validate": {
+          "type": "array",
+          "description": "Inline assertions evaluated against the step result.",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["status_code == 200", "response_body.id != null"]]
+        }
+      }
+    },
+    "returnDefinition": {
+      "type": "object",
+      "description": "A typed return value declaration for a step output.",
+      "required": ["type", "class"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Data type of the return value.",
+          "enum": ["string", "integer", "boolean", "object", "array"]
+        },
+        "class": {
+          "type": "string",
+          "description": "Semantic class from the class registry (ADR-0009).",
+          "examples": ["asset_id", "agreement_id", "url", "uuid"]
+        }
+      }
+    }
+  }
+}

@@ -44,7 +44,7 @@ type InputMode = "value" | "custom" | "variable";
 
 function detectMode(value: string | string[]): InputMode {
   const v = Array.isArray(value) ? value[0] ?? "" : value;
-  return v.startsWith("@") ? "variable" : "value";
+  return v.startsWith("${{") || v.startsWith("@") ? "variable" : "value";
 }
 
 function getModesForType(def: RightOperandDef): InputMode[] {

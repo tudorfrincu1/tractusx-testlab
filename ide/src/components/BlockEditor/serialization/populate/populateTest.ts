@@ -151,6 +151,10 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
             case "variable": {
               let val = String(paramVal);
               if (val.startsWith("@")) val = val.slice(1);
+              else {
+                const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(val);
+                if (varsMatch) val = varsMatch[1];
+              }
               setDropdownValue(sb, fieldKey, val);
               break;
             }

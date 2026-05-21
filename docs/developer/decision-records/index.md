@@ -52,6 +52,7 @@ Each ADR follows the [Michael Nygard format](https://cognitect.com/blog/2011/11/
 | [0008](ADR-0008-test-case-to-tck-rename.md) | Test-Case to TCK Rename | Accepted |
 | [0009](ADR-0009-typed-variable-class-system.md) | Typed Variable Class System | Proposed |
 | [0010](ADR-0010-yaml-syntax-v2.md) | YAML Syntax v2 (GHA-Inspired) | Accepted |
+| [0011](ADR-0011-environment-and-services.md) | Environment Variables and Services Management | Draft |
 
 ## Creating a New ADR
 

@@ -231,7 +231,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     init(this: Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("@")
+        .appendField("env.")
         .appendField(
           new Blockly.FieldDropdown(
             dynamicDropdown(
@@ -248,7 +248,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         );
       this.setOutput(true, "param_value");
       this.setColour(blockColors.variableGet);
-      this.setTooltip("Reference an environment/TCK variable — uses @variable_name syntax");
+      this.setTooltip("Reference an environment/TCK variable — uses ${{ env.variable_name }} syntax");
     },
   };
 
@@ -256,11 +256,11 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     init(this: Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("@")
+        .appendField("vars.")
         .appendField(new Blockly.FieldLabel(""), "VAR_NAME");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.variableGet);
-      this.setTooltip("Output variable — drag to use in another block");
+      this.setTooltip("Step return variable — uses ${{ vars.variable_name }} syntax");
       this.setDeletable(true);
       this.setMovable(true);
     },

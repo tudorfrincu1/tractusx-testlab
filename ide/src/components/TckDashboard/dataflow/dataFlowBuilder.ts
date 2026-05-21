@@ -176,12 +176,12 @@ function collectStepNames(script: ScriptDefinition): string[] {
   return names;
 }
 
-const VAR_REF_PATTERN = /@([a-zA-Z_][a-zA-Z0-9_]*)/g;
+const VAR_REF_PATTERN = /\$\{\{\s*vars\.(\w+)\s*\}\}|@([a-zA-Z_][a-zA-Z0-9_]*)/g;
 
 /** Recursively scan a value for `@variable_name` references. */
 function extractVarRefs(value: unknown, out: Set<string>): void {
   if (typeof value === "string") {
-    for (const match of value.matchAll(VAR_REF_PATTERN)) out.add(match[1]);
+    for (const match of value.matchAll(VAR_REF_PATTERN)) out.add(match[1] || match[2]);
   } else if (Array.isArray(value)) {
     for (const item of value) extractVarRefs(item, out);
   } else if (value !== null && typeof value === "object") {

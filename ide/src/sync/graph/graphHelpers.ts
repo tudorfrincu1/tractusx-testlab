@@ -34,13 +34,13 @@ export function getStepService(step: StepDefinition): string | undefined {
 
 export function collectVariableRefs(params: Record<string, unknown>): Set<string> {
   const refs = new Set<string>();
-  const varPattern = /@(\w+)|\$\{([^}]+)\}|\{\{([^}]+)\}\}/g;
+  const varPattern = /\$\{\{\s*vars\.(\w+)\s*\}\}|@(\w+)|\$\{([^}]+)\}|\{\{([^}]+)\}\}/g;
 
   function walk(value: unknown): void {
     if (typeof value === "string") {
       let match: RegExpExecArray | null;
       while ((match = varPattern.exec(value)) !== null) {
-        refs.add(match[1] || match[2] || match[3]);
+        refs.add(match[1] || match[2] || match[3] || match[4]);
       }
     } else if (Array.isArray(value)) {
       for (const item of value) walk(item);

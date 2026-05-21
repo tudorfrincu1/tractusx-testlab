@@ -181,7 +181,13 @@ function createAssertionBlock(
       const ab = makeBlock(ws, "assert_validates_schema");
       setDropdownValue(ab, "OUTPUT", output);
       const rawSchema = typeof a.schema === "string" ? a.schema : "";
-      const schemaVal = rawSchema.startsWith("@") ? rawSchema.slice(1) : rawSchema;
+      let schemaVal = rawSchema;
+      if (schemaVal.startsWith("@")) {
+        schemaVal = schemaVal.slice(1);
+      } else {
+        const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(schemaVal);
+        if (varsMatch) schemaVal = varsMatch[1];
+      }
       if (schemaVal) setDropdownValue(ab, "SCHEMA_REF", schemaVal);
       return ab;
     }

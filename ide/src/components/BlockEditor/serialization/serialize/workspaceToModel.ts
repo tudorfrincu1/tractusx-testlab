@@ -37,6 +37,7 @@ import { readValueBlockAsString, readAssertionChain, readValueBlockAsUnknown, se
 import { toRuntimeStepType } from "../stepTypeAliases";
 import { parseUnsupportedParams } from "../unsupportedStepPayload";
 import { parseJsonWithVarRefs } from "../../blocks/json/modal/jsonVarRefs";
+import { toVarRef, toEnvRef } from "../varSyntax";
 import { serializePreconditionPolicyBlock } from "./preconditionSerializers";
 
 export function workspaceToModel(
@@ -71,6 +72,7 @@ export function workspaceToModel(
 
 export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[] {
   const steps: Step[] = [];
+  const knownOutputs: Set<string> = new Set();
   let current = block;
 
   while (current) {
@@ -80,7 +82,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         steps.push({
           type: "export_variable",
           description: `Export ${varName}`,
-          params: { name: varName, value: `@${varName}` },
+          params: { name: varName, value: toVarRef(varName) },
         } as StepDefinition);
       }
       current = current.getNextBlock();
@@ -116,7 +118,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       const originalType = current.getFieldValue("ORIGINAL_TYPE") || "unsupported_step";
       const stepDescription = current.getFieldValue("STEP_DESCRIPTION") || "";
       const paramsJson = current.getFieldValue("PARAMS_JSON") || "{}";
-      const params = parseUnsupportedParams(paramsJson);
+      const params = parseUnsupportedParams(paramsJson, knownOutputs);
       steps.push({
         type: originalType,
         description: stepDescription || undefined,
@@ -135,7 +137,7 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
         } else if (kvBlock.type === "value_json") {
           const raw = kvBlock.getFieldValue("JSON_VALUE") || "{}";
           try {
-            const parsed: unknown = parseJsonWithVarRefs(raw);
+            const parsed: unknown = parseJsonWithVarRefs(raw, knownOutputs);
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
               Object.assign(params, parsed as Record<string, unknown>);
             }
@@ -154,15 +156,22 @@ export function readStepChain(block: Block | null, catalog: BlockCatalog): Step[
       const step = serializePreconditionPolicyBlock(current);
       if (step) steps.push(step);
     } else {
-      const step = blockToStep(current, catalog);
-      if (step) steps.push(step);
+      const step = blockToStep(current, catalog, knownOutputs);
+      if (step) {
+        steps.push(step);
+        if (step.store_in_memory) {
+          for (const key of Object.keys(step.store_in_memory as Record<string, unknown>)) {
+            knownOutputs.add(key);
+          }
+        }
+      }
     }
     current = current.getNextBlock();
   }
   return steps;
 }
 
-function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null {
+function blockToStep(block: Block, catalog: BlockCatalog, knownOutputs: ReadonlySet<string>): StepDefinition | null {
   if (!block.type.startsWith("step_")) return null;
 
   const stepType = block.type.replace("step_", "");
@@ -186,7 +195,9 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
         }
         case "variable": {
           const val = block.getFieldValue(fieldKey);
-          if (val && val !== "__NONE__") params[p.name] = `@${val}`;
+          if (val && val !== "__NONE__") {
+            params[p.name] = knownOutputs.has(val) ? toVarRef(val) : toEnvRef(val);
+          }
           break;
         }
         case "text": {
@@ -204,7 +215,7 @@ function blockToStep(block: Block, catalog: BlockCatalog): StepDefinition | null
           if (connected && connected.type === "value_json") {
             const raw = connected.getFieldValue("JSON_VALUE") || "{}";
             try {
-              const parsed: unknown = parseJsonWithVarRefs(raw);
+              const parsed: unknown = parseJsonWithVarRefs(raw, knownOutputs);
               if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
                 params[p.name] = parsed;
               }

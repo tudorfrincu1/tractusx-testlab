@@ -175,6 +175,17 @@ nav:
     - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
+    - Block & Assertion Reference: api-reference/blocks.md
+    - Blocks:
+      - Mock: api-reference/blocks/mock.md
+      - Wait (Moved): api-reference/blocks/wait.md
+      - Function: api-reference/blocks/function.md
+      - Flow: api-reference/blocks/flow.md
+      - EDC Connector: api-reference/blocks/edc-connector.md
+      - Digital Twin Registry: api-reference/blocks/dtr.md
+      - HTTP: api-reference/blocks/http.md
+      - Validation: api-reference/blocks/validation.md
+      - TCK Manifest: api-reference/blocks/manifest.md
   - Developer:
     - Overview: developer/index.md
     - Product Scope: developer/product-scope.md
@@ -199,6 +210,7 @@ nav:
       - ADR-0008 TCK Rename: developer/decision-records/ADR-0008-test-case-to-tck-rename.md
       - ADR-0009 Typed Variable Class System: developer/decision-records/ADR-0009-typed-variable-class-system.md
       - ADR-0010 YAML Syntax v2: developer/decision-records/ADR-0010-yaml-syntax-v2.md
+      - ADR-0011 Environment and Services: developer/decision-records/ADR-0011-environment-and-services.md
   - Contributing:
     - Guidelines: contributing/index.md
 

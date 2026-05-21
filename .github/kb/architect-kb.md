@@ -24,11 +24,25 @@
 - **Rationale**: SDK is the canonical implementation of Tractus-X protocols. Duplication creates drift.
 - **Consequences**: Any protocol change requires an SDK upgrade, not a testlab change.
 
-### AD-3: Variable syntax is `@variable_name` in YAML
+### AD-3: ~~Variable syntax is `@variable_name` in YAML~~
 - **Date**: 2025
-- **Status**: Active
-- **Decision**: All variable references in test YAML use `@variable_name` syntax. Never `${var}`, `{{var}}`, or other templating styles.
-- **Rationale**: Unambiguous, simple to parse, consistent across all test cases.
+- **Status**: Superseded by AD-6
+- **Decision**: ~~All variable references in test YAML use `@variable_name` syntax.~~
+- **Rationale**: ~~Unambiguous, simple to parse, consistent across all test cases.~~
+
+### AD-6: YAML Syntax v2 — Scoped variable system (GHA-inspired)
+- **Date**: 2026-05-20
+- **Status**: Active (ADR-0010)
+- **Decision**: Variable references use `${{ vars.x }}` for step-output variables and `${{ env.x }}` for environment/TCK-global variables. Keywords change: `type`→`uses`, `params`→`with`, `store_in_memory`→`returns`. No backward compatibility with `@` syntax.
+- **Rationale**: GHA-style is familiar to developers, scoped references enable compile-time ambiguity detection, typed `returns` integrates with the class system (AD-5).
+- **Consequences**: Full migration required across IDE + backend. Migration CLI needed for existing YAML files. See `docs/developer/yaml-v2-variable-migration-plan.md`.
+
+### AD-7: Environment and services managed at TCK level (ADR-0011)
+- **Date**: 2026-05-20
+- **Status**: Active (ADR-0011)
+- **Decision**: All services and env variables are declared in the TCK manifest `env:` block. Tests cannot declare their own. Services have a `role` (internal/external/additional), a type from a registry (edc_connector, mock_server, dtr, discovery_finder), and optional `auth`. Variables have an acquisition `type` (input/manual/function) and optional `secret` flag.
+- **Rationale**: One configuration point per TCK avoids duplication, enables compile-time validation of all references, and maps 1:1 to the IDE Environment Editor.
+- **Consequences**: Tests are never self-contained — they always need a parent TCK manifest. Manual variables introduce async complexity (runtime pauses). Service type registry must be maintained.
 
 ### AD-4: No file exceeds 300 lines
 - **Date**: 2025
@@ -100,8 +114,12 @@
 ### RISK-3: Block catalog desync
 - `ide/public/blocks/index.json` must stay in sync with the actual block files. A missing or wrong path in the manifest silently breaks block loading.
 
-### RISK-4: YAML variable reference errors
-- Using `${var}` instead of `@var` in YAML generates no parse error but produces wrong runtime behavior. Always verify variable syntax in acceptance criteria.
+### RISK-4: ~~YAML variable reference errors~~
+- ~~Using `${var}` instead of `@var` in YAML generates no parse error but produces wrong runtime behavior.~~ Superseded by AD-6 — only `${{ }}` syntax is valid now.
+
+### RISK-6: YAML v2 migration breakage
+- **Date**: 2026-05-20
+- The v2 migration touches every layer (models, parser, resolver, compiler, IDE serialization). Shipping frontend before backend (or vice versa) creates a window where generated YAML is rejected. Must ship atomically or behind feature flag.
 
 ### RISK-5: Block catalog class taxonomy drift
 - **Date**: 2026-05-19

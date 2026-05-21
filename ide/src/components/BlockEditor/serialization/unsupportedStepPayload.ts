@@ -25,12 +25,12 @@
 
 import { parseJsonWithVarRefs } from "../blocks/json/modal/jsonVarRefs";
 
-export function parseUnsupportedParams(paramsJsonRaw: string): Record<string, unknown> {
+export function parseUnsupportedParams(paramsJsonRaw: string, stepOutputs?: ReadonlySet<string>): Record<string, unknown> {
   const trimmed = paramsJsonRaw.trim();
   if (!trimmed) return {};
 
   try {
-    const parsed = parseJsonWithVarRefs(trimmed) as unknown;
+    const parsed = parseJsonWithVarRefs(trimmed, stepOutputs) as unknown;
     return (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed))
       ? parsed as Record<string, unknown>
       : { __raw_payload: trimmed };

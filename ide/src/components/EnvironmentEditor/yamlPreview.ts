@@ -36,7 +36,7 @@ function indent(level: number): string {
 }
 
 function quoted(value: string): string {
-  if (value.startsWith("@") || value.includes(" ") || value.includes(":")) {
+  if (value.startsWith("${{") || value.startsWith("@") || value.includes(" ") || value.includes(":")) {
     return `"${value}"`;
   }
   return value;

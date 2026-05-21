@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://eclipse-tractusx.github.io/tractusx-testlab/schemas/schema-file.schema.json",
+  "title": "TestLab Schema File (kind: schema)",
+  "description": "JSON Schema for TestLab YAML Syntax v2 schema definition files. Used to define validation schemas for step responses. Licensed under Apache-2.0. See https://www.apache.org/licenses/LICENSE-2.0",
+  "type": "object",
+  "required": ["kind", "name", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "schema",
+      "description": "Document type identifier. Must be 'schema' for schema files."
+    },
+    "name": {
+      "type": "string",
+      "description": "Schema identifier referenced from TCK env.schemas entries.",
+      "examples": ["asset_schema", "policy_schema", "certificate_payload"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this schema definition.",
+      "examples": ["1.0", "2.0.0"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this schema validates."
+    },
+    "type": {
+      "type": "string",
+      "description": "Root type of the schema (mirrors JSON Schema type).",
+      "enum": ["object", "array", "string", "integer", "number", "boolean", "null"]
+    },
+    "required": {
+      "type": "array",
+      "description": "List of required property names (when type is object).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "properties": {
+      "type": "object",
+      "description": "Property definitions (when type is object). Recursive structure supporting nested schemas.",
+      "additionalProperties": {
+        "$ref": "#/definitions/schemaProperty"
+      }
+    }
+  },
+  "definitions": {
+    "schemaProperty": {
+      "type": "object",
+      "description": "A property definition within a schema. Supports recursive nesting.",
+      "properties": {
+        "type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["object", "array", "string", "integer", "number", "boolean", "null"]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["object", "array", "string", "integer", "number", "boolean", "null"]
+              },
+              "description": "Multiple allowed types."
+            }
+          ],
+          "description": "Data type of this property."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this property."
+        },
+        "enum": {
+          "type": "array",
+          "description": "Allowed values for this property.",
+          "items": {}
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern the value must match (for string types)."
+        },
+        "format": {
+          "type": "string",
+          "description": "Semantic format hint (e.g., date-time, uri, uuid).",
+          "examples": ["date-time", "uri", "uuid", "email"]
+        },
+        "minimum": {
+          "type": "number",
+          "description": "Minimum value (for numeric types)."
+        },
+        "maximum": {
+          "type": "number",
+          "description": "Maximum value (for numeric types)."
+        },
+        "minLength": {
+          "type": "integer",
+          "description": "Minimum string length.",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "description": "Maximum string length.",
+          "minimum": 0
+        },
+        "minItems": {
+          "type": "integer",
+          "description": "Minimum array length.",
+          "minimum": 0
+        },
+        "maxItems": {
+          "type": "integer",
+          "description": "Maximum array length.",
+          "minimum": 0
+        },
+        "required": {
+          "type": "array",
+          "description": "Required properties (when type is object).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "properties": {
+          "type": "object",
+          "description": "Nested property definitions (when type is object).",
+          "additionalProperties": {
+            "$ref": "#/definitions/schemaProperty"
+          }
+        },
+        "items": {
+          "$ref": "#/definitions/schemaProperty",
+          "description": "Item schema (when type is array)."
+        },
+        "additionalProperties": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "$ref": "#/definitions/schemaProperty" }
+          ],
+          "description": "Whether additional properties are allowed, or their schema."
+        },
+        "default": {
+          "description": "Default value for this property."
+        },
+        "examples": {
+          "type": "array",
+          "description": "Example values for documentation.",
+          "items": {}
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

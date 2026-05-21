@@ -49,6 +49,8 @@
     --with-kw: #cba6f7;
     --class-kw: #c4a7e7;
     --comment: #6c7086;
+    --assert-type: #f5c2e7;
+    --operator: #fab387;
     --badge-testlab: #f38ba8;
     --badge-gha: #a6e3a1;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -150,6 +152,8 @@
   .code-block .env { color: var(--env-variable); font-weight: 500; }
   .code-block .bool { color: var(--boolean); font-weight: 500; }
   .code-block .cmt { color: var(--comment); font-style: italic; }
+  .code-block .assert-type { color: var(--assert-type); font-weight: 600; }
+  .code-block .op { color: var(--operator); font-weight: 500; }
 
   .ref-table {
     width: 100%;
@@ -299,6 +303,8 @@
     <div class="legend-item"><div class="legend-swatch" style="background:var(--with-kw)"></div> with:</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--validate-kw)"></div> validate:</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--store-kw)"></div> returns:</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--assert-type)"></div> validate/</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--operator)"></div> operator</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--class-kw)"></div> type:/class:</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--variable)"></div> ${{ vars.x }}</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--env-variable)"></div> ${{ env.x }}</div>
@@ -309,10 +315,10 @@
   <!-- Section 1: Step Syntax -->
   <section>
     <h2><span class="section-num">§1</span> Step Syntax</h2>
-    <p>Each step follows a consistent structure: id → identify → label → configure → returns → validate.</p>
+    <p>Each step follows a consistent structure: id → identify → label → configure → returns → validate. The <code>uses:</code> field uses hierarchical namespaces.</p>
     <div class="code-block"><span class="kw-top">steps:</span>
   - <span class="key">id:</span> <span class="str">send_notification</span>
-    <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
+    <span class="kw-uses">uses:</span> <span class="str">connector/http/call_via_dataplane</span>
     <span class="kw-name">name:</span> <span class="str">Send notification to SUT</span>
     <span class="kw-with">with:</span>
       <span class="key">method:</span> <span class="str">POST</span>
@@ -334,11 +340,26 @@
         <span class="kw-class">type:</span> <span class="str">object</span>
         <span class="kw-class">class:</span> <span class="str">response_headers</span>
     <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">EQUALS</span>
-        <span class="key">output:</span> <span class="str">status_code</span>
-        <span class="key">value:</span> <span class="num">200</span>
-      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
-        <span class="key">output:</span> <span class="str">response_body</span></div>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">status_code</span>
+          <span class="key">operator:</span> <span class="op">equals</span>
+          <span class="key">value:</span> <span class="num">200</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">path:</span> <span class="str">"header.messageId"</span>
+          <span class="key">operator:</span> <span class="op">matches_regex</span>
+          <span class="key">value:</span> <span class="str">"^urn:uuid:[0-9a-f-]{36}$"</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">path:</span> <span class="str">"content.requestStatus"</span>
+          <span class="key">operator:</span> <span class="op">one_of</span>
+          <span class="key">value:</span>
+            - <span class="str">"IN_PROGRESS"</span>
+            - <span class="str">"COMPLETED"</span>
+            - <span class="str">"REJECTED"</span></div>
   </section>
 
   <!-- Section 2: Syntax Reference -->
@@ -358,9 +379,9 @@
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--uses-kw)">uses:</td>
-          <td>Identifies which step type to execute (like an action reference)</td>
+          <td>Identifies which step type to execute. Uses hierarchical namespaces: <code>namespace/[sub-namespace/]action</code></td>
           <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
-          <td class="example-code">uses: mock_endpoint</td>
+          <td class="example-code">uses: connector/consumer/negotiate</td>
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--name-kw)">name:</td>
@@ -376,9 +397,9 @@
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--validate-kw)">validate:</td>
-          <td>Assertions to run after step execution</td>
+          <td>Assertions to run after step execution. Array of assertion objects using the same <code>uses:</code> / <code>with:</code> pattern as steps. The <code>validate/</code> namespace contains all assertion types.</td>
           <td><span class="origin-badge origin-testlab">TestLab</span></td>
-          <td class="example-code">validate: [{ type: EQUALS, output: status_code, value: 200 }]</td>
+          <td class="example-code">validate: [{ uses: validate/field, with: { input: body, path: "x", operator: equals, value: 1 } }]</td>
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--variable)">${{ vars.x }}</td>
@@ -418,9 +439,9 @@
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--env-variable)">env:</td>
-          <td>Environment configuration block — contains <code>variables</code> (with typed classes) and <code>services</code> available to all tests</td>
+          <td>Environment configuration block — contains <code>variables</code> (with typed classes), <code>services</code>, and <code>schemas</code></td>
           <td><span class="origin-badge origin-gha">GitHub Actions</span></td>
-          <td class="example-code">env: { variables: {...}, services: [...] }</td>
+          <td class="example-code">env: { variables: {...}, services: [...], schemas: {...} }</td>
         </tr>
         <tr>
           <td class="kw-cell" style="color:var(--validate-kw)">preconditions:</td>
@@ -432,79 +453,284 @@
     </table>
 
     <div class="note-box">
-      <strong>Functions:</strong> Steps with no <code>with:</code> inputs that auto-generate typed returns. For example, <code>generate_uuid</code> produces a variable with <code style="color:var(--class-kw)">class: uuid</code> automatically. Functions are pure generators — no configuration needed. All return values are automatically persisted as <code style="color:var(--variable)">${{ vars.x }}</code>.
+      <strong>Functions:</strong> Steps with no <code>with:</code> inputs that auto-generate typed returns. For example, <code>util/generate_uuid</code> produces a variable with <code style="color:var(--class-kw)">class: uuid</code> automatically. Functions are pure generators — no configuration needed. All return values are automatically persisted as <code style="color:var(--variable)">${{ vars.x }}</code>.
+    </div>
+  </section>
+
+  <!-- Section 2b: Namespace Registry -->
+  <section>
+    <h2><span class="section-num">§2b</span> Namespace Registry</h2>
+    <p>Step types use hierarchical <code>namespace/[sub-namespace/]action</code> identifiers. The authoritative enum is in <code>test-file.schema.json</code>.</p>
+
+    <table class="ref-table">
+      <thead>
+        <tr><th>Namespace</th><th>Purpose</th><th>Example <code>uses:</code> values</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">connector/provider/</td>
+          <td>Provider-side EDC connector operations</td>
+          <td class="example-code">connector/provider/create_asset<br/>connector/provider/create_policy<br/>connector/provider/create_contract_definition</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">connector/consumer/</td>
+          <td>Consumer-side EDC connector operations</td>
+          <td class="example-code">connector/consumer/negotiate<br/>connector/consumer/initiate_transfer<br/>connector/consumer/get_catalog<br/>connector/consumer/pull_data_filtered</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">connector/http/</td>
+          <td>Dataplane HTTP operations</td>
+          <td class="example-code">connector/http/call_via_dataplane</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">http/</td>
+          <td>Generic HTTP calls (no EDC context)</td>
+          <td class="example-code">http/call</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">mock/</td>
+          <td>Mock server operations</td>
+          <td class="example-code">mock/endpoint<br/>mock/wait/call<br/>mock/dtr<br/>mock/discovery</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">util/</td>
+          <td>Utility operations</td>
+          <td class="example-code">util/generate_uuid<br/>util/wait</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">validate/</td>
+          <td>Validation/assertion operations</td>
+          <td class="example-code">validate/assert<br/>validate/field<br/>validate/object<br/>validate/schema</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">notification/</td>
+          <td>Notification operations</td>
+          <td class="example-code">notification/send</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">flow/</td>
+          <td>Flow control</td>
+          <td class="example-code">flow/if</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Section 2c: Assertion Operators -->
+  <section>
+    <h2><span class="section-num">§2c</span> Assertion Operators</h2>
+    <p>The <code>validate:</code> field uses the same <code>uses:</code> / <code>with:</code> pattern as steps. Assertions live in the <code>validate/</code> namespace — just like <code>connector/</code>, <code>mock/</code>, or <code>util/</code> are step namespaces.</p>
+
+    <table class="ref-table">
+      <thead>
+        <tr><th>Operator</th><th>Description</th><th>Value Type</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">equals</td>
+          <td>Equals</td>
+          <td>scalar</td>
+          <td class="example-code">operator: equals, value: 200</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">not_equals</td>
+          <td>Not equals</td>
+          <td>scalar</td>
+          <td class="example-code">operator: not_equals, value: "ERROR"</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">not_null</td>
+          <td>Value exists and is not null</td>
+          <td><em>(no value needed)</em></td>
+          <td class="example-code">operator: not_null</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">matches_regex</td>
+          <td>Matches regular expression</td>
+          <td>string (regex)</td>
+          <td class="example-code">operator: matches_regex, value: "^urn:uuid:[0-9a-f-]{36}$"</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">one_of</td>
+          <td>Value is one of the listed options</td>
+          <td>array</td>
+          <td class="example-code">operator: one_of, value: ["A", "B", "C"]</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">contains</td>
+          <td>String/array contains value</td>
+          <td>scalar</td>
+          <td class="example-code">operator: contains, value: "certificate"</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">gt</td>
+          <td>Greater than</td>
+          <td>number</td>
+          <td class="example-code">operator: gt, value: 0</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">gte</td>
+          <td>Greater than or equal</td>
+          <td>number</td>
+          <td class="example-code">operator: gte, value: 1</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">lt</td>
+          <td>Less than</td>
+          <td>number</td>
+          <td class="example-code">operator: lt, value: 500</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--operator)">lte</td>
+          <td>Less than or equal</td>
+          <td>number</td>
+          <td class="example-code">operator: lte, value: 100</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 class="section-subtitle">Assertion Types (<code>validate/</code> namespace)</h3>
+    <div class="note-box">
+      <strong>Important:</strong> The <code>input</code> field <strong>always</strong> references a variable declared in a step's <code>returns:</code> block. At runtime it resolves to <code>${{ vars.step_name.field }}</code>.
+    </div>
+    <table class="ref-table">
+      <thead>
+        <tr><th><code>uses:</code> value</th><th>Purpose</th><th>Required <code>with:</code> fields</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">validate/assert</td>
+          <td>Compare a direct return variable against scalar/array</td>
+          <td><code>input</code>, <code>operator</code>, <code>value</code></td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">validate/field</td>
+          <td>Compare a nested field within a return variable (dot-path navigation)</td>
+          <td><code>input</code>, <code>path</code>, <code>operator</code>, <code>value</code> (optional for <code>not_null</code>)</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">validate/object</td>
+          <td>Deep-compare return variable against a JSON object</td>
+          <td><code>input</code>, <code>operator</code>, <code>value</code> (object)</td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--uses-kw)">validate/schema</td>
+          <td>Validate return variable against a JSON schema</td>
+          <td><code>input</code>, <code>schema</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      <strong>Harmonized syntax:</strong> Assertions use the exact same <code>uses:</code> + <code>with:</code> pattern as steps. The <code>validate/</code> namespace is a namespace like <code>connector/</code> or <code>mock/</code>. One mental model for the entire YAML file.
     </div>
   </section>
 
   <!-- Section 3: Full Example -->
   <section>
-    <h2><span class="section-num">§3</span> Full Example</h2>
-    <p>A complete test file with setup, typed variable returns, and validation — services are inherited from the TCK definition file (§5).</p>
+    <h2><span class="section-num">§3</span> Full Example — CCM Request Certificate</h2>
+    <p>A real-world v2 test file from the Certificate Management TCK. Demonstrates namespaced step types, scoped variables, and rich assertions.</p>
     <div class="code-block"><span class="kw-top">kind:</span> <span class="str">test</span>
-<span class="kw-top">name:</span> <span class="str">available-notification</span>
+<span class="kw-top">name:</span> <span class="str">request-certificate</span>
 <span class="kw-top">version:</span> <span class="str">"1.0"</span>
-
-<span class="kw-top">setup:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">mock_endpoint</span>
-    <span class="kw-name">name:</span> <span class="str">Expose mock endpoint for certificate pull</span>
-    <span class="kw-with">with:</span>
-      <span class="key">id:</span> <span class="str">"avail_cert_pull"</span>
-      <span class="key">method:</span> <span class="str">GET</span>
-      <span class="key">path:</span> <span class="str">"/api/v1/companycertificate/available"</span>
-      <span class="key">response_status:</span> <span class="num">200</span>
-      <span class="key">response_body:</span>
-        <span class="key">businessPartnerNumber:</span> <span class="env">${{ env.provider_bpn }}</span>
-        <span class="key">certificateType:</span> <span class="env">${{ env.certificate_type }}</span>
+<span class="kw-top">description:</span> <span class="str">&gt;</span>
+  <span class="str">Request certificate via CCMAPI endpoint per CX-0135 v3.1.0.</span>
 
 <span class="kw-top">steps:</span>
-  <span class="cmt"># Function step — no inputs, auto-generates a typed output</span>
-  - <span class="kw-uses">uses:</span> <span class="str">generate_uuid</span>
-    <span class="kw-name">name:</span> <span class="str">Generate notification message ID</span>
-    <span class="kw-store">returns:</span>
-      <span class="key">avail_message_id:</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">uuid</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
-    <span class="kw-name">name:</span> <span class="str">Discover notification endpoint</span>
+  - <span class="key">id:</span> <span class="str">discover_ccmapi</span>
+    <span class="kw-uses">uses:</span> <span class="str">connector/consumer/pull_data_filtered</span>
+    <span class="kw-name">name:</span> <span class="str">Discover CCMAPI offers and obtain EDR</span>
     <span class="kw-with">with:</span>
       <span class="key">service:</span> <span class="str">provider_edc</span>
-      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
       <span class="key">counter_party_address:</span> <span class="env">${{ env.provider_address }}</span>
-    <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
-        <span class="key">output:</span> <span class="str">edr_token</span>
-      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
-        <span class="key">output:</span> <span class="str">dataplane_url</span>
+      <span class="key">filters:</span>
+        - <span class="key">operand_left:</span> <span class="str">"https://w3id.org/edc/v0.0.1/ns/type"</span>
+          <span class="key">operator:</span> <span class="str">"="</span>
+          <span class="key">operand_right:</span> <span class="str">"https://w3id.org/catenax/taxonomy#CCMAPI"</span>
+      <span class="key">transfer_type:</span> <span class="str">"HttpData-PULL"</span>
     <span class="kw-store">returns:</span>
       <span class="key">edr_token:</span>
         <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+        <span class="kw-class">class:</span> <span class="str">edr_token</span>
       <span class="key">dataplane_url:</span>
         <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">dataplane_url</span>
+        <span class="kw-class">class:</span> <span class="str">url</span>
+      <span class="key">asset_id:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">asset_id</span>
+    <span class="kw-validate">validate:</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">edr_token</span>
+          <span class="key">operator:</span> <span class="op">not_null</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">dataplane_url</span>
+          <span class="key">operator:</span> <span class="op">not_null</span>
 
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
-    <span class="kw-name">name:</span> <span class="str">Send available notification</span>
+  <span class="cmt"># Function step — no inputs, auto-generates a typed output</span>
+  - <span class="key">id:</span> <span class="str">gen_request_id</span>
+    <span class="kw-uses">uses:</span> <span class="str">util/generate_uuid</span>
+    <span class="kw-name">name:</span> <span class="str">Generate request message ID</span>
+    <span class="kw-store">returns:</span>
+      <span class="key">request_uuid:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">uuid</span>
+
+  - <span class="key">id:</span> <span class="str">send_request</span>
+    <span class="kw-uses">uses:</span> <span class="str">connector/http/call_via_dataplane</span>
+    <span class="kw-name">name:</span> <span class="str">POST certificate request to CCMAPI</span>
     <span class="kw-with">with:</span>
       <span class="key">method:</span> <span class="str">POST</span>
       <span class="key">dataplane_url:</span> <span class="var">${{ vars.dataplane_url }}</span>
-      <span class="key">path:</span> <span class="str">"/companycertificate/available"</span>
+      <span class="key">path:</span> <span class="str">"/companycertificate/request"</span>
       <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>
+      <span class="key">headers:</span>
+        <span class="key">Content-Type:</span> <span class="str">"application/json"</span>
+      <span class="key">body:</span>
+        <span class="key">header:</span>
+          <span class="key">messageId:</span> <span class="str">"urn:uuid:<span class="var">${{ vars.request_uuid }}</span>"</span>
+          <span class="key">context:</span> <span class="str">"CompanyCertificateManagement-CCMAPI-Request:1.0.0"</span>
+          <span class="key">sentDateTime:</span> <span class="str">"2026-01-01T00:00:00Z"</span>
+          <span class="key">senderBpn:</span> <span class="env">${{ env.consumer_bpn }}</span>
+          <span class="key">receiverBpn:</span> <span class="env">${{ env.provider_bpn }}</span>
+        <span class="key">content:</span>
+          <span class="key">certifiedBpn:</span> <span class="env">${{ env.provider_bpn }}</span>
+          <span class="key">certificateType:</span> <span class="env">${{ env.certificate_type }}</span>
+    <span class="kw-store">returns:</span>
+      <span class="key">request_status:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">status</span>
+      <span class="key">document_id:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">document_id</span>
     <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">EQUALS</span>
-        <span class="key">output:</span> <span class="str">status_code</span>
-        <span class="key">value:</span> <span class="num">200</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">wait_for_call</span>
-    <span class="kw-name">name:</span> <span class="str">Wait for SUT to pull certificate</span>
-    <span class="kw-with">with:</span>
-      <span class="key">endpoint_id:</span> <span class="str">"avail_cert_pull"</span>
-      <span class="key">timeout_s:</span> <span class="env">${{ env.sut_response_timeout }}</span>
-    <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">EQUALS</span>
-        <span class="key">output:</span> <span class="str">method</span>
-        <span class="key">value:</span> <span class="str">"GET"</span></div>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">status_code</span>
+          <span class="key">operator:</span> <span class="op">equals</span>
+          <span class="key">value:</span> <span class="num">200</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">path:</span> <span class="str">"header.messageId"</span>
+          <span class="key">operator:</span> <span class="op">matches_regex</span>
+          <span class="key">value:</span> <span class="str">"^urn:uuid:[0-9a-f-]{36}$"</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">path:</span> <span class="str">"header.receiverBpn"</span>
+          <span class="key">operator:</span> <span class="op">equals</span>
+          <span class="key">value:</span> <span class="env">${{ env.consumer_bpn }}</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">path:</span> <span class="str">"content.requestStatus"</span>
+          <span class="key">operator:</span> <span class="op">one_of</span>
+          <span class="key">value:</span>
+            - <span class="str">"IN_PROGRESS"</span>
+            - <span class="str">"COMPLETED"</span>
+            - <span class="str">"REJECTED"</span></div>
   </section>
 
   <!-- Section 4: Migration -->
@@ -518,9 +744,25 @@
       <span></span>
       <span class="header">v2 (new)</span>
 
-      <span class="old">type: http_call_dataplane</span>
+      <span class="old">type: edc_call_dataplane</span>
       <span class="arrow">→</span>
-      <span class="new">uses: http_call_dataplane</span>
+      <span class="new">uses: connector/http/call_via_dataplane</span>
+
+      <span class="old">type: edc_negotiate</span>
+      <span class="arrow">→</span>
+      <span class="new">uses: connector/consumer/negotiate</span>
+
+      <span class="old">type: http_call</span>
+      <span class="arrow">→</span>
+      <span class="new">uses: http/call</span>
+
+      <span class="old">type: generate_uuid</span>
+      <span class="arrow">→</span>
+      <span class="new">uses: util/generate_uuid</span>
+
+      <span class="old">type: mock_create_endpoint</span>
+      <span class="arrow">→</span>
+      <span class="new">uses: mock/create_endpoint</span>
 
       <span class="old">description: "Send notification"</span>
       <span class="arrow">→</span>
@@ -540,28 +782,28 @@
 
       <span class="old">store_in_memory: { key: "value" }</span>
       <span class="arrow">→</span>
-      <span class="new">returns: { key: { class: type } }</span>
+      <span class="new">returns: { key: { type: string, class: type } }</span>
 
       <span class="old">services: (top-level)</span>
       <span class="arrow">→</span>
       <span class="new">env: { services: [...] }</span>
 
-      <span class="old">validate:</span>
+      <span class="old">validate: ["NOT_NULL:output"]</span>
       <span class="arrow">→</span>
-      <span class="new">validate: <span style="color:var(--text-muted);text-decoration:none;font-style:italic">(unchanged)</span></span>
+      <span class="new">validate: [{ uses: validate/assert, with: { input: x, operator: not_null } }]</span>
     </div>
     <!-- 4b: Migration Rules -->
     <h3 class="section-subtitle">Migration Rules</h3>
     <ol class="migration-rules">
-      <li>Replace <code class="old-kw">type:</code> with <code class="new-kw">uses:</code> on every step</li>
+      <li>Replace <code class="old-kw">type:</code> with <code class="new-kw">uses:</code> on every step — use namespaced identifiers (e.g., <code class="new-kw">connector/provider/create_asset</code>)</li>
       <li>Replace <code class="old-kw">description:</code> with <code class="new-kw">name:</code></li>
       <li>Replace <code class="old-kw">params:</code> with <code class="new-kw">with:</code></li>
       <li>Replace <code class="old-kw">@variable_name</code> with <code class="new-kw">${{ vars.variable_name }}</code> when it comes from a previous step's <code>returns</code></li>
       <li>Replace <code class="old-kw">@variable_name</code> with <code class="new-kw">${{ env.variable_name }}</code> when it comes from external configuration (connector addresses, BPNs, timeouts)</li>
-      <li>Remove quotes from validation type values: <code class="old-kw">"EQUALS"</code> → <code class="new-kw">EQUALS</code></li>
+      <li>Convert <code class="old-kw">validate:</code> from string arrays to assertion objects using <code class="new-kw">uses: validate/...</code> + <code class="new-kw">with: { input, operator, value }</code>. The <code>input</code> field always references a variable from the step's <code>returns:</code> block.</li>
       <li>In services: replace <code class="old-kw">type:</code> with <code class="new-kw">uses:</code> and <code class="old-kw">config:</code> with <code class="new-kw">with:</code></li>
       <li>Move <code class="old-kw">services:</code> from top-level into <code class="new-kw">env: { services: [...] }</code></li>
-      <li>Rename keyword: <code class="old-kw">store_in_memory:</code> → <code class="new-kw">returns:</code> and add type annotations: <code class="new-kw">returns: { key: { class: &lt;type&gt; } }</code> per ADR-0009</li>
+      <li>Rename keyword: <code class="old-kw">store_in_memory:</code> → <code class="new-kw">returns:</code> and add type annotations: <code class="new-kw">returns: { key: { type: string, class: &lt;semantic_type&gt; } }</code></li>
       <li>Add <code class="new-kw">class:</code> to each <code>env.variables</code> entry to declare its semantic type</li>
     </ol>
     <!-- 4c: Steps Side-by-Side -->
@@ -577,8 +819,7 @@
       <span class="key">counter_party_id:</span> <span class="str">"@provider_bpn"</span>
       <span class="key">counter_party_address:</span> <span class="str">"@provider_address"</span>
     <span class="key">validate:</span>
-      - <span class="key">type:</span> <span class="str">"NOT_NULL"</span>
-        <span class="key">output:</span> <span class="str">edr_token</span>
+      - <span class="str">"NOT_NULL:edr_token"</span>
     <span class="key">store_in_memory:</span>
       <span class="key">edr_token:</span> <span class="str">"edr_token"</span>
       <span class="key">dataplane_url:</span> <span class="str">"dataplane_url"</span></div>
@@ -586,15 +827,17 @@
       <div class="after-panel">
         <div class="panel-header">v2 (new)</div>
         <div class="code-block"><span class="kw-top">steps:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
+  - <span class="kw-uses">uses:</span> <span class="str">connector/consumer/pull_data_filtered</span>
     <span class="kw-name">name:</span> <span class="str">Discover notification endpoint</span>
     <span class="kw-with">with:</span>
       <span class="key">service:</span> <span class="str">provider_edc</span>
       <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
       <span class="key">counter_party_address:</span> <span class="env">${{ env.provider_address }}</span>
     <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">NOT_NULL</span>
-        <span class="key">output:</span> <span class="str">edr_token</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">edr_token</span>
+          <span class="key">operator:</span> <span class="op">not_null</span>
     <span class="kw-store">returns:</span>
       <span class="key">edr_token:</span>
         <span class="kw-class">type:</span> <span class="str">string</span>
@@ -685,6 +928,13 @@
         <span class="key">base_url:</span> <span class="env">${{ env.testlab_management_url }}</span>
         <span class="key">dma_path:</span> <span class="str">/management</span>
 
+  <span class="cmt"># Schemas — imported from schemas/ folder</span>
+  <span class="key">schemas:</span>
+    <span class="key">certificate_request:</span>
+      <span class="key">file:</span> <span class="str">schemas/certificate_request.yaml</span>
+    <span class="key">certificate_response:</span>
+      <span class="key">file:</span> <span class="str">schemas/certificate_response.yaml</span>
+
 <span class="cmt"># Preconditions — reusable policies/contracts</span>
 <span class="kw-top">preconditions:</span>
   - <span class="key">id:</span> <span class="str">ccmapi_usage_policy</span>
@@ -751,8 +1001,8 @@
       </ul>
     </div>
 
-    <h3 style="margin-top:1.5rem; font-size:0.9rem; color:var(--muted);">Lifecycle Diagram</h3>
-    <div class="code-block" style="font-family:monospace; font-size:0.75rem; line-height:1.6; color:var(--muted);">
+    <h3 style="margin-top:1.5rem; font-size:0.9rem; color:var(--text-muted);">Lifecycle Diagram</h3>
+    <div class="code-block" style="font-family:monospace; font-size:0.75rem; line-height:1.6; color:var(--text-muted);">
 ┌─────────────────────────────────────────────────────────────────┐
 │  <span style="color:var(--env-variable)">TCK env:</span> (global)                                              │
 │  ┌───────────────────────────┐  ┌───────────────────────────┐  │
@@ -773,224 +1023,117 @@
 └─────────────────────────────────────────────────────────────────┘</div>
   </section>
 
-  <!-- Section 6: Variable Reference Alternatives -->
+  <!-- Section 5c: IDE Variable Blocks -->
   <section>
-    <h2><span class="section-num">§6</span> Variable Reference Alternatives — Choose Your Style</h2>
-    <p>Four approaches to referencing variables and declaring returns. Compare syntax, verbosity, and scope visibility to pick the best fit for TestLab.</p>
+    <h2><span class="section-num">§5c</span> IDE Variable Blocks — Display Rules</h2>
+    <p>The IDE uses two distinct block types for variable references. Blocks do NOT display scope prefixes — the scope is implicit from the block type.</p>
 
-    <style>
-      .alt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1.5rem 0; }
-      .alt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; position: relative; }
-      .alt-card.current-proposal { border-color: var(--accent); box-shadow: 0 0 12px rgba(137,180,250,0.15); }
-      .alt-card-header { padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
-      .alt-card-header h3 { font-size: 0.85rem; color: var(--text); margin: 0; flex: 1; }
-      .alt-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
-      .alt-badge-gha { background: rgba(166,227,161,0.15); color: var(--badge-gha); }
-      .alt-badge-testlab { background: rgba(243,139,168,0.15); color: var(--badge-testlab); }
-      .alt-badge-current { background: rgba(137,180,250,0.2); color: var(--accent); }
-      .alt-card .code-block { margin: 0; border: none; border-radius: 0; font-size: 0.75rem; line-height: 1.6; padding: 0.75rem 1rem; }
-      .alt-props { padding: 0.6rem 1rem; font-size: 0.75rem; border-top: 1px solid var(--border); }
-      .alt-props dt { color: var(--text-muted); display: inline; } .alt-props dd { display: inline; color: var(--text); margin: 0 1rem 0 0.3rem; font-family: var(--font-mono); font-size: 0.7rem; }
-      .alt-props .stars { color: #f9e2af; font-style: normal; }
-      .alt-cross { padding: 0.5rem 1rem 0.75rem; border-top: 1px solid var(--border); }
-      .alt-cross summary { font-size: 0.72rem; color: var(--text-muted); cursor: pointer; font-weight: 600; }
-      .alt-cross .code-block { font-size: 0.7rem; padding: 0.5rem 0.75rem; margin-top: 0.4rem; line-height: 1.5; }
-      .alt-select-btn { display: block; width: calc(100% - 2rem); margin: 0.5rem 1rem 0.75rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-alt); color: var(--text-muted); font-size: 0.75rem; cursor: pointer; text-align: center; transition: all 0.15s; }
-      .alt-select-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(137,180,250,0.08); }
-      .alt-select-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(137,180,250,0.12); font-weight: 600; }
-      .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 2rem; }
-      .cmp-table th { text-align: left; padding: 0.6rem 0.75rem; background: var(--surface); color: var(--accent); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.72rem; }
-      .cmp-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-      .cmp-table tr:last-child td { border-bottom: none; }
-      .cmp-table code { font-family: var(--font-mono); font-size: 0.7rem; background: var(--surface-alt); padding: 0.1rem 0.35rem; border-radius: 3px; }
-      .cmp-table .stars { color: #f9e2af; }
-      @media (max-width: 700px) { .alt-grid { grid-template-columns: 1fr; } }
-    </style>
-
-    <div class="alt-grid">
-      <!-- Card A -->
-      <div class="alt-card">
-        <div class="alt-card-header">
-          <h3>A: Full GitHub Actions</h3>
-          <span class="alt-badge alt-badge-gha">GHA Standard</span>
-        </div>
-        <div class="code-block"><span class="kw-top">steps:</span>
-  - <span class="key">id:</span> <span class="str">discover</span>
-    <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
-    <span class="kw-with">with:</span>
-      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
-    <span class="kw-store">returns:</span>
-      <span class="key">edr_token:</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
-    <span class="kw-with">with:</span>
-      <span class="key">edr_token:</span> <span class="var">${{ steps.discover.returns.edr_token }}</span></div>
-        <div class="alt-props">
-          <dl>
-            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">${{ steps.discover.returns.edr_token }}</code></dd><br/>
-            <dt>Char count:</dt><dd>45</dd>
-            <dt>Scope visible:</dt><dd>Yes (explicit step.id)</dd><br/>
-            <dt>Requires id:</dt><dd>Yes</dd>
-            <dt>Readability:</dt><dd><span class="stars">★★☆☆☆</span></dd><br/>
-            <dt>Precedent:</dt><dd>GitHub Actions</dd>
-          </dl>
-        </div>
-        <details class="alt-cross"><summary>Cross-test imports</summary>
-          <div class="code-block"><span class="kw-top">exports:</span>
-  <span class="key">agreement_id:</span> <span class="var">${{ steps.negotiate.returns.agreement_id }}</span>
-
-<span class="cmt"># consuming test</span>
-<span class="kw-top">needs:</span>
-  - <span class="str">setup-negotiation</span></div>
-        </details>
-        <button class="alt-select-btn" onclick="selectAlt(this,'A')">Select A</button>
-      </div>
-
-      <!-- Card B -->
-      <div class="alt-card current-proposal">
-        <div class="alt-card-header">
-          <h3>B: Flat ${{ vars }}</h3>
-          <span class="alt-badge alt-badge-gha">GHA-inspired</span>
-          <span class="alt-badge alt-badge-current">current proposal</span>
-        </div>
-        <div class="code-block"><span class="kw-top">steps:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
-    <span class="kw-with">with:</span>
-      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
-    <span class="kw-store">returns:</span>
-      <span class="key">edr_token:</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
-    <span class="kw-with">with:</span>
-      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span></div>
-        <div class="alt-props">
-          <dl>
-            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">${{ vars.edr_token }}</code></dd><br/>
-            <dt>Char count:</dt><dd>22</dd>
-            <dt>Scope visible:</dt><dd>Yes (vars vs env)</dd><br/>
-            <dt>Requires id:</dt><dd>No</dd>
-            <dt>Readability:</dt><dd><span class="stars">★★★☆☆</span></dd><br/>
-            <dt>Precedent:</dt><dd>GHA-inspired</dd>
-          </dl>
-        </div>
-        <details class="alt-cross"><summary>Cross-test imports</summary>
-          <div class="code-block"><span class="kw-top">exports:</span>
-  <span class="key">agreement_id:</span> <span class="var">${{ steps.negotiate.returns.agreement_id }}</span>
-
-<span class="cmt"># consuming test</span>
-<span class="kw-top">needs:</span>
-  - <span class="str">setup-negotiation</span></div>
-        </details>
-        <button class="alt-select-btn selected" onclick="selectAlt(this,'B')">✓ Selected (B)</button>
-      </div>
-
-      <!-- Card C -->
-      <div class="alt-card">
-        <div class="alt-card-header">
-          <h3>C: @ Simple</h3>
-          <span class="alt-badge alt-badge-testlab">AD-3 Decision</span>
-        </div>
-        <div class="code-block"><span class="kw-top">steps:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
-    <span class="kw-with">with:</span>
-      <span class="key">counter_party_id:</span> <span class="var">@provider_bpn</span>
-    <span class="kw-store">returns:</span>
-      <span class="key">edr_token:</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
-    <span class="kw-with">with:</span>
-      <span class="key">edr_token:</span> <span class="var">@edr_token</span></div>
-        <div class="alt-props">
-          <dl>
-            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">@edr_token</code></dd><br/>
-            <dt>Char count:</dt><dd>10</dd>
-            <dt>Scope visible:</dt><dd>No (flat)</dd><br/>
-            <dt>Requires id:</dt><dd>No</dd>
-            <dt>Readability:</dt><dd><span class="stars">★★★★★</span></dd><br/>
-            <dt>Precedent:</dt><dd>Unique (AD-3)</dd>
-          </dl>
-        </div>
-        <details class="alt-cross"><summary>Cross-test imports</summary>
-          <div class="code-block"><span class="kw-top">exports:</span>
-  - <span class="str">agreement_id</span>
-
-<span class="kw-top">needs:</span>
-  - <span class="str">setup-negotiation</span>
-<span class="cmt"># then just use @agreement_id</span></div>
-        </details>
-        <button class="alt-select-btn" onclick="selectAlt(this,'C')">Select C</button>
-      </div>
-
-      <!-- Card D -->
-      <div class="alt-card">
-        <div class="alt-card-header">
-          <h3>D: @ Scoped</h3>
-          <span class="alt-badge alt-badge-testlab">Hybrid</span>
-        </div>
-        <div class="code-block"><span class="kw-top">steps:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">pull_data_filtered_from_precondition</span>
-    <span class="kw-with">with:</span>
-      <span class="key">counter_party_id:</span> <span class="env">@env.provider_bpn</span>
-    <span class="kw-store">returns:</span>
-      <span class="key">edr_token:</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>
-
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>
-    <span class="kw-with">with:</span>
-      <span class="key">edr_token:</span> <span class="var">@vars.edr_token</span></div>
-        <div class="alt-props">
-          <dl>
-            <dt>Ref syntax:</dt><dd><code style="color:var(--variable)">@vars.edr_token</code></dd><br/>
-            <dt>Char count:</dt><dd>16</dd>
-            <dt>Scope visible:</dt><dd>Yes (vars vs env)</dd><br/>
-            <dt>Requires id:</dt><dd>No</dd>
-            <dt>Readability:</dt><dd><span class="stars">★★★★☆</span></dd><br/>
-            <dt>Precedent:</dt><dd>Unique (evolved)</dd>
-          </dl>
-        </div>
-        <details class="alt-cross"><summary>Cross-test imports</summary>
-          <div class="code-block"><span class="kw-top">exports:</span>
-  - <span class="str">agreement_id</span>
-
-<span class="kw-top">needs:</span>
-  - <span class="str">setup-negotiation</span>
-<span class="cmt"># use @imports.agreement_id or just @agreement_id</span></div>
-        </details>
-        <button class="alt-select-btn" onclick="selectAlt(this,'D')">Select D</button>
-      </div>
-    </div>
-
-    <!-- Comparison Summary Table -->
-    <h3 class="section-subtitle">Comparison Summary</h3>
-    <table class="cmp-table">
+    <table class="ref-table">
       <thead>
-        <tr><th>Aspect</th><th>A: Full GHA</th><th>B: Flat ${{ vars }}</th><th>C: @ Simple</th><th>D: @ Scoped</th></tr>
+        <tr><th>Block Type</th><th>Display</th><th>Editable?</th><th>Source</th><th>Serializes As</th></tr>
       </thead>
       <tbody>
-        <tr><td>Ref for <code>edr_token</code></td><td><code style="color:var(--variable)">${{ steps.discover.returns.edr_token }}</code></td><td><code style="color:var(--variable)">${{ vars.edr_token }}</code></td><td><code style="color:var(--variable)">@edr_token</code></td><td><code style="color:var(--variable)">@vars.edr_token</code></td></tr>
-        <tr><td>Char count</td><td>45</td><td>22</td><td>10</td><td>16</td></tr>
-        <tr><td>Scope visible?</td><td>Yes (explicit step)</td><td>Yes (vars vs env)</td><td>No (flat)</td><td>Yes (vars vs env)</td></tr>
-        <tr><td>Requires <code>id:</code>?</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
-        <tr><td>Non-dev readability</td><td><span class="stars">★★☆☆☆</span></td><td><span class="stars">★★★☆☆</span></td><td><span class="stars">★★★★★</span></td><td><span class="stars">★★★★☆</span></td></tr>
-        <tr><td>Industry precedent</td><td>GitHub Actions</td><td>GHA-inspired</td><td>Unique (AD-3)</td><td>Unique (evolved)</td></tr>
-        <tr><td>Output keyword</td><td><code>returns:</code></td><td><code>returns:</code></td><td><code>returns:</code></td><td><code>returns:</code></td></tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--env-variable)">env_ref</td>
+          <td>Dropdown showing plain name (e.g., <code>consumer_bpn</code>)</td>
+          <td>User selects from dropdown</td>
+          <td>TCK manifest <code>env.variables</code></td>
+          <td><code style="color:var(--env-variable)">${{ env.consumer_bpn }}</code></td>
+        </tr>
+        <tr>
+          <td class="kw-cell" style="color:var(--variable)">vars_ref</td>
+          <td>Read-only label showing plain name (e.g., <code>status_code</code>)</td>
+          <td>NOT editable — auto-generated from step returns</td>
+          <td>Preceding steps' <code>returns</code></td>
+          <td><code style="color:var(--variable)">${{ vars.status_code }}</code></td>
+        </tr>
       </tbody>
     </table>
 
-    <script>
-      function selectAlt(btn, id) {
-        document.querySelectorAll('.alt-select-btn').forEach(b => { b.classList.remove('selected'); b.textContent = 'Select ' + b.textContent.replace(/^[✓ ]*Selected \(|\)$/g,'').replace(/^Select /,''); });
-        btn.classList.add('selected');
-        btn.textContent = '✓ Selected (' + id + ')';
-      }
-    </script>
+    <div class="note-box">
+      <strong>Key UX rules:</strong>
+      <ul style="margin:0.5rem 0 0 1.2rem; padding:0;">
+        <li>NO <code>env.</code> prefix displayed on <code>env_ref</code> blocks — user sees just <code>consumer_bpn</code></li>
+        <li>NO <code>vars.</code> prefix displayed on <code>vars_ref</code> blocks — user sees just <code>status_code</code></li>
+        <li>The scope (<code>${{ env.x }}</code> vs <code>${{ vars.x }}</code>) is determined by the block type, not shown in the UI</li>
+        <li><code>vars_ref</code> blocks are created automatically when a step declares <code>returns</code> — never manually defined</li>
+        <li>Block colors distinguish scope: <span style="color:var(--env-variable)">teal</span> for env, <span style="color:var(--variable)">peach</span> for vars</li>
+      </ul>
+    </div>
+
+    <h3 class="section-subtitle">Visual Representation</h3>
+    <div class="code-block" style="font-size:0.78rem; line-height:2.2;">
+<span style="color:var(--text-muted)">┌──────────────────────────────────────────────────────────────┐</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--env-variable)">┌─────────────────────┐</span>  <span style="color:var(--text-muted)">env_ref block (dropdown)</span>          <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--env-variable)">│ 🌐 consumer_bpn  ▾ │</span>  <span style="color:var(--text-muted)">→ serializes to ${{ env.consumer_bpn }}</span> <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--env-variable)">└─────────────────────┘</span>                                       <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span>                                                              <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--variable)">┌─────────────────────┐</span>  <span style="color:var(--text-muted)">vars_ref block (read-only label)</span>   <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--variable)">│ 📦 status_code     │</span>  <span style="color:var(--text-muted)">→ serializes to ${{ vars.status_code }}</span><span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">│</span> <span style="color:var(--variable)">└─────────────────────┘</span>                                       <span style="color:var(--text-muted)">│</span>
+<span style="color:var(--text-muted)">└──────────────────────────────────────────────────────────────┘</span></div>
+  </section>
+
+  <!-- Section 6: Variable Reference — Finalized -->
+  <section>
+    <h2><span class="section-num">§6</span> Variable Reference — Finalized Decision</h2>
+    <p>The finalized variable syntax uses <strong>Option B: Flat ${{ vars }}</strong>. This provides scope visibility with GHA-familiar syntax while keeping references concise.</p>
+
+    <div class="code-block"><span class="cmt"># Finalized variable reference syntax (ADR-0010)</span>
+
+<span class="kw-top">steps:</span>
+  - <span class="key">id:</span> <span class="str">discover</span>
+    <span class="kw-uses">uses:</span> <span class="str">connector/consumer/pull_data_filtered</span>
+    <span class="kw-with">with:</span>
+      <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span>
+    <span class="kw-store">returns:</span>
+      <span class="key">edr_token:</span>
+        <span class="kw-class">type:</span> <span class="str">string</span>
+        <span class="kw-class">class:</span> <span class="str">auth_token</span>
+
+  - <span class="kw-uses">uses:</span> <span class="str">connector/http/call_via_dataplane</span>
+    <span class="kw-with">with:</span>
+      <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>          <span class="cmt"># flat ref (unambiguous)</span>
+      <span class="key">sender:</span> <span class="env">${{ env.consumer_bpn }}</span>         <span class="cmt"># env ref</span></div>
+
+    <h3 class="section-subtitle">Resolution Rules</h3>
+    <table class="ref-table">
+      <thead>
+        <tr><th>Pattern</th><th>Scope</th><th>Resolution</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code style="color:var(--variable)">${{ vars.x }}</code></td>
+          <td>Test-local</td>
+          <td>Search preceding steps' <code>returns</code> for key <code>x</code>. Single match → resolved. Zero/multiple → compiler error.</td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--variable)">${{ vars.step_id.returns.x }}</code></td>
+          <td>Test-local (qualified)</td>
+          <td>Direct reference to a specific step's return value. Used when flat ref is ambiguous.</td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--env-variable)">${{ env.x }}</code></td>
+          <td>TCK-global</td>
+          <td>Resolves from TCK manifest <code>env.variables</code>. Available to all tests.</td>
+        </tr>
+        <tr>
+          <td><code style="color:var(--env-variable)">${{ env.schemas.name }}</code></td>
+          <td>TCK-global</td>
+          <td>References an imported schema object from <code>env.schemas</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-box">
+      <strong>Why Option B was chosen:</strong>
+      <ul style="margin:0.5rem 0 0 1.2rem; padding:0;">
+        <li>Explicit scope visibility (<code>vars</code> vs <code>env</code>) catches errors at author-time</li>
+        <li>GHA-familiar syntax reduces learning curve</li>
+        <li>Qualified form (<code>vars.step_id.returns.x</code>) handles ambiguity without requiring <code>id</code> on every step</li>
+        <li>Compile-time detection of undefined references</li>
+      </ul>
+    </div>
   </section>
 
   <!-- Section 7: Syntax Coloring Guide -->
@@ -1006,6 +1149,8 @@
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--with-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">with:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--with-kw)">#cba6f7</div></div>
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--validate-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">validate:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--validate-kw)">#74c7ec</div></div>
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--store-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">returns:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--store-kw)">#94e2d5</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--assert-type);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">validate/</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--assert-type)">#f5c2e7</div></div>
+      <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--operator);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">operator</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--operator)">#fab387</div></div>
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--class-kw);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">class:</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--class-kw)">#c4a7e7</div></div>
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--variable);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">${{ vars }}</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--variable)">#fab387</div></div>
       <div style="text-align:center;width:72px"><div style="width:40px;height:40px;border-radius:50%;background:var(--env-variable);margin:0 auto .4rem"></div><div style="font-size:.65rem;color:var(--text-muted)">${{ env }}</div><div style="font-family:var(--font-mono);font-size:.6rem;color:var(--env-variable)">#5eead4</div></div>
@@ -1021,11 +1166,13 @@
     <table class="ref-table">
       <thead><tr><th style="width:28px"></th><th>Category</th><th>Hex</th><th>Applies To</th><th>Example</th></tr></thead>
       <tbody>
-        <tr><td><div class="legend-swatch" style="background:var(--uses-kw)"></div></td><td>Step identifier</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--uses-kw)">#f38ba8</td><td><code>uses:</code> keyword &amp; value</td><td class="example-code" style="color:var(--uses-kw)">uses: http_call_dataplane</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--uses-kw)"></div></td><td>Step identifier</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--uses-kw)">#f38ba8</td><td><code>uses:</code> keyword &amp; value</td><td class="example-code" style="color:var(--uses-kw)">uses: connector/http/call_via_dataplane</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--name-kw)"></div></td><td>Step label</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--name-kw)">#89b4fa</td><td><code>name:</code> keyword</td><td class="example-code" style="color:var(--name-kw)">name: Send notification</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--with-kw)"></div></td><td>Parameters block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--with-kw)">#cba6f7</td><td><code>with:</code> keyword</td><td class="example-code" style="color:var(--with-kw)">with:</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--validate-kw)"></div></td><td>Validation block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--validate-kw)">#74c7ec</td><td><code>validate:</code> keyword</td><td class="example-code" style="color:var(--validate-kw)">validate:</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--store-kw)"></div></td><td>Outputs block</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--store-kw)">#94e2d5</td><td><code>returns:</code> keyword</td><td class="example-code" style="color:var(--store-kw)">returns:</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--assert-type)"></div></td><td>Assertion namespace</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--assert-type)">#f5c2e7</td><td><code>validate/assert</code>, <code>validate/field</code>, <code>validate/object</code>, <code>validate/schema</code></td><td class="example-code" style="color:var(--assert-type)">uses: validate/field</td></tr>
+        <tr><td><div class="legend-swatch" style="background:var(--operator)"></div></td><td>Operator</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--operator)">#fab387</td><td><code>equals</code>, <code>not_equals</code>, <code>not_null</code>, <code>matches_regex</code>, <code>one_of</code>, <code>contains</code>, <code>gt</code>, <code>gte</code>, <code>lt</code>, <code>lte</code></td><td class="example-code" style="color:var(--operator)">operator: matches_regex</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--class-kw)"></div></td><td>Type/Class annotation</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--class-kw)">#c4a7e7</td><td><code>type:</code> and <code>class:</code> declarations</td><td class="example-code" style="color:var(--class-kw)">type: string &nbsp; class: auth_token</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--variable)"></div></td><td>Local variable ref</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--variable)">#fab387</td><td><code>${{ vars.x }}</code> references</td><td class="example-code" style="color:var(--variable)">${{ vars.edr_token }}</td></tr>
         <tr><td><div class="legend-swatch" style="background:var(--env-variable)"></div></td><td>Environment ref</td><td style="font-family:var(--font-mono);font-size:.78rem;color:var(--env-variable)">#5eead4</td><td><code>${{ env.x }}</code> references</td><td class="example-code" style="color:var(--env-variable)">${{ env.provider_bpn }}</td></tr>
@@ -1044,23 +1191,32 @@
     <div class="code-block"><span class="cmt"># ① = uses (rose)  ② = string (green)  ③ = name (blue)  ④ = with (purple)</span>
 <span class="cmt"># ⑤ = key (sky)  ⑥ = variable (peach)  ⑦ = env (teal)  ⑧ = validate (cyan)</span>
 <span class="cmt"># ⑨ = number (sky)  ⑩ = returns (teal)  ⑪ = type/class (soft purple)</span>
+<span class="cmt"># ⑫ = validate/ namespace (pink)  ⑬ = operator (peach)</span>
 
 <span class="kw-top">steps:</span>
-  - <span class="kw-uses">uses:</span> <span class="str">http_call_dataplane</span>          <span class="cmt"># ① + ②</span>
-    <span class="kw-name">name:</span> <span class="str">Send available notification</span>  <span class="cmt"># ③ + ②</span>
-    <span class="kw-with">with:</span>                                     <span class="cmt"># ④</span>
-      <span class="key">method:</span> <span class="str">POST</span>                         <span class="cmt"># ⑤ + ②</span>
+  - <span class="kw-uses">uses:</span> <span class="str">connector/http/call_via_dataplane</span>  <span class="cmt"># ① + ②</span>
+    <span class="kw-name">name:</span> <span class="str">Send available notification</span>      <span class="cmt"># ③ + ②</span>
+    <span class="kw-with">with:</span>                                         <span class="cmt"># ④</span>
+      <span class="key">method:</span> <span class="str">POST</span>                             <span class="cmt"># ⑤ + ②</span>
       <span class="key">dataplane_url:</span> <span class="var">${{ vars.dataplane_url }}</span>  <span class="cmt"># ⑤ + ⑥</span>
       <span class="key">edr_token:</span> <span class="var">${{ vars.edr_token }}</span>        <span class="cmt"># ⑤ + ⑥</span>
       <span class="key">counter_party_id:</span> <span class="env">${{ env.provider_bpn }}</span> <span class="cmt"># ⑤ + ⑦</span>
-    <span class="kw-validate">validate:</span>                                 <span class="cmt"># ⑧</span>
-      - <span class="key">type:</span> <span class="str">EQUALS</span>                       <span class="cmt"># ⑤ + ②</span>
-        <span class="key">output:</span> <span class="str">status_code</span>                <span class="cmt"># ⑤ + ②</span>
-        <span class="key">value:</span> <span class="num">200</span>                          <span class="cmt"># ⑤ + ⑨</span>
-    <span class="kw-store">returns:</span>                                   <span class="cmt"># ⑩</span>
-      <span class="key">edr_token:</span>                               <span class="cmt"># ⑤</span>
-        <span class="kw-class">type:</span> <span class="str">string</span>                       <span class="cmt"># ⑪ + ②</span>
-        <span class="kw-class">class:</span> <span class="str">auth_token</span>                   <span class="cmt"># ⑪ + ②</span></div>
+    <span class="kw-store">returns:</span>                                       <span class="cmt"># ⑩</span>
+      <span class="key">status_code:</span>                                 <span class="cmt"># ⑤</span>
+        <span class="kw-class">type:</span> <span class="str">number</span>                         <span class="cmt"># ⑪ + ②</span>
+        <span class="kw-class">class:</span> <span class="str">status_code</span>                   <span class="cmt"># ⑪ + ②</span>
+    <span class="kw-validate">validate:</span>                                     <span class="cmt"># ⑧</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/assert</span>                 <span class="cmt"># ① + ⑫</span>
+        <span class="kw-with">with:</span>                                     <span class="cmt"># ④</span>
+          <span class="key">input:</span> <span class="str">status_code</span>                <span class="cmt"># ⑤ + ②</span>
+          <span class="key">operator:</span> <span class="op">equals</span>                    <span class="cmt"># ⑤ + ⑬</span>
+          <span class="key">value:</span> <span class="num">200</span>                          <span class="cmt"># ⑤ + ⑨</span>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/field</span>                  <span class="cmt"># ① + ⑫</span>
+        <span class="kw-with">with:</span>                                     <span class="cmt"># ④</span>
+          <span class="key">input:</span> <span class="str">response_body</span>              <span class="cmt"># ⑤ + ②</span>
+          <span class="key">path:</span> <span class="str">"header.messageId"</span>            <span class="cmt"># ⑤ + ②</span>
+          <span class="key">operator:</span> <span class="op">matches_regex</span>             <span class="cmt"># ⑤ + ⑬</span>
+          <span class="key">value:</span> <span class="str">"^urn:uuid:[0-9a-f-]{36}$"</span> <span class="cmt"># ⑤ + ②</span></div>
 
     <!-- Monaco Token Mapping -->
     <h3 class="section-subtitle">Monaco Token Mapping</h3>
@@ -1072,6 +1228,8 @@
       <tbody>
         <tr><td class="kw-cell" style="color:var(--keyword)">keyword</td><td>Top-level keywords, <code>uses:</code>, <code>with:</code>, <code>validate:</code>, <code>returns:</code></td><td style="font-family:var(--font-mono);font-size:.78rem">--keyword, --uses-kw, --with-kw, --validate-kw, --store-kw</td></tr>
         <tr><td class="kw-cell" style="color:var(--class-kw)">type</td><td>Type/Class annotation values (<code>type:</code> and <code>class:</code>)</td><td style="font-family:var(--font-mono);font-size:.78rem">--class-kw</td></tr>
+        <tr><td class="kw-cell" style="color:var(--assert-type)">type.assertion</td><td>Assertion namespace values (<code>validate/assert</code>, <code>validate/field</code>, <code>validate/object</code>, <code>validate/schema</code>)</td><td style="font-family:var(--font-mono);font-size:.78rem">--assert-type</td></tr>
+        <tr><td class="kw-cell" style="color:var(--operator)">operator</td><td>Assertion operators (<code>equals</code>, <code>not_equals</code>, <code>not_null</code>, <code>matches_regex</code>, <code>one_of</code>, <code>contains</code>, <code>gt</code>, <code>gte</code>, <code>lt</code>, <code>lte</code>)</td><td style="font-family:var(--font-mono);font-size:.78rem">--operator</td></tr>
         <tr><td class="kw-cell" style="color:var(--string)">string</td><td>String literals</td><td style="font-family:var(--font-mono);font-size:.78rem">--string</td></tr>
         <tr><td class="kw-cell" style="color:var(--number)">number</td><td>Numeric literals</td><td style="font-family:var(--font-mono);font-size:.78rem">--number</td></tr>
         <tr><td class="kw-cell" style="color:var(--variable)">variable</td><td><code>${{ vars.x }}</code> references</td><td style="font-family:var(--font-mono);font-size:.78rem">--variable</td></tr>
@@ -1119,7 +1277,7 @@
     <h2><span class="section-num">§8b</span> Specification — Test File</h2>
     <p>Formal attribute reference for individual test files (<code>tests/*.yaml</code>).</p>
 
-    <h3 style="margin-top:1rem; font-size:0.85rem; color:var(--muted);">Top-Level Attributes</h3>
+    <h3 style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Top-Level Attributes</h3>
     <table class="ref-table">
       <thead>
         <tr><th>Attribute</th><th>Type</th><th>Required</th><th>Description</th></tr>
@@ -1134,22 +1292,22 @@
       </tbody>
     </table>
 
-    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">Step Attributes</h3>
+    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted);">Step Attributes</h3>
     <table class="ref-table">
       <thead>
         <tr><th>Attribute</th><th>Type</th><th>Required</th><th>Description</th></tr>
       </thead>
       <tbody>
         <tr><td><code style="color:var(--uses-kw)">id</code></td><td><code>string</code></td><td></td><td>Unique step identifier within the test. Auto-generated by IDE. Pattern: <code>[a-z][a-z0-9_]{0,49}</code>. Used for qualified variable references.</td></tr>
-        <tr><td><code style="color:var(--uses-kw)">uses</code></td><td><code>string</code></td><td>✓</td><td>Step type (block type from catalog). Determines behavior.</td></tr>
+        <tr><td><code style="color:var(--uses-kw)">uses</code></td><td><code>string</code></td><td>✓</td><td>Step type — namespaced identifier from the catalog (e.g., <code>connector/consumer/negotiate</code>)</td></tr>
         <tr><td><code style="color:var(--name-kw)">name</code></td><td><code>string</code></td><td>✓</td><td>Human-readable label. Free text — not used as identifier.</td></tr>
         <tr><td><code style="color:var(--with-kw)">with</code></td><td><code>map</code></td><td></td><td>Input parameters. Keys defined by the step type schema.</td></tr>
-        <tr><td><code style="color:var(--store-kw)">returns</code></td><td><code>map</code></td><td></td><td>Declared return values. Each key maps to <code>{ type, class }</code>. All auto-persisted as <code>${{ vars.x }}</code> or <code>${{ vars.step_id.returns.x }}</code>.</td></tr>
-        <tr><td><code style="color:var(--validate-kw)">validate</code></td><td><code>list</code></td><td></td><td>Assertions over return values. Each has <code>type</code>, <code>output</code>, <code>value</code>.</td></tr>
+        <tr><td><code style="color:var(--store-kw)">returns</code></td><td><code>map</code></td><td></td><td>Declared return values. Each key maps to <code>{ type, class }</code>. All auto-persisted as <code>${{ vars.x }}</code>.</td></tr>
+        <tr><td><code style="color:var(--validate-kw)">validate</code></td><td><code>list</code></td><td></td><td>Assertions over return values. Each uses the <code>uses:</code> + <code>with:</code> pattern. The <code>input</code> field always references a variable from the step's <code>returns:</code> block. Types: <code>validate/assert</code>, <code>validate/field</code>, <code>validate/object</code>, <code>validate/schema</code>.</td></tr>
       </tbody>
     </table>
 
-    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">Variable Reference Syntax</h3>
+    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted);">Variable Reference Syntax</h3>
     <table class="ref-table">
       <thead>
         <tr><th>Pattern</th><th>Scope</th><th>Description</th></tr>
@@ -1172,7 +1330,7 @@
     <h2><span class="section-num">§8c</span> Schema Imports — <code>schemas/</code> Folder</h2>
     <p>Schemas define the expected structure of request/response payloads. They live in the <code>schemas/</code> folder next to tests and are imported at the TCK level.</p>
 
-    <h3 style="margin-top:1rem; font-size:0.85rem; color:var(--muted);">Folder Structure</h3>
+    <h3 style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">Folder Structure</h3>
     <div class="code-block" style="font-size:0.78rem; line-height:1.5;">
 <span class="key">certificate-management-v1.0/</span>
 ├── <span class="str">index.yaml</span>                    <span class="cmt"># TCK manifest (kind: tck)</span>
@@ -1184,7 +1342,7 @@
     ├── <span class="str">request_certificate.yaml</span>
     └── <span class="str">available_notification.yaml</span></div>
 
-    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">Schema File Example</h3>
+    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted);">Schema File Example</h3>
     <div class="code-block"><span class="cmt"># schemas/certificate_request.yaml</span>
 <span class="kw-top">kind:</span> <span class="str">schema</span>
 <span class="kw-top">name:</span> <span class="str">certificate_request</span>
@@ -1217,7 +1375,7 @@
         <span class="key">type:</span> <span class="str">string</span>
         <span class="key">enum:</span> [<span class="str">iso9001</span>, <span class="str">iatf16949</span>, <span class="str">iso14001</span>]</div>
 
-    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">Importing Schemas in TCK Manifest</h3>
+    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted);">Importing Schemas in TCK Manifest</h3>
     <div class="code-block"><span class="kw-top">env:</span>
   <span class="key">variables:</span>
     <span class="cmt"># ... (as before)</span>
@@ -1231,10 +1389,10 @@
     <span class="key">notification_header:</span>
       <span class="key">file:</span> <span class="str">schemas/notification_header.yaml</span></div>
 
-    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--muted);">Using Schemas in Steps</h3>
+    <h3 style="margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted);">Using Schemas in Steps</h3>
     <div class="code-block"><span class="key">steps:</span>
   - <span class="key">id:</span> <span class="str">wait_request</span>
-    <span class="kw-uses">uses:</span> <span class="str">mock_endpoint</span>
+    <span class="kw-uses">uses:</span> <span class="str">mock/create_endpoint</span>
     <span class="kw-name">name:</span> <span class="str">"Wait for certificate request"</span>
     <span class="kw-with">with:</span>
       <span class="key">method:</span> <span class="str">POST</span>
@@ -1245,9 +1403,10 @@
         <span class="kw-class">type:</span> <span class="str">object</span>
         <span class="kw-class">class:</span> <span class="str">response_body</span>
     <span class="kw-validate">validate:</span>
-      - <span class="key">type:</span> <span class="str">SCHEMA</span>
-        <span class="key">output:</span> <span class="str">response_body</span>
-        <span class="key">schema:</span> <span class="env">${{ env.schemas.certificate_response }}</span></div>
+      - <span class="kw-uses">uses:</span> <span class="str">validate/schema</span>
+        <span class="kw-with">with:</span>
+          <span class="key">input:</span> <span class="str">response_body</span>
+          <span class="key">schema:</span> <span class="env">${{ env.schemas.certificate_response }}</span></div>
 
     <div class="note-box">
       <strong>Schema usage patterns:</strong>

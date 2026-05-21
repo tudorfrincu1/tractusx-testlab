@@ -29,9 +29,10 @@ import { isTemplateStep } from "../../../../models/schema";
 import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 import { toCatalogStepType } from "../stepTypeAliases";
 import { makeBlock, setDropdownValue, createValueBlockFromString } from "../helpers";
+import { extractVarName, isEnvRef } from "../varSyntax";
 
-/** Regex for a pure variable reference: exactly `@identifier` with no extra content. */
-const PURE_VAR_REF = /^@[a-zA-Z_][a-zA-Z0-9_]*$/;
+/** Regex for a pure variable reference: `${{ vars.x }}`, `${{ env.x }}`, or legacy `@identifier`. */
+const PURE_VAR_REF = /^(?:\$\{\{\s*(?:vars|env)\.[a-zA-Z_][a-zA-Z0-9_]*\s*\}\}|@[a-zA-Z_][a-zA-Z0-9_]*)$/;
 
 /**
  * Tracks step output variable names as steps are built, mapping
@@ -88,7 +89,16 @@ export function createValueBlockWithOutputResolution(
   stepOutputs: StepOutputMap,
 ): Block {
   if (PURE_VAR_REF.test(strVal)) {
-    const varName = strVal.slice(1);
+    const varName = extractVarName(strVal) ?? strVal.slice(1);
+
+    // Env refs always go to variable_get (environment block)
+    if (isEnvRef(strVal)) {
+      const vb = makeBlock(ws, "variable_get");
+      setDropdownValue(vb, "VAR_NAME", varName);
+      return vb;
+    }
+
+    // Check if it's a known step output
     const outputRef = stepOutputs.get(varName);
     if (outputRef) {
       const block = makeBlock(ws, "output_variable");

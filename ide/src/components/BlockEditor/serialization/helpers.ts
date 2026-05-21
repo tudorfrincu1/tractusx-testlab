@@ -28,6 +28,7 @@ import { type Assertion, AssertionOperator } from "../../../models/schema";
 import { serializePolicyBlock, createPolicyRuleBlocks } from "./serialize/policySerializers";
 import * as deferredDropdowns from "./deferredDropdowns";
 import { parseJsonWithVarRefs } from "../blocks/json/modal/jsonVarRefs";
+import { toVarRef, toEnvRef, isVarRef, extractVarName } from "./varSyntax";
 
 /** Maps the assert_compare block dropdown values to typed YAML assertion types. */
 const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
@@ -37,12 +38,19 @@ const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
   less_or_equal: AssertionOperator.LESS_OR_EQUAL,
 };
 
-/** Read a value block's content as a plain string (or @variable reference). */
+/** Read a value block's content as a plain string (or variable reference).
+ *  - `output_variable` → `${{ vars.x }}` (step return)
+ *  - `variable_get` → `${{ env.x }}` (environment/TCK variable)
+ */
 export function readValueBlockAsString(block: Block | null): string | undefined {
   if (!block) return undefined;
-  if (block.type === "variable_get" || block.type === "output_variable") {
+  if (block.type === "output_variable") {
     const v = block.getFieldValue("VAR_NAME") || "";
-    return v && v !== "__NONE__" ? `@${v}` : undefined;
+    return v && v !== "__NONE__" ? toVarRef(v) : undefined;
+  }
+  if (block.type === "variable_get") {
+    const v = block.getFieldValue("VAR_NAME") || "";
+    return v && v !== "__NONE__" ? toEnvRef(v) : undefined;
   }
   if (block.type === "value_string" || block.type === "value_regex") {
     return block.getFieldValue("VALUE") || undefined;
@@ -86,7 +94,7 @@ export function readValueBlockAsUnknown(block: Block | null): unknown {
   }
   const rawValue = readValueBlockAsString(block);
   if (rawValue === undefined) return undefined;
-  if (rawValue.startsWith("@")) return rawValue;
+  if (isVarRef(rawValue)) return rawValue;
 
   const trimmed = rawValue.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
@@ -150,9 +158,10 @@ export function connectValue(parent: Block, inputName: string, child: Block) {
 }
 
 export function createValueBlockFromString(ws: Workspace, strVal: string): Block {
-  if (strVal.startsWith("@")) {
+  const varName = extractVarName(strVal);
+  if (varName) {
     const vb = makeBlock(ws, "variable_get");
-    setDropdownValue(vb, "VAR_NAME", strVal.slice(1));
+    setDropdownValue(vb, "VAR_NAME", varName);
     return vb;
   }
   const varMatch = strVal.match(/^(?:\{\{(.+)\}\}|\$\{(.+)\})$/);

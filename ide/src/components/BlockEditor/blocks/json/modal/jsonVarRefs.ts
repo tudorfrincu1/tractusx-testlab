@@ -83,6 +83,16 @@ export function replaceVarRefs(text: string): string {
         result += text[i];
         i++;
       }
+    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
+      const rest = text.slice(i);
+      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
+      if (match) {
+        result += `"${PLACEHOLDER_PREFIX}${match[1]}${PLACEHOLDER_SUFFIX}"`;
+        i += match[0].length;
+      } else {
+        result += text[i];
+        i++;
+      }
     } else {
       result += text[i];
       i++;
@@ -93,10 +103,10 @@ export function replaceVarRefs(text: string): string {
 }
 
 /**
- * Restore placeholder strings back to `@variable_name` tokens.
+ * Restore placeholder strings back to `${{ vars.variable_name }}` tokens.
  */
 export function restoreVarRefs(text: string): string {
-  return text.replace(PLACEHOLDER_RE, "@$1");
+  return text.replace(PLACEHOLDER_RE, "\\${{ vars.$1 }}");
 }
 
 /**
@@ -134,23 +144,25 @@ export function formatJsonWithVarRefs(text: string): string | null {
 
 /**
  * Parse JSON text that may contain `@variable_name` references.
- * Variable refs become `"@name"` strings in the resulting object.
+ * Variable refs become scoped references in the resulting object:
+ * - Names in `stepOutputs` → `${{ vars.x }}`
+ * - All others → `${{ env.x }}`
  * Returns the parsed value, or `undefined` if parsing fails.
  */
-export function parseJsonWithVarRefs(text: string): unknown {
+export function parseJsonWithVarRefs(text: string, stepOutputs?: ReadonlySet<string>): unknown {
   const replaced = replaceVarRefs(text);
   const parsed: unknown = JSON.parse(replaced);
-  return restorePlaceholdersInValue(parsed);
+  return restorePlaceholdersInValue(parsed, stepOutputs);
 }
 
 /**
- * Pattern matching `@variable_name` tokens outside of JSON strings.
+ * Pattern matching `${{ vars.variable_name }}`, `${{ env.variable_name }}`, or `@variable_name` tokens outside of JSON strings.
  * Exported so other modules can reuse the same regex.
  */
-export const VAR_REF_PATTERN = /@([a-zA-Z_][a-zA-Z0-9_]*)/g;
+export const VAR_REF_PATTERN = /\$\{\{\s*(?:vars|env)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}|@([a-zA-Z_][a-zA-Z0-9_]*)/g;
 
 /**
- * Count `@variable_name` tokens that appear outside of JSON strings.
+ * Count variable tokens that appear outside of JSON strings.
  * Uses the same character-level scanner as `replaceVarRefs`.
  */
 export function countVarRefsOutsideStrings(text: string): number {
@@ -169,6 +181,15 @@ export function countVarRefsOutsideStrings(text: string): number {
     } else if (text[i] === '"') {
       inString = true;
       i++;
+    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
+      const rest = text.slice(i);
+      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
+      if (match) {
+        count++;
+        i += match[0].length;
+      } else {
+        i++;
+      }
     } else if (text[i] === "@") {
       const rest = text.slice(i);
       const match = /^@([a-zA-Z_][a-zA-Z0-9_]*)/.exec(rest);
@@ -187,7 +208,7 @@ export function countVarRefsOutsideStrings(text: string): number {
 }
 
 /**
- * Collect unique `@variable_name` tokens that appear outside of JSON strings.
+ * Collect unique variable tokens that appear outside of JSON strings.
  */
 export function collectVarRefsOutsideStrings(text: string): string[] {
   const refs = new Set<string>();
@@ -205,6 +226,15 @@ export function collectVarRefsOutsideStrings(text: string): string[] {
     } else if (text[i] === '"') {
       inString = true;
       i++;
+    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
+      const rest = text.slice(i);
+      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
+      if (match) {
+        refs.add(match[1]);
+        i += match[0].length;
+      } else {
+        i++;
+      }
     } else if (text[i] === "@") {
       const rest = text.slice(i);
       const match = /^@([a-zA-Z_][a-zA-Z0-9_]*)/.exec(rest);
@@ -222,18 +252,23 @@ export function collectVarRefsOutsideStrings(text: string): string[] {
   return [...refs];
 }
 
-/** Recursively walk a parsed value and restore placeholder strings. */
-function restorePlaceholdersInValue(value: unknown): unknown {
+/** Recursively walk a parsed value and restore placeholder strings.
+ *  Names in `stepOutputs` → `${{ vars.x }}`, others → `${{ env.x }}`.
+ */
+function restorePlaceholdersInValue(value: unknown, stepOutputs?: ReadonlySet<string>): unknown {
   if (typeof value === "string") {
-    return value.replace(PLACEHOLDER_RE_UNQUOTED, "@$1");
+    return value.replace(PLACEHOLDER_RE_UNQUOTED, (_match, name: string) => {
+      const scope = stepOutputs?.has(name) ? "vars" : "env";
+      return `\${{ ${scope}.${name} }}`;
+    });
   }
   if (Array.isArray(value)) {
-    return value.map(restorePlaceholdersInValue);
+    return value.map((v) => restorePlaceholdersInValue(v, stepOutputs));
   }
   if (value !== null && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = restorePlaceholdersInValue(v);
+      out[k] = restorePlaceholdersInValue(v, stepOutputs);
     }
     return out;
   }

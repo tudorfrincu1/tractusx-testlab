@@ -172,10 +172,12 @@ function validateStep(
   }
 
   const paramStr = JSON.stringify(step.params ?? {});
-  // Match @var_name, ${var_name}, and {{var_name}} syntaxes
+  // Match ${{ vars.name }}, @var_name, ${var_name}, and {{var_name}} syntaxes
+  const newVarRefs = paramStr.match(/\$\{\{\s*vars\.(\w+)\s*\}\}/g) ?? [];
   const atVarRefs = paramStr.match(/@(\w+)/g) ?? [];
   const legacyVarRefs = paramStr.match(/\$\{([^}]+)\}/g) ?? [];
   const allRefs: string[] = [
+    ...newVarRefs.map((r) => { const m = /vars\.(\w+)/.exec(r); return m ? m[1] : ""; }).filter(Boolean),
     ...atVarRefs.map((r) => r.slice(1)),
     ...legacyVarRefs.map((r) => r.slice(2, -1)),
   ];
@@ -184,7 +186,7 @@ function validateStep(
     if (!definedVars.has(varName) && !memoryVars.has(varName)) {
       errors.push({
         path: `${path}.params`,
-        message: `Undefined variable reference: @${varName}`,
+        message: `Undefined variable reference: \${{ vars.${varName} }}`,
         severity: "warning",
       });
     }

@@ -167,7 +167,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     init(this: Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("@")
+        .appendField("env.")
         .appendField(
           new Blockly.FieldDropdown(
             dynamicDropdown(
@@ -184,7 +184,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
         );
       this.setOutput(true, "param_value");
       this.setColour(blockColors.variableGet);
-      this.setTooltip("Reference a variable — uses @variable_name syntax");
+      this.setTooltip("Reference an environment variable — uses ${{ env.variable_name }} syntax");
     },
   };
 

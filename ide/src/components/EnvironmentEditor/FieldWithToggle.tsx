@@ -41,14 +41,15 @@ export function FieldWithToggle({
   placeholder,
   hint,
 }: FieldWithToggleProps) {
-  const isVariableMode = value.startsWith("@");
+  const isVariableMode = value.startsWith("${{") || value.startsWith("@");
 
   function handleToggle() {
     if (isVariableMode) {
-      onChange(value.slice(1));
+      const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(value);
+      onChange(varsMatch ? varsMatch[1] : value.startsWith("@") ? value.slice(1) : value);
     } else {
       const firstVar = variables[0]?.name ?? "";
-      onChange(`@${firstVar}`);
+      onChange(`\${{ vars.${firstVar} }}`);
     }
   }
 
@@ -57,7 +58,7 @@ export function FieldWithToggle({
   }
 
   function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    onChange(`@${e.target.value}`);
+    onChange(`\${{ vars.${e.target.value} }}`);
   }
 
   return (
@@ -65,10 +66,10 @@ export function FieldWithToggle({
       <label>{label}</label>
       <div className="field-with-toggle">
         {isVariableMode ? (
-          <select value={value.slice(1)} onChange={handleSelectChange}>
+          <select value={(() => { const m = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(value); return m ? m[1] : value.startsWith("@") ? value.slice(1) : value; })()} onChange={handleSelectChange}>
             {variables.map((v) => (
               <option key={v.name} value={v.name}>
-                @{v.name}
+                {v.name}
               </option>
             ))}
           </select>

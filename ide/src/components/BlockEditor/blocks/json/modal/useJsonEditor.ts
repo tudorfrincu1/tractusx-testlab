@@ -83,7 +83,7 @@ export function useJsonEditor(
   const insertVariable = useCallback(
     (varName: string) => {
       const el = textareaRef.current;
-      const token = `@${varName}`;
+      const token = `\${{ vars.${varName} }}`;
       if (el) {
         const start = el.selectionStart;
         const end = el.selectionEnd;

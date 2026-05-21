@@ -93,9 +93,19 @@ Fields within a step MUST appear in this canonical order:
       type: string
       class: asset_id
   validate:
-    - status_code == 200
-    - response_body.id != null
+    - uses: validate/assert
+      with:
+        input: status_code
+        operator: equals
+        value: 200
+    - uses: validate/field
+      with:
+        input: response_body
+        path: "id"
+        operator: not_null
 ```
+
+> **Note:** The `input` field in assertions always references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ vars.step_name.field }}`.
 
 Order: **id → uses → name → with → returns → validate**
 
@@ -182,33 +192,88 @@ returns:
 
 ### 6. Validate (Assertions)
 
+Assertions use the **same `uses:` / `with:` pattern as steps**. The `validate/` namespace contains all assertion types — just like `connector/`, `mock/`, or `util/` are step namespaces.
+
 ```yaml
 validate:
-  - status_code == 200
-  - response_body.id != null
-  - response_body.type == "Asset"
-  - ${{ vars.transfer_id }} != null
+  - uses: validate/assert
+    with:
+      input: status_code
+      operator: equals
+      value: 200
+  - uses: validate/field
+    with:
+      input: response_body
+      path: "header.messageId"
+      operator: matches_regex
+      value: "^urn:uuid:[0-9a-f-]{36}$"
+  - uses: validate/field
+    with:
+      input: response_body
+      path: "content.requestStatus"
+      operator: one_of
+      value: ["IN_PROGRESS", "COMPLETED", "REJECTED"]
+  - uses: validate/field
+    with:
+      input: response_body
+      path: "content.certificate"
+      operator: not_null
+  - uses: validate/object
+    with:
+      input: response_body
+      operator: equals
+      value:
+        status: "COMPLETED"
+        type: "ISO9001"
+  - uses: validate/schema
+    with:
+      input: response_body
+      schema: "${{ env.schemas.certificate_response }}"
 ```
 
 **Why `validate:` not `assert:`:** The keyword is domain-specific to certification testing. "Validate" communicates intent to non-technical users more naturally than "assert" (which implies unit testing). No CI system uses `validate:`, avoiding confusion.
 
-**Assertion expression syntax:**
+**Why `uses:` / `with:`:** Assertions are conceptually the same as steps — they have a type (`uses:`) and parameters (`with:`). Using the same structural pattern means one mental model for the entire YAML file: every operation is `uses:` + `with:`.
+
+#### 6.1 Assertion Types (`validate/` namespace)
+
+The `input` field **always** references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ vars.step_name.field }}`.
+
+| `uses:` value | Purpose | Required `with:` fields |
+|---|---|---|
+| `validate/assert` | Compare a direct return variable against scalar/array | `input`, `operator`, `value` |
+| `validate/field` | Compare a nested field within a return variable | `input`, `path`, `operator`, `value` (optional for `not_null`) |
+| `validate/object` | Deep-compare return variable against JSON object | `input`, `operator`, `value` (object) |
+| `validate/schema` | Validate return variable against JSON schema | `input`, `schema` |
+
+#### 6.2 Operators
+
+**Operators for `validate/assert` and `validate/field`:**
 
 | Operator | Meaning | Example |
 |----------|---------|---------|
-| `==` | Equals | `status_code == 200` |
-| `!=` | Not equals | `response_body.error != null` |
-| `>`, `>=`, `<`, `<=` | Numeric comparison | `response_body.items.length > 0` |
-| `contains` | String/array contains | `response_body.type contains "Asset"` |
-| `matches` | Regex match | `response_body.id matches "^[0-9a-f-]{36}$"` |
-| `schema` | JSON Schema validation | `response_body schema ${{ env.schemas.asset_schema }}` |
+| `equals` | Equals | `operator: equals, value: 200` |
+| `not_equals` | Not equals | `operator: not_equals, value: "ERROR"` |
+| `not_null` | Value exists | `operator: not_null` (no `value` needed) |
+| `matches_regex` | Regex match | `operator: matches_regex, value: "^[0-9a-f-]{36}$"` |
+| `one_of` | One of listed options | `operator: one_of, value: ["A", "B"]` |
+| `contains` | Contains value | `operator: contains, value: "Asset"` |
+| `gt` | Greater than | `operator: gt, value: 0` |
+| `gte` | Greater than or equal | `operator: gte, value: 1` |
+| `lt` | Less than | `operator: lt, value: 500` |
+| `lte` | Less than or equal | `operator: lte, value: 100` |
 
-**Context variables available in `validate:`:**
+**Operators for `validate/object`:** `equals`, `contains`
+
+#### 6.3 Input variable resolution
+
+The `input` field references a variable name from the current step's `returns:` declaration:
 
 - `status_code` — HTTP response status (integer)
-- `response_body` — Parsed JSON response (object, supports dot-path access)
+- `response_body` — Parsed JSON response (object, used with `validate/field` for dot-path access)
 - `response_headers` — Response headers (object)
-- Any `${{ vars.x }}` or `${{ env.x }}` reference
+
+The `input` value is always a return variable name. It resolves at runtime to the actual value stored in `${{ vars.step_name.field }}`.
 
 ### 7. Document Kinds
 
@@ -252,7 +317,11 @@ preconditions:
     with:
       service: provider
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
 tests:
   - tests/create-asset.yaml
@@ -290,8 +359,17 @@ steps:
         type: string
         class: asset_id
     validate:
-      - status_code == 200
-      - response_body.id == ${{ vars.generated_id }}
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+      - uses: validate/field
+        with:
+          input: response_body
+          path: "id"
+          operator: equals
+          value: ${{ vars.generated_id }}
 
   - id: get_asset_1
     uses: edc/get_asset
@@ -300,8 +378,17 @@ steps:
       asset_id: ${{ vars.create_asset_1.returns.asset_id }}
       service: provider
     validate:
-      - status_code == 200
-      - response_body.id == ${{ vars.asset_id }}
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+      - uses: validate/field
+        with:
+          input: response_body
+          path: "id"
+          operator: equals
+          value: ${{ vars.asset_id }}
 
 teardown:
   - id: delete_asset_1
@@ -346,21 +433,49 @@ There is no cherry-picking or partial import. A test file does not declare its o
 
 **Rationale:** Cherry-picking creates divergence. If a test needs a variable, it belongs in the TCK manifest. This keeps the environment centralized and auditable.
 
-### 9. `uses:` Namespace Convention
+### 9. `uses:` Namespace Registry
 
-Step types follow a namespace/action pattern:
+Step types follow a hierarchical namespace pattern: `namespace/[sub-namespace/]action`.
 
-| Namespace | Scope | Examples |
-|-----------|-------|----------|
-| `edc/` | EDC connector operations | `edc/create_asset`, `edc/negotiate`, `edc/initiate_transfer` |
-| `dtr/` | Digital Twin Registry | `dtr/register_shell`, `dtr/lookup_shell` |
-| `discovery/` | Discovery services | `discovery/lookup_bpn`, `discovery/register_endpoint` |
-| `http/` | Generic HTTP operations | `http/call`, `http/call_dataplane` |
-| `mock/` | Mock server operations | `mock/create_endpoint`, `mock/wait_for_call` |
-| `util/` | Utility operations | `util/generate_uuid`, `util/wait`, `util/log` |
-| `validate/` | Validation operations | `validate/json_schema`, `validate/compare` |
-| `notification/` | Notification operations | `notification/send`, `notification/wait` |
-| `flow/` | Control flow | `flow/if`, `flow/repeat`, `flow/parallel` |
+**Naming conventions:**
+
+- Namespaces use lowercase path segments separated by `/`
+- Actions use `snake_case`
+- Sub-namespaces group related operations within a domain (e.g., `connector/provider/` vs `connector/consumer/`)
+- The full `uses:` value is the canonical step type identifier
+
+#### 9.1 Namespace Table
+
+| Namespace | Purpose | Actions |
+|-----------|---------|--------|
+| `connector/provider/` | Provider-side EDC connector operations | `create_asset`, `create_policy`, `create_contract_definition` |
+| `connector/consumer/` | Consumer-side EDC connector operations | `negotiate`, `initiate_transfer`, `get_catalog` |
+| `connector/http/` | Dataplane HTTP operations | `call_via_dataplane` |
+| `http/` | Generic HTTP calls | `call` |
+| `mock/` | Mock server operations | `endpoint`, `wait/call`, `dtr`, `discovery` |
+| `util/` | Utility operations | `generate_uuid`, `wait` |
+| `validate/` | Validation/assertion operations | `assert`, `field`, `object`, `schema` |
+| `notification/` | Notification operations | `send`, `receive` |
+| `flow/` | Flow control | `if`, `loop`, `parallel` |
+
+#### 9.2 Examples
+
+```yaml
+uses: connector/provider/create_asset
+uses: connector/consumer/negotiate
+uses: connector/http/call_via_dataplane
+uses: http/call
+uses: mock/endpoint
+uses: mock/wait/call
+uses: util/generate_uuid
+uses: validate/schema
+uses: notification/send
+uses: flow/if
+```
+
+#### 9.3 Extensibility
+
+New namespaces and actions can be added without breaking existing tests. The schema enum in `docs/specification/schemas/test-file.schema.json` is the authoritative source of valid `uses:` values. The compiler rejects unknown step types at compile time.
 
 ---
 
@@ -415,8 +530,10 @@ The compiler validates YAML files and rejects invalid documents with actionable 
 
 | Rule | Error Message |
 |------|---------------|
-| Invalid expression syntax | `Invalid validate expression at index {n} in step '{id}': {details}` |
-| Unknown operator | `Unknown operator '{op}' in validate expression at index {n} in step '{id}'` |
+| Invalid `uses:` value | `Unknown assertion type '{value}' in validate block of step '{id}'. Expected: validate/assert, validate/field, validate/object, validate/schema` |
+| Missing `with:` | `Assertion at index {n} in step '{id}' is missing required field 'with'` |
+| Missing required field | `Assertion '{uses}' at index {n} in step '{id}' is missing required field '{field}' in 'with'` |
+| Unknown operator | `Unknown operator '{op}' in assertion at index {n} in step '{id}'` |
 
 ---
 
@@ -443,7 +560,7 @@ The runtime (Python player) executes steps with these semantics:
 3. **Returns auto-persist**: After successful step execution, all declared `returns` are stored in the test memory dict keyed by `{step_id}.returns.{name}` and also by flat `{name}`.
 4. **Failure handling**: If a step fails, its `returns` are NOT stored. Subsequent steps referencing those returns receive `null`.
 5. **Teardown always runs**: Even if `steps` fail, `teardown` executes (best-effort cleanup).
-6. **Validate execution**: Assertions in `validate:` run immediately after the step completes. A failed assertion marks the step as failed but does NOT abort the test — remaining steps still execute (fail-continue mode).
+6. **Validate execution**: Assertions in `validate:` run immediately after the step completes. Each assertion is resolved via its `uses:` type and executed with its `with:` parameters. A failed assertion marks the step as failed but does NOT abort the test — remaining steps still execute (fail-continue mode).
 7. **Environment immutable**: `env` variables are read-only at runtime. Steps cannot modify them.
 
 ---
@@ -532,7 +649,11 @@ preconditions:
     with:
       service: provider
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
   - id: health_consumer
     uses: edc/health_check
@@ -540,7 +661,11 @@ preconditions:
     with:
       service: consumer
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
 tests:
   - tests/asset-crud.yaml
@@ -575,7 +700,11 @@ setup:
         type: string
         class: asset_id
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
   - id: create_policy
     uses: edc/create_policy
@@ -589,7 +718,11 @@ setup:
         type: string
         class: policy_id
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
   - id: create_contract_def
     uses: edc/create_contract_definition
@@ -600,7 +733,11 @@ setup:
       contract_policy_id: ${{ vars.policy_id }}
       service: provider
     validate:
-      - status_code == 200
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
 steps:
   - id: query_catalog
@@ -614,8 +751,15 @@ steps:
         type: string
         class: offer_id
     validate:
-      - status_code == 200
-      - response_body schema ${{ env.schemas.catalog_response }}
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+      - uses: validate/schema
+        with:
+          input: response_body
+          schema: ${{ env.schemas.catalog_response }}
 
   - id: negotiate
     uses: edc/negotiate
@@ -632,8 +776,15 @@ steps:
         type: string
         class: agreement_id
     validate:
-      - status_code == 200
-      - ${{ vars.agreement_id }} != null
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+      - uses: validate/assert
+        with:
+          input: agreement_id
+          operator: not_null
 
 teardown:
   - id: delete_asset
