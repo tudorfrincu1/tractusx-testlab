@@ -229,8 +229,7 @@ env:
         type: none
 
   schemas:
-    asset_schema:
-      file: schemas/asset.yaml
+    asset_schema: schemas/asset.yaml
 
 tests:
   - test: tests/request-certificate.yaml
