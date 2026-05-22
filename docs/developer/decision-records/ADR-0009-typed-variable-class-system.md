@@ -59,7 +59,7 @@ We introduce a **typed variable class system** with two new optional fields in t
 ```json
 {
   "name": "edr_token",
-  "class": "auth_token",
+  "class": "AuthToken",
   "schema": { "type": "string" },
   "description": "EDR token for dataplane authentication"
 }
@@ -72,45 +72,143 @@ We introduce a **typed variable class system** with two new optional fields in t
   "name": "edr_token",
   "type": "string",
   "required": true,
-  "accepts": ["auth_token"],
+  "accepts": ["AuthToken"],
   "description": "Authentication token for the dataplane call"
 }
 ```
 
 ### Rules
 
-1. `class` is a flat snake_case string identifier — no dots, no hierarchy.
+1. `class` is a PascalCase string identifier — maps directly to Python/TypeScript class names. No dots, no hierarchy. Pattern: `^[A-Z][a-zA-Z0-9]*$`.
 2. `accepts` is an array of class strings. An input accepts a variable if the variable's class appears in the array.
 3. If `accepts` is omitted, the input shows all variables (backward compatible).
-4. If `class` is omitted on an output, the variable is treated as class `"string"` (backward compatible).
-5. `uuid` class is **not** universally compatible. Inputs that should accept UUIDs must explicitly list `"uuid"` in their `accepts` array alongside their primary class (e.g., `"accepts": ["asset_id", "uuid"]`). This keeps the system predictable — no hidden wildcard rules.
+4. If `class` is omitted on an output, the variable has **no class constraint** — it appears in all input dropdowns regardless of `accepts` filters. This is the default for outputs that don't need type routing.
+5. `Uuid` class is **not** universally compatible. Inputs that should accept UUIDs must explicitly list `"Uuid"` in their `accepts` array alongside their primary class (e.g., `"accepts": ["AssetId", "Uuid"]`). This keeps the system predictable — no hidden wildcard rules.
 6. New classes can be added by editing the class registry JSON — no TypeScript or Python code changes required.
 7. The IDE dropdown provides a "Show all variables" toggle for advanced users who need to bypass filtering.
+8. `class` is **optional** on `returns` declarations. Not every output needs a class. Use `class` only when you want to enforce that the output is routed to specific inputs via `accepts` filtering. Outputs without `class` appear in all dropdowns and have no routing constraint. Example — a step that returns a plain description string doesn't need a class:
+   ```yaml
+   returns:
+     description:
+       type: string
+   ```
+   vs. a step that returns an asset ID that should only appear in asset-accepting inputs:
+   ```yaml
+   returns:
+     asset_id:
+       type: string
+       class: AssetId
+   ```
+
+### Primitive Type System
+
+The `type` field declares the structural data type of a variable. It is distinct from `class` (which declares semantic meaning). Every symbol in the symbol table and every output in an instruction's `returns` block carries a `type`.
+
+| Type | Description | JSON Representation | Runtime Behavior |
+|------|-------------|---------------------|------------------|
+| `string` | Text value | `"hello"` | Stored and returned as-is |
+| `integer` | Whole number | `42` | Stored and returned as-is |
+| `boolean` | True/false | `true` / `false` | Stored and returned as-is |
+| `object` | JSON object (serializable) | `{ "key": "value" }` | Stored and returned as-is |
+| `array` | JSON array (serializable) | `[1, 2, 3]` | Stored and returned as-is |
+| `class` | Live class instance (not JSON-serializable) | N/A | Created by factory (boot) or step executor (runtime). Never serialized. |
+
+**Rules:**
+- Primitives (`string`, `integer`, `boolean`) are JSON-native and serializable.
+- `object` and `array` are JSON-native and serializable — they represent plain data.
+- `class` indicates a live Python object (e.g., a `ConnectorService` or `MockInstance`). The IR stores only the factory recipe or step declaration; the Player instantiates it at runtime.
+- The `type` field enables the Player to distinguish "pass this value as-is" from "this is a live object handle" without inspecting the value.
 
 ### Class Taxonomy
 
-The initial taxonomy is flat (no inheritance). Classes are semantic, not structural:
+The class taxonomy is flat (no inheritance). Classes are semantic, not structural:
+
+#### Identifiers
 
 | Class | Semantics | Example Producers |
 |-------|-----------|-------------------|
-| `auth_token` | Authentication/authorization token | `pull_data_filtered`, `initiate_transfer` |
-| `dataplane_url` | EDC dataplane endpoint URL | `pull_data_filtered`, `initiate_transfer` |
-| `agreement_id` | Contract agreement identifier | `negotiate`, `pull_data_filtered` |
-| `asset_id` | EDC asset identifier | `create_asset` |
-| `policy_id` | Policy definition identifier | `create_policy` |
-| `offer_id` | Catalog offer identifier | `query_catalog` |
-| `negotiation_id` | Contract negotiation identifier | `negotiate` |
-| `transfer_id` | Transfer process identifier | `initiate_transfer` |
-| `endpoint_id` | Mock endpoint identifier | `mock_endpoint` |
-| `service_ref` | Service reference (connector, DTR) | services config |
-| `bpn` | Business Partner Number | environment/config |
-| `shell_id` | AAS shell descriptor ID | `register_aas_shell` |
-| `submodel_id` | Submodel identifier | `create_submodel` |
-| `status_code` | HTTP response status code | `http_call`, `http_call_dataplane` |
-| `response_body` | HTTP response body (JSON) | `http_call`, `http_call_dataplane` |
-| `uuid` | Generated UUID string | `generate_uuid` |
-| `url` | Generic URL | various |
-| `string` | Generic untyped string (fallback) | any output without `class` |
+| `AssetId` | EDC asset identifier | `create_asset` |
+| `PolicyId` | Policy definition identifier | `create_policy` |
+| `ContractDefId` | Contract definition identifier | `create_contract_definition` |
+| `OfferId` | Catalog offer/dataset identifier | `query_catalog` |
+| `NegotiationId` | Contract negotiation process identifier | `negotiate` |
+| `AgreementId` | Contract agreement identifier | `negotiate`, `pull_data_filtered` |
+| `TransferId` | Transfer process identifier | `initiate_transfer` |
+| `EndpointId` | Mock endpoint identifier (for wait blocks) | `mock_endpoint` |
+| `ShellId` | AAS shell descriptor identifier | `register_aas_shell` |
+| `SubmodelId` | Submodel descriptor identifier | `create_submodel` |
+| `Uuid` | Generated UUID v4 string | `generate_uuid` |
+| `Bpn` | Business Partner Number (BPNL/BPNS/BPNA) | environment/config |
+| `Did` | Decentralized Identifier (DID) | preconditions/config |
+
+#### URLs and Endpoints
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `Url` | Generic URL string | various |
+| `DataplaneUrl` | EDC dataplane public API endpoint URL | `pull_data_filtered`, `initiate_transfer` |
+
+#### Authentication
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `AuthToken` | Authentication/authorization token (e.g., EDR) | `pull_data_filtered`, `initiate_transfer` |
+
+#### HTTP Response Data
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `StatusCode` | HTTP response status code | `http_call`, connector steps |
+| `ResponseBody` | HTTP response body (JSON object) | `http_call`, connector steps |
+| `ResponseHeaders` | HTTP response headers (key-value pairs) | `http_call`, connector steps |
+
+#### Structured Data
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `Catalog` | Full catalog response object | `query_catalog` |
+| `Datasets` | Array of catalog datasets/offers | `query_catalog` |
+| `ShellDescriptor` | Full AAS shell descriptor object | `get_shell` |
+| `ShellIds` | Array of matching shell IDs | `lookup_shells` |
+| `CallbackPayload` | JSON payload received from SUT callback | `mock/wait` |
+| `ExtractedValue` | Value extracted via JSON path (type varies) | `extract_field` |
+
+#### State and Enums
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `State` | Process state string (e.g., FINALIZED, STARTED) | `get_transfer_state`, `get_negotiation_state` |
+| `Enum` | Enumeration value from a known set | preconditions/config |
+
+#### Live Instances (type: class)
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `ConnectorService` | Live EDC connector service instance | service factory (boot time) |
+| `MockInstance` | Live mock server endpoint instance | `mock/api` step executor |
+
+#### Fallback
+
+| Class | Semantics | Example Producers |
+|-------|-----------|-------------------|
+| `String` | Generic untyped string (fallback when no class applies) | any output without explicit `class` |
+
+> **Note:** When `class` is `null` on a symbol table entry, the variable has no semantic type constraint. It will appear in all dropdowns regardless of `accepts` filters (backward-compatible behavior). When `type` is `"class"`, the `class` field doubles as the factory registry key (see ADR-0014 §3.4.6).
+
+### Class Naming Convention
+
+Class identifiers use **PascalCase** — identical to their corresponding Python class names. This eliminates any mapping layer between the YAML/IR `class` field and the runtime factory registry.
+
+| Convention | Example | Rationale |
+|------------|---------|----------|
+| PascalCase | `ConnectorService` | Maps directly to `class ConnectorService` in Python |
+| No underscores | `MockInstance` not `Mock_Instance` | Clean, consistent, one style |
+| No abbreviations | `ResponseBody` not `RespBody` | Readable by non-developers |
+| Compound words | `AuthToken`, `DataplaneUrl` | Each word capitalized |
+
+**Pattern:** `^[A-Z][a-zA-Z0-9]*$`
+
+**Rationale:** When the Player's factory registry receives `"class": "ConnectorService"`, it can directly resolve `registry["ConnectorService"]` to the Python class without any `snake_to_pascal()` conversion. The class name in YAML IS the class name in code.
 
 ### Class Registry
 
@@ -120,7 +218,7 @@ The canonical class registry lives at **`ide/public/blocks/classes.json`**. Form
 {
   "classes": [
     {
-      "id": "auth_token",
+      "id": "AuthToken",
       "label": "Auth Token",
       "description": "Authentication or authorization token",
       "color": "#E8A838"

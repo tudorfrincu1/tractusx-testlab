@@ -105,6 +105,54 @@ tests:
 - Directory nesting is permitted (e.g. `tests/notifications/available.yaml`).
 - The compiler validates that testdata `file` extensions match the declared `type` and rejects mismatches.
 
+### 1.1 Testdata Compilation
+
+Testdata entries declared in `env.testdata` are resolved and inlined at compile time. The full testdata syntax specification is defined in [ADR-0010](ADR-0010-yaml-test-syntax-v2.md).
+
+**Entry specification:**
+
+Each `env.testdata` entry has two fields:
+
+| Field | Description |
+|-------|-------------|
+| `file` | Filename relative to the `testdata/` folder |
+| `type` | MIME type declaring the content format |
+
+**Supported types:**
+
+| Extension | MIME type |
+|-----------|----------|
+| `.json` | `application/json` |
+| `.xml` | `application/xml` |
+| `.pdf` | `application/pdf` |
+| `.txt` | `text/plain` |
+| `.csv` | `text/csv` |
+
+**Compile-time resolution:**
+
+The compiler resolves `${{ env.testdata.<key> }}` expressions by inlining the referenced file content into the step's `with:` field. For example:
+
+```yaml
+env:
+  testdata:
+    available_notification:
+      file: available_notification.json
+      type: application/json
+
+steps:
+  - uses: send_notification
+    with:
+      body: ${{ env.testdata.available_notification }}
+```
+
+At compile time, `${{ env.testdata.available_notification }}` is replaced with the contents of `testdata/available_notification.json`.
+
+**Compiler validations:**
+
+1. File exists at the resolved path (`testdata/<file>`)
+2. File extension matches the declared `type` (e.g. `.json` → `application/json`)
+3. The consuming block's `with:` field accepts the declared MIME type
+
 ### 2. Compilation Process
 
 Compilation transforms the source folder into a validated, self-contained package. The Compiler performs these phases in order:

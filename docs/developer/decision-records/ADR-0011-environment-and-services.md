@@ -21,7 +21,7 @@
 <!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
 <!-- It was reviewed and tested by a human committer. -->
 
-# ADR-0011: Environment Variables and Services Management
+# ADR-0011: Environment and Services Specification
 
 ## Status
 
@@ -29,14 +29,15 @@ Draft
 
 ## Date
 
-2026-05-20
+2026-05-21
 
 ## Context
 
-Testing against real Tractus-X dataspaces requires configured infrastructure services (EDC connectors, DTRs, Discovery Finders) and runtime variables (BPNs, URLs, credentials). ADR-0010 introduced the `env:` block in TCK manifests but left the detailed semantics undefined. This ADR formalizes:
+Testing against real Tractus-X dataspaces requires configured infrastructure services (connector connectors, DTRs, Discovery Finders) and runtime variables (BPNs, URLs, credentials). ADR-0010 introduced the `env:` block in TCK manifests with service definitions following the step-like pattern (`name` + `uses` + `with`). This ADR formalizes:
 
-- How services are declared, categorized, and referenced
-- How variables are acquired (user input, runtime prompt, auto-generation)
+- How services are declared, configured, and referenced
+- How services produce typed variables for step consumption
+- How variables are acquired (static, runtime prompt, auto-generation)
 - How secrets are handled
 - The scoping rule: tests consume but never declare services or env variables
 
@@ -47,230 +48,352 @@ Testing against real Tractus-X dataspaces requires configured infrastructure ser
 - The IDE Environment Editor must map 1:1 to the YAML `env:` block.
 - Services have different auth mechanisms (API key, OAuth2) depending on type and deployment.
 - Secrets must never leak into logs, exports, or YAML serialization.
+- Services are steps — they follow the same `uses` + `with` vocabulary as all other blocks.
 
 ## Decision
 
 ### 1. Services Live at TCK Level Only
 
-All service declarations belong in the TCK manifest under `env.services`. Individual test files (`kind: test`) CANNOT declare their own services. Tests reference services by name via `with: { service: "name" }`.
+All service declarations belong in the TCK manifest under `env.services`. Individual test files (`kind: test`) CANNOT declare their own services. Tests reference services by name via `with: { service: "name" }` or `${{ env.services.name }}`.
 
 **Rationale:** A TCK represents one test environment. Services are infrastructure — they don't change between test cases within the same TCK.
 
-### 2. Service Categories (Roles)
+### 2. Service Definition Pattern
 
-Each service declares a `role` indicating its relationship to the test:
+Services follow the same pattern as steps: `name` + `uses` + `with`. The `uses` field references a type from the `service/` namespace in the uses registry. The `with` block contains ALL configuration for that service type, including authentication.
 
-| Role | Description | Example |
-|------|-------------|---------|
-| `internal` | TestLab-owned services used to simulate participants | `testlab_connector`, `mock_server` |
-| `external` | System-under-test services being validated | `counter_party_connector` |
-| `additional` | Supporting infrastructure not directly under test | `dtr`, `discovery_finder` |
+```yaml
+env:
+  services:
+    - name: provider
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: ${{ env.provider_api_key }}
+          api_key_header: "X-Api-Key"
+      returns:
+        connector_service:
+          type: class
+          class: ConnectorService
+```
 
-The role is informational for the IDE (UI grouping) and logs but does not affect runtime behavior.
+**Field specification:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Service identifier. Pattern: `^[a-z][a-z0-9_]{0,49}$`. Becomes the variable handle. |
+| `uses` | Yes | Service type from `service/` namespace (e.g., `service/connector_service`). |
+| `with` | Yes | Typed inputs for the service, including `auth`. Schema depends on service type. |
 
 ### 3. Service Type Registry
 
-| Type | Description | Required Config |
-|------|-------------|-----------------|
-| `edc_connector` | Eclipse Dataspace Connector | `base_url`, `management_path`, `dsp_path`, `version` |
-| `mock_server` | TestLab built-in mock server | `port`, `callbacks` |
-| `dtr` | Digital Twin Registry | `base_url`, `lookup_path` |
-| `discovery_finder` | Discovery Finder service | `base_url` |
+Each `uses` value in the `service/` namespace defines its own input schema:
 
-The `version` field on `edc_connector` specifies the dataspace protocol version: `saturn` (EDC v0.11+, DSP 2025-1) or `jupiter` (EDC v0.8–0.10).
+| Uses | Description | Required `with` fields |
+|------|-------------|------------------------|
+| `service/connector_service` | Eclipse Dataspace Connector | `base_url`, `management_path`, `dsp_path`, `dataspace_version`, `auth` |
+| `service/mock_server` | TestLab built-in mock server | `port` |
+| `service/dtr` | Digital Twin Registry | `base_url`, `lookup_path`, `auth` |
+| `service/discovery_service` | Discovery Finder service | `base_url`, `auth` |
 
-### 4. Service Authentication
+### 4. Authentication Inside `with`
 
-Each service MAY declare an `auth` block:
+Auth is a nested object inside `with:` — not a separate top-level block. Each service type defines whether auth is required or optional.
 
+**API Key:**
 ```yaml
-auth:
-  type: api_key
-  api_key: ${{ env.provider_api_key }}
+with:
+  base_url: "https://connector.local"
+  auth:
+    type: api_key
+    api_key: ${{ env.provider_api_key }}
+    api_key_header: "X-Api-Key"
 ```
 
+**OAuth2:**
 ```yaml
-auth:
-  type: oauth2
-  token_url: "https://auth.local/token"
-  client_id: ${{ env.client_id }}
-  client_secret: ${{ env.client_secret }}
+with:
+  base_url: "https://connector.local"
+  auth:
+    type: oauth2
+    token_url: "https://auth.local/token"
+    client_id: ${{ env.client_id }}
+    client_secret: ${{ env.client_secret }}
 ```
 
-Supported auth types: `api_key`, `oauth2`, `none` (default).
+**No auth:**
+```yaml
+with:
+  base_url: "http://localhost:4243"
+  auth:
+    type: none
+```
 
-### 5. Variable Acquisition Types
+Supported auth types: `api_key`, `oauth2`, `none`.
 
-Each variable in `env.variables` declares how its value is obtained:
+### 5. Implicit Returns — Services as Typed Variables
 
-| Type | Description | Resolution Time |
-|------|-------------|-----------------|
-| `input` | User provides before execution starts | Pre-execution |
-| `manual` | User provides during execution (runtime prompt) | Mid-execution |
-| `function` | Auto-generated by a generator function | Pre-execution |
+Each service **implicitly generates a return variable** when declared. The variable:
 
-### 6. Generator Functions (for `type: function`)
+- Has the service `name` as its identifier
+- Has `type: object`
+- Has `class` derived from the `uses` action name (e.g., `service/connector_service` → class `connector_service`)
 
-Variables with `type: function` specify a `generator`:
+This means steps that accept a `service` input can use IDE class-based filtering to show only compatible services in their dropdown. For example, a step that expects `class: connector_service` will only show connector services, not mock servers.
 
-| Generator | Output | Example |
-|-----------|--------|---------|
-| `uuid_v4` | Random UUID v4 string | `550e8400-e29b-41d4-a716-446655440000` |
-| `timestamp_iso` | Current ISO 8601 timestamp | `2026-05-20T10:30:00Z` |
-| `random_string` | Random alphanumeric string (configurable length) | `aB3kQ9mR` |
-| `get_participant_bpn` | BPN from participant config | `BPNL000000000001` |
+**Referencing services in steps:**
 
-### 7. Secrets Handling
+```yaml
+- id: create_asset_1
+  uses: connector/provider/create_asset
+  with:
+    connector_service: ${{ env.services.provider.connector_service}}                         # 
+    asset_id: ${{ vars.generated_id }}
+```
 
-Variables with `secret: true`:
+The compiler validates that `connector_service: ${{ env.services.provider.connector_service}}` references an existing entry in `env.services`.
+
+### 6. Dataspace Version via Metadata Reference
+
+Services that need the dataspace version reference it from metadata using the `${{ metadata.dataspace_version }}` expression — no duplication:
+
+```yaml
+metadata:
+  dataspace_version: saturn
+
+env:
+  services:
+    - name: provider
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        connector_service:
+          type: class
+          class: ConnectorService
+```
+
+### 7. Variable Acquisition Types
+
+Each variable in `env.variables` has a value that may come from different sources:
+
+| Source | Description | Resolution Time |
+|--------|-------------|-----------------|
+| Static literal | Hardcoded value in YAML | Compile time |
+| `${{ execution.x }}` | Injected at runtime | Pre-execution |
+| User-prompted | Marked for runtime user input | Mid-execution (pauses) |
+| Generated | Auto-generated by runtime function | Pre-execution |
+
+For v1-alpha, all variables are static literals or expression references. Runtime prompting and generation are future extensions (tracked separately).
+
+### 8. Secrets Handling
+
+Variables with `secret: true` in the IDE metadata:
 
 - Are masked in all log output (`***`)
 - Are stored in memory only (never written to disk during execution)
 - Are excluded from YAML export/serialization of results
 - Display as `••••••` in the IDE variable editor
 
-### 8. Scoping Rule
+In the YAML, secrets are just regular variables — the `secret` flag is IDE/runtime metadata, not a YAML field.
 
-Tests (`kind: test`) CANNOT declare `env:` blocks. All environment configuration is inherited from the parent TCK manifest. Tests consume variables via `${{ env.x }}` and services via `with: { service: "name" }`.
+### 9. Scoping Rule
 
-### 9. Services May Reference Environment Variables
+Tests (`kind: test`) CANNOT declare `env:` blocks. All environment configuration is inherited from the parent TCK manifest via namespace resolution. Tests consume:
 
-Service configuration supports `${{ env.x }}` interpolation:
+- Variables via `${{ env.x }}`
+- Services via `with: { service: "name" }` or `${{ env.services.name }}`
+- Schemas via `${{ env.schemas.name }}`
+- Metadata via `${{ metadata.x }}`
 
-```yaml
-env:
-  variables:
-    provider_address:
-      class: url
-      type: input
-      description: "Provider connector management URL"
-  services:
-    - name: provider
-      uses: edc_connector
-      role: external
-      version: saturn
-      with:
-        base_url: ${{ env.provider_address }}
-        management_path: /management/v3
-        dsp_path: /api/v1/dsp
-      auth:
-        type: api_key
-        api_key: ${{ env.provider_api_key }}
-```
+### 10. Resolution Order
 
-Resolution order: variables are resolved first, then service configs are interpolated.
+Within the `env:` block, resolution follows declaration order:
+
+1. `env.variables` — resolved first (static values and `${{ execution.x }}` references)
+2. `metadata.*` — always available (declared above `env:`)
+3. `env.services` — resolved second (may reference `env.variables` and `metadata.*`)
+4. `env.schemas` / `env.testdata` — resolved last (file path validation)
+
+This means services can reference variables (`${{ env.provider_url }}`), but variables cannot reference services.
 
 ## Complete Example
 
 ```yaml
 kind: tck
-name: certificate-management
-version: "1.0"
+testlab: v1-alpha
+
+id: certificate-management-tck
+namespace: ccm-v0.0.1
+
+metadata:
+  name: "Certificate Management TCK"
+  version: "v0.0.1"
+  description: >
+    Validate certificate management workflow per CX-0135 v3.1.0.
+  authors:
+    - name: Mathias Moser
+      email: mathias.moser@catena-x.net
+      company: Catena-X Automotive Network e.V.
+  copyright_holders:
+    - "2026 Catena-X Automotive Network e.V."
+  license: Apache-2.0
+  standards:
+    - id: CX-0135
+      version: v3.1.0
+  tags:
+    - CCM
+  dataspace_version: saturn
 
 env:
   variables:
-    provider_address:
-      class: url
-      type: input
-      description: "Provider EDC management URL"
-      required: true
-    provider_bpn:
-      class: bpn
-      type: input
-      description: "Provider BPN"
-      required: true
-    provider_api_key:
-      class: string
-      type: input
-      secret: true
-      description: "Provider management API key"
-    test_asset_id:
-      class: uuid
-      type: function
-      generator: uuid_v4
-      description: "Auto-generated asset ID for this test run"
-    otp_code:
-      class: string
-      type: manual
-      description: "One-time password from authenticator app"
+    provider_url: "https://provider.local/management"
+    consumer_url: "https://consumer.local/management"
+    provider_bpn: "BPNL000000000001"
+    consumer_bpn: "BPNL000000000002"
+    provider_api_key: "test-api-key"
+    consumer_api_key: "test-api-key"
+    callback_url: "https://testlab.local/callback"
 
   services:
-    - name: testlab_connector
-      uses: edc_connector
-      role: internal
-      version: saturn
+    - name: provider
+      uses: service/connector_service
       with:
-        base_url: "http://localhost:11003"
+        base_url: ${{ env.provider_url }}
         management_path: /management/v3
         dsp_path: /api/v1/dsp
-      auth:
-        type: api_key
-        api_key: "testlab-dev-key"
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: ${{ env.provider_api_key }}
+          api_key_header: "X-Api-Key"
 
-    - name: counter_party_connector
-      uses: edc_connector
-      role: external
-      version: saturn
+    - name: consumer
+      uses: service/connector_service
       with:
-        base_url: ${{ env.provider_address }}
+        base_url: ${{ env.consumer_url }}
         management_path: /management/v3
         dsp_path: /api/v1/dsp
-      auth:
-        type: api_key
-        api_key: ${{ env.provider_api_key }}
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: ${{ env.consumer_api_key }}
+          api_key_header: "X-Api-Key"
 
-    - name: dtr
-      uses: dtr
-      role: additional
+    - name: mock_server
+      uses: service/mock_server
       with:
-        base_url: "http://localhost:4243"
-        lookup_path: /lookup/shells
-      auth:
-        type: none
+        port: 8090
 
   schemas:
-    asset_schema: schemas/asset.yaml
+    certificate_schema:
+      file: business_partner_certificate.json
+    notification_header_schema:
+      file: notification_header.json
+
+  testdata:
+    available_notification:
+      file: available_notification.json
+      type: application/json
+
+preconditions:
+  - id: health_provider
+    uses: connector/health_check
+    name: Provider health check
+    with:
+      connector_service: ${{ env.services.provider.connector_service}}
+    validate:
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+
+  - id: health_consumer
+    uses: connector/health_check
+    name: Consumer health check
+    with:
+      connector_service: ${{ env.services.consumer.connector_service}}
+    validate:
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
 
 tests:
-  - test: tests/request-certificate.yaml
-  - test: tests/verify-certificate.yaml
+  - request-certificate.yaml
+  - available-notification.yaml
 ```
+
+## Compiler Validation Rules
+
+| Rule | Error Message |
+|------|---------------|
+| Service missing `name` | `Service at index {n} is missing required field 'name'` |
+| Service missing `uses` | `Service '{name}' is missing required field 'uses'` |
+| Service missing `with` | `Service '{name}' is missing required field 'with'` |
+| Invalid `uses` namespace | `Service '{name}' uses '{value}' — must start with 'service/'` |
+| Unknown service type | `Unknown service type '{value}' in service '{name}'` |
+| Duplicate service name | `Duplicate service name '{name}' — first defined at index {n}` |
+| Missing required field | `Service '{name}' ({uses}): missing required field '{field}' in 'with'` |
+| Step references unknown service | `Step '{id}' references service '{name}' — not defined in env.services` |
+| Circular reference | `Circular reference in env: service '{name}' references variable that references service` |
 
 ## Consequences
 
-### Easier
+### Positive
 
-- Single place to configure all infrastructure per TCK
-- IDE Environment Editor maps directly to `env:` — no translation layer
-- Compile-time validation of variable references and service availability
-- Secrets are never accidentally exposed
+- Services follow the same vocabulary as steps (`uses` + `with`) — one pattern to learn
+- Typed variables from services enable IDE class-based filtering in dropdowns
+- Auth inside `with` means each service type fully defines its own input schema
+- `${{ metadata.dataspace_version }}` eliminates duplication across services
+- Compile-time validation catches misconfigured services before execution
 
-### Harder
+### Negative
 
 - Tests cannot be self-contained — they always require a parent TCK manifest
 - Adding a new service type requires updating the type registry
-- `manual` variables introduce async runtime complexity (execution pauses for user input)
+- `service/` namespace prefix is slightly more verbose than bare type names
+
+### Risks
+
+| Risk | Mitigation |
+|------|-----------|
+| Service type proliferation | Registry is curated — new types require ADR amendment |
+| Auth credentials in YAML | Secrets handling + IDE masking + never serialize to exports |
+| Breaking change from ADR-0011 draft | No production code depends on the draft yet — clean slate |
 
 ## Impact on IDE
 
-The Environment Editor (three-panel layout: Services / Variables / Schemas) maps 1:1:
+The Environment Editor maps to the `env:` block:
 
-- **Services panel**: Internal/External/Additional tabs correspond to `role` field
-- **Variables panel**: Postman-style table with type/kind/default/secret columns
-- **Add Service dialog**: type dropdown populated from the service type registry
+- **Services panel**: List of services with `uses` type badge and expandable `with` configuration
+- **Variables panel**: Key-value table with secret masking toggle
+- **Add Service dialog**: type dropdown from `service/` registry, form fields from type schema
+- **Service dropdowns in steps**: Filtered by class (only show compatible services)
 
 ## Impact on Backend
 
-The runtime must handle:
+The runtime handles:
 
-1. **Pre-execution**: Resolve all `input` variables (prompt or config file), execute `function` generators
-2. **Mid-execution**: When a step references a `manual` variable, pause and prompt the user (via SSE)
-3. **Validation**: Compiler rejects `${{ env.x }}` references to undefined variables
-4. **Validation**: Compiler rejects `with: { service: "x" }` references to undefined services
-5. **Secret masking**: Logger filters any value marked `secret: true` from output
+1. **Compile-time**: Validate all service references, required fields, and variable interpolation
+2. **Pre-execution**: Resolve `env.variables`, then interpolate into `env.services`
+3. **Service instantiation**: Create SDK service objects from resolved service configs
+4. **Variable injection**: Service `name` registered as typed variable (`class: {action_name}`)
+5. **Secret masking**: Logger filters any value marked as secret from output
 
 ## Related
 
-- [ADR-0010](ADR-0010-yaml-syntax-v2.md) — YAML Syntax v2 (parent syntax specification)
-- [ADR-0009](ADR-0009-typed-variable-class-system.md) — Typed Variable Class System (`class` field)
-- [ADR-0006](ADR-0006-service-auto-declaration-on-block-drop.md) — Service Auto-Declaration on Block Drop
+- [ADR-0010](ADR-0010-yaml-syntax-v2.md) — YAML Syntax v2 (parent syntax specification, defines `service/` namespace)
+- [ADR-0009](ADR-0009-typed-variable-class-system.md) — Typed Variable Class System (`class` field for returns)

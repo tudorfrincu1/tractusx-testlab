@@ -25,7 +25,7 @@
 
 ## Status
 
-Draft
+Accepted
 
 ## Date
 
@@ -35,7 +35,7 @@ Draft
 
 TestLab YAML v1 used a custom syntax (`type:`, `params:`, `@variable_name`, `store_in_memory:`) that was unfamiliar to most developers. This created a learning curve and made the format feel proprietary. After evaluating four alternatives — GitHub Actions (GHA), GitLab CI, Azure Pipelines, and keeping v1 — we chose the GHA-inspired syntax for the following reasons:
 
-| Criterion | GHA | GitLab CI | Azure Pipelines | v1 (current) |
+| Criterion | GHA | GitLab CI | Azure Pipelines | v0 (current) |
 |-----------|-----|-----------|-----------------|--------------|
 | Developer familiarity | Very high | High | Medium | None |
 | Step-as-function model | Native (`uses`/`with`) | Partial | Partial | Custom |
@@ -85,15 +85,15 @@ Fields within a step MUST appear in this canonical order:
 
 ```yaml
 - id: create_asset_1
-  uses: edc/create_asset
+  uses: connector/create_asset
   name: Create the test asset
   with:
-    asset_id: ${{ vars.generated_id }}
+    asset_id: ${{ steps.generated_id }}
     description: "Test asset for negotiation"
   returns:
     asset_id:
       type: string
-      class: asset_id
+      class: AssetId
   validate:
     - uses: validate/assert
       with:
@@ -107,7 +107,7 @@ Fields within a step MUST appear in this canonical order:
         operator: not_null
 ```
 
-> **Note:** The `input` field in assertions always references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ vars.step_name.field }}`.
+> **Note:** The `input` field in assertions always references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ steps.step_name.field }}`.
 
 Order: **id → uses → name → with → returns → validate**
 
@@ -121,21 +121,25 @@ All variable references use the `${{ }}` expression syntax:
 
 | Pattern | Scope | Source | Example |
 |---------|-------|--------|---------|
-| `${{ vars.x }}` | Test-local | Step `returns` values | `${{ vars.asset_id }}` |
-| `${{ vars.step_id.returns.x }}` | Test-local (qualified) | Specific step's return | `${{ vars.create_asset_1.returns.asset_id }}` |
+| `${{ steps.x }}` | Test-local | Step `returns` values | `${{ steps.asset_id }}` |
+| `${{ steps.step_id.x }}` | Test-local (qualified) | Specific step's return | `${{ steps.create_asset_1.asset_id }}` |
 | `${{ env.x }}` | TCK-global | TCK manifest `env.variables` | `${{ env.provider_url }}` |
 | `${{ env.schemas.name }}` | TCK-global | TCK manifest `env.schemas` | `${{ env.schemas.asset_schema }}` |
+| `${{ metadata.x }}` | TCK-global | TCK manifest `metadata` fields | `${{ metadata.dataspace_version }}` |
+| `${{ execution.x }}` | Runtime | Player-injected execution context | `${{ execution.id }}` |
 
 #### 3.2 Resolution Rules
 
-1. **Flat `${{ vars.x }}`** resolves by searching all preceding steps' `returns` for key `x`.
+1. **Flat `${{ steps.x }}`** resolves by searching all preceding steps' `returns` for key `x`.
 2. If exactly one match exists → resolved.
-3. If zero matches → **compiler error**: `Unresolved variable: vars.x — no preceding step returns 'x'`.
-4. If multiple matches → **compiler error**: `Ambiguous variable: vars.x — returned by steps [step_a, step_b]. Use qualified form: ${{ vars.step_a.returns.x }}`.
-5. **Qualified `${{ vars.step_id.returns.x }}`** always resolves to exactly that step's return. If the step or return does not exist → compiler error.
+3. If zero matches → **compiler error**: `Unresolved variable: steps.x — no preceding step returns 'x'`.
+4. If multiple matches → **compiler error**: `Ambiguous variable: steps.x — returned by steps [step_a, step_b]. Use qualified form: ${{ steps.step_a.x }}`.
+5. **Qualified `${{ steps.step_id.x }}`** always resolves to exactly that step's return. If the step or return does not exist → compiler error.
 6. **`${{ env.x }}`** resolves from the TCK manifest `env.variables` block. If not defined → compiler error.
 7. **`${{ env.schemas.name }}`** resolves to the schema file path declared in `env.schemas`. If not defined → compiler error.
-8. Variables are resolved **top-to-bottom** — a step can only reference returns from steps above it (including setup steps when referenced from main steps).
+8. **`${{ metadata.x }}`** resolves from the TCK manifest `metadata` block fields. Supports dot-notation for nested fields (e.g., `metadata.dataspace_version`). If the field does not exist → compiler error.
+9. **`${{ execution.x }}`** resolves from the runtime execution context. Four keys are always available (`id`, `tck_id`, `timestamp`, `runner`). Additional keys may be injected via CLI `--set`, SDK `execution_context`, or `TESTLAB_EXEC_*` environment variables. Built-in keys are validated at compile time; custom keys produce a warning: `execution.{x} is not a built-in key — ensure it is injected at runtime`.
+10. Variables are resolved **top-to-bottom** — a step can only reference returns from steps above it (including setup steps when referenced from main steps).
 
 #### 3.3 Variable Lifecycle
 
@@ -147,19 +151,57 @@ All variable references use the `${{ }}` expression syntax:
 | `preconditions` (TCK-level) | Visible to all tests in the TCK |
 | `env` variables | Visible everywhere (TCK-global) |
 
-#### 3.4 User Mental Model: Two Variable Concepts Only
+#### 3.4 Execution Context
 
-The `${{ vars.x }}` / `${{ env.x }}` interpolation syntax is an **implementation detail** that TCK authors should never need to think about. From the user's perspective, there are exactly **two concepts**:
+The `execution` scope provides runtime context injected by the Player before execution begins. It is read-only — steps cannot modify execution variables.
+
+**Built-in keys (always available):**
+
+| Key | Type | Description | Example |
+|-----|------|-------------|--------|
+| `execution.id` | string | UUID v4, unique per run | `"a1b2c3d4-e5f6-..."` |
+| `execution.tck_id` | string | Fully qualified TCK ID (`{namespace}/{id}`) | `"ccm-v0.0.1/certificate-management-tck"` |
+| `execution.timestamp` | string | ISO 8601 UTC start time | `"2026-05-21T14:30:00Z"` |
+| `execution.runner` | string | Runner identifier | `"local"`, `"ci"`, `"embedded"` |
+
+**Custom keys (user-injected):**
+
+Any additional `execution.*` key can be provided at runtime through three injection mechanisms:
+
+| Mechanism | Example | Use case |
+|-----------|---------|----------|
+| CLI `--set` | `testlab run tck.yaml --set execution.tenant_id=acme` | CI pipelines, manual runs |
+| SDK `execution_context` | `player.run("tck.yaml", execution_context={"tenant_id": "acme"})` | Embedded in application code |
+| Environment variables | `TESTLAB_EXEC_TENANT_ID=acme` → `execution.tenant_id` | Container/cloud environments |
+
+**Resolution priority** (highest wins):
+
+1. CLI `--set` flag
+2. SDK `execution_context` dict
+3. `TESTLAB_EXEC_*` environment variables (prefix stripped, lowercased)
+4. Built-in values
+
+**Environment variable mapping:** `TESTLAB_EXEC_` prefix is stripped and the remainder is lowercased with underscores preserved. Example: `TESTLAB_EXEC_CI_PIPELINE_ID` → `execution.ci_pipeline_id`.
+
+**Compiler behavior:**
+
+- Built-in keys (`id`, `tck_id`, `timestamp`, `runner`): always valid, no warning
+- Any other `execution.*` key: compile-time warning (may not be available at runtime)
+- At runtime: missing custom key → execution error with context message
+
+#### 3.5 User Mental Model: Two Variable Concepts Only
+
+The `${{ steps.x }}` / `${{ env.x }}` interpolation syntax is an **implementation detail** that TCK authors should never need to think about. From the user's perspective, there are exactly **two concepts**:
 
 | User Concept | Label in IDE | Actual Syntax | Semantics |
 |--------------|-------------|---------------|-----------|
-| **Local variable** | "Step output" / "Local" | `${{ vars.x }}` | Private to the current test — produced by a step's `returns` and consumed by subsequent steps within the same test file. Not visible to other tests. |
+| **Local variable** | "Step output" / "Local" | `${{ steps.x }}` | Private to the current test — produced by a step's `returns` and consumed by subsequent steps within the same test file. Not visible to other tests. |
 | **Environment variable** | "Environment" / "Public" | `${{ env.x }}` | Shared across the entire TCK — defined once in the TCK manifest and inherited by all test files. Can be overwritten if needed, globally visible. |
 
 **Design rules:**
 
 1. **The IDE hides interpolation syntax entirely.** Users pick variables from dropdowns or drag output tokens — they never type `${{ }}` manually.
-2. **Variable labels use domain language.** The IDE shows "Asset ID (from Create Asset step)" not `${{ vars.create_asset_1.returns.asset_id }}`.
+2. **Variable labels use domain language.** The IDE shows "Asset ID (from Create Asset step)" not `${{ steps.create_asset_1.asset_id }}`.
 3. **Color-coding distinguishes scope.** Local variables and environment variables use distinct visual indicators so users always know the scope at a glance.
 4. **No third category.** There is no "global mutable", no "shared between tests", no "session" scope. Two concepts only — local outputs and public environment. If a value must be shared, it belongs in `env`.
 5. **Qualification is automatic.** When ambiguity arises (two steps return the same variable name), the IDE silently switches to the qualified form — the user sees a disambiguation prompt ("Which step's output?"), never raw syntax.
@@ -167,7 +209,7 @@ The `${{ vars.x }}` / `${{ env.x }}` interpolation syntax is an **implementation
 
 **Rationale:** TCK authors are certification testers, not developers. Forcing them to understand expression interpolation, scoping rules, or qualified references adds cognitive load that produces zero value. The IDE and compiler handle the plumbing; the user thinks in "my step's output" and "the test environment".
 
-#### 3.4.1 Overwriting Environment Variables (`util/set_env`)
+#### 3.5.1 Overwriting Environment Variables (`util/set_env`)
 
 When a test needs to change an environment variable (e.g., switch a URL, update a token after rotation), the user uses the **"Set Environment Variable"** block:
 
@@ -205,7 +247,7 @@ When a test needs to change an environment variable (e.g., switch a URL, update 
 
 - Reject duplicate IDs within a test file.
 - Reject IDs that do not match the pattern.
-- Reject IDs that collide with reserved words: `env`, `vars`, `returns`, `steps`, `setup`, `teardown`.
+- Reject IDs that collide with reserved words: `env`, `steps`, `returns`, `steps`, `setup`, `teardown`.
 
 ### 5. Returns (Step Outputs)
 
@@ -215,10 +257,10 @@ Every step MAY declare `returns:`. Each return is a named output with metadata:
 returns:
   agreement_id:
     type: string
-    class: agreement_id
+    class: AgreementId
   negotiation_id:
     type: string
-    class: negotiation_id
+    class: NegotiationId
 ```
 
 | Field | Required | Description |
@@ -282,7 +324,7 @@ validate:
 
 #### 6.1 Assertion Types (`validate/` namespace)
 
-The `input` field **always** references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ vars.step_name.field }}`.
+The `input` field **always** references a variable declared in a step's `returns:` block. At runtime it resolves to `${{ steps.step_name.field }}`.
 
 | `uses:` value | Purpose | Required `with:` fields |
 |---|---|---|
@@ -449,7 +491,7 @@ Extracts a single query parameter value into a local variable for reuse in subse
   uses: util/extract_query_param
   name: Extract certificate type from SUT request
   with:
-    source: ${{ vars.wait_for_pull.returns.query_params }}
+    source: ${{ steps.wait_for_pull.query_params }}
     param: "certificateType"
   returns:
     value:
@@ -460,7 +502,7 @@ Extracts a single query parameter value into a local variable for reuse in subse
   uses: util/extract_query_param
   name: Extract decoded filter object
   with:
-    source: ${{ vars.wait_for_pull.returns.query_params }}
+    source: ${{ steps.wait_for_pull.query_params }}
     param: "filter"
     base64: true
   returns:
@@ -502,7 +544,7 @@ Extracts a single query parameter value into a local variable for reuse in subse
 | `true` | Valid JSON object/array | `object` or `array` |
 | `true` | Non-JSON content | `string` |
 
-After this step, `${{ vars.extract_cert_type.returns.value }}` (or short form `${{ vars.value }}` if unambiguous) is available as a local variable.
+After this step, `${{ steps.extract_cert_type.value }}` (or short form `${{ steps.value }}` if unambiguous) is available as a local variable.
 
 #### 6.4 Input variable resolution
 
@@ -512,7 +554,7 @@ The `input` field references a variable name from the current step's `returns:` 
 - `response_body` — Parsed JSON response (object, used with `validate/field` for dot-path access)
 - `response_headers` — Response headers (object)
 
-The `input` value is always a return variable name. It resolves at runtime to the actual value stored in `${{ vars.step_name.field }}`.
+The `input` value is always a return variable name. It resolves at runtime to the actual value stored in `${{ steps.step_name.field }}`.
 
 ### 7. Document Kinds
 
@@ -616,7 +658,7 @@ Testdata entries declared in `env.testdata` are referenced in step fields using 
   returns:
     callback_id:
       type: string
-      class: callback_id
+      class: CallbackId
     base_mock_url:
       type: string
 ```
@@ -677,18 +719,32 @@ env:
     provider_bpn: "BPNL000000000001"
     consumer_bpn: "BPNL000000000002"
   services:
-    provider:
-      type: edc_connector
-      url: ${{ env.provider_url }}
-      auth:
-        type: oauth2
-        token_url: "https://auth.local/token"
-    consumer:
-      type: edc_connector
-      url: ${{ env.consumer_url }}
-      auth:
-        type: oauth2
-        token_url: "https://auth.local/token"
+    - name: provider
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp
+        auth:
+          type: oauth2
+          token_url: "https://auth.local/token"
+      returns:
+        service:
+          type: class
+          class: ConnectorService
+    - name: consumer
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.consumer_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp
+        auth:
+          type: oauth2
+          token_url: "https://auth.local/token"
+      returns:
+        service:
+          type: class
+          class: ConnectorService
   schemas:
     certificate_schema:
       file: business_partner_certificate_schema.json
@@ -702,18 +758,8 @@ env:
       file: sample_certificate.pdf
       type: application/pdf
 
-preconditions:
-  - id: verify_health
-    uses: edc/health_check
-    name: Verify provider is healthy
-    with:
-      service: provider
-    validate:
-      - uses: validate/assert
-        with:
-          input: status_code
-          operator: equals
-          value: 200
+# Preconditions specification: see ADR-0012
+preconditions: []
 
 tests:
   - request-certificate.yaml
@@ -831,7 +877,7 @@ Tags are display-only metadata — they have no effect on compilation or executi
 
 The `dataspace_version` determines which SDK service implementations and protocol behaviors are used at runtime:
 
-| Value | EDC Version | Protocol |
+| Value | connector Version | Protocol |
 |-------|-------------|----------|
 | `jupiter` | v0.8 – v0.10 | DSP 2024-1 |
 | `saturn` | v0.11+ | DSP 2025-1 |
@@ -905,7 +951,7 @@ setup:
     returns:
       generated_id:
         type: string
-        class: uuid
+        class: Uuid4
   - id: certificate_callback
     name: Expose Certificate Management API
     uses: mock/api
@@ -938,9 +984,9 @@ setup:
           issuerName: "TÜV SÜD"
           issuerBpn: "BPNL133631123120"
     returns:
-      callback_id:
-        type: string
-        class: callback_id
+      mock:
+        type: class
+        class: MockInstance
       base_mock_url:
         type: string
       full_mock_url:
@@ -948,16 +994,15 @@ setup:
 
 steps:
   - id: create_asset_1
-    uses: edc/create_asset
+    uses: connector/create_asset
     name: Create the test asset
     with:
-      asset_id: ${{ vars.generated_id }}
+      asset_id: ${{ setup.gen_id.generated_id }}
       description: "Test asset"
-      service: provider
+      connector_service: ${{ env.services.provider.connector_service}}
     returns:
       asset_id:
         type: string
-        class: asset_id
     validate:
       - uses: validate/assert
         with:
@@ -969,14 +1014,14 @@ steps:
           input: response_body
           path: "id"
           operator: equals
-          value: ${{ vars.generated_id }}
+          value: ${{ setup.gen_id.generated_id }}
 
   - id: get_asset_1
-    uses: edc/get_asset
+    uses: connector/get_asset
     name: Retrieve the created asset
     with:
-      asset_id: ${{ vars.create_asset_1.returns.asset_id }}
-      service: provider
+      asset_id: ${{ steps.create_asset_1.asset_id }}
+      connector_service: ${{ env.services.provider.connector_service}}
     validate:
       - uses: validate/assert
         with:
@@ -988,13 +1033,13 @@ steps:
           input: response_body
           path: "id"
           operator: equals
-          value: ${{ vars.asset_id }}
+          value: ${{ steps.asset_id }}
 
   - id: wait_for_call
     uses: mock/wait/request
     name: Wait for provider RECEIVE acknowledgment
     with:
-      endpoint_id: "notification_receive_ack"
+      mock: ${{ steps.certificate_callback.mock }}
       timeout_s: 60
     returns:
       request_method:
@@ -1065,13 +1110,13 @@ teardown:
     name: Export asset ID to TCK environment
     with:
       variable: last_asset_id
-      value: ${{ vars.asset_id }}
+      value: ${{ steps.create_asset_1.asset_id }}
   - id: delete_asset_1
-    uses: edc/delete_asset
+    uses: connector/delete_asset
     name: Clean up test asset
     with:
-      asset_id: ${{ vars.asset_id }}
-      service: provider
+      asset_id: ${{ steps.create_asset_1.asset_id }}
+      service: ${{ env.services.provider }}
 ```
 
 ##### Test Document Structure
@@ -1119,7 +1164,7 @@ The `util/export_env` step writes a value back to the TCK's `env.variables` bloc
   name: Export asset ID to TCK environment
   with:
     variable: last_asset_id
-    value: ${{ vars.create_asset.returns.asset_id }}
+    value: ${{ steps.create_asset.asset_id }}
 ```
 
 | Field | Required | Description |
@@ -1138,9 +1183,9 @@ The `util/export_env` step writes a value back to the TCK's `env.variables` bloc
 
 | Scenario | Example |
 |----------|--------|
-| Pass created resource IDs to later tests | `variable: contract_id, value: ${{ vars.negotiate.returns.contract_id }}` |
+| Pass created resource IDs to later tests | `variable: contract_id, value: ${{ steps.negotiate.contract_id }}` |
 | Record test outcomes for conditional logic | `variable: asset_exists, value: "true"` |
-| Chain cleanup across tests | `variable: cleanup_asset_id, value: ${{ vars.asset_id }}` |
+| Chain cleanup across tests | `variable: cleanup_asset_id, value: ${{ steps.asset_id }}` |
 
 #### 7.3 Schema File (Standard JSON Schema)
 
@@ -1150,7 +1195,7 @@ Schema files are **standard JSON Schema** documents (not YAML, not a custom form
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "asset_schema",
-  "description": "JSON Schema for EDC asset response",
+  "description": "JSON Schema for connector asset response",
   "type": "object",
   "required": ["@id", "@type"],
   "properties": {
@@ -1160,7 +1205,7 @@ Schema files are **standard JSON Schema** documents (not YAML, not a custom form
     },
     "@type": {
       "type": "string",
-      "enum": ["edc:Asset"]
+      "enum": ["connector:Asset"]
     }
   }
 }
@@ -1178,8 +1223,10 @@ Schema files are **standard JSON Schema** documents (not YAML, not a custom form
 Tests inherit **ALL** environment from the TCK manifest identified by their `namespace` field:
 
 - All `env.variables` — available as `${{ env.x }}`
-- All `env.services` — referenceable by name in `with:` blocks
+- All `env.services` — referenceable by name in `with:` blocks or via `${{ env.services.name }}`
 - All `env.schemas` — available as `${{ env.schemas.name }}`
+
+**Service implicit returns:** Each service defined in `env.services` implicitly generates a return variable with `type: object` and `class` derived from the `uses` action name. For example, a service with `uses: service/connector_service` produces a typed variable with `class: ConnectorService`. This makes the service selectable as a typed input in step `with:` blocks (e.g., `connector_service: ${{ env.services.provider.connector_service}}` or `service: ${{ env.services.provider }}`).
 
 The `namespace` field is the key the compiler uses to resolve which TCK provides the inherited `env:` block. A test's `namespace` must match the `namespace` of exactly one TCK manifest. Both documents use the same keyword — symmetric and unambiguous.
 
@@ -1202,11 +1249,12 @@ Step types follow a hierarchical namespace pattern: `namespace/[sub-namespace/]a
 
 | Namespace | Purpose | Actions |
 |-----------|---------|--------|
-| `connector/provider/` | Provider-side EDC connector operations | `create_asset`, `create_policy`, `create_contract_definition` |
-| `connector/consumer/` | Consumer-side EDC connector operations | `negotiate`, `initiate_transfer`, `get_catalog` |
+| `connector/provider/` | Provider-side connector connector operations | `create_asset`, `create_policy`, `create_contract_definition` |
+| `connector/consumer/` | Consumer-side connector connector operations | `negotiate`, `initiate_transfer`, `get_catalog` |
 | `connector/http/` | Dataplane HTTP operations | `call_via_dataplane` |
 | `http/` | Generic HTTP calls | `call` |
 | `mock/` | Mock server operations | `endpoint`, `wait/request`, `dtr`, `discovery` |
+| `service/` | Service definitions | `connector_service`, `mock_server`, `discovery_service` |
 | `util/` | Utility operations | `generate_uuid`, `wait`, `set_env`, `export_env`, `extract_query_param` |
 | `validate/` | Validation/assertion operations | `assert`, `field`, `query_param`, `object`, `schema` |
 | `notification/` | Notification operations | `send`, `receive` |
@@ -1231,6 +1279,9 @@ uses: validate/schema
 uses: validate/query_param
 uses: notification/send
 uses: flow/if
+uses: service/connector_service
+uses: service/mock_server
+uses: service/discovery_service
 ```
 
 #### 9.3 Extensibility
@@ -1268,13 +1319,16 @@ The compiler validates YAML files and rejects invalid documents with actionable 
 
 | Rule | Error Message |
 |------|---------------|
-| Unresolved `vars.x` | `Unresolved variable 'vars.{x}' in step '{id}' — no preceding step returns '{x}'` |
-| Ambiguous `vars.x` | `Ambiguous variable 'vars.{x}' in step '{id}' — returned by [{ids}]. Use: ${{{{ vars.{first_id}.returns.{x} }}}}` |
-| Unresolved qualified ref | `Unresolved reference 'vars.{step_id}.returns.{x}' — step '{step_id}' does not return '{x}'` |
-| Step ID not found | `Unknown step ID '{step_id}' in variable reference 'vars.{step_id}.returns.{x}'` |
+| Unresolved `steps.x` | `Unresolved variable 'steps.{x}' in step '{id}' — no preceding step returns '{x}'` |
+| Ambiguous `steps.x` | `Ambiguous variable 'steps.{x}' in step '{id}' — returned by [{ids}]. Use: ${{{{ steps.{first_id}.{x} }}}}` |
+| Unresolved qualified ref | `Unresolved reference 'steps.{step_id}.{x}' — step '{step_id}' does not return '{x}'` |
+| Step ID not found | `Unknown step ID '{step_id}' in variable reference 'steps.{step_id}.{x}'` |
 | Forward reference | `Forward reference in step '{id}' — step '{ref_id}' is defined after current step` |
 | Unresolved `env.x` | `Unresolved environment variable 'env.{x}' — not defined in TCK manifest env.variables` |
 | Unresolved schema | `Unresolved schema 'env.schemas.{name}' — not defined in TCK manifest env.schemas` |
+| Unresolved `metadata.x` | `Unresolved metadata field 'metadata.{x}' — not defined in TCK manifest metadata block` |
+| Unresolved `execution.x` (built-in) | `Unresolved execution variable 'execution.{x}' — not a recognized built-in key. Built-in keys: id, tck_id, timestamp, runner` |
+| Uninjected `execution.x` (custom) | Warning: `execution.{x} is not a built-in key — ensure it is injected at runtime via --set or execution_context` |
 
 ### Returns Validation
 
@@ -1307,7 +1361,7 @@ The IDE (Blockly workspace → YAML) MUST follow these rules when serializing:
 4. **String quoting**: Quote strings containing special characters (`${{ }}`, `:`, `#`, `{`, `}`). Do not quote plain strings.
 5. **Indentation**: 2 spaces, no tabs.
 6. **Document separator**: Each file starts with `kind:` — no `---` separator needed (single-document files).
-7. **Variable serialization**: Always emit the flat form `${{ vars.x }}` unless the compiler has previously flagged ambiguity for that variable name.
+7. **Variable serialization**: Always emit the flat form `${{ steps.x }}` unless the compiler has previously flagged ambiguity for that variable name.
 
 ---
 
@@ -1317,7 +1371,7 @@ The runtime (Python player) executes steps with these semantics:
 
 1. **Sequential by default**: Steps execute top-to-bottom within each phase.
 2. **Phase order**: `preconditions` → `setup` → `steps` → `teardown`.
-3. **Returns auto-persist**: After successful step execution, all declared `returns` are stored in the test memory dict keyed by `{step_id}.returns.{name}` and also by flat `{name}`.
+3. **Returns auto-persist**: After successful step execution, all declared `returns` are stored in the test memory dict keyed by `{step_id}.{name}` and also by flat `{name}`.
 4. **Failure handling**: If a step fails, its `returns` are NOT stored. Subsequent steps referencing those returns receive `null`.
 5. **Teardown always runs**: Even if `steps` fail, `teardown` executes (best-effort cleanup).
 6. **Validate execution**: Assertions in `validate:` run immediately after the step completes. Each assertion is resolved via its `uses:` type and executed with its `with:` parameters. A failed assertion marks the step as failed but does NOT abort the test — remaining steps still execute (fail-continue mode).
@@ -1331,9 +1385,9 @@ The runtime (Python player) executes steps with these semantics:
 
 | v1 Syntax | v2 Syntax | Notes |
 |-----------|-----------|-------|
-| `type: create_asset` | `uses: edc/create_asset` | Namespace prefix added |
+| `type: create_asset` | `uses: connector/create_asset` | Namespace prefix added |
 | `params:` | `with:` | Direct rename |
-| `@variable_name` | `${{ vars.variable_name }}` | Expression syntax |
+| `@variable_name` | `${{ steps.variable_name }}` | Expression syntax |
 | `store_in_memory: key` | `returns:` block | Declares type and class |
 | (no equivalent) | `id:` | New required field |
 | (no equivalent) | `validate:` | Replaces external assertions |
@@ -1350,8 +1404,8 @@ Migration steps performed automatically:
 
 1. `type: x` → `uses: {namespace}/x` (namespace inferred from step registry)
 2. `params:` → `with:`
-3. `@var` → `${{ vars.var }}`
-4. `store_in_memory: key` → `returns:` with `type: string`, `class: string` (conservative defaults — user should refine)
+3. `@var` → `${{ steps.var }}`
+4. `store_in_memory: key` → `returns:` with `type: string`, `class: String` (conservative defaults — user should refine)
 5. auto-generate `id:` from step type + index
 6. Wrap file in `kind: test` structure
 7. Extract environment to TCK manifest `kind: tck`
@@ -1409,46 +1463,51 @@ env:
     consumer_bpn: "BPNL000000000002"
     callback_url: "https://testlab.local/callback"
   services:
-    provider:
-      type: edc_connector
-      url: ${{ env.provider_url }}
-      auth:
-        type: api_key
-        key: "test-api-key"
-    consumer:
-      type: edc_connector
-      url: ${{ env.consumer_url }}
-      auth:
-        type: api_key
-        key: "test-api-key"
+    - name: provider
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp/2025-1
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-api-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        service:
+          type: class
+          class: ConnectorService
+    - name: consumer
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.consumer_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp/2025-1
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-api-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        service:
+          type: class
+          class: ConnectorService
   schemas:
-    asset_response: schemas/asset-response.yaml
-    catalog_response: schemas/catalog-response.yaml
+    certificate_schema:
+      file: business_partner_certificate_schema.json
+    notification_header_schema:
+      file: notification_header.json
+  testdata:
+    available_notification:
+      file: available_notification.json
+      type: application/json
+    sample_certificate:
+      file: sample_certificate.pdf
+      type: application/pdf
 
-preconditions:
-  - id: health_provider
-    uses: edc/health_check
-    name: Provider health check
-    with:
-      service: provider
-    validate:
-      - uses: validate/assert
-        with:
-          input: status_code
-          operator: equals
-          value: 200
-
-  - id: health_consumer
-    uses: edc/health_check
-    name: Consumer health check
-    with:
-      service: consumer
-    validate:
-      - uses: validate/assert
-        with:
-          input: status_code
-          operator: equals
-          value: 200
+# Preconditions specification: see ADR-0012
+preconditions: []
 
 tests:
   - tests/asset-crud.yaml
@@ -1475,18 +1534,17 @@ setup:
     returns:
       generated_id:
         type: string
-        class: uuid
+        class: Uuid
 
   - id: create_asset
-    uses: edc/create_asset
+    uses: connector/create_asset
     name: Create provider asset
     with:
-      asset_id: ${{ vars.generated_id }}
-      service: provider
+      asset_id: ${{ steps.generated_id }}
+      connector_service: ${{ env.services.provider.connector_service}}
     returns:
       asset_id:
         type: string
-        class: asset_id
     validate:
       - uses: validate/assert
         with:
@@ -1495,16 +1553,15 @@ setup:
           value: 200
 
   - id: create_policy
-    uses: edc/create_policy
+    uses: connector/create_policy
     name: Create access policy
     with:
-      service: provider
+      connector_service: ${{ env.services.provider.connector_service}}
       policy:
         type: open
     returns:
       policy_id:
         type: string
-        class: policy_id
     validate:
       - uses: validate/assert
         with:
@@ -1513,13 +1570,13 @@ setup:
           value: 200
 
   - id: create_contract_def
-    uses: edc/create_contract_definition
+    uses: connector/create_contract_definition
     name: Create contract definition
     with:
-      asset_id: ${{ vars.asset_id }}
-      access_policy_id: ${{ vars.policy_id }}
-      contract_policy_id: ${{ vars.policy_id }}
-      service: provider
+      asset_id: ${{ steps.asset_id }}
+      access_policy_id: ${{ steps.policy_id }}
+      contract_policy_id: ${{ steps.policy_id }}
+      connector_service: ${{ env.services.provider.connector_service}}
     validate:
       - uses: validate/assert
         with:
@@ -1529,15 +1586,15 @@ setup:
 
 steps:
   - id: query_catalog
-    uses: edc/query_catalog
+    uses: connector/query_catalog
     name: Query provider catalog from consumer
     with:
       provider_url: ${{ env.provider_url }}
-      service: consumer
+      connector_service: ${{ env.services.consumer.connector_service}}
     returns:
       offer_id:
         type: string
-        class: offer_id
+        class: OfferId
     validate:
       - uses: validate/assert
         with:
@@ -1550,19 +1607,17 @@ steps:
           schema: ${{ env.schemas.catalog_response }}
 
   - id: negotiate
-    uses: edc/negotiate
+    uses: connector/negotiate
     name: Initiate contract negotiation
     with:
-      offer_id: ${{ vars.offer_id }}
+      offer_id: ${{ steps.offer_id }}
       provider_url: ${{ env.provider_url }}
-      service: consumer
+      connector_service: ${{ env.services.consumer.connector_service}}
     returns:
       negotiation_id:
         type: string
-        class: negotiation_id
       agreement_id:
         type: string
-        class: agreement_id
     validate:
       - uses: validate/assert
         with:
@@ -1576,11 +1631,11 @@ steps:
 
 teardown:
   - id: delete_asset
-    uses: edc/delete_asset
+    uses: connector/delete_asset
     name: Remove test asset
     with:
-      asset_id: ${{ vars.create_asset.returns.asset_id }}
-      service: provider
+      asset_id: ${{ steps.create_asset.asset_id }}
+      service: ${{ env.services.provider }}
 ```
 
 ---
@@ -1599,7 +1654,7 @@ teardown:
 ### Negative
 
 - **Breaking change from v1**: All existing YAML files must be migrated (mitigated by CLI tool).
-- **Verbosity increase**: `${{ vars.x }}` is longer than `@x` (mitigated by IDE auto-completion).
+- **Verbosity increase**: `${{ steps.x }}` is longer than `@x` (mitigated by IDE auto-completion).
 - **Learning curve for `${{ }}`**: Users unfamiliar with GHA must learn expression syntax (mitigated by IDE doing the heavy lifting).
 - **Strict ordering**: Canonical field order adds one more thing the compiler must validate.
 
