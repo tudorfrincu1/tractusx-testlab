@@ -24,6 +24,6 @@
 # Wait Blocks (Moved)
 
 !!! info "Namespace change"
-    Wait blocks are now part of the `mock/` namespace. The `wait/call` block has been renamed to `mock/wait/call`.
+    Wait blocks are now part of the `mock/` namespace. The `wait/call` block has been renamed to `mock/wait/http_request`.
 
-See [Mock Blocks — mock/wait/call](mock.md#mockwaitcall).
+See [Mock Blocks — mock/wait/http_request](mock.md#mockwaitcall).

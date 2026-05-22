@@ -1036,7 +1036,7 @@ steps:
           value: ${{ steps.asset_id }}
 
   - id: wait_for_call
-    uses: mock/wait/request
+    uses: mock/wait/http_request
     name: Wait for provider RECEIVE acknowledgment
     with:
       mock: ${{ steps.certificate_callback.mock }}
@@ -1268,7 +1268,7 @@ uses: connector/consumer/negotiate
 uses: connector/http/call_via_dataplane
 uses: http/call
 uses: mock/api
-uses: mock/wait/request
+uses: mock/wait/http_request
 uses: util/generate_uuid
 uses: util/set_env
 uses: util/export_env

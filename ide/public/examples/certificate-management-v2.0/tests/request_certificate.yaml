@@ -36,10 +36,10 @@ metadata:
 
 steps:
   - id: pull_data_1
-    uses: edc/pull_data_filtered
+    uses: connector/pull_data_filtered
     name: Discover CCMAPI offers, negotiate with expected policy, and obtain EDR
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       policy: ${{ preconditions.ccm_policy.policy }}

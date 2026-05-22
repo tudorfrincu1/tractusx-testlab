@@ -37,15 +37,15 @@ metadata:
 
 steps:
   - id: query_cert_submodel_assets
-    uses: edc/query_catalog
+    uses: connector/query_catalog
     name: Query provider catalog for certificate Submodel assets
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       filter:
         filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          - operand_left: "https://w3id.org/connector/v0.0.1/ns/type"
             operator: "="
             operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
           - operand_left: "http://purl.org/dc/terms/subject"
@@ -65,15 +65,15 @@ steps:
           operator: not_null
 
   - id: query_with_semantic_id
-    uses: edc/query_catalog
+    uses: connector/query_catalog
     name: Validate aas:semanticId property on certificate asset
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       filter:
         filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          - operand_left: "https://w3id.org/connector/v0.0.1/ns/type"
             operator: "="
             operand_right: "https://w3id.org/catenax/taxonomy#Submodel"
           - operand_left: "http://purl.org/dc/terms/subject"

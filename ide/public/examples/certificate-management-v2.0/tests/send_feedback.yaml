@@ -52,10 +52,10 @@ setup:
 
 steps:
   - id: pull_notification_endpoint
-    uses: edc/pull_data_filtered
+    uses: connector/pull_data_filtered
     name: Find CCMAPI endpoint and obtain dataplane credentials
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       policy: ${{ preconditions.ccm_policy.policy }}
@@ -124,7 +124,7 @@ steps:
         with: { input: status_code, operator: equals, value: 200 }
 
   - id: wait_provider_ack
-    uses: mock/wait/request
+    uses: mock/wait/http_request
     name: Wait for provider RECEIVE acknowledgment
     with:
       mock: ${{ setup.mock_receive_ack.mock }}

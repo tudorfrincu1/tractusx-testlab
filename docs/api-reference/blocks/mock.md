@@ -65,7 +65,7 @@ Expose an HTTP endpoint that the SUT can call.
 
 ---
 
-## mock/wait/call
+## mock/wait/http_request
 
 Block execution until the SUT sends a request to the specified mock endpoint. Times out if no call arrives.
 
@@ -86,7 +86,7 @@ Block execution until the SUT sends a request to the specified mock endpoint. Ti
 
 ```yaml
 - name: wait_for_certificate
-  uses: mock/wait/call
+  uses: mock/wait/http_request
   with:
     endpoint_id: ${{ vars.expose_callback.endpoint_id }}
     timeout_s: 60

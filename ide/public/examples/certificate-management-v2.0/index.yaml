@@ -61,25 +61,10 @@ env:
     testlab_mock_base_url: ""
     sut_response_timeout: 300
   services:
-    - name: provider
+    - name: testlab_connector
       uses: service/connector_service
       with:
         base_url: ${{ env.provider_url }}
-        management_path: /management/v3
-        dsp_path: /api/v1/dsp/2025-1
-        dataspace_version: ${{ metadata.dataspace_version }}
-        auth:
-          type: api_key
-          api_key: "test-api-key"
-          api_key_header: "X-Api-Key"
-      returns:
-        service:
-          type: class
-          class: ConnectorService
-    - name: testlab
-      uses: service/connector_service
-      with:
-        base_url: ${{ env.testlab_management_url }}
         management_path: /management/v3
         dsp_path: /api/v1/dsp/2025-1
         dataspace_version: ${{ metadata.dataspace_version }}
@@ -98,6 +83,19 @@ env:
       file: bpc-v3.1.0.json
 
 preconditions:
+  - id: health_testlab_connector
+    uses: connector/health_check
+    name: TestLab Connector health check
+    with:
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
+      dataspace_version: ${{ metadata.dataspace_version }}
+    validate:
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+          
   - id: testlab_connector
     uses: precondition/generate
     name: TestLab Connector Configuration

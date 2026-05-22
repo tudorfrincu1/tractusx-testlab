@@ -37,10 +37,10 @@ metadata:
 
 steps:
   - id: pull_data_1
-    uses: edc/pull_data_filtered
+    uses: connector/pull_data_filtered
     name: Query catalog for CCMAPI assets and validate policy matches expected constraints
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       policy: ${{ preconditions.ccm_policy.policy }}

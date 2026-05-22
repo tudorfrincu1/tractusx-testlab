@@ -389,7 +389,7 @@ Based on the test file from ADR-0010 §7.2:
     {
       "index": 4,
       "id": "wait_for_call",
-      "uses": "mock/wait/request",
+      "uses": "mock/wait/http_request",
       "name": "Wait for provider RECEIVE acknowledgment",
       "with": {
         "mock": { "$ref": "setup.certificate_callback.mock" },

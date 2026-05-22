@@ -30,14 +30,14 @@ metadata:
   version: "1.0"
   description: >
     Tests the PULL scenario of CX-0135: TestLab exposes a certificate asset via its
-    own EDC, then sends an AVAILABLE notification to the SUT through the dataspace
+    own connector, then sends an AVAILABLE notification to the SUT through the dataspace
     protocol (catalog, negotiate, transfer, dataplane). The SUT must then discover
     TestLab's catalog, negotiate, and pull the certificate data.
 
 setup:
   - id: create_testlab_asset
-    uses: edc/create_asset
-    name: Register a CCMAPI-typed asset in TestLab's EDC
+    uses: connector/create_asset
+    name: Register a CCMAPI-typed asset in TestLab's connector
     with:
       service: testlab
       name: "TestLab CCMAPI Certificate Data"
@@ -59,7 +59,7 @@ setup:
         with: { input: asset_id, operator: not_null }
 
   - id: create_testlab_policy
-    uses: edc/create_policy
+    uses: connector/create_policy
     name: Create a usage policy that restricts access to the SUT's BPN
     with:
       service: testlab
@@ -84,7 +84,7 @@ setup:
         with: { input: policy_id, operator: not_null }
 
   - id: create_testlab_contract_def
-    uses: edc/create_contract_def
+    uses: connector/create_contract_def
     name: Bind the asset to the policy
     with:
       service: testlab
@@ -144,10 +144,10 @@ setup:
 
 steps:
   - id: pull_notification_endpoint
-    uses: edc/pull_data_filtered
+    uses: connector/pull_data_filtered
     name: Discover the SUT's CCMAPI notification endpoint and obtain dataplane credentials
     with:
-      service: provider
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
       counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
       counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
       policy: ${{ preconditions.ccm_policy.policy }}
@@ -240,7 +240,7 @@ steps:
         with: { input: status_code, operator: equals, value: 200 }
 
   - id: wait_sut_pull
-    uses: mock/wait/request
+    uses: mock/wait/http_request
     name: Wait for SUT to pull certificate data from TestLab
     with:
       mock: ${{ setup.mock_certificate_data.mock }}
@@ -255,22 +255,22 @@ steps:
 
 teardown:
   - id: delete_testlab_asset
-    uses: edc/delete_asset
-    name: Remove CCMAPI asset from TestLab EDC
+    uses: connector/delete_asset
+    name: Remove CCMAPI asset from TestLab connector
     with:
       service: testlab
       asset_id: "${{ setup.create_testlab_asset.asset_id }}"
 
   - id: delete_testlab_policy
-    uses: edc/delete_policy
-    name: Remove usage policy from TestLab EDC
+    uses: connector/delete_policy
+    name: Remove usage policy from TestLab connector
     with:
       service: testlab
       policy_id: "${{ setup.create_testlab_policy.policy_id }}"
 
   - id: delete_testlab_contract_def
-    uses: edc/delete_contract_def
-    name: Remove contract definition from TestLab EDC
+    uses: connector/delete_contract_def
+    name: Remove contract definition from TestLab connector
     with:
       service: testlab
       contract_def_id: "${{ setup.create_testlab_contract_def.contract_def_id }}"

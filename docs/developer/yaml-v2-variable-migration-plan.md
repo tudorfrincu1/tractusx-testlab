@@ -31,7 +31,18 @@
 
 ## 1. Executive Summary
 
-Migrate the entire tractusx-testlab codebase (IDE frontend + Python backend) from the legacy `@variable_name` syntax to the new scoped `${{ vars.x }}` / `${{ env.x }}` variable system defined in ADR-0010. This introduces explicit scope separation between step-output variables and environment/TCK-global variables, enables compile-time ambiguity detection, and eliminates a proprietary syntax in favor of GHA-familiar patterns. **No backward compatibility** — all `@` syntax code paths are removed.
+Migrate the entire tractusx-testlab codebase (IDE frontend + Python backend) from the legacy `@variable_name` syntax to the new scoped variable system defined in ADR-0010, ADR-0011, and ADR-0013. The primary scopes are:
+
+- `${{ steps.<step_id>.<field> }}` — step output references (always qualified)
+- `${{ env.x }}` — environment variables from TCK manifest
+- `${{ env.services.<name>.<field> }}` — service class handles
+- `${{ env.schemas.<name> }}` — schema file references
+- `${{ metadata.x }}` — TCK manifest metadata
+- `${{ execution.x }}` — runtime-injected context
+- `${{ preconditions.<id>.<field> }}` — precondition returns
+- `${{ setup.<id>.<field> }}` — setup phase step returns
+
+This introduces explicit scope separation, enables compile-time validation, and eliminates a proprietary syntax in favor of GHA-familiar patterns. **No backward compatibility** — all `@` syntax code paths are removed.
 
 ---
 
@@ -102,42 +113,96 @@ Migrate the entire tractusx-testlab codebase (IDE frontend + Python backend) fro
 ### 3.1 Variable Scoping Model
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ TCK Manifest (env scope)                            │
-│   env:                                              │
-│     variables:                                      │
-│       provider_url: { type: string }                │
-│     schemas:                                        │
-│       asset_schema: schemas/asset.json              │
-│     services:                                       │
-│       provider: { type: edc_connector_saturn, ... } │
-│                                                     │
-│   Referenced as: ${{ env.provider_url }}             │
-│                  ${{ env.schemas.asset_schema }}     │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ TCK Manifest (env + metadata scopes)                             │
+│   metadata:                                                      │
+│     dataspace_version: saturn                                    │
+│   env:                                                           │
+│     variables:                                                   │
+│       provider_url: { type: string }                             │
+│     schemas:                                                     │
+│       asset_schema: schemas/asset.json                           │
+│     services:                                                    │
+│       - name: testlab_connector                                  │
+│         uses: service/connector_service                          │
+│         with:                                                    │
+│           base_url: ${{ env.provider_url }}                       │
+│           dataspace_version: ${{ metadata.dataspace_version }}    │
+│           auth: { type: api_key, api_key: "...", ... }           │
+│         returns:                                                 │
+│           connector_service: { type: class, class: ConnectorService } │
+│                                                                  │
+│   Referenced as: ${{ env.provider_url }}                          │
+│                  ${{ env.schemas.asset_schema }}                  │
+│                  ${{ env.services.testlab_connector.connector_service }} │
+│                  ${{ metadata.dataspace_version }}                │
+└──────────────────────────────────────────────────────────────────┘
            │ inherits into ▼
-┌─────────────────────────────────────────────────────┐
-│ Test File (vars scope)                              │
-│   steps:                                            │
-│     - id: create_asset_1                            │
-│       uses: edc/create_asset                        │
-│       returns:                                      │
-│         asset_id: { type: string, class: asset_id } │
-│                                                     │
-│   Referenced as: ${{ vars.asset_id }}                │
-│              or: ${{ vars.create_asset_1.returns.asset_id }} │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ Test File — Preconditions (preconditions scope)                  │
+│   preconditions:                                                 │
+│     - id: gen_asset_id                                           │
+│       uses: precondition/generate                                │
+│       returns:                                                   │
+│         asset_id: { type: string }                               │
+│                                                                  │
+│   Referenced as: ${{ preconditions.gen_asset_id.asset_id }}       │
+└──────────────────────────────────────────────────────────────────┘
+           │ inherits into ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Test File — Setup Phase (setup scope)                            │
+│   setup:                                                         │
+│     - id: create_asset_1                                         │
+│       uses: connector/create_asset                               │
+│       returns:                                                   │
+│         asset_id: { type: string, class: asset_id }              │
+│                                                                  │
+│   Referenced as: ${{ setup.create_asset_1.asset_id }}             │
+└──────────────────────────────────────────────────────────────────┘
+           │ inherits into ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Test File — Steps (steps scope)                                  │
+│   steps:                                                         │
+│     - id: create_asset_1                                         │
+│       uses: connector/create_asset                               │
+│       returns:                                                   │
+│         asset_id: { type: string, class: asset_id }              │
+│                                                                  │
+│   Referenced ${{ steps.create_asset_1.asset_id }}             │
+└──────────────────────────────────────────────────────────────────┘
+           │ available in ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Test File — Teardown Phase                                       │
+│   teardown:                                                      │
+│     - id: cleanup                                                │
+│       uses: connector/delete_asset                               │
+│       with:                                                      │
+│         asset_id: ${{ steps.create_asset_1.asset_id }}           │
+│                                                                  │
+│   Can reference: steps, setup, env, preconditions, metadata      │
+└──────────────────────────────────────────────────────────────────┘
+           │ runtime context ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Execution Context (execution scope)                              │
+│   Runtime-injected: execution_id, timestamp, run_mode, ...       │
+│                                                                  │
+│   Referenced as: ${{ execution.execution_id }}                    │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.2 Resolution Rules (from ADR-0010 §3.2)
 
-1. `${{ vars.x }}` — search preceding steps' `returns` for key `x`
-2. Single match → resolved
-3. Zero matches → **compiler error**
-4. Multiple matches → **compiler error** (use qualified form)
-5. `${{ vars.step_id.returns.x }}` — direct step reference
-6. `${{ env.x }}` — from TCK manifest `env.variables`
-7. Top-to-bottom resolution order
+1. `${{ steps.<step_id>.<field> }}` — directly resolves to step's return field. If step ID or field doesn't exist → **compiler error**
+2. `${{ env.x }}` — from TCK manifest `env.variables`
+3. `${{ env.services.<name>.<field> }}` — service class handle from manifest
+4. `${{ env.schemas.<name> }}` — schema file path from manifest
+5. `${{ metadata.x }}` — from TCK manifest `metadata`
+6. `${{ execution.x }}` — runtime-injected values
+7. `${{ preconditions.<id>.<field> }}` — from precondition step returns
+8. `${{ setup.<id>.<field> }}` — from setup phase step returns
+9. Top-to-bottom resolution order within each phase
+
+There is no flat/unqualified form for step references — every `steps` reference must include both the step ID and the field name.
 
 ### 3.3 Keyword Mapping (v1 → v2)
 
@@ -146,38 +211,52 @@ Migrate the entire tractusx-testlab codebase (IDE frontend + Python backend) fro
 | `type:` | `uses:` | Step type identifier |
 | `params:` | `with:` | Step input parameters |
 | `store_in_memory:` | `returns:` | Step output declarations |
-| `@variable` | `${{ vars.x }}` | Step-output reference |
+| `@variable` | `${{ steps.<step_id>.<field> }}` | Step-output reference (always qualified) |
 | `@env_var` | `${{ env.x }}` | Environment variable reference |
 | `variables:` (flat) | `env.variables:` (typed) | Environment variable definitions |
+| — | `${{ env.services.<name>.<field> }}` | Service class handle reference |
+| — | `${{ metadata.x }}` | Manifest metadata reference |
+| — | `${{ execution.x }}` | Runtime context reference |
+| — | `${{ preconditions.<id>.<field> }}` | Precondition output reference |
+| — | `${{ setup.<id>.<field> }}` | Setup phase output reference |
 
 ### 3.4 Block Type Mapping
 
 | v1 Block Type | v2 Block Type | Serialized As |
 |---------------|---------------|---------------|
-| `output_variable` | `vars_ref` | `${{ vars.x }}` |
+| `output_variable` | `steps_ref` | `${{ steps.<step_id>.<field> }}` |
 | `variable_get` | `env_ref` | `${{ env.x }}` |
 
 ### 3.5 `uses:` Namespace Migration
 
-Step types migrate from flat identifiers to a hierarchical `namespace/[sub-namespace/]action` system.
+Step types migrate from flat identifiers to a hierarchical `namespace/action` system.
 
 #### Old → New Step Type Mapping
 
 | v1 `type:` | v2 `uses:` | Namespace |
 |------------|------------|----------|
-| `edc_create_asset` | `connector/provider/create_asset` | `connector/provider/` |
-| `edc_create_policy` | `connector/provider/create_policy` | `connector/provider/` |
-| `edc_create_contract_definition` | `connector/provider/create_contract_definition` | `connector/provider/` |
-| `edc_negotiate` | `connector/consumer/negotiate` | `connector/consumer/` |
-| `edc_initiate_transfer` | `connector/consumer/initiate_transfer` | `connector/consumer/` |
-| `edc_get_catalog` | `connector/consumer/get_catalog` | `connector/consumer/` |
-| `edc_call_dataplane` | `connector/http/call_via_dataplane` | `connector/http/` |
+| `edc_create_asset` | `connector/provider/create_asset` | `connector/` |
+| `edc_create_policy` | `connector/provider/create_policy` | `connector/` |
+| `edc_create_contract_definition` | `connector/provider/create_contract_definition` | `connector/` |
+| `edc_negotiate` | `connector/consumer/negotiate` | `connector/` |
+| `edc_initiate_transfer` | `connector/consumer/initiate_transfer` | `connector/` |
+| `edc_get_catalog` | `connector/consumer/query_catalog` | `connector/` |
+| `edc_call_dataplane` | `connector/dataplane/http_request` | `connector/` |
+| `edc_health_check` | `connector/health_check` | `connector/` |
+| `edc_delete_asset` | `connector/delete_asset` | `connector/` |
+| `edc_delete_policy` | `connector/delete_policy` | `connector/` |
+| `edc_delete_contract_def` | `connector/delete_contract_def` | `connector/` |
+| `edc_pull_data_filtered` | `connector/pull_data_filtered` | `connector/` (base level — orchestrates both provider and consumer operations) |
 | `http_call` | `http/call` | `http/` |
-| `mock_create_endpoint` | `mock/create_endpoint` | `mock/` |
-| `mock_wait_for_call` | `mock/wait_for_call` | `mock/` |
+| `mock_create_endpoint` | `mock/api` | `mock/` |
+| `mock_wait_for_call` | `mock/wait/http_request` | `mock/` |
 | `generate_uuid` | `util/generate_uuid` | `util/` |
 | `wait` | `util/wait` | `util/` |
-| `validate_json_schema` | `validate/json_schema` | `validate/` |
+| `validate_json_schema` | `validate/schema` | `validate/` |
+| `validate_assert` | `validate/assert` | `validate/` |
+| `validate_field` | `validate/field` | `validate/` |
+| `validate_object` | `validate/object` | `validate/` |
+| `validate_query_param` | `validate/query_param` | `validate/` |
 | `send_notification` | `notification/send` | `notification/` |
 | `if` | `flow/if` | `flow/` |
 
@@ -185,15 +264,74 @@ Step types migrate from flat identifiers to a hierarchical `namespace/[sub-names
 
 | Namespace | Purpose |
 |-----------|--------|
-| `connector/provider/` | Provider-side EDC connector operations |
-| `connector/consumer/` | Consumer-side EDC connector operations |
-| `connector/http/` | Dataplane HTTP operations |
-| `http/` | Generic HTTP calls |
+| `connector/` | EDC connector operations (both provider and consumer) & dataplane calls. Note: `connector/pull_data_filtered` lives at the base `connector/` level (not under `provider/` or `consumer/`) because it's a composite orchestration function combining catalog query, negotiation, transfer, and EDR retrieval. Returns multiple outputs: `catalog`, `datasets`, `asset_id`, `negotiation_id`, `transfer_process_id`, `edr_token`, `dataplane_url`. |
+| `http/` | HTTP operations|
 | `mock/` | Mock server operations |
+| `mock/wait/` | Mock server wait/polling operations |
 | `util/` | Utility operations |
-| `validate/` | Validation/assertion operations |
+| `validate/` | Validation/assertion operations (standalone steps) |
 | `notification/` | Notification operations |
 | `flow/` | Flow control |
+| `precondition/` | Precondition categories: `generate`, `provide`, `input` |
+| `service/` | Service declarations in TCK manifest |
+
+#### Precondition Categories (ADR-0013)
+
+| `uses:` | Purpose |
+|---------|---------|
+| `precondition/generate` | Auto-generate values (UUIDs, timestamps) |
+| `precondition/provide` | Provide fixed values from manifest |
+| `precondition/input` | Require user input at runtime |
+| Any other `uses:` | Executable check (runs a step as a precondition) |
+
+#### Service Declaration Pattern (ADR-0011)
+
+Services declared in `env.services` produce typed class handles:
+
+```yaml
+env:
+  services:
+    - name: testlab_connector
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-api-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        connector_service:
+          type: class
+          class: ConnectorService
+```
+
+Referenced as: `${{ env.services.testlab_connector.connector_service }}`
+
+#### Setup/Teardown Phases
+
+`setup:` and `teardown:` are first-class phases in test files:
+- Setup runs before steps, outputs referenced via `${{ setup.<step_id>.<field> }}`
+- Teardown runs after steps (even on failure), can reference `steps`, `setup`, `env`, `preconditions`, `metadata`
+
+#### Inline Validate Shorthand
+
+Inside a step's own `validate:` block, `input` can be the bare field name (no `${{ }}`) referencing the step's own returns:
+
+```yaml
+- id: check_catalog
+  uses: connector/query_catalog
+  with:
+    connector_service: ${{ env.services.testlab_connector.connector_service }}
+  returns:
+    catalog: { type: object }
+  validate:
+    - uses: validate/field
+      with:
+        input: catalog  # bare name — references this step's own returns
+        field: "dcat:dataset"
+        operator: exists
+```
 
 The authoritative enum of valid `uses:` values is defined in `docs/specification/schemas/test-file.schema.json`.
 
@@ -210,7 +348,8 @@ The authoritative enum of valid `uses:` values is defined in `docs/specification
 - Remove legacy branch in `extractVarName()`
 - Remove legacy branch in `isVarRef()`
 - Remove `@(\w+)` from `VAR_REF_GLOBAL_PATTERN`
-- Add qualified variable ref support: `${{ vars.step_id.returns.x }}`
+- Add variable ref support: `${{ steps.<step_id>.<field> }}` (always qualified — no flat form)
+- Add scope detection for all scopes: `steps`, `env`, `env.services`, `env.schemas`, `metadata`, `execution`, `preconditions`, `setup`
 
 **Before**:
 ```typescript
@@ -225,9 +364,22 @@ export function extractVarName(value: string): string | undefined {
 
 **After**:
 ```typescript
-export function extractVarName(value: string): string | undefined {
-  const match = NEW_VAR_REF_RE.exec(value);
-  return match ? match[1] : undefined;
+export function extractVarName(value: string): { scope: string; name: string } | undefined {
+  const stepsMatch = STEPS_REF_RE.exec(value);
+  if (stepsMatch) return { scope: "steps", name: `${stepsMatch[1]}.${stepsMatch[2]}` };
+  const envMatch = ENV_REF_RE.exec(value);
+  if (envMatch) return { scope: "env", name: envMatch[1] };
+  const servicesMatch = SERVICES_REF_RE.exec(value);
+  if (servicesMatch) return { scope: "env.services", name: `${servicesMatch[1]}.${servicesMatch[2]}` };
+  const preconditionsMatch = PRECONDITIONS_REF_RE.exec(value);
+  if (preconditionsMatch) return { scope: "preconditions", name: `${preconditionsMatch[1]}.${preconditionsMatch[2]}` };
+  const setupMatch = SETUP_REF_RE.exec(value);
+  if (setupMatch) return { scope: "setup", name: `${setupMatch[1]}.${setupMatch[2]}` };
+  const metadataMatch = METADATA_REF_RE.exec(value);
+  if (metadataMatch) return { scope: "metadata", name: metadataMatch[1] };
+  const executionMatch = EXECUTION_REF_RE.exec(value);
+  if (executionMatch) return { scope: "execution", name: executionMatch[1] };
+  return undefined;
 }
 ```
 
@@ -242,7 +394,7 @@ export function extractVarName(value: string): string | undefined {
 **Changes**:
 - Rename `store_in_memory` → `returns` in model interfaces
 - Update `workspaceToModel()` to emit `returns: { key: { type, class } }` instead of `store_in_memory: { key: path }`
-- Update `toVarRef`/`toEnvRef` usage to use correct scope detection (output vars from preceding steps → `vars`, env store vars → `env`)
+- Update `toStepsRef`/`toEnvRef` usage to use correct scope detection (output vars from preceding steps → `steps`, env store vars → `env`, services → `env.services`, preconditions → `preconditions`, setup → `setup`)
 
 **Before** (`schema.ts`):
 ```typescript
@@ -276,20 +428,28 @@ export interface StepDefinition {
 - `ide/src/components/BlockEditor/blocks/registration/values/valueBlocks.ts`
 
 **Design Rules**:
-- Blocks do NOT display `env.` or `vars.` prefixes — the scope is implicit from the block type
-- The serializer adds the `${{ env.x }}` or `${{ vars.x }}` wrapper automatically based on which block type is used
-- Two distinct block types with different UX:
+- Blocks do NOT display `env.` or `steps.` prefixes — the scope is implicit from the block type
+- The serializer adds the `${{ env.x }}` or `${{ steps.<step_id>.<field> }}` wrapper automatically based on which block type is used
+- Multiple distinct block types with different UX:
 
 | Block | Display | Editable? | Source |
 |-------|---------|-----------|--------|
 | **env_ref** | Dropdown showing env variable names (e.g., `consumer_bpn`) | User selects from dropdown | TCK manifest `env.variables` |
-| **vars_ref** | Static label showing output name (e.g., `http_dataplane.status_code`) | NOT editable — auto-generated from step returns | Preceding steps' `returns` |
+| **steps_ref** | Static label showing output name (e.g., `create_asset_1.asset_id`) | NOT editable — auto-generated from step returns | Preceding steps' `returns` |
+| **services_ref** | Dropdown showing service handles | User selects from dropdown | TCK manifest `env.services` |
+| **preconditions_ref** | Static label showing precondition output | NOT editable — from precondition returns | Precondition phase `returns` |
+| **setup_ref** | Static label showing setup output | NOT editable — from setup returns | Setup phase `returns` |
+| **metadata_ref** | Dropdown showing metadata keys | User selects from dropdown | TCK manifest `metadata` |
 
 **Changes**:
 - `env_ref` block: dropdown populated from environment store, shows plain name (no `env.` prefix)
-- `vars_ref` block: read-only label showing the variable name (no `vars.` prefix), cannot be renamed or selected by user — created automatically when a step declares `returns`
-- Serialization emits `${{ env.x }}` for `env_ref` blocks, `${{ vars.x }}` for `vars_ref` blocks
-- Remove any visual prefix (`env.`, `vars.`) from block rendering — scope is determined by block type alone
+- `steps_ref` block: read-only label showing the variable name (no `steps.` prefix), cannot be renamed or selected by user — created automatically when a step declares `returns`
+- `services_ref` block: dropdown for service class handles
+- `preconditions_ref` block: read-only label from precondition returns
+- `setup_ref` block: read-only label from setup phase returns
+- `metadata_ref` block: dropdown from manifest metadata keys
+- Serialization emits `${{ env.x }}` for `env_ref`, `${{ steps.<step_id>.<field> }}` for `steps_ref`, `${{ env.services.n.f }}` for `services_ref`, etc.
+- Remove any visual prefix from block rendering — scope is determined by block type alone
 
 ---
 
@@ -301,8 +461,9 @@ export interface StepDefinition {
 
 **Changes**:
 - `trackStepOutputs()`: read `returns` instead of `store_in_memory`
-- `createValueBlockWithOutputResolution()`: use `isVarsRef()` / `isEnvRef()` for block type selection
+- `createValueBlockWithOutputResolution()`: use `isStepsRef()` / `isEnvRef()` / `isServicesRef()` / `isPreconditionsRef()` / `isSetupRef()` for block type selection
 - Remove all `PURE_VAR_REF` regex that includes `@` pattern
+- Add tracking for precondition and setup outputs as available references
 
 ---
 
@@ -311,9 +472,9 @@ export interface StepDefinition {
 **Files**: `ide/src/components/BlockEditor/blocks/json/modal/jsonVarRefs.ts`
 
 **Changes**:
-- Replace `@variable_name` placeholder system with `${{ vars.x }}` / `${{ env.x }}`
+- Replace `@variable_name` placeholder system with `${{ steps.<step_id>.<field> }}` / `${{ env.x }}` and other scopes
 - Update `replaceVarRefs()` to handle `${{ }}` syntax inside JSON
-- Since `${{ vars.x }}` is a valid JSON string value (unlike bare `@var`), the placeholder system may be simplified or removed entirely
+- Since `${{ steps.<step_id>.<field> }}` is a valid JSON string value (unlike bare `@var`), the placeholder system may be simplified or removed entirely
 
 ---
 
@@ -323,9 +484,9 @@ export interface StepDefinition {
 
 **Changes**:
 - Replace all `"@consumer_bpn"` → `"${{ env.consumer_bpn }}"`
-- Replace all `"@asset_id"` → `"${{ vars.asset_id }}"`
+- Replace all `"@asset_id"` → `"${{ steps.asset_id }}"`
 - Replace all `"@provider_backend_url"` → `"${{ env.provider_backend_url }}"`
-- Replace `"@contract_def_id"`, `"@access_policy_id"`, `"@usage_policy_id"` → appropriate scoped refs
+- Replace `"@contract_def_id"`, `"@access_policy_id"`, `"@usage_policy_id"` → appropriate scoped refs (`${{ steps.<step_id>.<field> }}` for step outputs, `${{ preconditions.<id>.<field> }}` for precondition outputs)
 
 ---
 
@@ -336,9 +497,10 @@ export interface StepDefinition {
 - `ide/src/sync/graph/modelToGraph.ts`
 
 **Changes**:
-- `collectVariableRefs()`: remove `@(\w+)` and `\$\{([^}]+)\}` from regex, keep only `${{ vars.x }}` and `${{ env.x }}`
+- `collectVariableRefs()`: remove `@(\w+)` and `\$\{([^}]+)\}` from regex, keep only `${{ steps.<step_id>.<field> }}`, `${{ env.x }}`, and other scoped patterns
 - `modelToGraph()`: read `returns` instead of `store_in_memory`
 - Update node data: `storesMemory` → `hasReturns` (or similar)
+- Add edges for cross-phase references (setup → steps, preconditions → steps)
 
 ---
 
@@ -348,9 +510,11 @@ export interface StepDefinition {
 
 **Changes**:
 - Remove `@(\w+)` and `\$\{([^}]+)\}` regex branches
-- Keep only `${{ vars.x }}` and `${{ env.x }}` pattern matching
+- Keep only `${{ steps.<step_id>.<field> }}`, `${{ env.x }}`, and all other scoped pattern matching
 - Add env scope validation: `${{ env.x }}` must exist in environment store
-- Add ambiguity detection per ADR-0010 §3.2 rules 3-4
+- Add services scope validation: `${{ env.services.<name>.<field> }}` must reference declared service
+- Add step ref validation: step ID must exist in preceding steps, field must exist in that step's `returns`
+- Add validation for `preconditions`, `setup`, `metadata`, `execution` scopes
 
 ---
 
@@ -366,7 +530,9 @@ export interface StepDefinition {
 - YAML preview: emit variables under `env.variables:` key
 - Remove `@` quoting logic (no longer needed)
 - Environment variables are now referenced as `${{ env.x }}` — update tooltips/labels
-- Services section: emit under `env.services:` key
+- Services section: emit under `env.services:` key with `name`, `uses`, `with`, `returns` structure
+- Add schemas section: emit under `env.schemas:` key
+- Add metadata section handling
 
 ---
 
@@ -375,9 +541,9 @@ export interface StepDefinition {
 **Files**: `ide/src/components/BlockEditor/serialization/helpers.ts`
 
 **Changes**:
-- `readValueBlockAsString()`: clarify `vars_ref` → `${{ vars.x }}`, `env_ref` → `${{ env.x }}`
+- `readValueBlockAsString()`: clarify `steps_ref` → `${{ steps.<step_id>.<field> }}`, `env_ref` → `${{ env.x }}`, `services_ref` → `${{ env.services.n.f }}`
 - `createValueBlockFromString()`: remove `@` pattern matching, remove `{{x}}`/`${x}` fallbacks
-- Only parse `${{ vars.x }}` and `${{ env.x }}` syntax
+- Only parse `${{ steps.<step_id>.<field> }}`, `${{ env.x }}`, `${{ env.services.n.f }}`, `${{ preconditions.id.f }}`, `${{ setup.id.f }}`, `${{ metadata.x }}`, `${{ execution.x }}` syntax
 
 ---
 
@@ -386,7 +552,7 @@ export interface StepDefinition {
 **Files**: `ide/src/components/BlockEditor/toolbox/toolboxBuilder.ts`
 
 **Changes**:
-- Update variable category to show `vars_ref` blocks (from step outputs) and `env_ref` blocks (from env store)
+- Update variable category to show `steps_ref` blocks (from step outputs), `env_ref` blocks (from env store), `services_ref`, `preconditions_ref`, `setup_ref`, and `metadata_ref` blocks
 - Remove references to `variable_get` as a generic block name
 
 ---
@@ -402,11 +568,17 @@ export interface StepDefinition {
 **Changes**:
 - Replace `AT_VAR_REF` with:
   ```python
-  VARS_REF = re.compile(r"\$\{\{\s*vars\.(\w+)\s*\}\}")
+  STEPS_REF = re.compile(r"\$\{\{\s*steps\.(\w+)\.(\w+)\s*\}\}")
   ENV_REF = re.compile(r"\$\{\{\s*env\.(\w+)\s*\}\}")
-  QUALIFIED_VARS_REF = re.compile(r"\$\{\{\s*vars\.(\w+)\.returns\.(\w+)\s*\}\}")
-  ANY_VAR_REF = re.compile(r"\$\{\{\s*(?:vars|env)\.[\w.]+\s*\}\}")
+  SERVICES_REF = re.compile(r"\$\{\{\s*env\.services\.(\w+)\.(\w+)\s*\}\}")
+  SCHEMAS_REF = re.compile(r"\$\{\{\s*env\.schemas\.(\w+)\s*\}\}")
+  PRECONDITIONS_REF = re.compile(r"\$\{\{\s*preconditions\.(\w+)\.(\w+)\s*\}\}")
+  METADATA_REF = re.compile(r"\$\{\{\s*metadata\.(\w+)\s*\}\}")
+  EXECUTION_REF = re.compile(r"\$\{\{\s*execution\.(\w+)\s*\}\}")
+  SETUP_REF = re.compile(r"\$\{\{\s*setup\.(\w+)\.(\w+)\s*\}\}")
+  ANY_VAR_REF = re.compile(r"\$\{\{\s*(?:steps|env|metadata|execution|preconditions|setup)[\w.]*\s*\}\}")
   ```
+  Note: there is no flat/unqualified `STEPS_REF` — all step references require both step ID and field name.
 - Remove `VAR_REF` (`${var}` pattern)
 - Replace `STORE_IN_MEMORY` key → `RETURNS` key
 - Add `USES`, `WITH`, `RETURNS`, `ID` keyword constants
@@ -447,11 +619,17 @@ class StepDefinition(BaseModel):
 **Files**: `src/tractusx_testlab/player/loading/resolver.py`
 
 **Changes**:
-- `resolve_str()`: replace `@var` + `${var}` logic with `${{ vars.x }}` and `${{ env.x }}` parsing
+- `resolve_str()`: replace `@var` + `${var}` logic with `${{ steps.<step_id>.<field> }}`, `${{ env.x }}`, and all other scoped patterns
 - Add scope-aware resolution:
-  - `${{ vars.x }}` → lookup in `context._step_variables` (populated from `returns`)
+  - `${{ steps.<step_id>.<field> }}` → qualified lookup by step ID + field in `context._step_variables`
   - `${{ env.x }}` → lookup in `context._env_variables` (populated from TCK manifest)
-- Support qualified refs: `${{ vars.step_id.returns.x }}`
+  - `${{ env.services.<name>.<field> }}` → lookup in `context._services`
+  - `${{ env.schemas.<name> }}` → lookup in `context._schemas`
+  - `${{ metadata.x }}` → lookup in `context._metadata`
+  - `${{ execution.x }}` → lookup in `context._execution`
+  - `${{ preconditions.<id>.<field> }}` → lookup in `context._precondition_outputs`
+  - `${{ setup.<id>.<field> }}` → lookup in `context._setup_outputs`
+- All step references are always qualified (step_id + field) — no flat form
 - Type-preserving: whole-string refs return raw value, inline refs stringify
 
 **Before**:
@@ -466,14 +644,34 @@ def resolve_str(value: str, context: "StepContext") -> str:
 **After**:
 ```python
 def resolve_str(value: str, context: "StepContext") -> Any:
-    # Whole-string ${{ vars.x }} → return raw typed value
-    m = patterns.VARS_REF.fullmatch(value.strip())
+    # ${{ steps.<step_id>.<field> }} → qualified lookup
+    m = patterns.STEPS_REF.fullmatch(value.strip())
     if m:
-        return context.get_step_variable(m.group(1), value)
+        return context.get_step_variable(m.group(1), m.group(2), value)
     # Whole-string ${{ env.x }} → return raw typed value
     m = patterns.ENV_REF.fullmatch(value.strip())
     if m:
         return context.get_env_variable(m.group(1), value)
+    # Whole-string ${{ env.services.<name>.<field> }}
+    m = patterns.SERVICES_REF.fullmatch(value.strip())
+    if m:
+        return context.get_service_handle(m.group(1), m.group(2), value)
+    # Whole-string ${{ preconditions.<id>.<field> }}
+    m = patterns.PRECONDITIONS_REF.fullmatch(value.strip())
+    if m:
+        return context.get_precondition_output(m.group(1), m.group(2), value)
+    # Whole-string ${{ setup.<id>.<field> }}
+    m = patterns.SETUP_REF.fullmatch(value.strip())
+    if m:
+        return context.get_setup_output(m.group(1), m.group(2), value)
+    # Whole-string ${{ metadata.x }}
+    m = patterns.METADATA_REF.fullmatch(value.strip())
+    if m:
+        return context.get_metadata(m.group(1), value)
+    # Whole-string ${{ execution.x }}
+    m = patterns.EXECUTION_REF.fullmatch(value.strip())
+    if m:
+        return context.get_execution(m.group(1), value)
     # Inline interpolation for mixed strings
     ...
 ```
@@ -488,9 +686,18 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 - Split `_variables: dict[str, Any]` into:
   - `_step_variables: dict[str, Any]` — populated from step `returns`
   - `_env_variables: dict[str, Any]` — populated from TCK manifest `env.variables`
-- Add `set_step_variable(name, value, step_id)` and `get_step_variable(name)`
+  - `_services: dict[str, Any]` — populated from TCK manifest `env.services` returns
+  - `_schemas: dict[str, str]` — populated from TCK manifest `env.schemas`
+  - `_metadata: dict[str, Any]` — populated from TCK manifest `metadata`
+  - `_execution: dict[str, Any]` — runtime-injected values
+  - `_precondition_outputs: dict[str, dict[str, Any]]` — from precondition phase returns
+  - `_setup_outputs: dict[str, dict[str, Any]]` — from setup phase returns
+- Add `set_step_variable(step_id, field, value)` and `get_step_variable(step_id, field)` — always qualified, no flat lookup
 - Add `set_env_variable(name, value)` and `get_env_variable(name)`
-- Support qualified lookup: `get_step_variable("step_id.returns.x")`
+- Add `get_service_handle(service_name, field)`
+- Add `get_precondition_output(precondition_id, field)`
+- Add `get_setup_output(setup_id, field)`
+- Add `get_metadata(key)` and `get_execution(key)`
 
 ---
 
@@ -517,7 +724,11 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 - Parse `uses` → `step_def.uses`, `with` → `step_def.with_params`, `returns` → `step_def.returns`
 - Parse `id` as required field
 - Remove `store_in_memory` and `store_in_variable` parsing
-- Update TCK manifest parsing: `env.variables`, `env.services`, `env.schemas`
+- Update TCK manifest parsing: `env.variables`, `env.services` (with `name`, `uses`, `with`, `returns`), `env.schemas`
+- Add `metadata` section parsing from TCK manifest
+- Add `preconditions` phase parsing (categories: `precondition/generate`, `precondition/provide`, `precondition/input`, executable checks)
+- Add `setup` and `teardown` phase parsing as first-class phases
+- Parse inline `validate:` blocks within steps (assertions as standalone steps with own `id`)
 
 ---
 
@@ -526,11 +737,14 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 **Files**: `src/tractusx_testlab/compiler/validator.py`
 
 **Changes**:
-- Replace `_VAR_REF = re.compile(r"\$\{(\w+)}")` with scoped patterns
-- `_check_var_refs()`: detect `${{ vars.x }}` and `${{ env.x }}` separately
-- For `vars`: check if variable name exists in any preceding step's `returns`
+- Replace `_VAR_REF = re.compile(r"\$\{(\w+)}")` with all scoped patterns from WP-B1
+- `_check_var_refs()`: detect `${{ steps.<step_id>.<field> }}`, `${{ env.x }}`, `${{ env.services.n.f }}`, `${{ preconditions.id.f }}`, `${{ setup.id.f }}`, `${{ metadata.x }}`, `${{ execution.x }}` separately
+- For `steps`: check that step ID exists in preceding steps AND the field exists in that step's `returns` — compiler error otherwise
 - For `env`: check if variable name exists in TCK manifest `env.variables`
-- Implement ambiguity detection (ADR-0010 §3.2 rule 4)
+- For `env.services`: check if service name and field exist in manifest `env.services` returns
+- For `preconditions`: check if precondition ID and field exist in precondition phase
+- For `setup`: check if setup step ID and field exist in setup phase
+- No ambiguity detection needed — all step references are always qualified with step ID + field
 - Add field ordering validation: `id` must be first, `uses` must be second
 
 ---
@@ -540,7 +754,7 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 **Files**: `src/tractusx_testlab/steps/server/mock.py`
 
 **Changes**:
-- `_resolve_variables()`: replace `@` prefix check with `${{ vars.x }}` / `${{ env.x }}` pattern
+- `_resolve_variables()`: replace `@` prefix check with `${{ steps.<step_id>.<field> }}` / `${{ env.x }}` and all scoped patterns
 - Use the shared resolver from `player/loading/resolver.py` instead of local implementation
 
 ---
@@ -550,8 +764,9 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 **Files**: `src/tractusx_testlab/steps/assertions.py`
 
 **Changes**:
-- Update inline `@var` resolution to use `${{ vars.x }}` pattern
+- Update inline `@var` resolution to use `${{ steps.<step_id>.<field> }}` pattern
 - Use shared resolver
+- Support `validate/assert`, `validate/field`, `validate/schema`, `validate/object`, `validate/query_param` as standalone steps with their own `id`
 
 ---
 
@@ -573,25 +788,30 @@ def resolve_str(value: str, context: "StepContext") -> Any:
 | File | Changes Needed |
 |------|---------------|
 | `tests/test_compiler_preconditions.py` | Replace `store_in_memory=` with `returns=` |
-| `tests/test_compiler.py` | Update variable validation expectations |
-| `tests/test_mocks.py` | Replace `@var` in test data with `${{ vars.x }}` |
-| `tests/test_step_executors.py` | Update params using variable refs |
+| `tests/test_compiler.py` | Update variable validation expectations to use `${{ steps.<step_id>.<field> }}` |
+| `tests/test_mocks.py` | Replace `@var` in test data with `${{ steps.<step_id>.<field> }}` |
+| `tests/test_step_executors.py` | Update params using variable refs to scoped syntax |
 | `tests/test_runner.py` | Update `store_step_outputs` expectations |
 | `tests/test_models.py` | Update `StepDefinition` construction |
 | `tests/factories.py` | Update factory methods for new model fields |
-| `tests/fixtures/` | Update YAML fixture files |
-| `tests/test_precondition_steps.py` | Update store_in_memory references |
-| `tests/test_precondition_steps_policy_contract.py` | Same |
+| `tests/fixtures/` | Update YAML fixture files to v2 syntax |
+| `tests/test_precondition_steps.py` | Update store_in_memory references, add `${{ preconditions.x.y }}` tests |
+| `tests/test_precondition_steps_policy_contract.py` | Same + test precondition scope isolation |
 
 ### 6.2 New Tests to Add
 
 | Test | Purpose |
 |------|---------|
-| `test_vars_ref_resolution.py` | `${{ vars.x }}` resolves from preceding step returns |
+| `test_steps_ref_resolution.py` | `${{ steps.<step_id>.<field> }}` resolves correctly; unknown step_id or field produces compiler error |
 | `test_env_ref_resolution.py` | `${{ env.x }}` resolves from manifest |
-| `test_qualified_vars_ref.py` | `${{ vars.step_id.returns.x }}` resolves correctly |
-| `test_ambiguity_detection.py` | Compiler rejects ambiguous flat vars refs |
-| `test_scope_isolation.py` | vars and env scopes don't leak into each other |
+| `test_services_ref_resolution.py` | `${{ env.services.<name>.<field> }}` resolves service handles |
+| `test_preconditions_ref_resolution.py` | `${{ preconditions.<id>.<field> }}` resolves from precondition returns |
+| `test_setup_ref_resolution.py` | `${{ setup.<id>.<field> }}` resolves from setup phase returns |
+| `test_metadata_ref_resolution.py` | `${{ metadata.x }}` resolves from manifest metadata |
+| `test_execution_ref_resolution.py` | `${{ execution.x }}` resolves from runtime context |
+| `test_scope_isolation.py` | steps, env, preconditions, setup scopes don't leak into each other |
+| `test_inline_validate_shorthand.py` | Bare field names in inline `validate:` blocks resolve against own step returns |
+| `test_teardown_scope_access.py` | Teardown phase can reference all prior scopes |
 
 ---
 
@@ -644,9 +864,9 @@ WP-F1 (varSyntax)
 | **300-line limit violations** — new model classes and resolver logic may bloat files | Medium | Split `StepReturnDef` into own file. Keep resolver as separate module (already is). |
 | **Existing TCK packages** — compiled `.tckpkg` archives contain old format | Medium | Bump package format version. Old packages fail validation with clear error. |
 | **IDE rollback** — if frontend ships before backend, YAML preview shows v2 but backend rejects it | High | Ship backend first (or simultaneously). Use feature flag during transition. |
-| **Qualified ref complexity** — `${{ vars.step_id.returns.x }}` adds parsing complexity | Low | Qualified refs are optional — flat refs are the default. Only needed for disambiguation. |
+| **Qualified ref complexity** — `${{ steps.step_id.field }}` requires users to know the step ID | Low | Step IDs are auto-generated from the block type and always visible in the IDE. All step refs are qualified — no ambiguity possible. |
 | **JSON-LD `@id` false positives** — test data contains `"@id"` (JSON-LD) that looks like legacy vars | Low | Post-migration grep will not confuse these — they're inside quoted JSON strings, not in param positions. |
-| **Environment variable naming** — existing env vars referenced as `@provider_url` need scope assignment | Medium | All variables currently in `variables:` block become `env` scope. All `store_in_memory` outputs become `vars` scope. |
+| **Environment variable naming** — existing env vars referenced as `@provider_url` need scope assignment | Medium | All variables currently in `variables:` block become `env` scope. All `store_in_memory` outputs become `steps` scope. Precondition outputs → `preconditions` scope. |
 
 ---
 
@@ -675,9 +895,12 @@ A `testlab migrate` CLI command should:
 
 1. Walk all `.yaml`/`.yml` files in a directory
 2. Replace `type:` → `uses:`, `params:` → `with:`, `store_in_memory:` → `returns:`
-3. Convert `@variable_name` → `${{ vars.variable_name }}` or `${{ env.variable_name }}` based on context
-4. Add `id:` field to steps (auto-generate from step type)
-5. Validate the result with the v2 compiler
-6. Write converted files (with `--dry-run` option)
+3. Convert `@variable_name` → `${{ steps.<step_id>.<field> }}` or `${{ env.variable_name }}` based on context (step refs require identifying the source step ID)
+4. Map old step type names to new namespaces (e.g., `edc_create_asset` → `connector/create_asset`, `mock_create_endpoint` → `mock/api`)
+5. Add `id:` field to steps (auto-generate from step type)
+6. Convert `mock_wait_for_call` → `mock/wait/http_request`
+7. Convert `edc_call_dataplane` → `connector/dataplane/http_request`
+8. Validate the result with the v2 compiler
+9. Write converted files (with `--dry-run` option)
 
 This ensures existing TCK test suites can be mechanically upgraded.

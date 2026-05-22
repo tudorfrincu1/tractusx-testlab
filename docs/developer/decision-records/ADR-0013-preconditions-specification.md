@@ -500,7 +500,7 @@ steps:
     uses: connector/patterns/pull_data_by_policy
     name: Pull CCMAPI data using preconditioned policy
     with:
-      service: ${{ env.services.consumer_edc }}
+      connector_service: ${{ env.services.consumer_edc.connector_service }}
       counter_party_address: ${{ preconditions.counter_party_connector.dsp_url }}
       counter_party_id: ${{ preconditions.counter_party_connector.id }}
       policy: ${{ preconditions.usage_policy.policy }}
