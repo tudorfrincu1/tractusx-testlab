@@ -1,8 +1,0 @@
-{
-  "version": "1.0",
-  "templates": [
-    "catalog-negotiation.yaml",
-    "transfer-dataplane-access.yaml",
-    "dtr-shell-lookup.yaml"
-  ]
-}
