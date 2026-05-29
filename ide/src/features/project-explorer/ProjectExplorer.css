@@ -1,0 +1,21 @@
+/* ProjectExplorer – static layout styles */
+
+.project-explorer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  overflow: hidden;
+}
+
+.project-explorer__tree {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.project-explorer__empty {
+  padding: 6px 14px 6px 52px;
+  font-size: 11px;
+  font-style: italic;
+}

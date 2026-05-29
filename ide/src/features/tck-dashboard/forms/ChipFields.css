@@ -1,0 +1,114 @@
+/* ChipFields styles */
+
+.chip-fields__field {
+  flex: 1;
+}
+
+.chip-fields__label {
+  font-size: 10px;
+  color: #999999;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.chip-fields__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  min-height: 32px;
+  align-items: center;
+}
+
+/* Chip base */
+.chip-fields__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Standard chip variant */
+.chip-fields__chip--standard {
+  background: rgba(30, 64, 175, 0.2);
+  border: 1px solid rgba(30, 64, 175, 0.35);
+  color: #93b4f5;
+}
+
+.chip-fields__chip-version {
+  color: #999999;
+  font-weight: 400;
+  font-size: 10px;
+}
+
+/* Add chip input container */
+.chip-fields__chip--editing {
+  gap: 3px;
+  background: #1a1a1a;
+  border: 1px solid #FFD700;
+}
+
+.chip-fields__input {
+  font-size: 11px;
+  color: #e0e0e0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-weight: 500;
+}
+
+.chip-fields__input--id {
+  width: 64px;
+}
+
+.chip-fields__input--version {
+  width: 44px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.chip-fields__input--tag {
+  width: 100px;
+}
+
+.chip-fields__separator {
+  color: #999999;
+  font-size: 10px;
+  user-select: none;
+}
+
+.chip-fields__separator--bold {
+  color: #999999;
+  font-size: 10px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.chip-fields__error-indicator {
+  font-size: 9px;
+  color: #ff6b6b;
+}
+
+/* Add button chip */
+.chip-fields__chip--add {
+  gap: 3px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px dashed #404040;
+  color: #999999;
+  font-size: 10px;
+  transition: border-color 0.15s;
+}
+
+.chip-fields__chip--add:hover {
+  border-color: #FFD700;
+}

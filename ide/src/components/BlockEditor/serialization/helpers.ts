@@ -39,12 +39,12 @@ const COMPARE_OP_TO_TYPE: Record<string, AssertionOperator> = {
 };
 
 /** Read a value block's content as a plain string (or variable reference).
- *  - `output_variable` → `${{ vars.x }}` (step return)
+ *  - `var_steps` / legacy `output_variable` → `${{ vars.x }}` (step return)
  *  - `variable_get` → `${{ env.x }}` (environment/TCK variable)
  */
 export function readValueBlockAsString(block: Block | null): string | undefined {
   if (!block) return undefined;
-  if (block.type === "output_variable") {
+  if (block.type === "output_variable" || block.type === "var_steps") {
     const v = block.getFieldValue("VAR_NAME") || "";
     return v && v !== "__NONE__" ? toVarRef(v) : undefined;
   }
@@ -82,11 +82,13 @@ export function toBlockValueString(value: unknown): string {
 export function readValueBlockAsUnknown(block: Block | null): unknown {
   if (!block) return undefined;
   if (block.type === "value_list") {
-    const items: string[] = [];
+    const items: unknown[] = [];
     let current = block.getInputTargetBlock("ITEMS");
     while (current) {
       if (current.type === "list_item") {
-        items.push(current.getFieldValue("VALUE") || "");
+        const valueBlock = current.getInputTargetBlock("VALUE");
+        const val = readValueBlockAsUnknown(valueBlock);
+        if (val !== undefined) items.push(val);
       }
       current = current.getNextBlock();
     }
@@ -171,8 +173,9 @@ export function createValueBlockFromString(ws: Workspace, strVal: string): Block
     return vb;
   }
 
-  const num = Number(strVal);
-  if (!isNaN(num) && strVal.trim() !== "") {
+  const trimmed = strVal.trim();
+  const num = Number(trimmed);
+  if (!isNaN(num) && trimmed !== "" && String(num) === trimmed) {
     const nb = makeBlock(ws, "value_number");
     nb.setFieldValue(num, "VALUE");
     return nb;

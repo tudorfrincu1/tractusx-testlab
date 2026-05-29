@@ -28,6 +28,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { TopBar, StatusBar, NotificationBar, EditorPanels } from "./components/Layout";
 import { ProjectExplorer } from "./components/ProjectExplorer/ProjectExplorer";
 import { TckDashboard } from "./components/TckDashboard";
+import { TemplateStringEditorModal } from "./features/block-editor/fields/templateString/TemplateStringEditorModal";
 import { PreconditionsPanel } from "./components/PreconditionsPanel/PreconditionsPanel";
 import { EnvironmentEditor } from "./components/EnvironmentEditor";
 import { WelcomeScreen } from "./components/WelcomeScreen/WelcomeScreen";
@@ -165,6 +166,7 @@ export default function App() {
           </>
         )}
       </div>
+      <TemplateStringEditorModal />
       <NotificationBar />
       <StatusBar />
     </div>

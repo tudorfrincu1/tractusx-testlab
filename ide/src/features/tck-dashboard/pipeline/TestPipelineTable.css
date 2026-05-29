@@ -1,0 +1,94 @@
+/* TestPipelineTable styles */
+
+.pipeline-table__add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #FFD700;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pipeline-table__empty {
+  font-size: 12px;
+  color: #999999;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.pipeline-table__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* PipelineRow */
+.pipeline-row {
+  display: flex;
+  align-items: stretch;
+  transition: opacity 0.15s;
+}
+
+.pipeline-row__connector-col {
+  width: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pipeline-row__connector-line {
+  flex: 1;
+  width: 2px;
+  background: #FFD700;
+  opacity: 0.3;
+}
+
+.pipeline-row__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 4px;
+  min-height: 44px;
+}
+
+.pipeline-row__name-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.pipeline-row__name-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e0e0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.pipeline-row__name-btn:hover {
+  color: #FFD700;
+}
+
+.pipeline-row__description {
+  font-size: 10px;
+  color: #999999;
+  margin-top: 1px;
+}
+
+.pipeline-row__stat {
+  font-size: 10px;
+  color: #999999;
+  white-space: nowrap;
+}
+
+.pipeline-row__actions {
+  display: flex;
+  gap: 2px;
+}

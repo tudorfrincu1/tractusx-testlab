@@ -23,10 +23,10 @@
 // It was reviewed and tested by a human committer.
 
 import JSZip from "jszip";
-import type { TckDefinition, ScriptDefinition } from "../../models/schema";
-import { isTck, isTest } from "../../models/schema";
-import { modelToYaml, yamlToModel } from "../../sync";
-import type { SchemaFile } from "../slices/useProjectStore";
+import type { TckDefinition, ScriptDefinition } from "@/models/schema";
+import { isTck, isTest } from "@/models/schema";
+import { modelToYaml, yamlToModel } from "@/services";
+import type { SchemaFile, TestdataFile } from "./useProjectStore";
 
 const INDEX_FILE = "index.yaml";
 
@@ -81,6 +81,7 @@ export interface ImportedProject {
   tck: TckDefinition;
   tests: Map<string, ScriptDefinition>;
   schemas: Map<string, SchemaFile>;
+  testdata?: Map<string, TestdataFile>;
   testOrder: string[];
 }
 

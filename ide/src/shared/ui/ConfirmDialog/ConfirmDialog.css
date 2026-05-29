@@ -1,0 +1,94 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+.confirm-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.confirm-dialog__panel {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 360px;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.confirm-dialog__title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.confirm-dialog__message {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #999;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-dialog__btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #444;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.confirm-dialog__btn--cancel {
+  background: transparent;
+  color: #999;
+  border-color: #444;
+}
+
+.confirm-dialog__btn--cancel:hover {
+  background: #2a2a2a;
+  border-color: #555;
+}
+
+.confirm-dialog__btn--confirm {
+  background: #ffd700;
+  color: #000;
+  border-color: #ffd700;
+  font-weight: 600;
+}
+
+.confirm-dialog__btn--confirm:hover {
+  background: #e6c200;
+  border-color: #e6c200;
+}

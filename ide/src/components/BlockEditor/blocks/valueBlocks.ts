@@ -265,14 +265,13 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
 
   Blockly.Blocks["list_item"] = {
     init(this: Block) {
-      this.appendDummyInput()
-        .appendField("\"")
-        .appendField(new Blockly.FieldTextInput(""), "VALUE")
-        .appendField("\"");
+      this.appendValueInput("VALUE")
+        .setCheck("param_value")
+        .appendField("\u2022");
       this.setPreviousStatement(true, "list_item");
       this.setNextStatement(true, "list_item");
       this.setColour(blockColors.listItem);
-      this.setTooltip("A single item in a value list");
+      this.setTooltip("A single item in a value list \u2014 connect any value block");
     },
   };
 }

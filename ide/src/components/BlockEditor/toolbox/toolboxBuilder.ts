@@ -50,18 +50,15 @@ export function getActiveDataspaceVersions(): Set<string> {
   return versions;
 }
 
-/** EDC block ordering with label separators. */
-const EDC_CONSUMER_BLOCKS = ["step_query_catalog", "step_query_catalog_with_filters", "step_negotiate", "step_initiate_transfer"];
-const EDC_PROVIDER_BLOCKS = ["step_create_asset", "step_create_policy", "step_create_contract_def"];
-const EDC_STRUCTURE_BLOCKS = ["filter_expression", "asset_criterion", "odrl_permission", "odrl_prohibition", "odrl_obligation", "odrl_logical_constraint", "odrl_constraint"];
-
-/** Build the EDC Connector category with nested sub-categories. */
-function buildEdcConnectorCategory(
+/** Build the Connector category with nested sub-categories driven by the catalog. */
+function buildConnectorCategory(
   cat: BlockCatalogCategory,
   activeVersions: Set<string>,
 ): object {
-  const available = new Set(
-    cat.blocks
+  const colour = getCategoryColor(cat.name);
+
+  if (!cat.subcategories || cat.subcategories.length === 0) {
+    const contents = cat.blocks
       .filter(
         (b) =>
           !b.custom_registration &&
@@ -69,57 +66,30 @@ function buildEdcConnectorCategory(
             activeVersions.size === 0 ||
             activeVersions.has(b.dataspace_version)),
       )
-      .map((b) => `step_${b.type}`),
-  );
-
-  const colour = getCategoryColor(cat.name);
-
-  const consumerContents = EDC_CONSUMER_BLOCKS
-    .filter((t) => available.has(t))
-    .map((t) => ({ kind: "block", type: t }));
-
-  const providerContents = EDC_PROVIDER_BLOCKS
-    .filter((t) => available.has(t))
-    .map((t) => ({ kind: "block", type: t }));
-
-  const structureContents = EDC_STRUCTURE_BLOCKS
-    .map((t) => ({ kind: "block", type: t }));
-
-  // Add shortcut blocks to the consumer category
-  if (cat.shortcuts && cat.shortcuts.length > 0) {
-    const shortcutBlocks: object[] = [];
-    for (const group of cat.shortcuts) {
-      if (group.subcategories && group.subcategories.length > 0) {
-        for (const sub of group.subcategories) {
-          for (const b of sub.blocks) {
-            if (!b.dataspace_version || activeVersions.size === 0 || activeVersions.has(b.dataspace_version)) {
-              shortcutBlocks.push({ kind: "block", type: `step_${b.type}` });
-            }
-          }
-        }
-      } else if (group.blocks) {
-        for (const b of group.blocks) {
-          if (!b.dataspace_version || activeVersions.size === 0 || activeVersions.has(b.dataspace_version)) {
-            shortcutBlocks.push({ kind: "block", type: `step_${b.type}` });
-          }
-        }
-      }
-    }
-    if (shortcutBlocks.length > 0) {
-      consumerContents.push({ kind: "sep", gap: "12" });
-      consumerContents.push(...shortcutBlocks);
-    }
+      .map((b) => ({ kind: "block", type: `step_${b.type}` }));
+    return { kind: "category", name: cat.name, colour, contents };
   }
 
   const subCategories: object[] = [];
-  if (consumerContents.length > 0) {
-    subCategories.push({ kind: "category", name: "Data Consumer", colour, contents: consumerContents });
-  }
-  if (providerContents.length > 0) {
-    subCategories.push({ kind: "category", name: "Data Provider (Internal Use)", colour, contents: providerContents });
-  }
-  if (structureContents.length > 0) {
-    subCategories.push({ kind: "category", name: "Data Structures", colour, contents: structureContents });
+
+  for (const sub of cat.subcategories) {
+    const contents: object[] = [];
+
+    for (const b of sub.blocks) {
+      if (b.custom_registration) continue;
+      if (b.dataspace_version && activeVersions.size > 0 && !activeVersions.has(b.dataspace_version)) continue;
+      contents.push({ kind: "block", type: `step_${b.type}` });
+    }
+
+    if (sub.programmatic_blocks) {
+      for (const blockType of sub.programmatic_blocks) {
+        contents.push({ kind: "block", type: blockType });
+      }
+    }
+
+    if (contents.length > 0) {
+      subCategories.push({ kind: "category", name: sub.name, colour, contents });
+    }
   }
 
   return {
@@ -135,8 +105,8 @@ function buildCatalogCategory(
   cat: BlockCatalogCategory,
   activeVersions: Set<string>,
 ): object {
-  if (cat.name === "EDC Connector") {
-    return buildEdcConnectorCategory(cat, activeVersions);
+  if (cat.name === "Connector") {
+    return buildConnectorCategory(cat, activeVersions);
   }
   return {
     kind: "category",
@@ -179,7 +149,6 @@ function buildInputsCategory(blocks: readonly string[], variables: string[]): ob
   }
 
   const variableContents: object[] = [];
-  if (blocks.includes("variable_def")) variableContents.push({ kind: "block", type: "variable_def" });
   if (variables.length > 0) {
     variableContents.push({ kind: "sep", gap: "8" });
     for (const v of variables) {

@@ -26,19 +26,25 @@ import type {
   TckDefinition,
   ScriptDefinition,
   TestLabDocument,
-} from "../models/schema";
+} from "@/models/schema";
 import type { AggregatedVariable, TestSummary } from "./selectors/selectors";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
 export interface ActiveFile {
-  type: "tck" | "test" | "schema" | "preconditions" | "environment";
+  type: "tck" | "test" | "schema" | "testdata" | "preconditions" | "environment";
   name: string;
 }
 
 export interface SchemaFile {
   name: string;
   content: string;
+}
+
+export interface TestdataFile {
+  name: string;
+  content: string;
+  type: string;
 }
 
 /* ── Store interface ────────────────────────────────────────────────────── */
@@ -50,6 +56,7 @@ export interface ProjectState {
   tck: TckDefinition;
   tests: Map<string, ScriptDefinition>;
   schemas: Map<string, SchemaFile>;
+  testdata: Map<string, TestdataFile>;
   testOrder: string[];
   activeFile: ActiveFile | null;
   dirty: Map<string, boolean>;

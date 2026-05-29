@@ -58,8 +58,10 @@ export const blockColors = {
   categories: {
     Mock: "#0F766E",
     Wait: "#A16207",
+    Utility: "#CA8A04",
     Function: "#CA8A04",
     Flow: "#9333EA",
+    Connector: "#2563EB",
     "EDC Connector": "#2563EB",
     "EDC Connector (Saturn)": "#2563EB",
     "EDC Connector (Jupiter)": "#1D4ED8",

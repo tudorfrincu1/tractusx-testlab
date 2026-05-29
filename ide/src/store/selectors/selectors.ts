@@ -26,7 +26,7 @@ import type {
   TckDefinition,
   ScriptDefinition,
   VariableDefinition,
-} from "../../models/schema";
+} from "@/models/schema";
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 

@@ -107,18 +107,18 @@ export interface Assertion {
   operator?: string;
   expected?: unknown;
   json_path?: string;
-  store_in_variable?: string;
   validate?: Assertion[];
 }
 
 export interface StepDefinition {
-  type: string;
-  description?: string;
-  params: Record<string, unknown>;
+  id: string;
+  uses: string;
+  name?: string;
+  with: Record<string, unknown>;
+  returns?: Record<string, unknown>;
   on_failure?: FailurePolicy;
   timeout_s?: number;
   validate?: Assertion[];
-  store_in_memory?: Record<string, string>;
   if?: string;
 }
 
@@ -134,11 +134,21 @@ export function isTemplateStep(step: Step): step is TemplateStepDefinition {
   return "template" in step;
 }
 
+export interface ServiceAuthDefinition {
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface ServiceReturnField {
+  type: string;
+  class?: string;
+}
+
 export interface ServiceDefinition {
   name: string;
-  type: ServiceType;
-  config: Record<string, unknown>;
-  auth?: string;
+  uses: string;
+  with?: Record<string, unknown> & { auth?: ServiceAuthDefinition };
+  returns?: Record<string, ServiceReturnField>;
 }
 
 export interface AuthDefinition {
@@ -158,45 +168,27 @@ export interface PolicyRule {
   constraints: PolicyConstraint[];
 }
 
-export interface PreconditionPolicyDefinition {
-  type: "precondition_policy_config";
-  description: string;
-  params: {
-    version: "jupiter" | "saturn";
-    policy_type: "access" | "usage";
-    permissions?: PolicyRule[];
-    prohibitions?: PolicyRule[];
-    obligations?: PolicyRule[];
-  };
+export interface InlineValidation {
+  uses: string;
+  with: Record<string, unknown>;
 }
 
-export interface PreconditionAssetDefinition {
-  type: "precondition_asset_config";
-  description: string;
-  params: {
-    version: "jupiter" | "saturn";
-    asset_id?: string;
-    properties: Record<string, string>;
-    data_address: Record<string, string>;
-  };
+export interface PreconditionReturnField {
+  type: string;
+  class?: string;
+  generator?: string;
+  label?: string;
+  placeholder?: string;
 }
 
-export interface PreconditionContractDefinition {
-  type: "precondition_contract_def_config";
-  description: string;
-  params: {
-    version: "jupiter" | "saturn";
-    contract_def_id?: string;
-    access_policy_id?: string;
-    contract_policy_id?: string;
-    asset_selector?: Record<string, string>[];
-  };
+export interface PreconditionDefinition {
+  id: string;
+  uses: string;
+  name: string;
+  with?: Record<string, unknown>;
+  returns?: Record<string, PreconditionReturnField>;
+  validate?: InlineValidation[];
 }
-
-export type PreconditionDefinition =
-  | PreconditionPolicyDefinition
-  | PreconditionAssetDefinition
-  | PreconditionContractDefinition;
 
 export interface ScriptDefinition {
   kind: typeof ScriptKind.TEST;
@@ -228,6 +220,13 @@ export interface StandardRef {
   version?: string;
 }
 
+export interface TckEnv {
+  variables?: Record<string, VariableDefinition>;
+  services?: ServiceDefinition[];
+  schemas?: Record<string, unknown>;
+  testdata?: Record<string, { file: string; type: string }>;
+}
+
 export interface TckDefinition {
   kind: typeof ScriptKind.TCK;
   name: string;
@@ -237,6 +236,7 @@ export interface TckDefinition {
   author?: string;
   standards?: StandardRef[];
   tags?: string[];
+  env?: TckEnv;
   preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   tests: (ScriptDefinition | string | TestRef)[];

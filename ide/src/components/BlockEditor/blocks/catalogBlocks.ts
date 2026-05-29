@@ -63,7 +63,7 @@ function registerSingleBlock(
         .appendField(createInfoIconField(Blockly, block.description));
 
       this.appendDummyInput()
-        .appendField("description:")
+        .appendField("name:")
         .appendField(new Blockly.FieldTextInput(""), "DESCRIPTION");
 
       registerBlockParams(this, block, Blockly, catalog, serviceType);

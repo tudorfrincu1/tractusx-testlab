@@ -25,7 +25,12 @@
 /** Barrel re-export — all public symbols from store subfolders. */
 
 export * from "./types";
-export * from "./slices";
-export * from "./api";
+export * from "./editor";
+export * from "./environment";
+export * from "./compile";
+export * from "./execution";
 export * from "./selectors";
 export * from "./project";
+export * from "./notifications";
+export * from "./ui/index";
+export { useUiStore } from "./ui/useUiStore";

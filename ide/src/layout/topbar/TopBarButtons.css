@@ -1,0 +1,38 @@
+/* TopBarButtons styles */
+.toolbar-button {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.dropdown-item__icon {
+  flex-shrink: 0;
+}
+
+.dropdown-item__label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dropdown-item__description {
+  font-size: 10px;
+}

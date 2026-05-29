@@ -1,0 +1,53 @@
+/* EditableFileName styles */
+.editable-filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 8px;
+  cursor: text;
+  font-family: monospace;
+  font-size: 12px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 1px 4px;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.editable-filename:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(255, 215, 0, 0.5);
+}
+
+.editable-filename--editing {
+  cursor: default;
+  border-bottom: none;
+  background: none;
+}
+
+.editable-filename--editing:hover {
+  background: none;
+}
+
+.editable-filename__name {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.editable-filename__ext {
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
+.editable-filename__input {
+  font-family: monospace;
+  font-size: 12px;
+  color: #e0e0e0;
+  background: #2a2a3a;
+  border: 1px solid #ffd700;
+  border-radius: 3px;
+  padding: 1px 4px;
+  outline: none;
+  width: auto;
+  min-width: 60px;
+  max-width: 200px;
+}

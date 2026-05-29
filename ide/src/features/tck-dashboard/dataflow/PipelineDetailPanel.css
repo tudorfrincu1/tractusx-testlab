@@ -1,0 +1,256 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+/* ── Node Detail Panel ──────────────────────────────────────────────────── */
+
+.node-detail-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background: #242424;
+  border-left: 1px solid #404040;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 20;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  animation: panel-slide-in 0.2s ease;
+}
+
+@keyframes panel-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.node-detail-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px;
+  border-bottom: 1px solid #404040;
+}
+
+.node-detail-panel__title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.node-detail-panel__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.node-detail-panel__badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.node-detail-panel__badge--idle { background: #3a3a3a; color: #999; }
+.node-detail-panel__badge--running { background: rgba(255, 167, 38, 0.2); color: #ffa726; }
+.node-detail-panel__badge--passed { background: rgba(102, 187, 106, 0.2); color: #66bb6a; }
+.node-detail-panel__badge--failed { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+.node-detail-panel__badge--skipped { background: #333; color: #666; }
+
+.node-detail-panel__close {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.node-detail-panel__close:hover { color: #fff; }
+
+.node-detail-panel__progress {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #999;
+  border-bottom: 1px solid #333;
+}
+
+.node-detail-panel__section {
+  padding: 10px 14px;
+  border-bottom: 1px solid #333;
+}
+
+.node-detail-panel__section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.node-detail-panel__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.node-detail-panel__chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.node-detail-panel__chip--service { background: rgba(255, 167, 38, 0.15); color: #ffa726; }
+.node-detail-panel__chip--output { background: rgba(102, 187, 106, 0.15); color: #66bb6a; }
+
+.node-detail-panel__var-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node-detail-panel__var-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.node-detail-panel__var-name {
+  color: #4db6ac;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.node-detail-panel__var-source { color: #999; font-size: 10px; }
+
+.node-detail-panel__step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.node-detail-panel__step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 11px;
+  color: #e0e0e0;
+}
+
+.node-detail-panel__step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.node-detail-panel__step-dot--idle { background: #555; }
+.node-detail-panel__step-dot--running { background: #ffa726; }
+.node-detail-panel__step-dot--passed { background: #66bb6a; }
+.node-detail-panel__step-dot--failed { background: #ff6b6b; }
+.node-detail-panel__step-dot--skipped { background: #444; }
+
+.node-detail-panel__step-number {
+  color: #777;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  min-width: 16px;
+  flex-shrink: 0;
+}
+
+.node-detail-panel__step-name { color: #ccc; }
+
+/* ── Annotations Bar ────────────────────────────────────────────────────── */
+
+.annotations-bar {
+  grid-column: 2;
+  grid-row: 2;
+  background: #242424;
+  border-top: 1px solid #404040;
+  max-height: 140px;
+  overflow-y: auto;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.annotations-bar--empty { padding: 6px 14px; }
+
+.annotations-bar__header {
+  padding: 6px 14px;
+  border-bottom: 1px solid #333;
+}
+
+.annotations-bar__count { font-size: 11px; font-weight: 600; color: #999; }
+
+.annotations-bar__list { list-style: none; margin: 0; padding: 0; }
+
+.annotations-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.annotations-bar__item:hover { background: rgba(255, 255, 255, 0.04); }
+
+.annotations-bar__severity { font-size: 12px; flex-shrink: 0; }
+.annotations-bar__severity--critical { color: #ff6b6b; }
+.annotations-bar__severity--warning { color: #ffa726; }
+.annotations-bar__severity--info { color: #42a5f5; }
+
+.annotations-bar__stage { font-weight: 600; color: #e0e0e0; }
+.annotations-bar__step { color: #999; }
+
+.annotations-bar__message {
+  color: #999;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .pipeline-graph-view { grid-template-columns: 1fr; }
+  .stage-list-sidebar { display: none; }
+  .pipeline-graph-canvas { grid-column: 1; }
+  .annotations-bar { grid-column: 1; }
+  .node-detail-panel { width: 100%; }
+}

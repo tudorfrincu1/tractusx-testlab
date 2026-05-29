@@ -1,0 +1,202 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+/* ── TCK Variable Table ─────────────────────────────────────────────────── */
+
+.var-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.var-table th {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #333;
+}
+
+.var-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #2a2a2a;
+  vertical-align: middle;
+}
+
+.var-table__input {
+  width: 100%;
+  font-size: 12px;
+  color: #e0e0e0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  outline: none;
+  font-family: "JetBrains Mono", monospace;
+  transition: border-color 0.15s;
+}
+
+.var-table__input:focus {
+  border-color: #ffd700;
+}
+
+.var-table__input--name {
+  font-family: "JetBrains Mono", monospace;
+  color: #93b4f5;
+}
+
+.var-table__select {
+  font-size: 12px;
+  color: #e0e0e0;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 3px 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.var-table__select:focus {
+  border-color: #ffd700;
+}
+
+.var-table__toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.var-table__toggle--on {
+  color: #ffd700;
+}
+
+.var-table__toggle--off {
+  color: #555;
+}
+
+.var-table__delete-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.var-table__delete-btn:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.var-table__add-btn {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 8px;
+  transition: background 0.12s;
+  border-radius: 4px;
+}
+
+.var-table__add-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.var-table__empty {
+  color: #666;
+  font-size: 12px;
+  padding: 12px 8px;
+}
+
+/* ── Source badges ──────────────────────────────────────────────────────── */
+
+.var-table__source-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.var-table__source-badge--tck {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.var-table__source-badge--test {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.12);
+  text-transform: none;
+  cursor: default;
+}
+
+.var-table__row--test-level {
+  opacity: 0.85;
+}
+
+.var-table__promote-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.var-table__promote-btn:hover {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.var-table__count {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}

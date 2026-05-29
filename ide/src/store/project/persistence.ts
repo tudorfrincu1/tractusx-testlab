@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { ScriptDefinition, TckDefinition, TestLabDocument } from "../../models/schema";
+import type { ScriptDefinition, TckDefinition, TestLabDocument } from "@/models/schema";
 import {
   isTck,
   isTest,
@@ -30,11 +30,12 @@ import {
   createEmptyTck,
   createEmptyTest,
   ScriptKind,
-} from "../../models/schema";
-import { yamlToModel, modelToYaml } from "../../sync";
-import { useTestLabStore } from "../slices/useTestLabStore";
+} from "@/models/schema";
+import { yamlToModel, modelToYaml } from "@/services";
+import { useEditorStore } from "../editor/useEditorStore";
+import { useServiceStore } from "../environment/useServiceStore";
 import { buildTckTestsArray } from "../selectors/helpers";
-import type { ActiveFile, SchemaFile, ProjectState } from "../types";
+import type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "../types";
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
 
@@ -48,6 +49,7 @@ export interface SerializedProject {
   tckYaml: string;
   tests: Record<string, string>;
   schemas: Record<string, string>;
+  testdata?: Record<string, { content: string; type: string }>;
   testOrder: string[];
   activeFile: ActiveFile | null;
   workspaceStates?: Record<string, object>;
@@ -61,7 +63,7 @@ export function saveProjectToLocalStorage(
   set: (state: Partial<ProjectState>) => void,
 ): void {
   try {
-    const { projectName, tck, tests, schemas, testOrder, activeFile, workspaceStates } = get();
+    const { projectName, tck, tests, schemas, testdata, testOrder, activeFile, workspaceStates } = get();
     const serialized: SerializedProject = {
       projectName,
       tckYaml: modelToYaml(tck),
@@ -70,6 +72,9 @@ export function saveProjectToLocalStorage(
       ),
       schemas: Object.fromEntries(
         [...schemas.entries()].map(([k, v]) => [k, v.content])
+      ),
+      testdata: Object.fromEntries(
+        [...testdata.entries()].map(([k, v]) => [k, { content: v.content, type: v.type }])
       ),
       testOrder,
       activeFile,
@@ -106,17 +111,27 @@ export function loadSerializedProject(
       schemasMap.set(name, { name, content });
     }
 
+    const testdataMap = new Map<string, TestdataFile>();
+    for (const [name, entry] of Object.entries(data.testdata ?? {})) {
+      testdataMap.set(name, { name, content: entry.content, type: entry.type });
+    }
+
     set({
       hasProject: true,
       projectName: data.projectName,
       tck: tcResult.model,
       tests: testsMap,
       schemas: schemasMap,
+      testdata: testdataMap,
       testOrder: data.testOrder ?? [],
       activeFile: data.activeFile ?? { type: "tck", name: "index" },
       dirty: new Map(),
       workspaceStates: data.workspaceStates ?? {},
     });
+
+    const services = tcResult.model.env?.services ?? [];
+    useServiceStore.getState().setServices(services);
+
     get().saveToLocalStorage();
     return true;
   } catch {
@@ -220,6 +235,9 @@ export function loadDocumentIntoStore(
       dirty: new Map(),
       workspaceStates: {},
     });
+
+    const services = tc.env?.services ?? [];
+    useServiceStore.getState().setServices(services);
   } else if (isTest(doc)) {
     const script = doc as ScriptDefinition;
     const projectName = name ?? script.name ?? "Untitled";
@@ -243,7 +261,7 @@ export function loadDocumentIntoStore(
 
   const activeModel = get().getActiveModel();
   if (activeModel) {
-    useTestLabStore.getState().loadModel(activeModel);
+    useEditorStore.getState().loadModel(activeModel);
   }
   get().saveToLocalStorage();
 }

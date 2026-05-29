@@ -1,0 +1,78 @@
+/* nodeTypes styles */
+.graph-node {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  min-width: 140px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.graph-node__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.graph-node__service-badge {
+  font-size: 8px;
+  font-weight: 600;
+  background: rgba(94, 168, 168, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  color: #5EA8A8;
+}
+
+.graph-node__include-label {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.graph-node__service-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.graph-node--terminal {
+  border-radius: 20px;
+  min-width: 80px;
+  padding: 8px 20px;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  box-shadow: none;
+}
+
+.graph-node--phase {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  min-width: 100px;
+  padding: 6px 12px;
+}
+
+.graph-node--variable {
+  border-radius: 14px;
+}
+
+.graph-node--tck {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.graph-node--service {
+  border-radius: 14px;
+  background: rgba(94, 168, 168, 0.08);
+  min-width: 140px;
+}

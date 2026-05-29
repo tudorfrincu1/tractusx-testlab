@@ -57,10 +57,10 @@ function resolveParentSourceVariable(block: Block): string | undefined {
   let current: Block | null = block.getParent();
   while (current) {
     if (current.type.startsWith("step_")) {
-      // Search all inputs for a connected variable_get or output_variable block
+      // Search all inputs for a connected variable_get or var_* block
       for (const input of current.inputList) {
         const connected = input.connection?.targetBlock();
-        if (connected?.type === "variable_get" || connected?.type === "output_variable") {
+        if (connected?.type === "variable_get" || connected?.type.startsWith("var_")) {
           const varName = connected.getFieldValue("VAR_NAME");
           if (varName && varName !== "__NONE__") return String(varName);
         }
@@ -252,19 +252,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
     },
   };
 
-  Blockly.Blocks["output_variable"] = {
-    init(this: Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("vars.")
-        .appendField(new Blockly.FieldLabel(""), "VAR_NAME");
-      this.setOutput(true, "param_value");
-      this.setColour(blockColors.variableGet);
-      this.setTooltip("Step return variable — uses ${{ vars.variable_name }} syntax");
-      this.setDeletable(true);
-      this.setMovable(true);
-    },
-  };
+
 
   Blockly.Blocks["key_value_pair"] = {
     init(this: Block) {
@@ -299,7 +287,7 @@ export function registerValueBlocks(Blockly: typeof BlocklyType, catalog?: Block
   Blockly.Blocks["value_json"] = {
     init(this: Block) {
       this.appendDummyInput()
-        .appendField("{}")
+        .appendField("JSON")
         .appendField(
           new Blockly.FieldLabelSerializable(truncateJsonPreview(DEFAULT_JSON)),
           "JSON_PREVIEW",

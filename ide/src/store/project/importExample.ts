@@ -22,11 +22,11 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { TckDefinition, ScriptDefinition, TestRef } from "../../models/schema";
-import { isTck, isTest, isTestRef } from "../../models/schema";
-import { yamlToModel } from "../../sync";
-import type { SchemaFile } from "../slices/useProjectStore";
+import type { TckDefinition, ScriptDefinition, TestRef } from "@/models/schema";
+import { isTck, isTest, isTestRef } from "@/models/schema";
+import { yamlToModel } from "@/services";
 import type { ImportedProject } from "./projectIO";
+import { fetchSchemas, fetchTestdata } from "./importHelpers";
 
 /** Fetch a folder-based example from public/examples/ */
 export async function importExampleFolder(examplePath: string): Promise<ImportedProject | null> {
@@ -62,10 +62,12 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
   if (!isTck(tcResult.model)) return null;
   const tc = tcResult.model;
 
-  // Collect test file paths from test refs
+  // Collect test file paths from test refs or plain strings
   const testPaths: Array<{ path: string; ref: unknown }> = [];
   for (const entry of tc.tests) {
-    if (isTestRef(entry)) {
+    if (typeof entry === "string") {
+      testPaths.push({ path: entry, ref: entry });
+    } else if (isTestRef(entry)) {
       testPaths.push({ path: entry.test, ref: entry });
     }
   }
@@ -76,9 +78,24 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
   const pathToName = new Map<string, string>();
 
   const fetches = testPaths.map(async ({ path }) => {
-    const url = `${folderUrl}${path}`;
-    const r = await fetch(url);
-    if (!r.ok) return null;
+    // Try tests/ prefix first (known file structure), fallback to direct path
+    let url = path.includes("/")
+      ? `${folderUrl}${path}`
+      : `${folderUrl}tests/${path}`;
+    let r = await fetch(url);
+    const contentType = r.headers.get("content-type") ?? "";
+
+    // SPA fallback returns 200 with text/html for missing files — treat as failure
+    if (!r.ok || contentType.includes("text/html")) {
+      if (!path.includes("/")) {
+        url = `${folderUrl}${path}`;
+        r = await fetch(url);
+        const fallbackType = r.headers.get("content-type") ?? "";
+        if (!r.ok || fallbackType.includes("text/html")) return null;
+      } else {
+        return null;
+      }
+    }
     const text = await r.text();
     const result = yamlToModel(text);
     if (!result.ok || !isTest(result.model)) return null;
@@ -98,6 +115,10 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
 
   // Rewrite test refs in the TCK to use clean names
   const cleanTests = tc.tests.map((entry) => {
+    if (typeof entry === "string") {
+      const cleanName = pathToName.get(entry);
+      return { test: cleanName ?? entry.replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "") };
+    }
     if (isTestRef(entry)) {
       const cleanName = pathToName.get(entry.test);
       if (cleanName) return { ...entry, test: cleanName };
@@ -107,51 +128,18 @@ export async function importExampleFolder(examplePath: string): Promise<Imported
   tc.tests = cleanTests;
   const testOrder = deriveTestOrder(tc, tests, loadedOrder);
 
-  // Scan test files for schema references and fetch schemas
-  const schemas = new Map<string, SchemaFile>();
-  const schemaPathSet = new Set<string>();
+  // Fetch schemas from env.schemas and test step references
+  const schemas = await fetchSchemas(tc, tests, folderUrl);
 
-  for (const script of tests.values()) {
-    for (const phase of [script.setup, script.steps, script.teardown]) {
-      if (!phase) continue;
-      for (const step of phase) {
-        if ("params" in step && step.params) {
-          const p = step.params as Record<string, unknown>;
-          if (typeof p.path === "string" && p.path.endsWith(".json")) {
-            schemaPathSet.add(p.path);
-          }
-          if (typeof p.schema_path === "string" && p.schema_path.endsWith(".json")) {
-            schemaPathSet.add(p.schema_path);
-          }
-        }
-      }
-    }
-  }
-
-  const schemaFetches = [...schemaPathSet].map(async (schemaPath) => {
-    const resolved = schemaPath.startsWith("../")
-      ? schemaPath.slice(3)
-      : schemaPath;
-    const url = `${folderUrl}${resolved}`;
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    const content = await r.text();
-    const name = resolved.replace(/^schemas\//, "").replace(/\.json$/, "");
-    return { name, content };
-  });
-
-  const schemaResults = await Promise.all(schemaFetches);
-  for (const entry of schemaResults) {
-    if (entry) {
-      schemas.set(entry.name, { name: entry.name, content: entry.content });
-    }
-  }
+  // Fetch testdata from env.testdata
+  const testdata = await fetchTestdata(tc, folderUrl);
 
   return {
     projectName: tc.name,
     tck: tc,
     tests,
     schemas,
+    testdata,
     testOrder,
   };
 }

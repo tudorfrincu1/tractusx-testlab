@@ -30,6 +30,7 @@ import { useTestLabStore } from "../../store/slices/useTestLabStore";
 import { theme } from "../../theme/tractusxTheme";
 import { findStepLineRange } from "../../sync";
 import { defineTractusDarkTheme, registerYamlCompletions } from "./monacoSetup";
+import "./MonacoEditor.css";
 
 export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
   const yaml = useTestLabStore((s) => s.yaml);
@@ -175,13 +176,9 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
   );
 
   return (
-    <div style={{ height: "100%", position: "relative" }}>
+    <div className="monaco-editor-wrapper">
       {readOnly && (
-        <div style={{
-          position: "absolute", inset: 0, zIndex: 2,
-          background: "rgba(0,0,0,0.18)",
-          pointerEvents: "none",
-        }} />
+        <div className="monaco-editor-overlay" />
       )}
       <Editor
         height="100%"
