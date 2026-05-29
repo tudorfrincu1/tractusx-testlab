@@ -44,6 +44,18 @@ from tractusx_testlab.player.execution.preconditions import (
 from factories import create_precondition_log, create_step_definition
 
 _MODULE = "tractusx_testlab.player.execution.preconditions"
+
+
+@pytest.fixture()
+def patched_precondition_deps():
+    """Patch ConditionEvaluator, StepRegistry, run_step, store_step_outputs."""
+    with patch(f"{_MODULE}.ConditionEvaluator") as mock_cond, \
+         patch(f"{_MODULE}.StepRegistry") as mock_registry, \
+         patch(f"{_MODULE}.run_step", new_callable=AsyncMock) as mock_run, \
+         patch(f"{_MODULE}.store_step_outputs") as mock_store:
+        yield mock_cond, mock_registry, mock_run, mock_store
+
+
 def _make_script(preconditions: list | None = None, name: str = "test") -> MagicMock:
     script = MagicMock()
     script.name = name
@@ -104,17 +116,10 @@ class TestExecutePreconditionSteps:
         assert status.value == "COMPLETED"
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_runs_all_precondition_steps(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
         mock_run.return_value = _make_passed_result()
@@ -130,17 +135,10 @@ class TestExecutePreconditionSteps:
         assert status.value == "COMPLETED"
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_sets_phase_to_precondition(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
         mock_run.return_value = _make_passed_result()
@@ -154,17 +152,10 @@ class TestExecutePreconditionSteps:
         assert results[0].phase == StepPhase.PRECONDITION
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_stops_on_failure(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
         mock_run.return_value = _make_failed_result()
@@ -180,17 +171,10 @@ class TestExecutePreconditionSteps:
         assert status.value == "FAILED"
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_calls_store_step_outputs(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
         mock_run.return_value = _make_passed_result()
@@ -204,17 +188,10 @@ class TestExecutePreconditionSteps:
         mock_store.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_extracts_precondition_logs_into_result(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
 
@@ -273,17 +250,10 @@ class TestExecutePreconditionSteps:
         assert status.value == "COMPLETED"
 
     @pytest.mark.asyncio
-    @patch(f"{_MODULE}.store_step_outputs")
-    @patch(f"{_MODULE}.run_step", new_callable=AsyncMock)
-    @patch(f"{_MODULE}.StepRegistry")
-    @patch(f"{_MODULE}.ConditionEvaluator")
     async def test_monitor_receives_events(
-        self,
-        mock_cond: MagicMock,
-        mock_registry: MagicMock,
-        mock_run: AsyncMock,
-        mock_store: MagicMock,
+        self, patched_precondition_deps,
     ) -> None:
+        mock_cond, mock_registry, mock_run, mock_store = patched_precondition_deps
         mock_cond.should_run.return_value = True
         mock_registry.get.return_value = MagicMock()
         mock_run.return_value = _make_passed_result()

@@ -1,0 +1,85 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
+
+"""Expression resolver — converts ${{ expr }} template strings to $ref/$concat IR nodes."""
+
+from __future__ import annotations
+
+import re
+from typing import Any
+
+_EXPR_PATTERN = re.compile(r"\$\{\{\s*(.+?)\s*\}\}")
+_FULL_EXPR_PATTERN = re.compile(r"^\$\{\{\s*(.+?)\s*\}\}$")
+
+
+def resolve_expression(value: Any) -> Any:
+    """Recursively resolve ${{ expr }} strings to $ref/$concat objects."""
+    if isinstance(value, str):
+        return _resolve_string_expr(value)
+    if isinstance(value, dict):
+        return {k: resolve_expression(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [resolve_expression(item) for item in value]
+    return value
+
+
+def _resolve_string_expr(value: str) -> Any:
+    """Convert a string with ${{ expr }} to $ref or $concat."""
+    full_match = _FULL_EXPR_PATTERN.match(value)
+    if full_match:
+        return {"$ref": _normalize_ref(full_match.group(1))}
+
+    parts = _EXPR_PATTERN.split(value)
+    if len(parts) == 1:
+        return value
+
+    concat_parts: list[Any] = []
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            if part:
+                concat_parts.append(part)
+        else:
+            concat_parts.append({"$ref": _normalize_ref(part)})
+
+    if len(concat_parts) == 1:
+        return concat_parts[0]
+    return {"$concat": concat_parts}
+
+
+def _normalize_ref(expr: str) -> str:
+    """Normalize expression paths to canonical $ref format."""
+    expr = expr.strip()
+    if expr.startswith("env."):
+        return expr
+    if expr.startswith("preconditions."):
+        return f"env.{expr}"
+    if expr.startswith("testdata."):
+        return f"env.{expr}"
+    if expr.startswith("schemas."):
+        return f"env.{expr}"
+    if expr.startswith("steps.") or expr.startswith("setup."):
+        return expr
+    if expr.startswith("metadata."):
+        return expr
+    return expr

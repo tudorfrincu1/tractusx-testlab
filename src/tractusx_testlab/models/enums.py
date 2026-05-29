@@ -30,6 +30,8 @@ import enum
 
 
 class StepStatus(str, enum.Enum):
+    """Execution status of an individual test step."""
+
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     WAITING = "WAITING"
@@ -39,6 +41,8 @@ class StepStatus(str, enum.Enum):
 
 
 class ScriptStatus(str, enum.Enum):
+    """Execution status of a test script."""
+
     IDLE = "IDLE"
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
@@ -47,6 +51,8 @@ class ScriptStatus(str, enum.Enum):
 
 
 class JobStatus(str, enum.Enum):
+    """Overall status of a test execution job."""
+
     QUEUED = "QUEUED"
     RUNNING = "RUNNING"
     WAITING = "WAITING"
@@ -58,6 +64,8 @@ class JobStatus(str, enum.Enum):
 
 
 class AssertionType(str, enum.Enum):
+    """Supported assertion comparison operators."""
+
     EXACT = "EXACT"
     SCHEMA = "SCHEMA"
     CONTAINS = "CONTAINS"
@@ -79,28 +87,38 @@ class AssertionType(str, enum.Enum):
 
 
 class AssertionSeverity(str, enum.Enum):
+    """Whether assertion failure aborts (HARD) or just warns (SOFT)."""
+
     HARD = "HARD"
     SOFT = "SOFT"
 
 
 class FailurePolicy(str, enum.Enum):
+    """Determines behavior when a step fails."""
+
     ABORT = "ABORT"
     CONTINUE = "CONTINUE"
     SKIP_REST = "SKIP_REST"
 
 
 class ValueSource(str, enum.Enum):
+    """Origin of a parameter value (inline literal, file, or variable reference)."""
+
     INLINE = "INLINE"
     FILE = "FILE"
     VARIABLE = "VARIABLE"
 
 
 class SdkCallMode(str, enum.Enum):
+    """Controls which SDK calls are permitted during execution."""
+
     ALLOWLIST = "ALLOWLIST"
     OPEN = "OPEN"
 
 
 class ServiceType(str, enum.Enum):
+    """Type of dataspace service a participant can expose."""
+
     CONNECTOR_CONSUMER = "CONNECTOR_CONSUMER"
     CONNECTOR_PROVIDER = "CONNECTOR_PROVIDER"
     DSP_CONSUMER = "DSP_CONSUMER"
@@ -114,11 +132,15 @@ class ServiceType(str, enum.Enum):
 
 
 class PackageFormat(str, enum.Enum):
+    """Format used for compiled test packages."""
+
     PLAIN = "PLAIN"
     ENCRYPTED = "ENCRYPTED"
 
 
 class ServiceState(str, enum.Enum):
+    """Lifecycle state of a managed service instance."""
+
     DECLARED = "DECLARED"
     INITIALIZING = "INITIALIZING"
     READY = "READY"

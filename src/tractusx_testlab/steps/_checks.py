@@ -28,23 +28,25 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
 
 import jsonschema
 
 
-def check_exact(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_exact(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual value equals expected exactly."""
     passed = actual == expected
     return passed, "" if passed else f"Expected {expected!r}, got {actual!r}"
 
 
-def check_status_code(actual: Any, expected: Any, output: Any) -> tuple[bool, str]:
+def check_status_code(actual: object, expected: object, output: object) -> tuple[bool, str]:
+    """Check that the HTTP status code matches expected."""
     actual_code = actual if isinstance(actual, int) else getattr(output, "status_code", None)
     passed = actual_code == expected
     return passed, "" if passed else f"Expected status_code={expected}, got {actual_code}"
 
 
-def check_contains(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_contains(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual contains expected (string, list, or dict values)."""
     if isinstance(actual, str) and isinstance(expected, str):
         passed = expected in actual
     elif isinstance(actual, list):
@@ -56,7 +58,8 @@ def check_contains(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]
     return passed, "" if passed else f"Expected output to contain {expected!r}"
 
 
-def check_not_contains(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_not_contains(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual does not contain expected."""
     if isinstance(actual, str) and isinstance(expected, str):
         passed = expected not in actual
     elif isinstance(actual, (list, dict)):
@@ -66,12 +69,14 @@ def check_not_contains(actual: Any, expected: Any, _output: Any) -> tuple[bool, 
     return passed, "" if passed else f"Expected output to NOT contain {expected!r}"
 
 
-def check_regex(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_regex(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual string matches the expected regex pattern."""
     passed = bool(re.search(expected, actual)) if isinstance(actual, str) and isinstance(expected, str) else False
     return passed, "" if passed else f"Pattern {expected!r} not found in output"
 
 
-def check_schema(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_schema(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Validate actual against a JSON schema (dict or JSON string)."""
     try:
         schema = expected if isinstance(expected, dict) else json.loads(expected)
         jsonschema.validate(actual, schema)
@@ -82,7 +87,7 @@ def check_schema(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
         return False, f"Invalid schema: {exc}"
 
 
-def check_schema_validation(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_schema_validation(actual: object, expected: object, _output: object) -> tuple[bool, str]:
     """Validate *actual* against a JSON schema provided in *expected*.
 
     *expected* should be a parsed JSON schema dict (loaded by ``load_schema``).
@@ -99,12 +104,14 @@ def check_schema_validation(actual: Any, expected: Any, _output: Any) -> tuple[b
         return False, f"Invalid schema: {exc}"
 
 
-def check_not_null(actual: Any, _expected: Any, _output: Any) -> tuple[bool, str]:
+def check_not_null(actual: object, _expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is not None."""
     passed = actual is not None
     return passed, "" if passed else "Expected non-null value, got None"
 
 
-def check_not_empty(actual: Any, _expected: Any, _output: Any) -> tuple[bool, str]:
+def check_not_empty(actual: object, _expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is not empty (None, empty string, list, or dict)."""
     if actual is None:
         return False, "Expected non-empty value, got None"
     if isinstance(actual, (str, list, dict)):
@@ -113,17 +120,20 @@ def check_not_empty(actual: Any, _expected: Any, _output: Any) -> tuple[bool, st
     return True, ""
 
 
-def check_equals(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_equals(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual equals expected."""
     passed = actual == expected
     return passed, "" if passed else f"Expected {expected!r}, got {actual!r}"
 
 
-def check_not_equals(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_not_equals(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual does not equal expected."""
     passed = actual != expected
     return passed, "" if passed else f"Expected value != {expected!r}, got {actual!r}"
 
 
-def check_greater_than(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_greater_than(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is strictly greater than expected."""
     try:
         passed = float(actual) > float(expected)
         return passed, "" if passed else f"Expected {actual} > {expected}"
@@ -131,7 +141,8 @@ def check_greater_than(actual: Any, expected: Any, _output: Any) -> tuple[bool, 
         return False, f"Cannot compare: {exc}"
 
 
-def check_less_than(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_less_than(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is strictly less than expected."""
     try:
         passed = float(actual) < float(expected)
         return passed, "" if passed else f"Expected {actual} < {expected}"
@@ -139,7 +150,8 @@ def check_less_than(actual: Any, expected: Any, _output: Any) -> tuple[bool, str
         return False, f"Cannot compare: {exc}"
 
 
-def check_greater_or_equal(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_greater_or_equal(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is greater than or equal to expected."""
     try:
         passed = float(actual) >= float(expected)
         return passed, "" if passed else f"Expected {actual} >= {expected}"
@@ -147,7 +159,8 @@ def check_greater_or_equal(actual: Any, expected: Any, _output: Any) -> tuple[bo
         return False, f"Cannot compare: {exc}"
 
 
-def check_less_or_equal(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_less_or_equal(actual: object, expected: object, _output: object) -> tuple[bool, str]:
+    """Check that actual is less than or equal to expected."""
     try:
         passed = float(actual) <= float(expected)
         return passed, "" if passed else f"Expected {actual} <= {expected}"
@@ -155,7 +168,7 @@ def check_less_or_equal(actual: Any, expected: Any, _output: Any) -> tuple[bool,
         return False, f"Cannot compare: {exc}"
 
 
-def check_between(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_between(actual: object, expected: object, _output: object) -> tuple[bool, str]:
     """Check value is within [min, max] range. Expected is (min, max) tuple or list."""
     try:
         if isinstance(expected, (list, tuple)) and len(expected) == 2:
@@ -169,7 +182,7 @@ def check_between(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
         return False, f"Cannot compare: {exc}"
 
 
-def check_assert_field(actual: Any, expected: Any, _output: Any) -> tuple[bool, str]:
+def check_assert_field(actual: object, expected: object, _output: object) -> tuple[bool, str]:
     """Check a field value using an operator + expected pair.
 
     *expected* must be a dict with ``operator`` and optionally ``value`` keys.

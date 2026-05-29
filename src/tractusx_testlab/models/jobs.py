@@ -36,6 +36,8 @@ from tractusx_testlab.models.results import TckResult as TckResult  # SDK alias
 
 
 class JobEvent(BaseModel):
+    """Record of a single event during job execution."""
+
     timestamp: datetime = Field(default_factory=datetime.now)
     event_type: str = ""
     description: str = ""
@@ -43,23 +45,31 @@ class JobEvent(BaseModel):
 
 
 class JobMemory(BaseModel):
+    """Mutable key-value store and event log attached to a running job."""
+
     state: dict[str, Any] = Field(default_factory=dict)
     events: list[JobEvent] = Field(default_factory=list)
 
     def set(self, key: str, value: Any) -> None:
+        """Store a value in job memory."""
         self.state[key] = value
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a value from job memory, returning default if absent."""
         return self.state.get(key, default)
 
     def has(self, key: str) -> bool:
+        """Check whether a key exists in job memory."""
         return key in self.state
 
     def log_event(self, event: JobEvent) -> None:
+        """Append an event to the job event log."""
         self.events.append(event)
 
 
 class Job(BaseModel):
+    """Runtime representation of a test execution job."""
+
     job_id: str
     status: JobStatus = JobStatus.QUEUED
     package_name: Optional[str] = None

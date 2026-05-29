@@ -18,59 +18,25 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Integration tests proving the CCM example YAML files work with the backend."""
+"""Integration tests: CCM step execution (UUID, JSON path, extract dataset, semantic schema)."""
 
 from __future__ import annotations
 
 import uuid
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-import yaml
 
-import tractusx_testlab.steps  # noqa: F401 — trigger @step registrations
-from tractusx_testlab.models.enums import AssertionType, ServiceType
-from tractusx_testlab.scripting import StepRegistry
-from tractusx_testlab.scripting._builders import parse_assertion, parse_service
+from tractusx_testlab.models import StepDefinition
 from tractusx_testlab.steps.connector.extract import ExtractDatasetStep
 from tractusx_testlab.steps.industry.semantic import ValidateSemanticSchemaStep
 from tractusx_testlab.steps.utility.json_extract import JsonPathExtractStep
 from tractusx_testlab.steps.utility.uuid_gen import GenerateUuidStep
 
-CCM_DIR = Path(__file__).resolve().parent.parent / "ide" / "public" / "examples" / "certificate-management-v1.0"
-CCM_TESTS_DIR = CCM_DIR / "tests"
-
-_CCM_TEST_FILES = {
-    "available_notification.yaml": 4,
-    "catalog_policy_validation.yaml": 1,
-    "certificate_asset_validation.yaml": 3,
-    "error_handling.yaml": 4,
-    "expose_testlab_asset.yaml": 4,
-    "push_certificate.yaml": 4,
-    "request_certificate.yaml": 3,
-    "send_feedback.yaml": 4,
-    "validate_payload.yaml": 2,
-}
-
-# All step types referenced across CCM YAML files
-_CCM_STEP_TYPES = [
-    "create_asset", "create_contract_def", "create_policy",
-    "delete_asset", "delete_policy",
-    "export_variable", "generate_uuid", "http_call_dataplane",
-    "import_variable", "load_schema", "mock_endpoint",
-    "pull_data_filtered_from_precondition", "query_catalog_with_filters",
-    "wait_for_call",
-]
-
-# Step types used in YAML but not yet registered in the step registry
-_CCM_STEP_TYPES_UNREGISTERED = [
-    "delete_contract_def",
-]
 
 def _make_mock_context(**variables: Any) -> MagicMock:
     """Create a mock StepContext with preset variables."""
@@ -78,91 +44,13 @@ def _make_mock_context(**variables: Any) -> MagicMock:
     ctx.get_variable = MagicMock(side_effect=lambda name, default=None: variables.get(name, default))
     return ctx
 
-def _make_step_definition(**overrides: Any) -> Any:
+
+def _make_step_definition(**overrides: Any) -> StepDefinition:
     """Create a minimal StepDefinition for step execution tests."""
-    from tractusx_testlab.models import StepDefinition
     defaults = {"type": "test", "name": "test-step", "params": {}, "validate": []}
     defaults.update(overrides)
     return StepDefinition(**defaults)
 
-class TestCcmYamlParsing:
-    @pytest.mark.parametrize("filename,expected_steps", list(_CCM_TEST_FILES.items()))
-    def test_ccm_yaml_parses_successfully(self, filename: str, expected_steps: int) -> None:
-
-        yaml_path = CCM_TESTS_DIR / filename
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        raw_steps = data.get("steps", [])
-
-        assert len(raw_steps) == expected_steps, (
-            f"{filename}: expected {expected_steps} steps, got {len(raw_steps)}"
-        )
-        assert data.get("kind", "test") == "test", f"{filename} kind should be 'test'"
-        for i, step_raw in enumerate(raw_steps):
-            assert "type" in step_raw, f"Step {i} in {filename} missing 'type'"
-            step_type = step_raw["type"]
-            assert StepRegistry.has(step_type, "saturn"), (
-                f"Step type '{step_type}' in {filename} is not registered"
-            )
-
-class TestCcmIndexParsing:
-    def test_ccm_index_parses_as_tck(self) -> None:
-
-        index_path = CCM_DIR / "index.yaml"
-        with open(index_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        assert data["kind"] == "tck"
-        assert data["name"] == "certificate-management"
-        tests = data.get("tests", [])
-        assert len(tests) == 9, f"Expected 9 tests, got {len(tests)}"
-        for entry in tests:
-            assert "test" in entry, f"Each test entry must have a 'test' key, got {entry}"
-
-class TestCompactAssertionParsing:
-    def test_ccm_compact_assertions_parse_correctly(self) -> None:
-
-        # Arrange — use request_certificate.yaml which has all compact assertion types
-        yaml_path = CCM_TESTS_DIR / "request_certificate.yaml"
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        # Act — collect all assertions from all steps via the builder
-        all_assertions = []
-        for step_raw in data.get("steps", []):
-            for expect_raw in step_raw.get("validate", []):
-                all_assertions.append(parse_assertion(expect_raw))
-
-        # Assert — verify we got assertions and they have correct types
-        assert len(all_assertions) > 0, "Expected at least one assertion"
-        assertion_types_found = {a.type for a in all_assertions}
-        assert AssertionType.NOT_NULL in assertion_types_found, "Expected NOT_NULL assertion type"
-        assert AssertionType.EQUALS in assertion_types_found, "Expected EQUALS assertion type"
-        for assertion in all_assertions:
-            assert assertion.path is not None, "Compact assertions must set path from 'output' field"
-
-class TestCcmStepRegistry:
-    @pytest.mark.parametrize("step_type", _CCM_STEP_TYPES)
-    def test_ccm_step_types_all_registered(self, step_type: str) -> None:
-
-        step_cls = StepRegistry.get(step_type, "saturn")
-
-        assert step_cls is not None, f"Step type '{step_type}' is not registered for dataspace 'saturn'"
-
-class TestCcmServiceParsing:
-    def test_ccm_service_type_edc_connector_accepted(self) -> None:
-
-        yaml_path = CCM_TESTS_DIR / "request_certificate.yaml"
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        services = [parse_service(s) for s in data.get("services", [])]
-
-        assert len(services) == 1, "Expected exactly one service definition"
-        svc = services[0]
-        assert svc.name == "provider_edc"
-        assert svc.type == ServiceType.EDC_CONNECTOR_SATURN
 
 class TestGenerateUuidStep:
     @pytest.mark.asyncio
@@ -191,6 +79,7 @@ class TestGenerateUuidStep:
         uuid_part = output.value[len("urn:uuid:"):]
         uuid.UUID(uuid_part, version=4)  # must not raise
 
+
 class TestJsonPathExtractStep:
     @pytest.mark.asyncio
     async def test_json_path_extract_step(self) -> None:
@@ -217,6 +106,7 @@ class TestJsonPathExtractStep:
             await step_instance.execute(
                 {"source": "nonexistent", "path": "any"}, ctx, definition,
             )
+
 
 class TestExtractDatasetStep:
     @pytest.mark.asyncio
@@ -265,6 +155,7 @@ class TestExtractDatasetStep:
         assert output.value["datasets"] == []
         assert output.value["offer_id"] is None
         assert output.value["asset_id"] is None
+
 
 class TestValidateSemanticSchemaStep:
     @pytest.mark.asyncio

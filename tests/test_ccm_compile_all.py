@@ -33,7 +33,7 @@ from tractusx_testlab.scripting.parser import YamlParser
 
 CCM_TESTS_DIR = (
     Path(__file__).resolve().parent.parent
-    / "ide" / "public" / "examples" / "certificate-management-v1.0" / "tests"
+    / "ide" / "public" / "examples" / "certificate-management-v2.0" / "tests"
 )
 
 _CCM_YAML_FILES = sorted(CCM_TESTS_DIR.glob("*.yaml"))

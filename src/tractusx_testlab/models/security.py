@@ -58,7 +58,7 @@ class EncryptedKeyBlock(BaseModel):
 
 
 class SecurityBlock(BaseModel):
-    format: str = "encrypted-v1"
+    format: str = "stck"
     algorithm: str = "AES-256-GCM"
     key_derivation: str = "RSA-OAEP-SHA256"
     compiler_id: str = ""

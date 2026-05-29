@@ -37,18 +37,18 @@ from tractusx_testlab.cli import app
 
 @app.command()
 def run(
-    target: Path = typer.Argument(..., help="TCK manifest (.yaml) or package (.tckpkg)."),
+    target: Path = typer.Argument(..., help="TCK manifest (.yaml), plain package (.tck), or encrypted package (.stck)."),
     config_file: Optional[Path] = typer.Option(
         None, "--config", "-c",
         help="YAML config file with variable overrides (e.g. saturn_tck_int.yaml).",
     ),
     player_keys: Optional[Path] = typer.Option(
         None, "--player-keys", "-k",
-        help="Directory with the player identity (required for .tckpkg files).",
+        help="Directory with the player identity (required for .stck encrypted files).",
     ),
     compiler_pub: Optional[Path] = typer.Option(
         None, "--compiler-pub",
-        help="Path to the compiler's signing.pub (required for .tckpkg files).",
+        help="Path to the compiler's signing.pub (required for .stck encrypted files).",
     ),
     var: Optional[list[str]] = typer.Option(
         None, "--var",
@@ -69,9 +69,9 @@ def run(
 
     runtime_vars = _build_runtime_vars(config_file, var)
 
-    if target.suffix == ".tckpkg" and (player_keys is None or compiler_pub is None):
+    if target.suffix == ".stck" and (player_keys is None or compiler_pub is None):
         typer.echo(
-            "Error: --player-keys and --compiler-pub are required for .tckpkg files.",
+            "Error: --player-keys and --compiler-pub are required for encrypted .stck files.",
             err=True,
         )
         raise typer.Exit(1)
@@ -127,12 +127,12 @@ def _load_tck(
     player_keys: Optional[Path],
     compiler_pub: Optional[Path],
 ):
-    """Load a TCK from YAML or encrypted .tckpkg."""
+    """Load a TCK from YAML or encrypted .stck."""
     from tractusx_testlab.player.loading.loader import Loader
 
     loader = Loader()
 
-    if target.suffix == ".tckpkg":
+    if target.suffix == ".stck":
         from tractusx_testlab.security.crypto.keygen import load_private_key, load_public_key
 
         priv = load_private_key(player_keys / "encryption.pem")
@@ -192,7 +192,7 @@ def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_step
             elif event == "step.completed":
                 status = payload.get("status", "")
                 name = payload.get("step_name", "")
-                icon = "[green]✓" if status == "passed" else "[red]✗"
+                icon = "[green]PASS" if status == "passed" else "[red]FAIL"
                 progress.update(task_id, advance=1, description=f"  {icon} {name}")
             elif event == "script.started":
                 script = payload.get("script", "")

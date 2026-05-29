@@ -40,6 +40,8 @@ from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):
+    """Schema for a declared variable in a test script."""
+
     name: str
     type: str = "str"
     default: Optional[Any] = None
@@ -48,6 +50,8 @@ class VariableDefinition(BaseModel):
 
 
 class Assertion(BaseModel):
+    """Validation rule applied to a step output."""
+
     type: AssertionType
     severity: AssertionSeverity = AssertionSeverity.HARD
     source: ValueSource = ValueSource.INLINE
@@ -69,6 +73,8 @@ class Assertion(BaseModel):
 
 
 class StepDefinition(BaseModel):
+    """Compile-time definition of a single test step."""
+
     type: str
     name: Optional[str] = None
     description: Optional[str] = None
@@ -85,6 +91,8 @@ class StepDefinition(BaseModel):
 
 
 class ServiceDefinition(BaseModel):
+    """Declaration of an external service used by a test script."""
+
     name: str
     type: ServiceType
     base_url: str
@@ -93,6 +101,8 @@ class ServiceDefinition(BaseModel):
 
 
 class ScriptDefinition(BaseModel):
+    """Top-level definition of a test script with phases and services."""
+
     kind: ScriptKind = ScriptKind.TEST
     name: str
     version: str = "1.0"
@@ -111,11 +121,15 @@ class ScriptDefinition(BaseModel):
 
 
 class ImportDefinition(BaseModel):
+    """Reference to an external script to import into a TCK."""
+
     import_ref: str
     override: Optional[dict] = None
 
 
 class TckDefinition(BaseModel):
+    """Top-level definition of a TCK package containing multiple tests."""
+
     kind: ScriptKind = ScriptKind.TCK
     name: str
     version: str = "1.0"

@@ -136,7 +136,7 @@ class CreatePolicyStep(BaseStep):
         )
 
 
-@step("create_contract_definition", aliases=["create_contract_def"])
+@step("create_contract_definition", aliases=["create_contract_definition"])
 class CreateContractDefinitionStep(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         service_name = params.get("service")

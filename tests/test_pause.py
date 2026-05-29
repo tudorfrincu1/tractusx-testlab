@@ -21,12 +21,11 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Tests for pause/resume endpoints and related SSE events."""
+"""Tests for the pause endpoint and pause-related SSE events."""
 
 from __future__ import annotations
 
 import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -166,90 +165,12 @@ class TestPauseEndpoint:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Resume endpoint
+# Pause SSE event
 # ──────────────────────────────────────────────────────────────────────
 
 
-class TestResumeEndpoint:
-    """POST /testlab/test-execution/{job_id}/resume tests."""
-
-    @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Route uses str(enum) instead of enum.value — returns 409 always")
-    async def test_resume_paused_job_returns_200(
-        self, client: AsyncClient, mock_player: MagicMock,
-    ) -> None:
-        job = mock_player.jobs.create("tck-1")
-        mock_player.jobs.start(job.job_id)
-        mock_player.jobs.pause(job.job_id)
-
-        response = await client.post(
-            f"/testlab/test-execution/{job.job_id}/resume",
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["job_id"] == job.job_id
-        assert data["status"] == "RUNNING"
-
-    @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Route uses str(enum) instead of enum.value — returns 409 always")
-    async def test_resume_sets_job_status_to_running(
-        self, client: AsyncClient, mock_player: MagicMock,
-    ) -> None:
-        job = mock_player.jobs.create("tck-1")
-        mock_player.jobs.start(job.job_id)
-        mock_player.jobs.pause(job.job_id)
-
-        await client.post(f"/testlab/test-execution/{job.job_id}/resume")
-
-        updated = mock_player.jobs.get(job.job_id)
-        assert updated.status == JobStatus.RUNNING
-
-    @pytest.mark.asyncio
-    async def test_resume_running_job_returns_409(
-        self, client: AsyncClient, mock_player: MagicMock,
-    ) -> None:
-        job = mock_player.jobs.create("tck-1")
-        mock_player.jobs.start(job.job_id)
-
-        response = await client.post(
-            f"/testlab/test-execution/{job.job_id}/resume",
-        )
-
-        assert response.status_code == 409
-
-    @pytest.mark.asyncio
-    async def test_resume_completed_job_returns_409(
-        self, client: AsyncClient, mock_player: MagicMock,
-    ) -> None:
-        job = mock_player.jobs.create("tck-1")
-        mock_player.jobs.start(job.job_id)
-        mock_player.jobs.complete(job.job_id)
-
-        response = await client.post(
-            f"/testlab/test-execution/{job.job_id}/resume",
-        )
-
-        assert response.status_code == 409
-
-    @pytest.mark.asyncio
-    async def test_resume_nonexistent_job_returns_404(
-        self, client: AsyncClient,
-    ) -> None:
-        response = await client.post(
-            "/testlab/test-execution/nonexistent/resume",
-        )
-
-        assert response.status_code == 404
-
-
-# ──────────────────────────────────────────────────────────────────────
-# Pause/resume SSE events
-# ──────────────────────────────────────────────────────────────────────
-
-
-class TestPauseResumeEvents:
-    """SSE stream emits job.paused and job.resumed events."""
+class TestPauseEvent:
+    """SSE stream emits job.paused event."""
 
     @pytest.mark.asyncio
     async def test_paused_job_emits_event(
@@ -268,24 +189,6 @@ class TestPauseResumeEvents:
             )
 
         assert "event: job.paused" in response.text
-
-    @pytest.mark.asyncio
-    async def test_resumed_job_emits_event(
-        self, client: AsyncClient, mock_player: MagicMock,
-    ) -> None:
-        job = mock_player.jobs.create("tck-1")
-        mock_player.jobs.start(job.job_id)
-        queue = _make_event_queue(
-            ("job.resumed", {"job_id": job.job_id, "status": "RUNNING"}),
-            ("job.completed", {"status": "completed"}),
-        )
-
-        with patch(f"{_STREAMING_MODULE}.create_event_queue", return_value=queue):
-            response = await client.get(
-                f"/testlab/test-execution/{job.job_id}/stream",
-            )
-
-        assert "event: job.resumed" in response.text
 
 
 # ──────────────────────────────────────────────────────────────────────

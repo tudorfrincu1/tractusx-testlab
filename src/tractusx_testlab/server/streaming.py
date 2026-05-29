@@ -54,6 +54,20 @@ _TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 # Pending jobs: job_id → Tck (execution deferred until SSE stream connects)
 _pending_jobs: dict[str, Tck] = {}
 
+# Background task references — prevents garbage collection and logs exceptions
+_background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
+
+
+def _on_task_done(task: asyncio.Task) -> None:  # type: ignore[type-arg]
+    """Remove completed task from the tracking set and log any unhandled exceptions."""
+    _background_tasks.discard(task)
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        _logger.exception("Background task failed: %s", exc, exc_info=exc)
+
+
 streaming_router = APIRouter(prefix="/test-execution", tags=["streaming"])
 
 
@@ -187,7 +201,9 @@ async def stream_job_events(
     # Start execution NOW — after the queue is registered so no events are lost
     tck = _pending_jobs.pop(job_id, None)
     if tck is not None:
-        asyncio.create_task(_execute_tck_bg(player, tck, job_id))
+        task = asyncio.create_task(_execute_tck_bg(player, tck, job_id))
+        _background_tasks.add(task)
+        task.add_done_callback(_on_task_done)
 
     return StreamingResponse(
         sse_event_generator(queue, job_id, event_buffer, last_event_id),

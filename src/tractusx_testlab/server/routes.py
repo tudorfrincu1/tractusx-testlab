@@ -46,6 +46,20 @@ from tractusx_testlab.server.streaming import streaming_router
 
 _logger = logging.getLogger(__name__)
 
+# Background task references — prevents garbage collection and logs exceptions
+_background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
+
+
+def _on_task_done(task: asyncio.Task) -> None:  # type: ignore[type-arg]
+    """Remove completed task from the tracking set and log any unhandled exceptions."""
+    _background_tasks.discard(task)
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        _logger.exception("Background task failed: %s", exc, exc_info=exc)
+
+
 router = APIRouter(prefix="/testlab", tags=["testlab"])
 router.include_router(streaming_router)
 router.include_router(compile_router)
@@ -74,9 +88,9 @@ async def upload_package(
     player: TestlabPlayer = Depends(_get_player),
     storage: PackageStorage = Depends(_get_storage),
 ) -> JSONResponse:
-    """Upload a .tckpkg archive."""
-    if not file.filename or not file.filename.endswith(".tckpkg"):
-        raise HTTPException(400, "File must be a .tckpkg archive")
+    """Upload a .stck archive."""
+    if not file.filename or not file.filename.endswith(".stck"):
+        raise HTTPException(400, "File must be a .stck archive")
 
     data = await file.read()
     max_bytes = player._config.max_upload_bytes
@@ -143,7 +157,9 @@ async def run_test(
             raise HTTPException(404, f"File not found: {path}")
 
     job = player.jobs.create(target.stem)
-    asyncio.create_task(_execute_in_background(player, target, runtime_vars))
+    task = asyncio.create_task(_execute_in_background(player, target, runtime_vars))
+    _background_tasks.add(task)
+    task.add_done_callback(_on_task_done)
 
     return JSONResponse(
         content={"job_id": job.job_id, "status": job.status.value},

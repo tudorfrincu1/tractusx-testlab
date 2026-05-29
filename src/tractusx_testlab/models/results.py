@@ -42,6 +42,8 @@ from tractusx_testlab.models.preconditions import PreconditionLog
 
 
 class HttpRequest(BaseModel):
+    """Captured HTTP request details for a step execution."""
+
     method: str
     url: str
     headers: Optional[dict] = None
@@ -49,6 +51,8 @@ class HttpRequest(BaseModel):
 
 
 class HttpResponse(BaseModel):
+    """Captured HTTP response details from a step execution."""
+
     status_code: int
     headers: Optional[dict] = None
     body: Optional[Any] = None
@@ -56,6 +60,8 @@ class HttpResponse(BaseModel):
 
 
 class AssertionResult(BaseModel):
+    """Result of evaluating a single assertion against step output."""
+
     assertion: Assertion
     passed: bool
     expected: Optional[Any] = None
@@ -65,6 +71,8 @@ class AssertionResult(BaseModel):
 
 
 class StepResult(BaseModel):
+    """Execution result for a single test step."""
+
     step_name: str
     step_type: str = ""
     phase: StepPhase = StepPhase.MAIN
@@ -82,6 +90,8 @@ class StepResult(BaseModel):
 
 
 class CallbackResult(BaseModel):
+    """Result of receiving (or timing out) a callback on a mock listener."""
+
     listener_name: str
     path: str
     method: str = "POST"
@@ -92,6 +102,8 @@ class CallbackResult(BaseModel):
 
 
 class AssertionSummary(BaseModel):
+    """Aggregated assertion pass/fail counts for a script run."""
+
     total: int = 0
     passed: int = 0
     failed_hard: int = 0
@@ -99,6 +111,8 @@ class AssertionSummary(BaseModel):
 
 
 class ScriptResult(BaseModel):
+    """Execution result for a complete test script."""
+
     script_id: str = ""
     script_name: str = ""
     dataspace_version: str = ""
@@ -114,6 +128,8 @@ class ScriptResult(BaseModel):
 
 
 class TckResult(BaseModel):
+    """Execution result for an entire TCK package."""
+
     tck_id: str = ""
     package_name: str = ""
     status: ScriptStatus = ScriptStatus.IDLE
@@ -123,12 +139,14 @@ class TckResult(BaseModel):
 
     @property
     def duration_ms(self) -> Optional[float]:
+        """Total TCK execution duration in milliseconds."""
         if self.started_at and self.finished_at:
             return (self.finished_at - self.started_at).total_seconds() * 1000
         return None
 
     @property
     def passed(self) -> int:
+        """Count of steps with PASSED status across all scripts."""
         return sum(
             1 for script in self.scripts
             for step in script.steps if step.status == StepStatus.PASSED
@@ -136,8 +154,10 @@ class TckResult(BaseModel):
 
     @property
     def total(self) -> int:
+        """Total number of steps across all scripts."""
         return sum(len(script.steps) for script in self.scripts)
 
     @property
     def tck_name(self) -> str:
+        """Alias for tck_id used as the display name."""
         return self.tck_id

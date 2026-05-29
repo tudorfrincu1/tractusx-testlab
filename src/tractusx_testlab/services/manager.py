@@ -31,7 +31,7 @@ lazily instantiates AAS / Notification services from script definitions.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 from tractusx_testlab.models import (
     ServiceNotFoundError,
@@ -89,7 +89,7 @@ class ServiceManager:
 
     def __init__(self) -> None:
         self._definitions: dict[str, ServiceDefinition] = {}
-        self._instances: dict[str, Any] = {}
+        self._instances: dict[str, object] = {}
         self._states: dict[str, ServiceState] = {}
 
     # ------------------------------------------------------------------
@@ -102,6 +102,7 @@ class ServiceManager:
         self._states[definition.name] = ServiceState.DECLARED
 
     def register_all(self, definitions: list[ServiceDefinition]) -> None:
+        """Register multiple service definitions at once."""
         for definition in definitions:
             self.register(definition)
 
@@ -109,7 +110,7 @@ class ServiceManager:
     # Retrieval (lazy init)
     # ------------------------------------------------------------------
 
-    def get(self, name: str, expected_type: Optional[ServiceType] = None) -> Any:
+    def get(self, name: str, expected_type: Optional[ServiceType] = None) -> object:
         """Return a live service instance, initialising it if necessary."""
         if name not in self._definitions:
             raise ServiceNotFoundError(name)
@@ -129,19 +130,24 @@ class ServiceManager:
         self._states[name] = ServiceState.READY
         return instance
 
-    def get_provider(self, name: str) -> Any:
+    def get_provider(self, name: str) -> object:
+        """Return a connector provider service instance by name."""
         return self.get(name, expected_type=ServiceType.CONNECTOR_PROVIDER)
 
-    def get_consumer(self, name: str) -> Any:
+    def get_consumer(self, name: str) -> object:
+        """Return a connector consumer service instance by name."""
         return self.get(name, expected_type=ServiceType.CONNECTOR_CONSUMER)
 
-    def get_dtr(self, name: str) -> Any:
+    def get_dtr(self, name: str) -> object:
+        """Return a Digital Twin Registry (AAS) service instance by name."""
         return self.get(name, expected_type=ServiceType.DTR)
 
-    def get_dsp_consumer(self, name: str) -> Any:
+    def get_dsp_consumer(self, name: str) -> object:
+        """Return a DSP consumer service instance by name."""
         return self.get(name, expected_type=ServiceType.DSP_CONSUMER)
 
-    def get_dsp_provider(self, name: str) -> Any:
+    def get_dsp_provider(self, name: str) -> object:
+        """Return a DSP provider service instance by name."""
         return self.get(name, expected_type=ServiceType.DSP_PROVIDER)
 
     # ------------------------------------------------------------------
@@ -157,7 +163,7 @@ class ServiceManager:
             return f"{name}:{expected_type.value}"
         return name
 
-    def _create_instance(self, service_definition: ServiceDefinition, expected_type: Optional[ServiceType] = None) -> Any:
+    def _create_instance(self, service_definition: ServiceDefinition, expected_type: Optional[ServiceType] = None) -> object:
         """Create a live SDK service from a ServiceDefinition."""
         logger.info("Initialising service '%s' (%s)", service_definition.name, service_definition.type.value)
         self._states[service_definition.name] = ServiceState.INITIALIZING
@@ -178,7 +184,7 @@ class ServiceManager:
     @staticmethod
     def _create_connector_service(
         service_definition: ServiceDefinition, expected_type: Optional[ServiceType] = None,
-    ) -> Any:
+    ) -> object:
         from tractusx_sdk.dataspace.services.connector.service_factory import ServiceFactory
 
         auth = service_definition.auth
@@ -212,7 +218,7 @@ class ServiceManager:
         )
 
     @staticmethod
-    def _create_aas_service(service_definition: ServiceDefinition) -> Any:
+    def _create_aas_service(service_definition: ServiceDefinition) -> object:
         from tractusx_sdk.industry.services.aas_service import AasService
 
         params = service_definition.params or {}
@@ -223,13 +229,13 @@ class ServiceManager:
         )
 
     @staticmethod
-    def _create_dsp_consumer_service(service_definition: ServiceDefinition) -> Any:
+    def _create_dsp_consumer_service(service_definition: ServiceDefinition) -> object:
         from tractusx_testlab.steps.connector.consume import _DspConsumer
 
         return _DspConsumer(base_url=service_definition.base_url)
 
     @staticmethod
-    def _create_dsp_provider_service(service_definition: ServiceDefinition) -> Any:
+    def _create_dsp_provider_service(service_definition: ServiceDefinition) -> object:
         from tractusx_testlab.steps.connector.consume import _DspConsumer
 
         # Provider service uses the same lightweight DSP client for now
@@ -240,6 +246,7 @@ class ServiceManager:
     # ------------------------------------------------------------------
 
     def state(self, name: str) -> ServiceState:
+        """Return the current lifecycle state of a service."""
         return self._states.get(name, ServiceState.DECLARED)
 
     def teardown(self) -> None:
@@ -251,4 +258,5 @@ class ServiceManager:
 
     @property
     def service_names(self) -> list[str]:
+        """Return the names of all registered services."""
         return list(self._definitions.keys())

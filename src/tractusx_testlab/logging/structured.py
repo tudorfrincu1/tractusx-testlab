@@ -31,14 +31,14 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import IO, Any, Optional
+from typing import IO, Optional
 
 
 class _JsonFormatter(logging.Formatter):
     """Emit each log record as a single JSON line."""
 
     def format(self, record: logging.LogRecord) -> str:
-        entry: dict[str, Any] = {
+        entry: dict[str, object] = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
@@ -117,7 +117,7 @@ class StructuredLogger:
             level=self._logger.level,
         )
 
-    def _log(self, level: int, msg: str, **kw: Any) -> None:
+    def _log(self, level: int, msg: str, **kw: object) -> None:
         record = self._logger.makeRecord(
             self._logger.name, level, "(testlab)", 0, msg, (), None
         )
@@ -125,16 +125,16 @@ class StructuredLogger:
             record.extra_data = kw  # type: ignore[attr-defined]
         self._logger.handle(record)
 
-    def debug(self, msg: str, **kw: Any) -> None:
+    def debug(self, msg: str, **kw: object) -> None:
         self._log(logging.DEBUG, msg, **kw)
 
-    def info(self, msg: str, **kw: Any) -> None:
+    def info(self, msg: str, **kw: object) -> None:
         self._log(logging.INFO, msg, **kw)
 
-    def warning(self, msg: str, **kw: Any) -> None:
+    def warning(self, msg: str, **kw: object) -> None:
         self._log(logging.WARNING, msg, **kw)
 
-    def error(self, msg: str, **kw: Any) -> None:
+    def error(self, msg: str, **kw: object) -> None:
         self._log(logging.ERROR, msg, **kw)
 
     def close(self) -> None:
