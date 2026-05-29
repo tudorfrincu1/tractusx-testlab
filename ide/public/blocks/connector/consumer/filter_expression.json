@@ -1,8 +1,10 @@
 {
   "type": "filter_expression",
+  "uses": "connector/consumer/filter_expression",
+  "sequence": { "type": "internal" },
   "label": "Filter Expression",
   "description": "A single filter criterion for catalog queries. Combine multiple to build complex filters.",
-  "category": "edc-connector",
+  "category": "connector",
   "custom_registration": true,
   "params": [
     {

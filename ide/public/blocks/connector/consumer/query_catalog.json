@@ -1,18 +1,19 @@
 {
   "type": "query_catalog",
+  "uses": "connector/consumer/query_catalog",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Query Catalog",
   "description": "Send a catalog request to the connector and retrieve available offers.",
   "params": [
-    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service to query" },
+    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service to query" },
+    { "name": "counter_party_id", "type": "string", "required": true, "description": "BPN of the counter-party" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
-    { "name": "filter_by", "type": "string", "required": false, "description": "Property to filter by (e.g. dct:type)" },
-    { "name": "filter_value", "type": "string", "required": false, "description": "Value to match against the filter property" },
-    { "name": "operator", "type": "string", "required": false, "description": "Comparison operator (default: =)" }
+    { "name": "filter", "type": "object", "required": false, "description": "Filter object containing filter_expression array of { operand_left, operator, operand_right }" }
   ],
   "outputs": [
     {
       "name": "catalog",
-      "class": "catalog",
+      "class": "Catalog",
       "description": "The full catalog response",
       "schema": {
         "type": "object",
@@ -40,10 +41,10 @@
     },
     {
       "name": "datasets",
-      "class": "datasets",
+      "class": "Datasets",
       "description": "Array of datasets (offers) in the catalog",
       "schema": {
-        "type": "array",
+        "type": "object",
         "items": {
           "type": "object",
           "properties": {

@@ -1,5 +1,7 @@
 {
   "type": "add_submodel",
+  "uses": "digital-twin-registry/add_submodel",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Add Submodel Descriptor",
   "description": "Attach a submodel descriptor to an existing shell.",
   "params": [

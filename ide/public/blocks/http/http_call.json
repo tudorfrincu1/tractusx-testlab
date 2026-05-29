@@ -1,5 +1,7 @@
 {
   "type": "http_call",
+  "uses": "http/call",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "HTTP Call",
   "description": "Send a plain HTTP request to any URL.",
   "params": [

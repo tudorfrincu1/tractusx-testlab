@@ -1,0 +1,14 @@
+{
+  "type": "assert",
+  "uses": "validate/assert",
+  "expect": true,
+  "sequence": { "type": "validation" },
+  "label": "Assert Value",
+  "description": "Validate that a value meets an expected condition (e.g., not_null, equals, contains).",
+  "params": [
+    { "name": "input", "type": "class", "required": true, "description": "The value or variable to validate", "accepts": ["*"] },
+    { "name": "operator", "type": "dropdown", "required": true, "description": "Comparison operator", "options": ["equals", "not_equals", "not_null", "is_null", "contains", "matches_regex", "greater_than", "less_than"] },
+    { "name": "value", "type": "text", "required": false, "description": "Expected value (not required for unary operators like not_null)" }
+  ],
+  "outputs": []
+}

@@ -1,19 +1,44 @@
 {
   "type": "wait_for_call",
+  "uses": "mock/wait/http_request",
+  "sequence": { "type": "inbound", "has_response": false },
   "label": "Wait for Call",
   "description": "Block execution until the SUT sends a request to the specified mock endpoint. Times out if no call arrives.",
   "params": [
-    { "name": "endpoint_id", "type": "endpoint_ref", "required": true, "description": "Reference to a mock endpoint defined above", "accepts": ["endpoint_id"] },
+    { "name": "mock", "type": "class", "required": true, "description": "Reference to a mock instance referenced in setup", "accepts": ["MockInstance"] },
     { "name": "timeout_s", "type": "number", "required": false, "description": "Maximum seconds to wait before failing", "default": 30 }
   ],
   "depends_on": ["mock_endpoint", "mock_dtr", "mock_discovery"],
   "outputs": [
     {
-      "name": "callback_payload",
-      "class": "callback_payload",
-      "description": "The full JSON payload received from the callback",
-      "schema": { "type": "object" },
-      "example": { "items": [{ "id": 1 }] }
+      "name": "request_method",
+      "class": "String",
+      "description": "HTTP method used in the received request",
+      "schema": { "type": "string" }
+    },
+    {
+      "name": "request_headers",
+      "class": "ResponseHeaders",
+      "description": "Headers from the received request",
+      "schema": { "type": "object" }
+    },
+    {
+      "name": "request_body",
+      "class": "ResponseBody",
+      "description": "Body payload from the received request",
+      "schema": { "type": "object" }
+    },
+    {
+      "name": "query_params",
+      "class": "String",
+      "description": "Query parameters from the received request",
+      "schema": { "type": "object" }
+    },
+    {
+      "name": "elapsed_ms",
+      "class": "String",
+      "description": "Time in milliseconds between mock setup and request arrival",
+      "schema": { "type": "integer" }
     }
   ]
 }

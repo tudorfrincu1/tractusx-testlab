@@ -1,0 +1,15 @@
+{
+  "type": "field",
+  "uses": "validate/field",
+  "expect": true,
+  "sequence": { "type": "validation" },
+  "label": "Assert Field",
+  "description": "Extract a field from an object by JSON path and validate it against an expected condition.",
+  "params": [
+    { "name": "input", "type": "class", "required": true, "description": "The object to extract the field from", "accepts": ["*"] },
+    { "name": "path", "type": "text", "required": true, "description": "JSON path to the field (e.g., header.messageId)" },
+    { "name": "operator", "type": "dropdown", "required": true, "description": "Comparison operator", "options": ["equals", "not_equals", "not_null", "is_null", "contains", "matches_regex", "greater_than", "less_than"] },
+    { "name": "value", "type": "text", "required": false, "description": "Expected value (not required for unary operators like not_null)" }
+  ],
+  "outputs": []
+}

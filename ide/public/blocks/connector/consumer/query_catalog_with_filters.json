@@ -1,5 +1,7 @@
 {
   "type": "query_catalog_with_filters",
+  "uses": "connector/consumer/query_catalog_with_filters",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Query Catalog (Filtered)",
   "description": "Send a catalog request with multiple filter expressions to narrow results.",
   "params": [

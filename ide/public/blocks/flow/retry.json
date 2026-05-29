@@ -1,5 +1,7 @@
 {
   "type": "retry",
+  "uses": "flow/retry",
+  "sequence": { "type": "internal" },
   "label": "Retry Until Success",
   "description": "Retry a sequence of steps until assertions pass or max attempts reached.",
   "container": true,

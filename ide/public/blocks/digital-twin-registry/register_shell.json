@@ -1,5 +1,7 @@
 {
   "type": "register_shell",
+  "uses": "digital-twin-registry/register_shell",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Register Shell",
   "description": "Register a new AAS shell descriptor in the Digital Twin Registry.",
   "params": [

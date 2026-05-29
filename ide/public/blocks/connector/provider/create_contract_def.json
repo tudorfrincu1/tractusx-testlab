@@ -1,18 +1,20 @@
 {
-  "type": "create_contract_def",
+  "type": "create_contract_definition",
+  "uses": "connector/provider/create_contract_definition",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Create Contract Definition",
   "description": "Create a contract definition linking an asset to a policy.",
   "params": [
-    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service" },
+    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service" },
     { "name": "contract_def_id", "type": "string", "required": false, "description": "Contract definition ID (auto-generated if omitted)" },
     { "name": "access_policy_id", "type": "string", "required": true, "description": "ID of the access policy", "accepts": ["policy_id"] },
     { "name": "contract_policy_id", "type": "string", "required": true, "description": "ID of the contract policy", "accepts": ["policy_id"] },
-    { "name": "asset_selector", "type": "array", "item_type": "asset_criterion", "required": true, "description": "Criteria selecting which assets this contract covers" }
+    { "name": "asset_selector", "type": "array", "item_type": "object", "required": true, "description": "Criteria selecting which assets this contract covers: array of { operandLeft, operator, operandRight }" }
   ],
   "outputs": [
     {
       "name": "contract_def_id",
-      "class": "contract_def_id",
+      "class": "ContractDefId",
       "description": "ID of the created contract definition",
       "schema": { "type": "string" },
       "example": "contractdef-uuid-789"

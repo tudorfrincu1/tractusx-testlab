@@ -1,5 +1,7 @@
 {
   "type": "lookup_shell",
+  "uses": "digital-twin-registry/lookup_shell",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Lookup Shell",
   "description": "Look up an AAS shell by specific asset IDs.",
   "params": [

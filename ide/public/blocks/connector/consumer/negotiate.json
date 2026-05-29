@@ -1,13 +1,14 @@
 {
   "type": "negotiate",
+  "uses": "connector/consumer/negotiate",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Negotiate Contract",
   "description": "Initiate a contract negotiation for a specific offer.",
   "params": [
     { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
     { "name": "offer_id", "type": "string", "required": true, "description": "ID of the offer/policy to negotiate", "accepts": ["offer_id", "uuid", "string"] },
-    { "name": "asset_id", "type": "string", "required": true, "description": "ID of the asset to negotiate for", "accepts": ["asset_id", "uuid"] },
-    { "name": "store_in_variable", "type": "string", "required": false, "description": "Variable name to store the agreement ID" }
+    { "name": "asset_id", "type": "string", "required": true, "description": "ID of the asset to negotiate for", "accepts": ["asset_id", "uuid"] }
   ],
   "outputs": [
     {

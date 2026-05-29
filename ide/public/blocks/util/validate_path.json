@@ -1,12 +1,13 @@
 {
   "type": "validate_path",
+  "uses": "util/validate_path",
+  "sequence": { "type": "internal" },
   "label": "Validate Path",
   "description": "Extract a value from a step output using a dot-notation path and validate it with assertions.",
   "category": "validation",
   "params": [
     { "name": "variable", "type": "variable", "required": true, "description": "Source variable containing the step output", "accepts": ["response_body", "response_headers", "callback_payload", "catalog", "datasets", "shell_descriptor", "extracted_value"] },
-    { "name": "path", "type": "json_path", "required": true, "description": "Dot-notation path to the value (e.g., content.status)" },
-    { "name": "store_in_variable", "type": "string", "required": false, "description": "Optionally store the extracted value in a variable" }
+    { "name": "path", "type": "json_path", "required": true, "description": "Dot-notation path to the value (e.g., content.status)" }
   ],
   "outputs": [
     {

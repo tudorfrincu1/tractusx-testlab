@@ -1,5 +1,7 @@
 {
   "type": "delay",
+  "uses": ["flow/delay", "util/wait"],
+  "sequence": { "type": "internal" },
   "label": "Delay",
   "description": "Pause test execution for a fixed duration.",
   "params": [

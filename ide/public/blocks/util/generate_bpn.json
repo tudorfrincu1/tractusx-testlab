@@ -1,5 +1,8 @@
 {
   "type": "generate_bpn",
+  "uses": "util/generate_bpn",
+  "sequence": { "type": "internal" },
+  "expect": false,
   "label": "Generate BPN",
   "description": "Generate a valid random Business Partner Number (BPN).",
   "params": [

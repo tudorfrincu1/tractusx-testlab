@@ -1,5 +1,7 @@
 {
   "type": "initiate_transfer",
+  "uses": "connector/consumer/initiate_transfer",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Initiate Transfer",
   "description": "Start a data transfer using a finalized contract agreement.",
   "params": [

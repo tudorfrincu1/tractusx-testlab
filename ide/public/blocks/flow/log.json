@@ -1,5 +1,7 @@
 {
   "type": "log",
+  "uses": "flow/log",
+  "sequence": { "type": "internal" },
   "label": "Log Message",
   "description": "Log a message to the test output for debugging.",
   "params": [

@@ -1,5 +1,7 @@
 {
   "type": "pull_data_filtered_from_precondition",
+  "uses": "connector/consumer/pull_data_filtered_from_precondition",
+  "sequence": { "type": "outbound", "has_response": true },
   "label": "Obtain Data Exchange Authorization from Precondition",
   "description": "Query catalog with filters, negotiate a contract matching a precondition-defined policy, initiate a PULL transfer, and return the EDR token and dataplane URL.",
   "params": [

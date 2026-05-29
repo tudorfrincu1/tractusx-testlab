@@ -1,0 +1,26 @@
+{
+  "type": "pull_data_filtered",
+  "uses": ["connector/pull_data_filtered", "connector/consumer/pull_data_filtered"],
+  "sequence": { "type": "outbound", "has_response": true },
+  "label": "Obtain Data Exchange Authorization",
+  "description": "Query catalog with filters, negotiate a contract for the matching offer, initiate a PULL transfer, and return the EDR token and dataplane URL.",
+  "params": [
+    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "Consumer EDC connector service" },
+    { "name": "counter_party_id", "type": "string", "required": true, "description": "BPN of the provider" },
+    { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the provider connector" },
+    { "name": "policy", "type": "class", "class": "Policy", "required": false, "description": "Policy object to use for negotiation" },
+    { "name": "filters", "type": "filter_expression_list", "required": true, "description": "Filter expressions to narrow catalog results" },
+    { "name": "max_wait", "type": "number", "required": false, "description": "Max seconds to wait for transfer completion", "default": 60 },
+    { "name": "poll_interval", "type": "number", "required": false, "description": "Seconds between transfer status polls", "default": 1 }
+  ],
+  "outputs": [
+    { "name": "catalog", "class": "Catalog", "description": "Full catalog response object", "schema": { "type": "object" } },
+    { "name": "datasets", "class": "Datasets", "description": "Array of matching datasets from catalog", "schema": { "type": "object" } },
+    { "name": "edr_token", "class": "AuthToken", "description": "EDR authorization token for dataplane calls", "schema": { "type": "string" } },
+    { "name": "dataplane_url", "class": "DataplaneUrl", "description": "Dataplane public API endpoint URL", "schema": { "type": "string" } },
+    { "name": "asset_id", "class": "AssetId", "description": "Matched asset ID from catalog", "schema": { "type": "string" } },
+    { "name": "negotiation_id", "class": "NegotiationId", "description": "Negotiation process ID", "schema": { "type": "string" } },
+    { "name": "transfer_process_id", "class": "TransferId", "description": "Transfer process ID", "schema": { "type": "string" } },
+    { "name": "agreement_id", "class": "AgreementId", "description": "Contract agreement ID from negotiation", "schema": { "type": "string" } }
+  ]
+}
