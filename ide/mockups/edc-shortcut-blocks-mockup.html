@@ -1113,8 +1113,6 @@ function renderPreconditionRef() {
 function renderMoreToggle() {
   var openClass = state.moreOpen ? ' open' : '';
   var visibleClass = state.moreOpen ? ' visible' : '';
-  var moreFields = '';
-  moreFields += fieldGroup('transfer_type', false, selectHtml(['HttpData-PULL', 'HttpData-PUSH'], 'HttpData-PULL'));
   if (state.filter === 'asset') {
     moreFields += fieldGroup('offer_id', false, inputHtml('(optional)', true));
   }
@@ -1123,7 +1121,7 @@ function renderMoreToggle() {
   }
   return '<div class="more-toggle' + openClass + '" onclick="toggleMore()">' +
     '<span class="arrow">\u25BC</span> More options</div>' +
-    '<div class="more-fields' + visibleClass + '">' + moreFields + '</div>';
+    '<div class="more-fields' + visibleClass + '">''</div>';
 }
 
 function renderFlowIndicator() {
