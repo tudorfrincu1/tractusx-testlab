@@ -49,10 +49,6 @@ tractusx-testlab/
 │   │   │   ├── certificate-management-v1.0/
 │   │   │   ├── connector-ping-v1.0/
 │   │   │   ├── dtr-ping-v1.0/
-│   │   │   ├── industry-core-validation-v1.0/
-│   │   │   ├── product-carbon-footprint-v1.0/
-│   │   │   ├── special-characteristics-v1.0/
-│   │   │   └── traceability-notification-v1.0/
 │   │   └── templates/            ← Reusable step templates
 │   │       └── index.json
 │   ├── src/

@@ -59,6 +59,7 @@ The TestLab IDE displays preconditions as a checklist/configuration panel that t
 
 | Category | Direction | Purpose |
 |----------|-----------|---------|
+| `inject` | TestLab → Environment | TestLab retrieves/injects values from infrastructure into env variables via `seed` |
 | `generate` | TestLab → User | TestLab produces a value and shows it to the user for SUT configuration |
 | `provide` | TestLab → User | A template/object defined in YAML, shown to the user to copy and register in their SUT |
 | `input` | User → TestLab | A value the user must provide before execution starts |
@@ -102,6 +103,7 @@ Preconditions use the **same step syntax** as ADR-0010 (`id` → `uses` → `nam
 
 | `uses:` value | Category | Direction |
 |---------------|----------|-----------|
+| `precondition/inject/{target}` | Injected values | TestLab → Environment |
 | `precondition/generate` | Generated values | TestLab → User |
 | `precondition/provide` | Static templates | TestLab → User |
 | `precondition/input` | User-provided values | User → TestLab |
@@ -522,6 +524,113 @@ The IDE presents preconditions as a **configuration panel** (separate from the b
 | `check` (executable) | Status indicators with pass/fail badges — auto-run after user confirms configuration |
 
 The IDE shows a "Preconditions" checklist that must be fully green before the "Run TCK" button becomes active.
+
+### 10. Variable Seeding (`seed`)
+
+Preconditions can **seed** environment variables with their output values. This bridges the gap between precondition-generated values and `env.variables` that services and steps reference.
+
+#### 10.1 YAML Syntax
+
+```yaml
+preconditions:
+  - id: testlab_connector
+    uses: precondition/inject/connector
+    with:
+      type: connector
+      name: "TestLab Connector"
+    returns:
+      dsp_url: { type: "string", class: "Url" }
+      management_url: { type: "string", class: "Url" }
+      bpn: { type: "string", class: "Bpn" }
+    seed:
+      testlab_dsp_url: dsp_url
+      testlab_management_url: management_url
+      consumer_bpn: bpn
+```
+
+**`seed` field:**
+
+| Key | Value | Meaning |
+|-----|-------|---------|
+| env variable name | `returns` field name | After precondition executes, write `returns.<value>` into `env.variables.<key>` |
+
+#### 10.2 `uses` Path Convention
+
+| `uses:` pattern | Category | Purpose |
+|-----------------|----------|---------|
+| `precondition/inject/{target}` | Inject | Retrieves/injects from environment (e.g., `connector`, `participant`) |
+| `precondition/generate/{target}` | Generate | Creates a new value (e.g., `uuid`, `ed25519`, `timestamp`, `bpn`) |
+| `precondition/provide` | Provide | Provides a static value (e.g., a policy object) |
+| `precondition/input` | Input | Requests user input at runtime |
+
+#### 10.3 Seeding Priority Rules
+
+```
+--env explicit override  >  seed from precondition  >  default value
+```
+
+If the user provides `--env testlab_dsp_url=https://...`, the seed is skipped for that variable. Seeds only write to variables that have not been explicitly overridden.
+
+#### 10.4 Compiled Representation
+
+In `tck-execution.json`, the `seed` mapping is preserved verbatim:
+
+```json
+{
+  "preconditions": [{
+    "id": "testlab_connector",
+    "uses": "precondition/inject/connector",
+    "name": "TestLab Connector Configuration",
+    "with": { "type": "connector", "name": "TestLab Connector" },
+    "returns": {
+      "dsp_url": { "type": "string", "class": "Url" },
+      "management_url": { "type": "string", "class": "Url" },
+      "bpn": { "type": "string", "class": "Bpn" }
+    },
+    "seed": {
+      "testlab_dsp_url": "dsp_url",
+      "testlab_management_url": "management_url",
+      "consumer_bpn": "bpn"
+    }
+  }]
+}
+```
+
+In `global_symbols`, seeded variables include a `seeded_by` field:
+
+```json
+{
+  "env.testlab_dsp_url": {
+    "source": "env.variables",
+    "type": "string",
+    "default": "",
+    "seeded_by": "testlab_connector.dsp_url"
+  }
+}
+```
+
+#### 10.5 Compiler Validation Rules
+
+| Rule | Error |
+|------|-------|
+| `seed` value must exist in `returns` keys | `Seed target 'x' not found in returns of precondition '{id}'` |
+| `seed` key must be declared in `env.variables` | `Seed variable 'x' not declared in env.variables` |
+| Same env variable cannot be seeded by multiple preconditions | `Variable 'x' seeded by both '{id1}' and '{id2}'` |
+
+#### 10.6 Player Boot Sequence (Updated)
+
+```
+1. Load global_symbols → apply defaults + --env overrides
+2. Load assets (schemas, testdata) + overrides
+3. Execute preconditions IN ORDER:
+   a. Run precondition step → get output dict
+   b. Validate output matches `returns` contract
+   c. For each `seed` entry: if env var NOT already set by --env → write output value
+4. Re-resolve services that depend on seeded variables (lazy init)
+5. Run tests
+```
+
+---
 
 ## Consequences
 

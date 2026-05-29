@@ -1569,7 +1569,7 @@ setup:
           operator: equals
           value: 200
 
-  - id: create_contract_def
+  - id: create_contract_definition
     uses: connector/create_contract_definition
     name: Create contract definition
     with:

@@ -112,7 +112,7 @@ Each `test:` entry points to a YAML file with `kind: test`. Tests declare depend
 | `wait_for_call` | Block until a mock endpoint receives a request |
 | `create_asset` | Register an asset in an EDC connector |
 | `create_policy` | Create an access/contract policy |
-| `create_contract_def` | Link an asset to policies via a contract definition |
+| `create_contract_definition` | Link an asset to policies via a contract definition |
 | `send_notification` | Send a CX notification through the EDC dataplane |
 | `generate_uuid` | Generate a random UUID |
 

@@ -1,0 +1,183 @@
+################################################################################
+# Eclipse Tractus-X - Tractus-X TestLab
+#
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
+
+kind: tck
+testlab: v1-alpha
+
+id: certificate-management-tck
+namespace: ccm-v0.0.1
+
+metadata:
+  name: "Certificate Management TCK"
+  version: "v0.0.1"
+  description: >
+    Validate CCMAPI certificate management workflow per CX-0135 v3.1.0:
+    (1) Request certificate from provider
+    (2) Validate certificate payload against schema
+    (3) Await provider feedback callback
+    (4) Send feedback notification and await acknowledgment
+    (5) Expose TestLab as provider and verify SUT consumer behavior
+  authors:
+    - name: Certificate Management Expert Groupby def
+  copyright_holders:
+    - "2026 Contributors to the Eclipse Foundation"
+  license: Apache-2.0
+  standards:
+    - id: CX-0135
+      version: v3.1.0
+  tags:
+    - CCM
+  dataspace_version: saturn
+
+env:
+  variables:
+    provider_url: ""
+    provider_bpn: ""
+    consumer_bpn: ""
+    certificate_type: "iso9001"
+    location_bpns: ""
+    testlab_management_url: ""
+    testlab_dsp_url: ""
+    testlab_mock_base_url: ""
+    sut_response_timeout: 300
+  services:
+    - name: testlab_connector
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp/2025-1
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-api-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        service:
+          type: class
+          class: ConnectorService
+  schemas:
+    certificate_schema:
+      file: business_partner_certificate_schema.json
+    bpc_v310_schema:
+      file: bpc-v3.1.0.json
+  testdata:
+    available_notification_body:
+      file: available_notification_body.json
+    certificate_available_response:
+      file: certificate_available_response.json
+    error_unknown_cert_type_body:
+      file: error_unknown_cert_type_body.json
+    expose_available_notification_body:
+      file: expose_available_notification_body.json
+    expose_certificate_data_response:
+      file: expose_certificate_data_response.json
+    push_certificate_body:
+      file: push_certificate_body.json
+    request_certificate_body:
+      file: request_certificate_body.json
+    send_feedback_body:
+      file: send_feedback_body.json
+
+preconditions:
+  - id: health_testlab_connector
+    uses: connector/health_check
+    name: TestLab Connector health check
+    with:
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
+      dataspace_version: ${{ metadata.dataspace_version }}
+    validate:
+      - uses: validate/assert
+        with:
+          input: status_code
+          operator: equals
+          value: 200
+          
+  - id: testlab_connector
+    uses: precondition/inject/connector
+    name: TestLab Connector Configuration
+    with:
+      type: connector
+      name: "TestLab Connector"
+    returns:
+      dsp_url:
+        type: string
+        class: Url
+      management_url:
+        type: string
+        class: Url
+      bpn:
+        type: string
+        class: Bpn
+    seed:
+      testlab_dsp_url: dsp_url
+      testlab_management_url: management_url
+      consumer_bpn: bpn
+
+  - id: ccm_policy
+    uses: precondition/provide
+    name: Required CCMAPI Usage Policy
+    with:
+      value:
+        permissions:
+          - action: use
+            constraints:
+              and:
+                - left_operand: UsagePurpose
+                  operator: isAnyOf
+                  right_operand: "cx.ccm.base:1"
+                - left_operand: FrameworkAgreement
+                  operator: eq
+                  right_operand: "DataExchangeGovernance:1.0"
+    returns:
+      policy:
+        type: object
+        class: Policy
+
+  - id: sut_connector
+    uses: precondition/input
+    name: SUT Connector Details
+    returns:
+      counter_party_address:
+        type: string
+        class: Url
+        label: "SUT DSP Endpoint URL"
+        placeholder: "https://my-connector.example.com/api/dsp"
+      counter_party_id:
+        type: string
+        class: Bpn
+        label: "SUT BPN"
+    seed:
+      provider_url: counter_party_address
+      provider_bpn: counter_party_id
+
+tests:
+  - catalog_policy_validation.yaml
+  - request_certificate.yaml
+  - validate_payload.yaml
+  - push_certificate.yaml
+  - available_notification.yaml
+  - send_feedback.yaml
+  - expose_testlab_asset.yaml
+  - error_handling.yaml
+
