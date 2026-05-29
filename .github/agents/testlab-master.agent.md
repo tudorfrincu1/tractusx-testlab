@@ -62,6 +62,23 @@ The testlab backend uses the SDK directly. You are an expert in its module struc
 
 **Key principle**: The testlab is a thin mapping/orchestration layer. It does NOT reimplement SDK functionality — it wires SDK services together via YAML-defined test scripts. When building steps or services, always delegate to SDK classes rather than reimplementing protocol logic.
 
+### Reference Architecture — layered modules (Tractus-X SDK)
+
+Model package organization on the SDK's `dataspace/` package — the gold standard for this project: <https://github.com/eclipse-tractusx/tractusx-sdk/tree/main/src/tractusx_sdk/dataspace>. It separates concerns into clear layers, each a directory with a single responsibility:
+
+```
+dataspace/
+  adapters/      # HTTP clients — talk to external components, no business logic
+  config/        # configuration files and settings
+  controllers/   # API-context logic — orchestrate adapters/services per use case
+  managers/      # lifecycle + data management (connections, tokens, state)
+  models/        # Pydantic data models and schemas — no behavior
+  services/      # core functionality + outbound calls to external services
+  tools/         # pure utilities and helpers
+```
+
+Apply the same layering in `tractusx_testlab/`: keep adapters (I/O) separate from services (logic) separate from models (data) separate from managers (lifecycle). A new capability adds a file to the matching layer — never a god-module that mixes HTTP, parsing, state, and models. Each layer directory has an `__init__.py` barrel exposing only its public surface.
+
 ## Engineering Principles
 
 ### Architecture
@@ -192,6 +209,8 @@ Use the `build-from-mockup` skill when analyzing an HTML mockup from `ide/mockup
 
 ## How to Split Oversized Files
 
+Modularity is the goal; the 300-line limit is just the trigger to check it. Write modular code from the start. When splitting, extract **reusable** units along responsibility seams (one concern per file) — never cut a file arbitrarily in half. Shared logic becomes an importable helper; never duplicate it.
+
 When a file exceeds 300 lines, apply these patterns:
 
 ### Step modules (`steps/`)
@@ -215,6 +234,28 @@ When a file exceeds 300 lines, apply these patterns:
 - Helper functions used by one module → `_helpers.py` in that package (private)
 - Helper functions used across modules → shared utility module
 - Constants → `_constants.py` in the relevant package
+
+### Worked Example — splitting a 350-line `steps/connector.py`
+
+**Bad (arbitrary cut — do NOT do this):**
+```
+steps/connector_part1.py   # first 3 step classes
+steps/connector_part2.py   # last 4 step classes, copies the same _parse_dsp_response()
+```
+The `partN` names carry no meaning and the shared parser is duplicated — a maintenance trap.
+
+**Good (responsibility seams — reusable units):**
+```
+steps/connector/
+  __init__.py            # barrel re-export of all step classes
+  dsp_version.py         # one step class — DspVersionStep
+  dsp_catalog.py         # one step class — DspCatalogStep
+  negotiate.py           # one step class — NegotiateStep
+  transfer.py            # one step class — TransferStep
+  _helpers.py            # _parse_dsp_response(), _extract_dataset() — shared, imported once
+  _constants.py          # DSP_CONTEXT, DEFAULT_PROTOCOL, property keys
+```
+Each step lives in its own file; the shared parser is defined once in `_helpers.py` and imported. Adding a new connector step means adding one file, not editing a 350-line module.
 
 ## Token Economy
 

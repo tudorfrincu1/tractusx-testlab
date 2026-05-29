@@ -82,6 +82,33 @@ src/tractusx_testlab/
 - Use `conftest.py` for fixtures shared across multiple test files
 - Parametrize with `@pytest.mark.parametrize` for testing multiple input/output pairs
 
+#### Worked Example — extracting a reusable factory
+
+**Bad (copy-pasted setup in every test):**
+```python
+def test_compiler_accepts_valid_step():
+    step = StepDefinition(id="s1", uses="connector/pull", inputs={}, outputs={})  # duplicated
+    ...
+
+def test_compiler_rejects_unknown_step():
+    step = StepDefinition(id="s1", uses="connector/pull", inputs={}, outputs={})  # duplicated again
+    ...
+```
+
+**Good (one reusable factory in `factories.py`, overridable defaults):**
+```python
+# tests/factories.py
+def create_step(**overrides) -> StepDefinition:
+    defaults = {"id": "s1", "uses": "connector/pull", "inputs": {}, "outputs": {}}
+    return StepDefinition(**{**defaults, **overrides})
+
+# tests/test_compiler.py
+def test_compiler_rejects_unknown_step():
+    step = create_step(uses="connector/does_not_exist")  # only the relevant field varies
+    ...
+```
+The factory makes each test state only what matters for its scenario, and it is importable by every test module.
+
 ### Mocking Strategy
 - Mock at the boundary — mock external services, not internal functions
 - Prefer dependency injection over monkey-patching
@@ -116,7 +143,7 @@ src/tractusx_testlab/
 
 - DO NOT write tests that test implementation details — test behavior
 - DO NOT use `time.sleep()` in tests — use async primitives or mocked time
-- DO NOT create test files exceeding 300 lines — split by module or concern
+- DO NOT create test files exceeding 300 lines — split by module or concern into reusable fixtures/factories, never arbitrary fragments
 - DO NOT use bare `assert` without a message for complex assertions
 - DO NOT import from `unittest` when pytest provides the same functionality
 - DO NOT leave disabled tests (`@pytest.mark.skip` without a reason)

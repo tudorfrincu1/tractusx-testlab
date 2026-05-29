@@ -51,7 +51,7 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 - Block definitions live in `public/blocks/` as JSON — never hardcode in TypeScript
 - Toolbox is built dynamically from the block catalog
 - Sync flow: workspace change → `workspaceToModel()` → `modelToYaml()` → Zustand → YAML preview
-- No MUI or heavy UI libraries — plain CSS only
+- No MUI or heavy UI libraries — SCSS (Sass) with shared partials in `shared/styles/`
 
 ### `testlab-master` — Backend Developer
 
@@ -97,7 +97,8 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 
 | Rule | Enforcement |
 |------|-------------|
-| No file exceeds 300 lines | `find <dir> -name '*.ext' \| xargs wc -l \| awk '$1 > 300'` |
+| No source-code file exceeds 300 lines (docs exempt) | `find <dir> -name '*.ext' \| xargs wc -l \| awk '$1 > 300'` |
+| Code is modular by design — single-responsibility units, reusable helpers, no duplication | Split along responsibility seams; extract shared logic into importable modules |
 | Apache-2.0 license header on all source files | Required |
 | AI-generated code subtitle after license header | See below |
 | Variable syntax in YAML: `@variable_name` | Never `${var}` |
@@ -133,7 +134,7 @@ Replace `Codex` and `o3` with the actual tool and model name being used.
 
 ### Stack
 - Vite 6 + React 19 + TypeScript strict + Blockly 12 + Zustand + Monaco Editor
-- No MUI or heavy UI libraries — plain CSS + Blockly built-in styling
+- No MUI or heavy UI libraries — SCSS (Sass) + Blockly built-in styling
 
 ### Block System
 - Block definitions: `public/blocks/{category}/{block}.json` — one JSON per block
@@ -162,7 +163,8 @@ cd ide && npx vite build     # Must succeed
 ```
 
 ### Splitting Oversized Files
-- **Components**: extract sub-components, hooks (`useXxxLogic.ts`), styles (`.css`), constants, types
+Modularity is the goal; the line limit is just the trigger. Extract **reusable** units along responsibility seams — never cut a file arbitrarily. Shared logic becomes an importable module; never duplicate it.
+- **Components**: extract sub-components, hooks (`useXxxLogic.ts`), styles (`.scss`), constants, types
 - **Stores**: extract slices, selectors, persistence, helpers
 - **Sync modules**: one transform per file, split by entity if needed
 
@@ -219,6 +221,7 @@ python -m pytest tests/ -x -q                                        # Must pass
 ```
 
 ### Splitting Oversized Files
+Modularity is the goal; the line limit is just the trigger. Extract **reusable** units along responsibility seams — never cut a file arbitrarily. Shared logic becomes an importable helper; never duplicate it.
 - **Steps**: one step class per file, extract `_helpers.py` and `_constants.py`
 - **CLI**: one command group per file, main app wires with `app.add_typer()`
 - **Models**: one concern per file, `__init__.py` as barrel re-export only
@@ -294,14 +297,14 @@ grep -rn "time.sleep\|asyncio.sleep" tests/ --include="*.py"               # Sho
 - Use Mermaid for all diagrams (max 10-12 nodes)
 - Active voice, second person, present tense, short sentences (max 25 words)
 - No placeholders (`TODO`, `TBD`, `Coming soon`)
-- No files over 300 lines — split into sub-pages
+- Documentation is exempt from the 300-line source rule — split long pages into sub-pages for readability, but a cohesive reference (ADR, spec, API page) may exceed 300 lines when splitting would harm comprehension
 
 ---
 
 ## Review Checklist (Applied to All Deliveries)
 
 ```
-□ File under 300 lines?
+□ File under 300 lines? (source code only — docs exempt)
 □ Functions under 30 lines?
 □ Single responsibility per module?
 □ No magic strings or hardcoded values?

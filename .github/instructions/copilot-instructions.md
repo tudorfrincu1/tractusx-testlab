@@ -35,8 +35,12 @@ applyTo: "**/*"
 - Block catalog: `ide/public/blocks/index.json` — manifest listing all block categories and file paths
 - Individual block definitions: `ide/public/blocks/{category}/{block}.json` — one JSON file per block
 
-## File Size
-- No file should exceed 300 lines — split into modules
+## File Size & Modularity
+- No source-code file (Python, TypeScript) should exceed 300 lines — split into modules
+- Documentation files (`docs/**/*.md`, ADRs, specifications) are EXEMPT — prefer sub-pages for readability, but a cohesive reference may exceed 300 lines when splitting would harm comprehension
+- **Write modular code from the start** — the 300-line limit is a symptom, not the goal. Organize code into small, single-responsibility units (functions, hooks, modules) with clear, typed boundaries.
+- **When splitting an oversized file, extract reusable units** — pull shared logic into well-named helpers/modules that other code can import. Never split by arbitrarily cutting a file in half; split along responsibility seams (one concern per module).
+- **Prefer composition and reuse over duplication** — if the same logic appears twice, extract it. A new module must have a single, nameable purpose and a minimal public surface.
 
 ## License
 - Apache-2.0 license header on all source files

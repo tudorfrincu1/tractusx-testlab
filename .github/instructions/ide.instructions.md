@@ -26,6 +26,8 @@ workspace change → `workspaceToModel()` → `modelToYaml()` → Zustand store 
 - TypeScript strict mode enabled
 - Functional components only (no class components)
 - **No file may exceed 300 lines** — split using component/hook/constant extraction
-- **No inline `style={{}}`** — use CSS files or CSS modules
+- **Write modular code from the start** — extract non-trivial logic into custom hooks (`useXxx`), pure transform functions, sub-components, and typed constant/type modules. Each file has one responsibility and a minimal export surface.
+- **When splitting, create reusable units, not arbitrary fragments** — hooks for behavior, pure functions for data transforms, sub-components for UI sections. Shared logic goes in an importable module; never duplicate it.
+- **No inline `style={{}}`** — use `.scss` files (Sass). Reusable tokens, mixins, and placeholders live in `shared/styles/` (`_variables.scss`, `_mixins.scss`, `_placeholders.scss`) and are consumed via `@use`. Keep runtime theming as `--tx-*` CSS custom properties; never duplicate a color/spacing/mixin across components
 - **No `: any` or `as any`** — use `unknown` + type narrowing
 - **No bare `catch {}` blocks** — always handle or log the error with context

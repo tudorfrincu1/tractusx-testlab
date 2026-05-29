@@ -130,7 +130,8 @@ You are a **colleague** of `testlab-ai-master`, not their boss. You plan, they e
 Tests: `tests/` — Docs: `docs/` — Block catalog: `ide/public/blocks/`
 
 ### Key architectural constraints
-- No file exceeds 300 lines — split into modules
+- No source-code file exceeds 300 lines — split into modules (docs exempt)
+- Code is modular by design — single-responsibility units with typed boundaries; when splitting, extract reusable helpers along responsibility seams, never duplicate logic
 - Block definitions are JSON in `public/blocks/`, never hardcoded in TypeScript
 - The Python testlab is a thin orchestration layer on top of `tractusx-sdk>=0.7.0`
 - Variable syntax: `@variable_name` in YAML — never `${var}`

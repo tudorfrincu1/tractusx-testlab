@@ -46,9 +46,9 @@ A gap analysis document identifying what the backend must provide:
    ```
    ide/src/components/{feature}/
    ├── {Feature}.tsx            ← top-level container
-   ├── {Feature}.css            ← scoped styles
+   ├── {Feature}.scss           ← scoped styles, @use shared/styles partials
    ├── {SubComponent}.tsx       ← one per visual zone
-   ├── {SubComponent}.css       ← scoped styles per sub-component
+   ├── {SubComponent}.scss      ← scoped styles per sub-component
    ├── use{Feature}Logic.ts     ← custom hook for state/logic
    ├── types.ts                 ← props interfaces and domain types
    └── constants.ts             ← magic values extracted as named constants
@@ -86,11 +86,11 @@ A gap analysis document identifying what the backend must provide:
 
 ### Phase 5: Style Faithfully (Frontend)
 
-1. **Use CSS files, not inline styles** — one `.css` file per component
-2. **Reuse IDE CSS custom properties** — never hardcode colors that exist as variables
+1. **Use SCSS files, not inline styles** — one `.scss` file per component, importing shared tokens/mixins via `@use "@/shared/styles" as *;`
+2. **Reuse shared design tokens** — `--tx-*` CSS custom properties for theming and `shared/styles/` partials for mixins/placeholders; never hardcode a value that exists as a token
 3. **Match the mockup's spacing system** — extract consistent gaps/padding
 4. **Transitions from the mockup** — if the mockup has hover effects or animations, replicate them
-5. **Responsive** — if the mockup shows responsive behavior, implement it with CSS (media queries or flexbox)
+5. **Responsive** — if the mockup shows responsive behavior, implement it with SCSS (media queries or flexbox)
 6. **BEM-like naming** — `.feature__element--modifier` or scoped class names
 
 ### Phase 6: Connect and Verify

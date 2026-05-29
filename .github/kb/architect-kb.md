@@ -44,11 +44,12 @@
 - **Rationale**: One configuration point per TCK avoids duplication, enables compile-time validation of all references, and maps 1:1 to the IDE Environment Editor.
 - **Consequences**: Tests are never self-contained — they always need a parent TCK manifest. Manual variables introduce async complexity (runtime pauses). Service type registry must be maintained.
 
-### AD-4: No file exceeds 300 lines
-- **Date**: 2025
+### AD-4: No source-code file exceeds 300 lines
+- **Date**: 2025 (revised 2026-05-29)
 - **Status**: Active
-- **Decision**: Every source file (Python, TypeScript, Markdown docs) must stay under 300 lines. Split into modules when approaching the limit.
-- **Rationale**: Keeps files readable, reviewable, and focused on a single responsibility.
+- **Decision**: Every source-code file (Python, TypeScript) must stay under 300 lines. Split into modules when approaching the limit. **Documentation files (Markdown — ADRs, specifications, guides) are EXEMPT**: prefer splitting long pages into sub-pages for readability, but a self-contained reference may exceed 300 lines when splitting would harm comprehension.
+- **Modularity directive**: The 300-line limit is a symptom check, not the goal. Code must be written modular from the start — small single-responsibility units with typed boundaries. When a file is split, extract **reusable** units along responsibility seams (hooks, pure functions, helper modules, one step/class per file), not arbitrary fragments. Shared logic is extracted into importable helpers; never duplicated.
+- **Rationale**: The limit keeps code readable, reviewable, and single-responsibility. Documentation has different constraints — a cohesive reference (e.g. an ADR or spec) is often more useful kept whole than fragmented across pages.
 
 ### AD-5: Typed variable class system for block I/O
 - **Date**: 2026-05-19
