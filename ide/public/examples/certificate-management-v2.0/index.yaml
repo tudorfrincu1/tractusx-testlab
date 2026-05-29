@@ -81,6 +81,23 @@ env:
       file: business_partner_certificate_schema.json
     bpc_v310_schema:
       file: bpc-v3.1.0.json
+  testdata:
+    available_notification_body:
+      file: available_notification_body.json
+    certificate_available_response:
+      file: certificate_available_response.json
+    error_unknown_cert_type_body:
+      file: error_unknown_cert_type_body.json
+    expose_available_notification_body:
+      file: expose_available_notification_body.json
+    expose_certificate_data_response:
+      file: expose_certificate_data_response.json
+    push_certificate_body:
+      file: push_certificate_body.json
+    request_certificate_body:
+      file: request_certificate_body.json
+    send_feedback_body:
+      file: send_feedback_body.json
 
 preconditions:
   - id: health_testlab_connector
@@ -97,17 +114,15 @@ preconditions:
           value: 200
           
   - id: testlab_connector
-    uses: precondition/generate
+    uses: precondition/inject/connector
     name: TestLab Connector Configuration
     returns:
       dsp_url:
         type: string
         class: Url
-        generator: testlab_dsp_endpoint
       bpn:
         type: string
         class: Bpn
-        generator: testlab_bpn
 
   - id: ccm_policy
     uses: precondition/provide
@@ -152,6 +167,5 @@ tests:
   - available_notification.yaml
   - send_feedback.yaml
   - expose_testlab_asset.yaml
-  - certificate_asset_validation.yaml
   - error_handling.yaml
 

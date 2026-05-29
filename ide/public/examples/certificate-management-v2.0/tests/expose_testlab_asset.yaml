@@ -36,7 +36,7 @@ metadata:
 
 setup:
   - id: create_testlab_asset
-    uses: connector/create_asset
+    uses: connector/provider/create_asset
     name: Register a CCMAPI-typed asset in TestLab's connector
     with:
       service: testlab
@@ -59,7 +59,7 @@ setup:
         with: { input: asset_id, operator: not_null }
 
   - id: create_testlab_policy
-    uses: connector/create_policy
+    uses: connector/provider/create_policy
     name: Create a usage policy that restricts access to the SUT's BPN
     with:
       service: testlab
@@ -84,7 +84,7 @@ setup:
         with: { input: policy_id, operator: not_null }
 
   - id: create_testlab_contract_def
-    uses: connector/create_contract_def
+    uses: connector/provider/create_contract_definition
     name: Bind the asset to the policy
     with:
       service: testlab
@@ -161,7 +161,6 @@ steps:
         - operand_left: "https://w3id.org/catenax/ontology/common#version"
           operator: "="
           operand_right: "3.0"
-      transfer_type: "HttpData-PULL"
     returns:
       catalog:
         type: object
@@ -207,7 +206,7 @@ steps:
         class: Uuid
 
   - id: send_available_notification
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: Send the AVAILABLE notification to the SUT via its dataplane
     with:
       method: POST
@@ -252,25 +251,3 @@ steps:
     validate:
       - uses: validate/assert
         with: { input: request_method, operator: equals, value: "GET" }
-
-teardown:
-  - id: delete_testlab_asset
-    uses: connector/delete_asset
-    name: Remove CCMAPI asset from TestLab connector
-    with:
-      service: testlab
-      asset_id: "${{ setup.create_testlab_asset.asset_id }}"
-
-  - id: delete_testlab_policy
-    uses: connector/delete_policy
-    name: Remove usage policy from TestLab connector
-    with:
-      service: testlab
-      policy_id: "${{ setup.create_testlab_policy.policy_id }}"
-
-  - id: delete_testlab_contract_def
-    uses: connector/delete_contract_def
-    name: Remove contract definition from TestLab connector
-    with:
-      service: testlab
-      contract_def_id: "${{ setup.create_testlab_contract_def.contract_def_id }}"

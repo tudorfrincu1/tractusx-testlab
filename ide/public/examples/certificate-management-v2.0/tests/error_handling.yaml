@@ -52,7 +52,6 @@ steps:
         - operand_left: "https://w3id.org/catenax/ontology/common#version"
           operator: "="
           operand_right: "3.0"
-      transfer_type: "HttpData-PULL"
     returns:
       catalog:
         type: object
@@ -98,7 +97,7 @@ steps:
         class: Uuid
 
   - id: send_unknown_cert_type
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: >
       Send request with nonexistent certificate type — SUT must return
       REJECTED with proper CX-0135 header envelope
@@ -109,21 +108,7 @@ steps:
       edr_token: "${{ steps.pull_notification_endpoint.edr_token }}"
       headers:
         Content-Type: "application/json"
-      body:
-        header:
-          messageId: "urn:uuid:${{ steps.gen_err_message_id.generated_id }}"
-          context: "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
-          sentDateTime: "2026-01-01T00:00:00Z"
-          senderBpn: "${{ env.consumer_bpn }}"
-          receiverBpn: "${{ env.provider_bpn }}"
-          relatedMessageId: "urn:uuid:${{ steps.gen_err_message_id.generated_id }}"
-          version: "3.1.0"
-          senderFeedbackUrl: "${{ env.testlab_dsp_url }}"
-        content:
-          certifiedBpn: "${{ env.provider_bpn }}"
-          certificateType: "NONEXISTENT_CERT_TYPE_XYZ"
-          locationBpns:
-            - "${{ env.location_bpns }}"
+      body: "${{ testdata.error_unknown_cert_type_body }}"
     returns:
       status_code:
         type: integer
@@ -172,7 +157,7 @@ steps:
           value: "REJECTED"
 
   - id: send_malformed_request
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: Send malformed request body without header field — SUT must return HTTP 500
     with:
       method: POST
@@ -193,4 +178,7 @@ steps:
         class: StatusCode
     validate:
       - uses: validate/assert
-        with: { input: status_code, operator: equals, value: 500 }
+        with: 
+          input: status_code, 
+          operator: equals
+          value: 500

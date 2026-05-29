@@ -91,7 +91,7 @@ steps:
         class: Uuid
 
   - id: send_status_notification
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: Send CX-0135 status notification to provider via dataplane
     with:
       method: POST
@@ -100,21 +100,7 @@ steps:
       edr_token: "${{ steps.pull_notification_endpoint.edr_token }}"
       headers:
         Content-Type: "application/json"
-      body:
-        header:
-          messageId: "urn:uuid:${{ steps.gen_feedback_uuid.generated_id }}"
-          context: "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
-          sentDateTime: "2026-01-01T00:00:00Z"
-          senderBpn: "${{ env.consumer_bpn }}"
-          receiverBpn: "${{ env.provider_bpn }}"
-          relatedMessageId: "urn:uuid:${{ env.request_id }}"
-          version: "3.1.0"
-          senderFeedbackUrl: "${{ env.testlab_dsp_url }}"
-        content:
-          documentId: "${{ env.document_id }}"
-          certificateStatus: "ACCEPTED"
-          locationBpns:
-            - "${{ env.location_bpns }}"
+      body: "${{ testdata.send_feedback_body }}"
     returns:
       status_code:
         type: integer

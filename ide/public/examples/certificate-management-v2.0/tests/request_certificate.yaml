@@ -127,7 +127,7 @@ steps:
         class: Uuid
 
   - id: http_call_1
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: POST certificate request to CCMAPI endpoint via data plane
     with:
       method: POST
@@ -136,21 +136,7 @@ steps:
       edr_token: "${{ steps.pull_data_1.edr_token }}"
       headers:
         Content-Type: "application/json"
-      body:
-        header:
-          messageId: "urn:uuid:${{ steps.gen_uuid_1.request_uuid }}"
-          context: "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
-          sentDateTime: "2026-01-01T00:00:00Z"
-          senderBpn: "${{ env.consumer_bpn }}"
-          receiverBpn: "${{ env.provider_bpn }}"
-          relatedMessageId: "urn:uuid:${{ steps.gen_uuid_1.request_uuid }}"
-          version: "3.1.0"
-          senderFeedbackUrl: "${{ env.testlab_dsp_url }}"
-        content:
-          certifiedBpn: "${{ env.provider_bpn }}"
-          certificateType: "${{ env.certificate_type }}"
-          locationBpns:
-            - "${{ env.location_bpns }}"
+      body: "${{ testdata.request_certificate_body }}"
     returns:
       status_code:
         type: integer

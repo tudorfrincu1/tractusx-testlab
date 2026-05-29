@@ -74,7 +74,7 @@ steps:
       operator: not_null
 
   - id: http_call_1
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: Fetch certificate payload via data plane
     with:
       method: GET

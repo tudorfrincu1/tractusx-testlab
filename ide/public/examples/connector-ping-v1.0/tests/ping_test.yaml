@@ -18,38 +18,41 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## It was reviewed and tested by a human committer.
 
 kind: test
-name: ping-test
-version: "1.0"
-description: Simple catalog query to verify connector is alive and responding.
+testlab: v1-alpha
 
-services:
-  - name: testbed
-    type: connector_consumer
-    config:
-      management_url: "@counter_party_address"
+id: connector-ping
+namespace: connector-v1.0
+
+metadata:
+  name: "Ping Test"
+  version: "1.0"
+  description: >
+    Simple catalog query to verify connector is alive and responding.
 
 steps:
-  - type: query_catalog
+  - id: ping_catalog
+    uses: connector/consumer/query_catalog
     name: Ping Catalog
-    params:
-      service: testbed
-      counter_party_address: "@counter_party_address"
-      filter:
-        filter_expression:
-          - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
-            operator: "like"
-            operand_right: "%"
-    store_in_memory:
-      catalog_datasets: "datasets"
+    with:
+      connector_service: "${{ env.services.testlab_connector.connector_service }}"
+      counter_party_address: "${{ env.counter_party_address }}"
+      filters:
+        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          operator: "like"
+          operand_right: "%"
+    returns:
+      status_code:
+        type: integer
+        class: StatusCode
+      datasets:
+        type: array
+        class: CatalogDatasets
     validate:
-      - type: "EQUALS"
-        output: status_code
-        value: 200
-      - type: "NOT_NULL"
-        output: datasets
-
-variables:
-  catalog_datasets:
-    type: str
+      - uses: validate/assert
+        with: { input: status_code, operator: equals, value: 200 }
+      - uses: validate/assert
+        with: { input: datasets, operator: not_null }

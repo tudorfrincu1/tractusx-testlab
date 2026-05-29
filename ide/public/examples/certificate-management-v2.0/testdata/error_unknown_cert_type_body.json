@@ -1,0 +1,19 @@
+{
+  "header": {
+    "messageId": "urn:uuid:${{ steps.gen_err_message_id.generated_id }}",
+    "context": "CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+    "sentDateTime": "2026-01-01T00:00:00Z",
+    "senderBpn": "${{ env.consumer_bpn }}",
+    "receiverBpn": "${{ env.provider_bpn }}",
+    "relatedMessageId": "urn:uuid:${{ steps.gen_err_message_id.generated_id }}",
+    "version": "3.1.0",
+    "senderFeedbackUrl": "${{ env.testlab_dsp_url }}"
+  },
+  "content": {
+    "certifiedBpn": "${{ env.provider_bpn }}",
+    "certificateType": "NONEXISTENT_CERT_TYPE_XYZ",
+    "locationBpns": [
+      "${{ env.location_bpns }}"
+    ]
+  }
+}

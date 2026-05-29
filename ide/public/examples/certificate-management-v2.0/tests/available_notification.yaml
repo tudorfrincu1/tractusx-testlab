@@ -40,30 +40,7 @@ setup:
       method: GET
       path: "/api/v1/companycertificate/available"
       response_status: 200
-      response_body:
-        businessPartnerNumber: "${{ env.provider_bpn }}"
-        certificateType: "${{ env.certificate_type }}"
-        registrationNumber: "CERT-AVAIL-001"
-        enclosedSites:
-          - enclosedSiteBpn: "${{ env.location_bpns }}"
-        validFrom: "2026-01-01"
-        validUntil: "2028-12-31"
-        trustLevel: "none"
-        document:
-          documentID: "cert-asset-001"
-          creationDate: "2026-01-01T00:00:00Z"
-          contentType: "application/pdf"
-          contentBase64: "iVBORw0KGgoAAAANSUhEUgA="
-        validator:
-          validatorName: "TÜV SÜD"
-          validatorBpn: "BPNL133631123120"
-        type:
-          certificateVersion: "2015"
-          certificateType: "${{ env.certificate_type }}"
-        areaOfApplication: "Quality Management"
-        issuer:
-          issuerName: "TÜV SÜD"
-          issuerBpn: "BPNL133631123120"
+      response_body: "${{ testdata.certificate_available_response }}"
     returns:
       mock:
         type: class
@@ -114,7 +91,7 @@ steps:
         class: Uuid
 
   - id: send_available_notification
-    uses: http/call_dataplane
+    uses: connector/dataplane/http_request
     name: Send certificate available notification to SUT
     with:
       method: POST
@@ -123,21 +100,7 @@ steps:
       edr_token: "${{ steps.pull_notification_endpoint.edr_token }}"
       headers:
         Content-Type: "application/json"
-      body:
-        header:
-          messageId: "urn:uuid:${{ steps.gen_avail_message_id.generated_id }}"
-          context: "CompanyCertificateManagement-CCMAPI-Available:1.0.0"
-          sentDateTime: "2026-01-01T00:00:00Z"
-          senderBpn: "${{ env.consumer_bpn }}"
-          receiverBpn: "${{ env.provider_bpn }}"
-          relatedMessageId: "urn:uuid:${{ steps.gen_avail_message_id.generated_id }}"
-          version: "3.1.0"
-          senderFeedbackUrl: "${{ env.testlab_dsp_url }}"
-        content:
-          documentId: "cert-asset-001"
-          certificateType: "${{ env.certificate_type }}"
-          locationBpns:
-            - "${{ env.location_bpns }}"
+      body: "${{ env.testdata.available_notification_body }}"
     returns:
       status_code:
         type: integer
