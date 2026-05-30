@@ -25,15 +25,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import { BlocklyWorkspace } from "@/features/block-editor/BlocklyWorkspace";
-import { BlockEditorErrorBoundary } from "@/features/block-editor/BlockEditorErrorBoundary";
-import { YamlEditor } from "@/features/yaml-editor/MonacoEditor";
-import { SchemaEditor } from "@/features/yaml-editor/SchemaEditor";
-import { TestdataEditor } from "@/features/yaml-editor/TestdataEditor";
-import { DependencyGraph } from "@/features/graph-view/DependencyGraph";
+import { BlocklyWorkspace, BlockEditorErrorBoundary } from "@/features/block-editor";
+import { YamlEditor, SchemaEditor, TestdataEditor } from "@/features/yaml-editor";
+import { DependencyGraph } from "@/features/graph-view";
 import { SequenceDiagram } from "@/features/sequence-view";
 import { PanelHeader, PanelTabBar, IconBtn } from "./PanelControls";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -44,11 +41,11 @@ import {
   ValidationPanel,
   collectBlockWarnings,
   modelErrorsToIssues,
-} from "@/features/block-editor/ui/ValidationPanel";
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useExecutionStore } from "@/store/execution/useExecutionStore";
-import { ExecutionPanel } from "@/features/execution/ExecutionPanel";
-import { TestdataVariableButton } from "@/features/yaml-editor/VariablePicker/TestdataVariableButton";
+} from "@/features/block-editor";
+import { useEditorStore } from "@/store";
+import { useExecutionStore } from "@/store";
+import { ExecutionPanel } from "@/features/execution";
+import { TestdataVariableButton } from "@/features/yaml-editor";
 import { EditableFileName } from "./EditableFileName";
 
 export interface EditorPanelsProps {

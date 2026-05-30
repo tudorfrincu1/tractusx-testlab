@@ -25,12 +25,14 @@
 import { create } from "zustand";
 import type { TckDefinition, ScriptDefinition } from "@/models/schema";
 import { createEmptyTck } from "@/models/schema";
-import { exportProjectZip } from "./projectIO";
-import { buildTckTestsArray } from "../selectors/helpers";
-import { getAggregatedVariables as computeAggregatedVariables, getTestSummaries as computeTestSummaries } from "../selectors/selectors";
-import type { AggregatedVariable, TestSummary } from "../selectors/selectors";
+import { exportProjectZip } from "@/services/project";
+import { buildTckTestsArray } from "../selectors/storeBuilders";
+import { getAggregatedVariables as computeAggregatedVariables } from "../selectors/variableSelectors";
+import type { AggregatedVariable } from "../selectors/variableSelectors";
+import { getTestSummaries as computeTestSummaries } from "../selectors/testSelectors";
+import type { TestSummary } from "../selectors/testSelectors";
 import { saveProjectToLocalStorage, loadProjectFromLocalStorage, loadDocumentIntoStore } from "./persistence";
-import type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "../types";
+import type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "../store.types";
 import { createTestActions } from "./projectTestActions";
 import { createAssetActions } from "./projectAssetActions";
 

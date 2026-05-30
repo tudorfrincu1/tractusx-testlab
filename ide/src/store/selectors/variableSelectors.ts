@@ -28,8 +28,6 @@ import type {
   VariableDefinition,
 } from "@/models/schema";
 
-/* ── Types ──────────────────────────────────────────────────────────────── */
-
 /** A variable merged from all tests + TCK level */
 export interface AggregatedVariable {
   name: string;
@@ -37,21 +35,6 @@ export interface AggregatedVariable {
   usedBy: string[];
   isTckLevel: boolean;
 }
-
-/** Summary of a test for the pipeline table */
-export interface TestSummary {
-  name: string;
-  description?: string;
-  stepCount: number;
-  serviceNames: string[];
-  order: number;
-  prerequisiteTests: string[];
-  inputCount: number;
-  outputCount: number;
-  overrides?: Record<string, unknown>;
-}
-
-/* ── Selector functions ─────────────────────────────────────────────────── */
 
 /** Derive aggregated variables from TCK + all tests. */
 export function getAggregatedVariables(
@@ -83,37 +66,4 @@ export function getAggregatedVariables(
   }
 
   return [...merged.values()];
-}
-
-/** Derive test summaries from the test map and order. */
-export function getTestSummaries(
-  tck: TckDefinition,
-  tests: Map<string, ScriptDefinition>,
-  testOrder: string[],
-): TestSummary[] {
-  return testOrder.map((name) => {
-    const script = tests.get(name);
-    const ref = tck.tests.find(
-      (t) => typeof t === "object" && "test" in t && (t as { test: string }).test === name
-    ) as { with?: Record<string, unknown>; prerequisite_tests?: string[]; order?: number } | undefined;
-
-    const prerequisiteTests = ref?.prerequisite_tests
-      ?? script?.prerequisites?.map((entry) => entry.test)
-      ?? [];
-
-    const outputCount = script?.output_definitions?.length
-      ?? 0;
-
-    return {
-      name,
-      description: script?.description,
-      stepCount: (script?.setup?.length ?? 0) + (script?.steps?.length ?? 0) + (script?.teardown?.length ?? 0),
-      serviceNames: script?.services?.map((s) => s.name) ?? [],
-      order: ref?.order ?? testOrder.indexOf(name) + 1,
-      prerequisiteTests,
-      inputCount: script?.inputs?.length ?? 0,
-      outputCount,
-      overrides: ref?.with,
-    };
-  });
 }

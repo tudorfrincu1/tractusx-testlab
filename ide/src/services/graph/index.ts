@@ -24,4 +24,4 @@
 
 export { modelToGraph } from "./modelToGraph";
 export type { GraphData } from "./modelToGraph";
-export { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./graphHelpers";
+export { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./dependencyGraphNodeBuilders";

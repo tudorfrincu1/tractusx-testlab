@@ -26,7 +26,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
 import { useExecutionStore } from "../../../store/execution/useExecutionStore";
 import { isValidBackendUrl } from "../../../store/execution/executionApi";
-import "./ExecutionControls.css";
 
 /**
  * Gear/plug icon button with a popover for configuring the backend URL.

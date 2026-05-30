@@ -23,9 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import { useState } from "react";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import type { NetworkEntry, NetworkFilter } from "../types";
-import "./NetworkTab.css";
 
 const MOCK_ENTRIES: readonly NetworkEntry[] = [
   {

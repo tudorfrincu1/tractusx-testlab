@@ -23,12 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 import { useEffect } from "react";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import { useResizablePanel } from "@/shared/hooks/useResizablePanel";
 import { ConsoleTab, NetworkTab, PerformanceTab } from "./tabs";
 import type { BottomPanelTab } from "./types";
 import Close from "@mui/icons-material/Close";
-import "./BottomPanel.css";
 
 const TAB_CONFIG: readonly { value: BottomPanelTab; icon: string; label: string }[] = [
   { value: "console", icon: "\u25B6", label: "Console" },

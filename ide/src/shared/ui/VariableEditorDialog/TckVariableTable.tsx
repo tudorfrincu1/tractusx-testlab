@@ -25,9 +25,8 @@
 import { useState, useCallback, useMemo } from "react";
 import type { VariableDefinition } from "@/models/schema";
 import { useProjectStore } from "@/store/project/useProjectStore";
-import { getAggregatedVariables as computeAggregatedVariables } from "@/store/selectors/selectors";
+import { getAggregatedVariables as computeAggregatedVariables } from "@/store/selectors/variableSelectors";
 import { VariableRow } from "./VariableRow";
-import "./TckVariableTable.css";
 
 export function TckVariableTable() {
   const tck = useProjectStore((s) => s.tck);

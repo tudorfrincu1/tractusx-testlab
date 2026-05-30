@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { ScriptDefinition, TckDefinition, TestLabDocument } from "@/models/schema";
+import type { TckDefinition, ScriptDefinition, TestLabDocument } from "@/models/schema";
 import {
   isTck,
   isTest,
@@ -31,17 +31,32 @@ import {
   createEmptyTest,
   ScriptKind,
 } from "@/models/schema";
-import { useEditorStore } from "../editor/useEditorStore";
-import { buildTckTestsArray } from "../selectors/helpers";
-import type { ProjectState } from "../types";
+import type { ActiveFile, SchemaFile } from "@/models/project";
 
-/** Load a TestLabDocument (tck or standalone test) into the store. */
-export function loadDocumentIntoStore(
+/* ── Parsed document result ─────────────────────────────────────────────── */
+
+export interface ParsedProjectData {
+  projectName: string;
+  tck: TckDefinition;
+  tests: Map<string, ScriptDefinition>;
+  testOrder: string[];
+  schemas: Map<string, SchemaFile>;
+  activeFile: ActiveFile;
+  services: unknown[];
+}
+
+/* ── Pure document parsing ──────────────────────────────────────────────── */
+
+/**
+ * Parse a TestLabDocument into project data without any store interaction.
+ * Returns null if the document type is unrecognized.
+ */
+export function parseTestLabDocument(
   doc: TestLabDocument,
   name: string | undefined,
-  set: (state: Partial<ProjectState>) => void,
-  get: () => ProjectState,
-): void {
+  buildTckTestsArray: (order: string[]) => unknown[],
+  currentGeneration?: number,
+): ParsedProjectData | null {
   if (isTck(doc)) {
     const tc = doc;
     const projectName = name ?? tc.name ?? "Untitled";
@@ -76,47 +91,37 @@ export function loadDocumentIntoStore(
     const cleanTc: TckDefinition = {
       ...tc,
       name: projectName,
-      tests: buildTckTestsArray(order),
+      tests: buildTckTestsArray(order) as TckDefinition["tests"],
     };
 
-    set({
-      hasProject: true,
+    return {
       projectName,
-      projectGeneration: get().projectGeneration + 1,
       tck: cleanTc,
       tests: testsMap,
       testOrder: order,
       schemas: new Map(),
-      testdata: new Map(),
       activeFile: { type: "tck", name: "index" },
-      dirty: new Map(),
-      workspaceStates: {},
-    });
-  } else if (isTest(doc)) {
+      services: tc.env?.services ?? [],
+    };
+  }
+
+  if (isTest(doc)) {
     const script = doc as ScriptDefinition;
     const projectName = name ?? script.name ?? "Untitled";
     const tc = createEmptyTck();
     tc.name = projectName;
     tc.tests = [{ test: script.name }];
 
-    set({
-      hasProject: true,
+    return {
       projectName,
-      projectGeneration: get().projectGeneration + 1,
       tck: tc,
       tests: new Map([[script.name, script]]),
       testOrder: [script.name],
       schemas: new Map(),
-      testdata: new Map(),
       activeFile: { type: "test", name: script.name },
-      dirty: new Map(),
-      workspaceStates: {},
-    });
+      services: [],
+    };
   }
 
-  const activeModel = get().getActiveModel();
-  if (activeModel) {
-    useEditorStore.getState().loadModel(activeModel);
-  }
-  get().saveToLocalStorage();
+  return null;
 }

@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./TopBarButtons.css";
 
 export function ToolbarButton({
   label,

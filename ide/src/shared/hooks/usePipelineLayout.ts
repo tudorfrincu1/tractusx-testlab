@@ -25,9 +25,9 @@
 
 import { useMemo, useEffect, useRef } from "react";
 import { useNodesState, useEdgesState } from "@xyflow/react";
-import type { FlowData } from "@/features/tck-dashboard/dataflow/dataFlowBuilder";
-import { flowDataToReactFlow, type StageStatusMap } from "@/features/tck-dashboard/dataflow/flowDataToReactFlow";
-import { layoutPipelineGraph } from "@/features/tck-dashboard/dataflow/pipelineLayout";
+import type { FlowData } from "@/features/tck-dashboard/dataflow/builder/dataFlowBuilder";
+import { flowDataToReactFlow, type StageStatusMap } from "@/features/tck-dashboard/dataflow/builder/flowDataToReactFlow";
+import { layoutPipelineGraph } from "@/features/tck-dashboard/dataflow/graph/pipelineLayout";
 
 export type LayoutDirection = "TB" | "LR";
 

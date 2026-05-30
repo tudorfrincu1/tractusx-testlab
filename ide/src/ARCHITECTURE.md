@@ -8,9 +8,43 @@
 
 > **Authoritative target:** the exhaustive, depth-by-depth folder tree, deltas, and
 > migration phases live in
-> [docs/developer/refactor-plan/ide-refactor-plan.md](../../docs/developer/refactor-plan/ide-refactor-plan.md).
+> [docs/developer/refactor-plan/ide-refactor-plan.md](../../docs/developer/refactor-plan/ide-refactor-plan.md)
+> (see **§0** for the objective and **§2** for the complete annotated module tree).
 > This file is the quick-reference summary. When in doubt, the refactor plan wins;
 > keep this doc consistent with it.
+
+## Objective — a Deeply Modular Frontend
+
+**The goal is a deeply modular frontend, not merely "split files over 300 lines."**
+Every concern — hooks, helpers, stores, sync, serialization, block definitions,
+catalog loading, field classes, transforms, and views — is a **module in its own
+right**: a folder with a single nameable responsibility, its own barrel (`index.ts`)
+as public surface, and freedom to nest into **sub-modules within sub-modules**
+wherever a real responsibility seam exists.
+
+**File size is only one of several triggers** that reveal where modularity is
+missing — never the goal. Any one of these signals a module is needed:
+
+1. **A file bundles more than one nameable responsibility** — even well under 300
+   lines (loading *and* transforming *and* validating = three modules in one file).
+2. **A folder is a flat dump of siblings** that obviously cluster by concern.
+3. **A file exceeds 300 lines** — the loudest trigger, but the *last* to rely on.
+4. **The same logic appears twice** — extract it into one importable module.
+
+### Guardrail — no over-engineering (non-negotiable)
+
+Nest **only** at real, nameable responsibility seams. Each module has a single
+nameable purpose and a minimal public surface. **Do not** create a single-function
+"module" just to add depth, do not split a cohesive unit, and do not invent a folder
+holding one stray file with no sibling concern (unless the plan §2 tree defines that
+seam, e.g. a one-directional `reader/`). The boring, readable structure a human can
+navigate always wins over artificial depth.
+
+### Doctrine — behavior + appearance preserving
+
+Modularization is **purely structural**: no change to behavior, generated output,
+styling, or any observable contract. Every change must stay green on `tsc --noEmit`,
+`vite build`, and the test suite, and be pixel-identical in the live browser.
 
 ## Top-Level Layers
 
@@ -72,8 +106,20 @@ features/block-editor/
   toolbox/                       # dynamic toolbox built from the catalog
   ui/                            # block-editor-local panels
 
+# other features are nested by concern too (see plan §2d for full trees):
+features/
+  environment-editor/            # services/ + variables/ + preview/ + shared/ (FieldWithToggle)
+  tck-dashboard/                 # forms/ + pipeline/ + dataflow/{graph, panels, builder}
+  yaml-editor/                   # editors/{Monaco, Schema, Testdata} + VariablePicker/
+  preconditions/                 # modal/ + list/ + rules/
+  project-explorer/              # tree/ + contextMenu/ + actions/
+
+models/
+  schema/                        # testSchema, phaseSchema, assertionSchema (split by concern)
+
 store/
-  project/ editor/ environment/ execution/ compile/ notifications/ ui/ selectors/
+  project/ editor/ environment/ execution/ compile/ notifications/ ui/
+  selectors/                     # derived read models, split per domain (no mutation)
 
 services/
   yaml/{yamlFieldMap, modelToYaml, yamlToModel, yamlLineMap}   # frozen v2 contract; single field-map source
@@ -143,10 +189,14 @@ assets/styles/
 - Max **30 lines** per function — extract helpers.
 - One component per `.tsx` file.
 
-**Modularity is by design — the line limit is a *trigger* to check it, not the goal.**
-Write small, single-responsibility units from the start. When splitting an oversized
-file, extract **reusable** units along responsibility seams (one concern per file) into
-importable modules — never cut a file arbitrarily in half, never duplicate logic.
+**Modularity is the objective; the 300-line limit is the *loudest* trigger, but the
+*last* one to rely on — not the goal** (see [Objective](#objective--a-deeply-modular-frontend)).
+A module is also needed when a file bundles more than one nameable responsibility
+(even under 300 lines), a folder is a flat dump of siblings that cluster by concern,
+or the same logic appears twice. Write small, single-responsibility units from the
+start. When splitting, extract **reusable** units along responsibility seams (one
+concern per module) into importable modules — never cut a file arbitrarily in half,
+never duplicate logic, and never nest where no real seam exists.
 
 ## Adding a New Feature
 

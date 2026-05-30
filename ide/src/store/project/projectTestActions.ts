@@ -23,8 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import { createEmptyTest } from "@/models/schema";
-import { uniqueName } from "../selectors/helpers";
-import type { ProjectState } from "../types";
+import { uniqueName } from "../selectors/storeBuilders";
+import type { ProjectState } from "../store.types";
 
 type Get = () => ProjectState;
 type Set = (partial: Partial<ProjectState>) => void;

@@ -23,8 +23,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useEditorStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { isTest, isTck } from "@/models/schema";
 
 import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
@@ -32,7 +32,6 @@ import WarningAmber from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import Science from "@mui/icons-material/Science";
 import { useSaveIndicator } from "./useSaveIndicator";
-import "./StatusBar.css";
 
 function formatFileName(file: { type: string; name: string }): string {
   if (file.type === "tck") return "index.yaml";

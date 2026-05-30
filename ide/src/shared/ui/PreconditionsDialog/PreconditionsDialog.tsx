@@ -27,7 +27,6 @@ import { useProjectStore } from "@/store";
 import { PolicySection } from "./PolicySection";
 import { VERSION_SCHEMAS } from "./constraintSchemas";
 import type { PreconditionDefinition, PolicyRule } from "@/models/schema";
-import "./PreconditionsDialog.css";
 
 export interface PreconditionsDialogProps {
   onClose: () => void;

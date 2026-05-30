@@ -30,7 +30,6 @@ import { useExecutionStore } from "../../../store/execution/useExecutionStore";
 import { useProjectStore } from "../../../store/project/useProjectStore";
 import { useCompileStore } from "../../../store/compile/useCompileStore";
 import { modelToYaml } from "../../../services";
-import "./ExecutionControls.css";
 
 /**
  * Execute / Pause / Resume / Stop button group for the top bar.

@@ -32,7 +32,6 @@ import { useExecutionStore } from "../../../store/execution/useExecutionStore";
 import { useProjectStore } from "../../../store/project/useProjectStore";
 import { modelToYaml } from "../../../services";
 import type { CompileStatus } from "../../../store/compile/useCompileStore";
-import "./ExecutionControls.css";
 
 /** Map compile status to the appropriate icon. */
 function CompileStatusIcon({ status }: { status: CompileStatus }) {

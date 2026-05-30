@@ -23,6 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 export { useProjectStore } from "./useProjectStore";
+export type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "./useProjectStore";
 
 export {
   STORAGE_KEY,
@@ -40,5 +41,5 @@ export {
   importProjectZip,
   downloadFile,
   importExampleFolder,
-} from "./projectIO";
-export type { ImportedProject } from "./projectIO";
+} from "@/services/project";
+export type { ImportedProject } from "@/services/project";

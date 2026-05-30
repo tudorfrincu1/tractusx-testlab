@@ -24,7 +24,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import "./EditableFileName.css";
 
 export interface EditableFileNameProps {
   name: string;

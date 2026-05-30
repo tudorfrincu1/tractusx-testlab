@@ -19,37 +19,36 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
-/* It was reviewed and tested by a human committer. */
+// This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+// It was reviewed and tested by a human committer.
 
-.console-tab {
-  padding: 8px 12px;
-}
+export {
+  exportProjectZip,
+  importProjectZip,
+  downloadFile,
+  importExampleFolder,
+} from "./projectImportExport";
+export type { ImportedProject } from "./projectImportExport";
 
-.console-line {
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  display: flex;
-  gap: 10px;
-  padding: 1px 0;
-}
+export {
+  writeTestsFolder,
+  writeSchemasFolder,
+  writeTestdataFolder,
+  readTestsFromZip,
+  readSchemasFromZip,
+  readTestdataFromZip,
+} from "./projectExportTransforms";
 
-.console-line__time {
-  color: var(--tx-text-muted);
-  flex-shrink: 0;
-  opacity: 0.6;
-}
+export { fetchTests, fetchSchemas, fetchTestdata } from "./projectImportTransforms";
 
-.console-line__level {
-  flex-shrink: 0;
-  font-weight: 600;
-  min-width: 44px;
-}
+export {
+  STORAGE_KEY,
+  OLD_STORAGE_KEY,
+  serializeProject,
+  deserializeProject,
+  deserializeOldFormat,
+} from "./projectFilePersistence";
+export type { SerializedProject, DeserializedProject } from "./projectFilePersistence";
 
-.console-line__level--info { color: #89b4fa; }
-.console-line__level--warn { color: #f9e2af; }
-.console-line__level--error { color: #f38ba8; }
-.console-line__level--debug { color: #a6adc8; }
-
-.console-line__msg { color: var(--tx-text); }
+export { parseTestLabDocument } from "./projectDocumentParser";
+export type { ParsedProjectData } from "./projectDocumentParser";

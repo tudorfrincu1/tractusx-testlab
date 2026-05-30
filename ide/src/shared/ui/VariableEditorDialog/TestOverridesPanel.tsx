@@ -26,7 +26,6 @@ import { useState, useCallback, useMemo } from "react";
 import { useProjectStore } from "@/store/project/useProjectStore";
 import { isTestRef } from "@/models/schema";
 import type { TestRef, TckDefinition } from "@/models/schema";
-import "./TestOverridesPanel.css";
 
 export function TestOverridesPanel() {
   const tck = useProjectStore((s) => s.tck);

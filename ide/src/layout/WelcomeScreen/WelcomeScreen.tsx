@@ -23,11 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 import { useRef } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useProjectStore } from "@/store";
+import { useEditorStore } from "@/store";
+import { useServiceStore } from "@/store";
 import { yamlToModel } from "@/services";
-import { importProjectZip, importExampleFolder } from "@/store/project/projectIO";
+import { importProjectZip, importExampleFolder } from "@/services/project";
 import { theme } from "@/shared/theme/tractusxTheme";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -40,7 +40,6 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import ScienceIcon from "@mui/icons-material/Science";
 import { ActionCard, ExampleCard } from "./WelcomeCards";
-import "./WelcomeScreen.css";
 
 /* ── Example definitions ────────────────────────────────────────────────── */
 

@@ -23,12 +23,12 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 import { useEffect, useRef, useState } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useProjectStore } from "@/store";
+import { useEditorStore } from "@/store";
+import { useServiceStore } from "@/store";
 import { yamlToModel } from "@/services";
-import { importProjectZip, importExampleFolder } from "@/store/project/projectIO";
-import { ExportDialog } from "@/features/export/ExportDialog";
+import { importProjectZip, importExampleFolder } from "@/services/project";
+import { ExportDialog } from "@/features/export";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { theme } from "@/shared/theme/tractusxTheme";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
@@ -44,7 +44,6 @@ import { TopBarHamburgerMenu, HamburgerMenuItem } from "./TopBarHamburgerMenu";
 import { ExecuteButton } from "./controls/ExecuteButton";
 import { CompileButton } from "./controls/CompileButton";
 import { BackendSettings } from "./controls/BackendSettings";
-import "./TopBar.css";
 export function TopBar() {
   const hasProject = useProjectStore((s) => s.hasProject);
   const activeFile = useProjectStore((s) => s.activeFile);

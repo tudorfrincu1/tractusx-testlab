@@ -26,7 +26,6 @@ import type { ServiceDefinition } from "@/models/schema";
 import type { ServiceFieldDef } from "@/store/environment/useServiceStore";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { SERVICE_SCHEMAS } from "@/store/environment/useServiceStore";
-import "./ServiceForm.css";
 
 /* ── Service Form ──────────────────────────────────────────────────────────── */
 

@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import type { ConsoleEntry } from "../types";
-import "./ConsoleTab.css";
 
 const MOCK_ENTRIES: readonly ConsoleEntry[] = [
   { time: "14:32:01", level: "info", message: "Compilation started for ccm-test-01.yaml" },

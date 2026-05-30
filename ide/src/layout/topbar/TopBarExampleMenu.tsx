@@ -24,7 +24,6 @@
 
 import { theme } from "@/shared/theme/tractusxTheme";
 import { DropdownItem } from "./TopBarButtons";
-import "./TopBarExampleMenu.css";
 
 import HttpIcon from "@mui/icons-material/Http";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";

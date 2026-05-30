@@ -32,7 +32,6 @@
 
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
-import "./AppErrorBoundary.css";
 
 interface Props {
   children: ReactNode;

@@ -23,7 +23,6 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import "./App.css";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { TopBar, StatusBar, NotificationBar, EditorPanels, ContextBar, BottomPanel } from "@/layout";
 import { NetworkDetailOverlay } from "@/layout/bottom-panel/NetworkDetailOverlay";

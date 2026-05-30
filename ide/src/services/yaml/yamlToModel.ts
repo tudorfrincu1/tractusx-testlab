@@ -24,6 +24,7 @@
 
 /**
  * Parses a YAML string into a TestLabDocument model.
+ * Field names and order reference the canonical yamlFieldMap.
  */
 
 import yaml from "js-yaml";
@@ -33,6 +34,7 @@ import type {
   ServiceDefinition, VariableDefinition,
 } from "@/models/schema";
 import { ScriptKind } from "@/models/schema";
+import type { StepFieldKey, PreconditionFieldKey } from "./yamlFieldMap";
 
 export type ParseResult =
   | { ok: true; model: TestLabDocument }
@@ -184,7 +186,7 @@ function parseTck(raw: Record<string, unknown>): TckDefinition {
 function parseSteps(raw: unknown): StepDefinition[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((s: unknown): StepDefinition => {
-    const obj = s as Record<string, unknown>;
+    const obj = s as Record<StepFieldKey, unknown>;
     return {
       id: String(obj.id ?? ""),
       uses: String(obj.uses ?? ""),
@@ -202,7 +204,7 @@ function parseSteps(raw: unknown): StepDefinition[] | undefined {
 function parsePreconditions(raw: unknown): PreconditionDefinition[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((p: unknown): PreconditionDefinition => {
-    const obj = p as Record<string, unknown>;
+    const obj = p as Record<PreconditionFieldKey, unknown>;
     return {
       id: String(obj.id ?? ""),
       uses: String(obj.uses ?? ""),

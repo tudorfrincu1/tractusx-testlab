@@ -29,6 +29,7 @@
 import yaml from "js-yaml";
 import type { TestLabDocument, ScriptDefinition, TckDefinition, StepDefinition, PreconditionDefinition } from "@/models/schema";
 import { isTck, isTestRef } from "@/models/schema";
+import { STEP_FIELDS, PRECONDITION_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS, buildOrderedRecord } from "./yamlFieldMap";
 
 export function modelToYaml(model: TestLabDocument): string {
   const obj = isTck(model) ? buildTckObject(model) : buildTestObject(model);
@@ -45,58 +46,62 @@ export function modelToYaml(model: TestLabDocument): string {
 }
 
 function buildTestObject(model: ScriptDefinition): Record<string, unknown> {
-  const obj: Record<string, unknown> = { kind: "test" };
-  if (model.testlab) obj.testlab = model.testlab;
-  if (model.id) obj.id = model.id;
-  if (model.namespace) obj.namespace = model.namespace;
-  if (model.metadata) obj.metadata = model.metadata;
-  if (model.env) obj.env = model.env;
-  if (model.preconditions) obj.preconditions = model.preconditions.map(buildPrecondition);
-  if (model.setup && model.setup.length > 0) obj.setup = model.setup.map(buildStep);
-  obj.steps = model.steps.map(buildStep);
-  if (model.teardown && model.teardown.length > 0) obj.teardown = model.teardown.map(buildStep);
-  return obj;
+  return buildOrderedRecord(TEST_ROOT_FIELDS, {
+    kind: "test",
+    testlab: model.testlab || undefined,
+    id: model.id || undefined,
+    namespace: model.namespace || undefined,
+    metadata: model.metadata || undefined,
+    env: model.env || undefined,
+    preconditions: model.preconditions ? model.preconditions.map(buildPrecondition) : undefined,
+    setup: model.setup && model.setup.length > 0 ? model.setup.map(buildStep) : undefined,
+    steps: model.steps.map(buildStep),
+    teardown: model.teardown && model.teardown.length > 0 ? model.teardown.map(buildStep) : undefined,
+  });
 }
 
 function buildTckObject(model: TckDefinition): Record<string, unknown> {
-  const obj: Record<string, unknown> = { kind: "tck" };
-  if (model.testlab) obj.testlab = model.testlab;
-  if (model.id) obj.id = model.id;
-  if (model.namespace) obj.namespace = model.namespace;
-  if (model.metadata) obj.metadata = model.metadata;
-  if (model.env) obj.env = model.env;
-  if (model.preconditions) obj.preconditions = model.preconditions.map(buildPrecondition);
-  obj.tests = model.tests.map((t) => {
+  const tests = model.tests.map((t) => {
     if (typeof t === "string") return t;
     if (isTestRef(t)) return t;
     return buildTestObject(t);
   });
-  return obj;
+
+  return buildOrderedRecord(TCK_ROOT_FIELDS, {
+    kind: "tck",
+    testlab: model.testlab || undefined,
+    id: model.id || undefined,
+    namespace: model.namespace || undefined,
+    metadata: model.metadata || undefined,
+    env: model.env || undefined,
+    preconditions: model.preconditions ? model.preconditions.map(buildPrecondition) : undefined,
+    tests,
+  });
 }
 
 function buildStep(step: StepDefinition): Record<string, unknown> {
-  const obj: Record<string, unknown> = {};
-  obj.id = step.id;
-  obj.uses = step.uses;
-  if (step.name) obj.name = step.name;
-  if (step.with && Object.keys(step.with).length > 0) obj.with = step.with;
-  if (step.returns) obj.returns = step.returns;
-  if (step.validate && step.validate.length > 0) obj.validate = step.validate;
-  if (step.on_failure) obj.on_failure = step.on_failure;
-  if (step.timeout_s != null) obj.timeout_s = step.timeout_s;
-  if (step.if) obj.if = step.if;
-  return obj;
+  return buildOrderedRecord(STEP_FIELDS, {
+    id: step.id,
+    uses: step.uses,
+    name: step.name || undefined,
+    with: step.with && Object.keys(step.with).length > 0 ? step.with : undefined,
+    returns: step.returns || undefined,
+    validate: step.validate && step.validate.length > 0 ? step.validate : undefined,
+    on_failure: step.on_failure || undefined,
+    timeout_s: step.timeout_s ?? undefined,
+    if: step.if || undefined,
+  });
 }
 
 function buildPrecondition(pre: PreconditionDefinition): Record<string, unknown> {
-  const obj: Record<string, unknown> = {};
-  obj.id = pre.id;
-  obj.uses = pre.uses;
-  if (pre.name) obj.name = pre.name;
-  if ("with" in pre && pre.with) obj.with = pre.with;
-  if (pre.returns) obj.returns = pre.returns;
-  if ("validate" in pre && pre.validate && pre.validate.length > 0) obj.validate = pre.validate;
-  return obj;
+  return buildOrderedRecord(PRECONDITION_FIELDS, {
+    id: pre.id,
+    uses: pre.uses,
+    name: pre.name || undefined,
+    with: "with" in pre && pre.with ? pre.with : undefined,
+    returns: pre.returns || undefined,
+    validate: "validate" in pre && pre.validate && pre.validate.length > 0 ? pre.validate : undefined,
+  });
 }
 
 function stripEmpty(obj: unknown): unknown {

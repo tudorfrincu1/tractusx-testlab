@@ -36,7 +36,7 @@ import { createEmptyTck } from "@/models/schema";
 import type { ValidationError } from "@/services/validation/validator";
 import { validate } from "@/services/validation/validator";
 import { modelToYaml, yamlToModel } from "@/services";
-import type { BottomPanelTab, NetworkEntry } from "@/layout/bottom-panel/types";
+import type { BottomPanelTab, NetworkEntry } from "@/layout/bottom-panel/bottomPanel.types";
 
 export type GraphMode = "execution" | "dataflow";
 

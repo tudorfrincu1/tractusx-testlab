@@ -25,7 +25,6 @@
 import { useEffect, useCallback } from "react";
 import { TckVariableTable } from "./TckVariableTable";
 import { TestOverridesPanel } from "./TestOverridesPanel";
-import "./VariableEditorDialog.css";
 
 export interface VariableEditorDialogProps {
   onClose: () => void;

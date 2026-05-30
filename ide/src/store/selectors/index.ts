@@ -22,7 +22,10 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { getAggregatedVariables, getTestSummaries } from "./selectors";
-export type { AggregatedVariable, TestSummary } from "./selectors";
+export { getAggregatedVariables } from "./variableSelectors";
+export type { AggregatedVariable } from "./variableSelectors";
 
-export { uniqueName, buildTckTestsArray } from "./helpers";
+export { getTestSummaries } from "./testSelectors";
+export type { TestSummary } from "./testSelectors";
+
+export { uniqueName, buildTckTestsArray } from "./storeBuilders";

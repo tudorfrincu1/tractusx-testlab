@@ -23,9 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import { modelToYaml } from "@/services";
-import { uniqueName } from "../selectors/helpers";
-import { downloadFile } from "./projectIO";
-import type { ProjectState } from "../types";
+import { uniqueName } from "../selectors/storeBuilders";
+import { downloadFile } from "@/services/project";
+import type { ProjectState } from "../store.types";
 
 type Get = () => ProjectState;
 type Set = (partial: Partial<ProjectState>) => void;

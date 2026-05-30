@@ -26,26 +26,16 @@ import type {
   TckDefinition,
   ScriptDefinition,
   TestLabDocument,
-} from "@/models/schema";
-import type { AggregatedVariable, TestSummary } from "./selectors/selectors";
+  ActiveFile,
+  SchemaFile,
+  TestdataFile,
+} from "@/models";
+import type { AggregatedVariable } from "./selectors/variableSelectors";
+import type { TestSummary } from "./selectors/testSelectors";
 
-/* ── Types ──────────────────────────────────────────────────────────────── */
+/* ── Types (re-exported from models for backward compat) ────────────────── */
 
-export interface ActiveFile {
-  type: "tck" | "test" | "schema" | "testdata" | "preconditions" | "environment";
-  name: string;
-}
-
-export interface SchemaFile {
-  name: string;
-  content: string;
-}
-
-export interface TestdataFile {
-  name: string;
-  content: string;
-  type: string;
-}
+export type { ActiveFile, SchemaFile, TestdataFile };
 
 /* ── Store interface ────────────────────────────────────────────────────── */
 

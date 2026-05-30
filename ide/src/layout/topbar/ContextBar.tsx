@@ -23,9 +23,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { FolderIcon, FolderOpenIcon, FileTypeIcon, ViewTypeIcon } from "./ContextBarIcons";
-import "./ContextBar.css";
 
 /** Types that represent TCK-level views (not files in folders) */
 const TCK_VIEW_TYPES = new Set(["tck", "environment", "preconditions"]);

@@ -32,7 +32,7 @@ import type { TestLabDocument, ScriptDefinition, Step } from "@/models/schema";
 import { isTck, isTemplateStep, isTestRef } from "@/models/schema";
 import { getStepColor } from "@/shared/theme/tractusxTheme";
 import type { GraphMode } from "@/store/editor/useEditorStore";
-import { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./graphHelpers";
+import { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./dependencyGraphNodeBuilders";
 
 export interface GraphData {
   nodes: Node[];

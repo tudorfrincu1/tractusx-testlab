@@ -27,3 +27,11 @@ export { yamlToModel } from "./yamlToModel";
 export type { ParseResult } from "./yamlToModel";
 export { findStepLineRange } from "./yamlLineMap";
 export type { YamlLineRange } from "./yamlLineMap";
+export {
+  STEP_FIELDS, PRECONDITION_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS,
+  VALIDATION_FIELDS, buildOrderedRecord,
+} from "./yamlFieldMap";
+export type {
+  StepFieldKey, PreconditionFieldKey, TestRootFieldKey, TckRootFieldKey,
+  ValidationFieldKey,
+} from "./yamlFieldMap";

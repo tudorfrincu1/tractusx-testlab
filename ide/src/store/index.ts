@@ -24,7 +24,7 @@
 
 /** Barrel re-export — all public symbols from store subfolders. */
 
-export * from "./types";
+export * from "./store.types";
 export * from "./editor";
 export * from "./environment";
 export * from "./compile";

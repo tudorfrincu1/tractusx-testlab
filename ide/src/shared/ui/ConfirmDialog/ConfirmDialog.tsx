@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useEffect, useCallback } from "react";
-import "./ConfirmDialog.css";
 
 export interface ConfirmDialogProps {
   title: string;

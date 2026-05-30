@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { VariableDefinition } from "@/models/schema";
-import type { AggregatedVariable } from "@/store/selectors/selectors";
+import type { AggregatedVariable } from "@/store/selectors/variableSelectors";
 
 const VARIABLE_TYPES = ["string", "number", "boolean", "object", "array"] as const;
 

@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import type { PerformanceEntry } from "../types";
-import "./PerformanceTab.css";
 
 const MAX_DURATION_MS = 2500;
 

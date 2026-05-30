@@ -22,15 +22,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { modelToYaml } from "./yaml";
-export { yamlToModel } from "./yaml";
-export type { ParseResult } from "./yaml";
-export { findStepLineRange } from "./yaml";
-export type { YamlLineRange } from "./yaml";
-export { modelToGraph } from "./graph";
-export * from "./project";
-export type { GraphData } from "./graph";
-export { getStepService, collectVariableRefs, getServiceColor, buildTckSummaryGraph } from "./graph";
-export { validate, setKnownStepTypes } from "./validation/validator";
-export type { ValidationError } from "./validation/validator";
-export { modelToSequence } from "./sequence";
+/** Barrel re-export — all public symbols from shared/ submodules. */
+
+export * from "./hooks";
+export * from "./ui";
+export * from "./theme/tractusxTheme";

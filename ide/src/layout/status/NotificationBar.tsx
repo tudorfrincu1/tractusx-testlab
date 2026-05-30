@@ -27,10 +27,9 @@ import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import { useExecutionStore } from "@/store/execution/useExecutionStore";
-import { useNotificationStore } from "@/store/notifications/useNotificationStore";
-import type { NotificationSeverity } from "@/store/notifications/useNotificationStore";
-import "./NotificationBar.css";
+import { useExecutionStore } from "@/store";
+import { useNotificationStore } from "@/store";
+import type { NotificationSeverity } from "@/store";
 
 /** Auto-dismiss delay for success messages (ms). */
 const SUCCESS_AUTO_DISMISS_MS = 5_000;

@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useEffect, useRef, useState } from "react";
-import "./TopBarHamburgerMenu.css";
 
 export interface HamburgerMenuItem {
   label: string;

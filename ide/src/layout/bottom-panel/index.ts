@@ -24,4 +24,4 @@
 
 export { BottomPanel } from "./BottomPanel";
 export { NetworkDetailOverlay } from "./NetworkDetailOverlay";
-export type { BottomPanelTab, NetworkEntry, ConsoleEntry, PerformanceEntry } from "./types";
+export type { BottomPanelTab, NetworkEntry, ConsoleEntry, PerformanceEntry } from "./bottomPanel.types";
