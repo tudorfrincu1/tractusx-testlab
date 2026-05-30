@@ -236,10 +236,8 @@ class ServiceManager:
 
     @staticmethod
     def _create_dsp_provider_service(service_definition: ServiceDefinition) -> object:
-        from tractusx_testlab.steps.connector.consume import _DspConsumer
-
         # Provider service uses the same lightweight DSP client for now
-        return _DspConsumer(base_url=service_definition.base_url)
+        return ServiceManager._create_dsp_consumer_service(service_definition)
 
     # ------------------------------------------------------------------
     # Lifecycle

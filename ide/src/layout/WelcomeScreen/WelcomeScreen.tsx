@@ -23,9 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useRef } from "react";
-import { useProjectStore } from "@/store";
-import { useEditorStore } from "@/store";
-import { useServiceStore } from "@/store";
+import { useProjectStore, useEditorStore, useServiceStore } from "@/store";
 import { yamlToModel } from "@/services";
 import { importProjectZip, importExampleFolder } from "@/services/project";
 import { theme } from "@/shared/theme/tractusxTheme";
@@ -33,12 +31,8 @@ import { theme } from "@/shared/theme/tractusxTheme";
 import AddIcon from "@mui/icons-material/Add";
 import FileOpenIcon from "@mui/icons-material/FileOpen";
 import HttpIcon from "@mui/icons-material/Http";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import StorageIcon from "@mui/icons-material/Storage";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import ScienceIcon from "@mui/icons-material/Science";
 import { ActionCard, ExampleCard } from "./WelcomeCards";
 
 /* ── Example definitions ────────────────────────────────────────────────── */

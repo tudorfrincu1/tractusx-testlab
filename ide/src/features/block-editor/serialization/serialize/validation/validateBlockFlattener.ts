@@ -25,6 +25,23 @@
 
 import type { InlineValidation } from "@/models/schema";
 
+/** Optional assertion fields that get forwarded from inline validation to the flattened step. */
+const OPTIONAL_WITH_FIELDS = ["value", "schema", "min", "max", "path", "json_path", "store_in_variable"] as const;
+
+/** Build the `with` block for a flattened assertion step. */
+function buildAssertionWith(w: Record<string, unknown>, stepId: string): Record<string, unknown> {
+  const outputName = String(w.input ?? "");
+  const operator = String(w.operator ?? "");
+  const withBlock: Record<string, unknown> = {
+    input: `\${{ steps.${stepId}.${outputName} }}`,
+    operator,
+  };
+  for (const field of OPTIONAL_WITH_FIELDS) {
+    if (w[field] !== undefined) withBlock[field] = w[field];
+  }
+  return withBlock;
+}
+
 /** Extract inline validate assertions from a step and emit them as standalone v2 assertion steps. */
 export function flattenValidateToSteps(step: Record<string, unknown>): Record<string, unknown>[] {
   const validate = step.validate as InlineValidation[] | undefined;
@@ -38,22 +55,11 @@ export function flattenValidateToSteps(step: Record<string, unknown>): Record<st
     const outputName = String(w.input ?? "");
     const operator = String(w.operator ?? "");
     const assertId = `assert_${outputName || "check"}_${counter++}`;
-    const withBlock: Record<string, unknown> = {
-      input: `\${{ steps.${stepId}.${outputName} }}`,
-      operator,
-    };
-    if (w.value !== undefined) withBlock.value = w.value;
-    if (w.schema !== undefined) withBlock.schema = w.schema;
-    if (w.min !== undefined) withBlock.min = w.min;
-    if (w.max !== undefined) withBlock.max = w.max;
-    if (w.path !== undefined) withBlock.path = w.path;
-    if (w.json_path !== undefined) withBlock.json_path = w.json_path;
-    if (w.store_in_variable !== undefined) withBlock.store_in_variable = w.store_in_variable;
     result.push({
       id: assertId,
       uses: "validate/assert",
       name: `Assert ${operator}: ${outputName}`,
-      with: withBlock,
+      with: buildAssertionWith(w, stepId),
     });
   }
   // Remove inline validate from the parent step since we've flattened them

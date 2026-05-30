@@ -36,7 +36,7 @@ interface TopBarHamburgerMenuProps {
   items: HamburgerMenuItem[];
 }
 
-export function TopBarHamburgerMenu({ items }: TopBarHamburgerMenuProps) {
+export function TopBarHamburgerMenu({ items }: Readonly<TopBarHamburgerMenuProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -79,8 +79,8 @@ export function TopBarHamburgerMenu({ items }: TopBarHamburgerMenuProps) {
 
       {isOpen && (
         <div className="hamburger__dropdown" style={{ top: dropdownTop }}>
-          {items.map((item, idx) => (
-            <div key={idx}>
+          {items.map((item) => (
+            <div key={item.label}>
               {item.dividerBefore && <div className="hamburger__divider" />}
               <button
                 className={`hamburger__item ${item.active ? "hamburger__item--active" : ""}`}

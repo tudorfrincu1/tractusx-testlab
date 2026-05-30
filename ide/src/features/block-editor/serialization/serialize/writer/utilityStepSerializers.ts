@@ -60,7 +60,7 @@ export function serializeExportVariable(block: Block): StepDefinition | null {
     uses: "util/export_env",
     name: `Export ${varName}`,
     with: { name: varName, value: emitVarRef("steps", varName) },
-  } as StepDefinition;
+  };
 }
 
 export function serializeImportVariable(block: Block): StepDefinition | null {
@@ -74,7 +74,7 @@ export function serializeImportVariable(block: Block): StepDefinition | null {
     uses: "import_variable",
     name: `Import ${exportVar} from ${testName}`,
     with: { test: testName, select: exportVar, store_in_variable: outputVar },
-  } as StepDefinition;
+  };
 }
 
 export function serializeSchemaImport(block: Block): StepDefinition | null {
@@ -87,7 +87,7 @@ export function serializeSchemaImport(block: Block): StepDefinition | null {
     name: `Load ${varName}`,
     with: { name: varName, source: "file", path: schemaPath },
     returns: { [varName]: "$" },
-  } as unknown as StepDefinition;
+  };
 }
 
 export function serializeUnsupportedStep(block: Block, knownOutputs: ReadonlySet<string>): StepDefinition {
@@ -102,7 +102,7 @@ export function serializeUnsupportedStep(block: Block, knownOutputs: ReadonlySet
     uses: originalType,
     name: stepDescription || undefined,
     with: params,
-  } as unknown as StepDefinition;
+  };
 }
 
 export function serializeOperationOrTemplate(block: Block, knownOutputs: ReadonlySet<string>): StepDefinition {
@@ -135,5 +135,5 @@ export function serializeOperationOrTemplate(block: Block, knownOutputs: Readonl
     uses: originalType,
     name: stepDescription || undefined,
     with: params,
-  } as unknown as StepDefinition;
+  };
 }

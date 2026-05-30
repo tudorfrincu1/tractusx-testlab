@@ -62,8 +62,7 @@ if TYPE_CHECKING:
 # Regex patterns for parsing condition expressions
 # ---------------------------------------------------------------------------
 
-# ${{ ... }} wrapper — captures inner expression
-_EXPRESSION_RE = re.compile(r"^\$\{\{\s*(.*?)\s*\}\}$")
+# ${{ ... }} wrapper — unwrapped via string ops to avoid any ReDoS risk
 
 # Status functions: success(), failure(), always()
 _STATUS_FN_RE = re.compile(r"^(success|failure|always)\(\)$")
@@ -117,10 +116,9 @@ class ConditionEvaluator:
         if not expr:
             return True
 
-        # Strip ${{ }} wrapper if present
-        m = _EXPRESSION_RE.match(expr)
-        if m:
-            expr = m.group(1).strip()
+        # Strip ${{ }} wrapper if present (string ops — no regex backtracking)
+        if expr.startswith("${{") and expr.endswith("}}"):
+            expr = expr[3:-2].strip()
 
         if not expr:
             return True

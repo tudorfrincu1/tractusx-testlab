@@ -52,45 +52,16 @@ class TransferDataStep(BaseStep):
         consumer = context.get_consumer_service()
         url = f"{context.get_consumer_base_url()}/v3/transferprocesses"
 
-        if params.get("negotiation_id"):
-            negotiation_id = params["negotiation_id"]
-        else:
-            negotiation_id = context.get_variable(NEGOTIATION_ID)
+        negotiation_id = params.get("negotiation_id") or context.get_variable(NEGOTIATION_ID)
 
         edr_entry = consumer.get_edr_entry(
             negotiation_id=negotiation_id,
             verify=params.get("verify"),
         )
 
-        data_address_result = None
-        if edr_entry:
-            transfer_process_id = edr_entry.get("transferProcessId") or edr_entry.get("@id")
-            context.set_variable(TRANSFER_ID, transfer_process_id)
-            context.set_variable(EDR_ENTRY, edr_entry)
+        data_address_result = _resolve_data_address(edr_entry, consumer, context, params)
+        endpoint, auth_token = _extract_endpoint_and_token(data_address_result)
 
-            # Get the actual data address (endpoint + auth token) using the transfer process ID
-            try:
-                data_address_result = consumer.get_edr(
-                    transfer_id=transfer_process_id,
-                    verify=params.get("verify"),
-                )
-            except ConnectionError:
-                logger.warning("Failed to retrieve EDR data address for transfer %s", transfer_process_id)
-
-            if data_address_result:
-                endpoint = data_address_result.get("endpoint")
-                auth_token = data_address_result.get("authorization") or data_address_result.get("authCode")
-                if endpoint:
-                    context.set_variable("data_address", endpoint)
-                    context.set_variable(DATAPLANE_ENDPOINT, endpoint)
-                if auth_token:
-                    context.set_variable(EDR_TOKEN, auth_token)
-                    context.set_variable("edr_token", auth_token)
-
-        endpoint = data_address_result.get("endpoint") if data_address_result else None
-        auth_token = (
-            data_address_result.get("authorization") or data_address_result.get("authCode")
-        ) if data_address_result else None
         result_value = {
             "edr_entry": edr_entry,
             "data_address": endpoint,
@@ -105,3 +76,48 @@ class TransferDataStep(BaseStep):
                 body=result_value,
             ),
         )
+
+
+def _resolve_data_address(edr_entry: dict | None, consumer, context: "StepContext", params: dict) -> dict | None:
+    """Resolve the EDR data address from the entry, storing variables in context."""
+    if not edr_entry:
+        return None
+
+    transfer_process_id = edr_entry.get("transferProcessId") or edr_entry.get("@id")
+    context.set_variable(TRANSFER_ID, transfer_process_id)
+    context.set_variable(EDR_ENTRY, edr_entry)
+
+    try:
+        data_address_result = consumer.get_edr(
+            transfer_id=transfer_process_id,
+            verify=params.get("verify"),
+        )
+    except ConnectionError:
+        logger.warning("Failed to retrieve EDR data address for transfer %s", transfer_process_id)
+        return None
+
+    if data_address_result:
+        _store_data_address_vars(data_address_result, context)
+
+    return data_address_result
+
+
+def _store_data_address_vars(data_address_result: dict, context: "StepContext") -> None:
+    """Store endpoint and auth token variables from a data address result."""
+    endpoint = data_address_result.get("endpoint")
+    auth_token = data_address_result.get("authorization") or data_address_result.get("authCode")
+    if endpoint:
+        context.set_variable("data_address", endpoint)
+        context.set_variable(DATAPLANE_ENDPOINT, endpoint)
+    if auth_token:
+        context.set_variable(EDR_TOKEN, auth_token)
+        context.set_variable("edr_token", auth_token)
+
+
+def _extract_endpoint_and_token(data_address_result: dict | None) -> tuple[str | None, str | None]:
+    """Extract endpoint and auth token from data address result."""
+    if not data_address_result:
+        return None, None
+    endpoint = data_address_result.get("endpoint")
+    auth_token = data_address_result.get("authorization") or data_address_result.get("authCode")
+    return endpoint, auth_token

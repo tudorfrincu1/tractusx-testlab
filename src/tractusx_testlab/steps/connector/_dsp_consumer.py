@@ -34,8 +34,8 @@ class _DspConsumer:
 
     _DSP_CONTEXT = {
         "dspace": "https://w3id.org/dspace/2024/1/",
-        "odrl": "http://www.w3.org/ns/odrl/2/",
-        "dcat": "http://www.w3.org/ns/dcat#",
+        "odrl": "http://www.w3.org/ns/odrl/2/",  # NOSONAR — W3C standard namespace URI, not a network call
+        "dcat": "http://www.w3.org/ns/dcat#",  # NOSONAR — W3C standard namespace URI, not a network call
     }
 
     def __init__(self, base_url: str) -> None:

@@ -61,6 +61,28 @@ async def compile_yaml(request: Request) -> JSONResponse:
             "errors": [_error("", "Request body is empty")],
         })
 
+    data = _parse_yaml_body(raw)
+    if isinstance(data, JSONResponse):
+        return data
+
+    kind = _resolve_script_kind(data)
+    if isinstance(kind, JSONResponse):
+        return kind
+
+    parsed = _parse_script(data, kind)
+    if isinstance(parsed, JSONResponse):
+        return parsed
+
+    errors = _run_semantic_validation(parsed, kind)
+    if errors:
+        return JSONResponse(content={"status": "error", "errors": errors})
+
+    _logger.debug("YAML compile OK (kind=%s)", kind.value)
+    return JSONResponse(content={"status": "ok", "errors": []})
+
+
+def _parse_yaml_body(raw: bytes) -> dict | JSONResponse:
+    """Parse raw bytes as YAML, returning dict or error response."""
     try:
         data = yaml.safe_load(raw)
     except yaml.YAMLError as exc:
@@ -74,35 +96,35 @@ async def compile_yaml(request: Request) -> JSONResponse:
             "status": "error",
             "errors": [_error("", "YAML root must be a mapping")],
         })
+    return data
 
-    parser = YamlParser()
+
+def _resolve_script_kind(data: dict) -> ScriptKind | JSONResponse:
+    """Determine script kind from data, returning error response if invalid."""
     kind_value = data.get("kind")
     has_tests = "tests" in data
 
     try:
         if kind_value:
-            kind = ScriptKind(kind_value)
-        elif has_tests:
-            kind = ScriptKind.TCK
-        else:
-            kind = ScriptKind.TEST
+            return ScriptKind(kind_value)
+        return ScriptKind.TCK if has_tests else ScriptKind.TEST
     except ValueError:
         return JSONResponse(content={
             "status": "error",
             "errors": [_error("kind", f"Unknown script kind: {kind_value!r}")],
         })
 
+
+def _parse_script(data: dict, kind: ScriptKind) -> JSONResponse | object:
+    """Parse the YAML data into a script/tck definition or return error response."""
+    parser = YamlParser()
     try:
         if kind == ScriptKind.TCK:
-            parsed = parser.parse_tck_from_dict(data)
-        else:
-            parsed = parser.parse_script_from_dict(data)
+            return parser.parse_tck_from_dict(data)
+        return parser.parse_script_from_dict(data)
     except ValidationError as exc:
         errors = [
-            _error(
-                ".".join(str(loc) for loc in e["loc"]),
-                e["msg"],
-            )
+            _error(".".join(str(loc) for loc in e["loc"]), e["msg"])
             for e in exc.errors()
         ]
         return JSONResponse(content={"status": "error", "errors": errors})
@@ -112,7 +134,9 @@ async def compile_yaml(request: Request) -> JSONResponse:
             "errors": [_error("", f"Validation failed: {exc}")],
         })
 
-    # --- Semantic validation (empty name, unknown steps, etc.) ---
+
+def _run_semantic_validation(parsed: object, kind: ScriptKind) -> list[dict[str, str]]:
+    """Run semantic validation and return list of error dicts (empty if OK)."""
     errors: list[dict[str, str]] = []
 
     if not parsed.name or not parsed.name.strip():
@@ -121,15 +145,17 @@ async def compile_yaml(request: Request) -> JSONResponse:
     if kind == ScriptKind.TEST:
         result = _validator.validate(parsed, version=parsed.dataspace_version)
         for issue in result.issues:
-            path = issue.field or ""
-            if issue.phase:
-                path = f"{issue.phase}[{issue.step_index}].{path}" if path else f"{issue.phase}[{issue.step_index}]"
-            elif issue.step_index is not None:
-                path = f"steps[{issue.step_index}].{path}" if path else f"steps[{issue.step_index}]"
+            path = _build_issue_path(issue)
             errors.append(_error(path, issue.message))
 
-    if errors:
-        return JSONResponse(content={"status": "error", "errors": errors})
+    return errors
 
-    _logger.debug("YAML compile OK (kind=%s)", kind.value)
-    return JSONResponse(content={"status": "ok", "errors": []})
+
+def _build_issue_path(issue) -> str:
+    """Build a structured path string from a validation issue."""
+    path = issue.field or ""
+    if issue.phase:
+        return f"{issue.phase}[{issue.step_index}].{path}" if path else f"{issue.phase}[{issue.step_index}]"
+    if issue.step_index is not None:
+        return f"steps[{issue.step_index}].{path}" if path else f"steps[{issue.step_index}]"
+    return path

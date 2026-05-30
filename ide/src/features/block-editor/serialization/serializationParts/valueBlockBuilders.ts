@@ -62,7 +62,7 @@ export function readValueBlockAsString(block: Block | null): string | undefined 
   }
   if (block.type === "value_number") {
     const n = block.getFieldValue("VALUE");
-    return n !== undefined ? String(n) : undefined;
+    return n === undefined ? undefined : String(n);
   }
   if (block.type === "value_boolean") {
     return block.getFieldValue("VALUE") || undefined;
@@ -78,40 +78,37 @@ export function toBlockValueString(value: unknown): string {
   return String(value);
 }
 
-export function readValueBlockAsUnknown(block: Block | null): unknown {
-  if (!block) return undefined;
-  if (block.type === "value_list") {
-    const items: unknown[] = [];
-    let current = block.getInputTargetBlock("ITEMS");
-    while (current) {
-      if (current.type === "list_item") {
-        const valueBlock = current.getInputTargetBlock("VALUE");
-        const val = readValueBlockAsUnknown(valueBlock);
-        if (val !== undefined) items.push(val);
-      }
-      current = current.getNextBlock();
+function readListBlock(block: Block): unknown[] {
+  const items: unknown[] = [];
+  let current = block.getInputTargetBlock("ITEMS");
+  while (current) {
+    if (current.type === "list_item") {
+      const valueBlock = current.getInputTargetBlock("VALUE");
+      const val = readValueBlockAsUnknown(valueBlock);
+      if (val !== undefined) items.push(val);
     }
-    return items;
+    current = current.getNextBlock();
   }
-  if (block.type === "value_object") {
-    const entries: Record<string, unknown> = {};
-    let current = block.getInputTargetBlock("ENTRIES");
-    while (current) {
-      if (current.type === "key_value_pair") {
-        const key = current.getFieldValue("KEY") || "";
-        if (key) {
-          const valueBlock = current.getInputTargetBlock("VALUE");
-          entries[key] = readValueBlockAsUnknown(valueBlock);
-        }
-      }
-      current = current.getNextBlock();
-    }
-    return entries;
-  }
-  const rawValue = readValueBlockAsString(block);
-  if (rawValue === undefined) return undefined;
-  if (parseVarRef(rawValue)) return rawValue;
+  return items;
+}
 
+function readObjectBlock(block: Block): Record<string, unknown> {
+  const entries: Record<string, unknown> = {};
+  let current = block.getInputTargetBlock("ENTRIES");
+  while (current) {
+    if (current.type === "key_value_pair") {
+      const key = current.getFieldValue("KEY") || "";
+      if (key) {
+        const valueBlock = current.getInputTargetBlock("VALUE");
+        entries[key] = readValueBlockAsUnknown(valueBlock);
+      }
+    }
+    current = current.getNextBlock();
+  }
+  return entries;
+}
+
+function tryParseJson(rawValue: string): unknown {
   const trimmed = rawValue.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
@@ -120,12 +117,22 @@ export function readValueBlockAsUnknown(block: Block | null): unknown {
       return rawValue;
     }
   }
-
   return rawValue;
 }
 
+export function readValueBlockAsUnknown(block: Block | null): unknown {
+  if (!block) return undefined;
+  if (block.type === "value_list") return readListBlock(block);
+  if (block.type === "value_object") return readObjectBlock(block);
+
+  const rawValue = readValueBlockAsString(block);
+  if (rawValue === undefined) return undefined;
+  if (parseVarRef(rawValue)) return rawValue;
+  return tryParseJson(rawValue);
+}
+
 export function createValueBlockFromString(ws: Workspace, strVal: string): Block {
-  // Try v2 scoped refs first (steps, preconditions, services, metadata, setup)
+  // Try v2 scoped refs first (steps, preconditions, services, metadata, setup, env)
   const parsed = parseVarRef(strVal);
   if (parsed) {
     const blockType = SCOPE_TO_BLOCK_TYPE[parsed.scope];
@@ -136,27 +143,25 @@ export function createValueBlockFromString(ws: Workspace, strVal: string): Block
     }
   }
 
-  const parsedVar = parseVarRef(strVal);
-  if (parsedVar && parsedVar.scope === "env") {
-    const vb = makeBlock(ws, "var_env");
-    setDropdownValue(vb, "VAR_NAME", parsedVar.path);
-    return vb;
-  }
-  const varMatch = strVal.match(/^(?:\{\{(.+)\}\}|\$\{(.+)\})$/);
+  // Legacy template syntax: {{name}} or ${name} → env variable
+  const varRegex = /^(?:\{\{([^}]+)\}\}|\$\{([^}]+)\})$/;
+  const varMatch = varRegex.exec(strVal);
   if (varMatch) {
     const vb = makeBlock(ws, "var_env");
-    const name = varMatch[1] || varMatch[2];
-    setDropdownValue(vb, "VAR_NAME", name);
+    setDropdownValue(vb, "VAR_NAME", varMatch[1] || varMatch[2]);
     return vb;
   }
 
+  // Numeric literal
   const trimmed = strVal.trim();
   const num = Number(trimmed);
-  if (!isNaN(num) && trimmed !== "" && String(num) === trimmed) {
+  if (!Number.isNaN(num) && trimmed !== "" && String(num) === trimmed) {
     const nb = makeBlock(ws, "value_number");
     nb.setFieldValue(num, "VALUE");
     return nb;
   }
+
+  // Default: string literal
   const vb = makeBlock(ws, "value_string");
   vb.setFieldValue(strVal, "VALUE");
   return vb;

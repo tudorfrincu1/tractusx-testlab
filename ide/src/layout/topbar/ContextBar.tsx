@@ -89,15 +89,14 @@ export function ContextBar() {
       {isFileView && activeFile && (
         <>
           <span className="context-bar__separator">›</span>
-          <span
+          <button
             className="context-bar__segment context-bar__segment--clickable"
             onClick={handleRootClick}
-            role="button"
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === "Enter") handleRootClick(); }}
           >
             <FolderOpenIcon /> {FOLDER_LABELS[activeFile.type]}
-          </span>
+          </button>
           <span className="context-bar__separator">›</span>
           <span className="context-bar__segment context-bar__segment--active">
             <FileTypeIcon type={activeFile.type} /> {getFileLabel(activeFile.type, activeFile.name)}

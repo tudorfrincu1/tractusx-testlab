@@ -161,6 +161,7 @@ find ide/src -name '*.ts' -o -name '*.tsx' | xargs wc -l | awk '$1 > 300 && !/to
 cd ide && npx tsc --noEmit   # Must succeed
 cd ide && npx vite build     # Must succeed
 ```
+- **SonarQube**: Run `mcp_sonarqube_analyze_file_list` on all created/modified files. Fix CRITICAL/BLOCKER findings before delivering.
 
 ### Splitting Oversized Files
 Modularity is the goal; the line limit is just the trigger. Extract **reusable** units along responsibility seams — never cut a file arbitrarily. Shared logic becomes an importable module; never duplicate it.
@@ -219,6 +220,7 @@ grep -rn "except Exception:" src/ --include="*.py"                   # Must be e
 grep -rn "print(" src/ --include="*.py" | grep -v "_fingerprint"     # Must be empty
 python -m pytest tests/ -x -q                                        # Must pass
 ```
+- **SonarQube**: Run `mcp_sonarqube_analyze_file_list` on all created/modified files. Fix CRITICAL/BLOCKER findings before delivering.
 
 ### Splitting Oversized Files
 Modularity is the goal; the line limit is just the trigger. Extract **reusable** units along responsibility seams — never cut a file arbitrarily. Shared logic becomes an importable helper; never duplicate it.
@@ -274,6 +276,7 @@ python -m pytest tests/ -x -q                                              # Mus
 find tests -name '*.py' | xargs wc -l | awk '$1 > 300 && !/total/'        # Must be empty
 grep -rn "time.sleep\|asyncio.sleep" tests/ --include="*.py"               # Should be empty
 ```
+- **SonarQube**: Run `mcp_sonarqube_analyze_file_list` on all created/modified files. Fix CRITICAL/BLOCKER findings before delivering.
 
 ---
 

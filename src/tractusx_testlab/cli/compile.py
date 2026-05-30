@@ -257,4 +257,4 @@ def decompile(
         typer.echo(f"Decompiled → {out_path}")
         typer.echo(f"  Package  : {manifest.name} v{manifest.version}")
         typer.echo(f"  Checksum : {manifest.checksum[:32]}...")
-        typer.echo(f"  Verified : signature OK")
+        typer.echo("  Verified : signature OK")

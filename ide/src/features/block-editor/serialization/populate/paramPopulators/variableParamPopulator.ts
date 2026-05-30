@@ -35,8 +35,8 @@ export const variableParamPopulator: ParamPopulator = ({ stepBlock, fieldKey, pa
   if (value.startsWith("@")) {
     value = value.slice(1);
   } else {
-    const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(value);
-    if (varsMatch) value = varsMatch[1];
+    const varsMatch = /^\$\{\{\s*vars\.([^}]+)\}\}$/.exec(value);
+    if (varsMatch) value = varsMatch[1].trim();
   }
   setDropdownValue(stepBlock, fieldKey, value);
 };

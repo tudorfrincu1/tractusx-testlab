@@ -101,35 +101,7 @@ class YamlParser:
         shared_vars = parse_variables(data.get(keys.VARIABLES, {}))
 
         tests_raw = data.get(keys.TESTS, [])
-        tests = []
-        for entry in tests_raw:
-            if isinstance(entry, str):
-                if entry.startswith(_INCLUDE_PREFIX):
-                    rel_path = entry[len(_INCLUDE_PREFIX):].strip()
-                    if base_dir:
-                        script_path = (base_dir / rel_path).resolve()
-                        tests.append(YamlParser.parse_script(script_path))
-                    else:
-                        raise ValueError(f"Cannot resolve include path without base_dir: {entry}")
-                elif base_dir:
-                    script_path = (base_dir / entry).resolve()
-                    if script_path.exists():
-                        tests.append(YamlParser.parse_script(script_path))
-                        continue
-                    tests.append(entry)
-                else:
-                    tests.append(entry)
-            elif isinstance(entry, dict):
-                if _TEST_KEY in entry:
-                    rel_path = entry[_TEST_KEY]
-                    if base_dir:
-                        script_path = (base_dir / rel_path).resolve()
-                        if script_path.exists():
-                            tests.append(YamlParser.parse_script(script_path))
-                            continue
-                    tests.append(rel_path)
-                else:
-                    tests.append(YamlParser._build_script(entry, base_dir=base_dir))
+        tests = [YamlParser._resolve_test_entry(entry, base_dir) for entry in tests_raw]
 
         imports = [
             ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
@@ -145,6 +117,43 @@ class YamlParser:
             tests=tests,
             imports=imports,
         )
+
+    @staticmethod
+    def _resolve_test_entry(entry, base_dir: Optional[Path]):
+        """Resolve a single test entry (string or dict) into a parsed test or path."""
+        if isinstance(entry, str):
+            return YamlParser._resolve_string_test_entry(entry, base_dir)
+        if isinstance(entry, dict):
+            return YamlParser._resolve_dict_test_entry(entry, base_dir)
+        return entry
+
+    @staticmethod
+    def _resolve_string_test_entry(entry: str, base_dir: Optional[Path]):
+        """Resolve a string-typed test entry (include or file path)."""
+        if entry.startswith(_INCLUDE_PREFIX):
+            rel_path = entry[len(_INCLUDE_PREFIX):].strip()
+            if not base_dir:
+                raise ValueError(f"Cannot resolve include path without base_dir: {entry}")
+            script_path = (base_dir / rel_path).resolve()
+            return YamlParser.parse_script(script_path)
+
+        if base_dir:
+            script_path = (base_dir / entry).resolve()
+            if script_path.exists():
+                return YamlParser.parse_script(script_path)
+        return entry
+
+    @staticmethod
+    def _resolve_dict_test_entry(entry: dict, base_dir: Optional[Path]):
+        """Resolve a dict-typed test entry (test key reference or inline script)."""
+        if _TEST_KEY in entry:
+            rel_path = entry[_TEST_KEY]
+            if base_dir:
+                script_path = (base_dir / rel_path).resolve()
+                if script_path.exists():
+                    return YamlParser.parse_script(script_path)
+            return rel_path
+        return YamlParser._build_script(entry, base_dir=base_dir)
 
     @staticmethod
     def _build_script(data: dict, base_dir: Optional[Path] = None) -> ScriptDefinition:

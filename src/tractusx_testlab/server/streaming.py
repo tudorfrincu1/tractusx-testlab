@@ -27,10 +27,7 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import time
-from collections.abc import AsyncGenerator
 from typing import Annotated, Any
 
 import yaml
@@ -40,16 +37,14 @@ from starlette.responses import StreamingResponse
 
 from tractusx_testlab.models.definitions import TckDefinition
 from tractusx_testlab.models.enums import ScriptKind
-from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck
 
-from tractusx_testlab.server._event_buffer import BufferedEvent, EventBuffer
+from tractusx_testlab.server._event_buffer import EventBuffer
+from tractusx_testlab.server._sse_generator import create_event_queue, sse_event_generator
 
 _logger = logging.getLogger(__name__)
-
-_TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
 # Pending jobs: job_id → Tck (execution deferred until SSE stream connects)
 _pending_jobs: dict[str, Tck] = {}
@@ -135,7 +130,14 @@ async def _parse_and_execute_yaml(request: Request, player: TestlabPlayer) -> JS
     )
 
 
-@streaming_router.post("/run", status_code=202)
+@streaming_router.post(
+    "/run",
+    status_code=202,
+    responses={
+        400: {"description": "Request body is empty or contains invalid YAML"},
+        422: {"description": "YAML definition could not be parsed"},
+    },
+)
 async def run_test_yaml(
     request: Request,
     player: PlayerDep,
@@ -149,7 +151,14 @@ async def run_test_yaml(
     return await _parse_and_execute_yaml(request, player)
 
 
-@streaming_router.post("/run/yaml", status_code=202)
+@streaming_router.post(
+    "/run/yaml",
+    status_code=202,
+    responses={
+        400: {"description": "Request body is empty or contains invalid YAML"},
+        422: {"description": "YAML definition could not be parsed"},
+    },
+)
 async def run_yaml(
     request: Request,
     player: PlayerDep,
@@ -181,7 +190,12 @@ async def _execute_tck_bg(
 # ──────────────────────────────────────────────────────────────────────
 
 
-@streaming_router.get("/{job_id}/stream")
+@streaming_router.get(
+    "/{job_id}/stream",
+    responses={
+        404: {"description": "Job not found"},
+    },
+)
 async def stream_job_events(
     job_id: str,
     request: Request,
@@ -223,84 +237,3 @@ async def stream_job_events(
         },
     )
 
-
-# ──────────────────────────────────────────────────────────────────────
-# SSE generator utilities
-# ──────────────────────────────────────────────────────────────────────
-
-
-def create_event_queue(monitor: ExecutionMonitor) -> asyncio.Queue[tuple[str, dict[str, Any]]]:
-    """Register a callback on *monitor* that pushes events into a queue.
-
-    Returns the queue. The callback is sync-safe (uses ``put_nowait``).
-    """
-    queue: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue()
-
-    def _push_event(event: str, payload: dict[str, Any]) -> None:
-        queue.put_nowait((event, payload))
-
-    monitor.add_callback(_push_event)
-    return queue
-
-
-async def sse_event_generator(
-    queue: asyncio.Queue[tuple[str, dict[str, Any]]],
-    job_id: str,
-    event_buffer: EventBuffer,
-    last_event_id: int | None = None,
-    timeout_s: float = 600.0,
-) -> AsyncGenerator[str, None]:
-    """Yield SSE-formatted strings from *queue* until a terminal event arrives.
-
-    Features:
-        - **Replay**: If *last_event_id* is set, replays buffered events first.
-        - **Heartbeat**: Sends ``:keepalive`` comment every 15 s when idle.
-        - **Event IDs**: Every event includes a monotonic ``id:`` field.
-        - **Buffer**: Events are stored for future replay on reconnect.
-
-    Args:
-        queue: Event queue populated by :func:`create_event_queue`.
-        job_id: Job identifier for buffer scoping.
-        event_buffer: Shared event buffer instance.
-        last_event_id: If set, replay events with ID > this value.
-        timeout_s: Maximum seconds without a *real* event before closing.
-    """
-    # Phase 1: replay buffered events
-    if last_event_id is not None:
-        for buffered in event_buffer.get_events_after(job_id, last_event_id):
-            yield _format_sse(buffered.id, buffered.event, buffered.data)
-
-    # Phase 2: live stream with heartbeat
-    last_real_event = time.monotonic()
-    try:
-        while True:
-            try:
-                event, payload = await asyncio.wait_for(queue.get(), timeout=15.0)
-            except TimeoutError:
-                if time.monotonic() - last_real_event > timeout_s:
-                    event_id = event_buffer.next_id(job_id)
-                    timeout_data = {"reason": "No events received within timeout"}
-                    event_buffer.append(
-                        job_id, BufferedEvent(id=event_id, event="stream.timeout", data=timeout_data),
-                    )
-                    yield _format_sse(event_id, "stream.timeout", timeout_data)
-                    return
-                yield ":keepalive\n\n"
-                continue
-
-            last_real_event = time.monotonic()
-            event_id = event_buffer.next_id(job_id)
-            event_buffer.append(job_id, BufferedEvent(id=event_id, event=event, data=payload))
-            yield _format_sse(event_id, event, payload)
-
-            if event in _TERMINAL_EVENTS:
-                return
-    except asyncio.CancelledError:
-        _logger.debug("SSE stream cancelled by client disconnect")
-        raise
-
-
-def _format_sse(event_id: int, event: str, data: dict[str, Any]) -> str:
-    """Format a single SSE message with an ``id:`` field."""
-    payload = json.dumps(data, default=str)
-    return f"id: {event_id}\nevent: {event}\ndata: {payload}\n\n"

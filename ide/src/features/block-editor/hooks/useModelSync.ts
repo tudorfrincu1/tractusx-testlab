@@ -127,8 +127,8 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
         // workspace may be in transient state
       }
     };
-    window.addEventListener("testlab:force-sync", handler);
-    return () => window.removeEventListener("testlab:force-sync", handler);
+    globalThis.addEventListener("testlab:force-sync", handler);
+    return () => globalThis.removeEventListener("testlab:force-sync", handler);
   }, [ready, workspaceRef, catalogRef, setModelFromBlocks]);
 
   // Model → workspace sync (when YAML or load changes model)

@@ -145,6 +145,7 @@ Run this checklist after every implementation. Fix any failures before deliverin
 5. **Debug**: use `debug-ide` skill for systematic diagnosis (Reproduce → Diagnose → Fix → Verify)
 6. **Knowledge**: use `document-knowledge` skill to persist patterns (PAT), gotchas (GOTCHA), anti-patterns (ANTI), lessons (LESSON), fixes (FIX), API quirks (API) in `.github/kb/ide-kb.md`
 7. **Build from mockup**: use `build-from-mockup` skill when translating an HTML mockup from `ide/mockups/` into production React components. Decompose the mockup into organized components, hooks, CSS, and types — matching the visual design pixel-for-pixel.
+8. **SonarQube analysis**: after finishing all code changes, run `mcp_sonarqube_analyze_file_list` on every file you created or modified. Fix any CRITICAL or BLOCKER findings before delivering. MAJOR findings should be fixed when feasible. Document any accepted findings with justification.
 
 ## How to Split Oversized Files
 

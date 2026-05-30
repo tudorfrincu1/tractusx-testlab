@@ -25,8 +25,7 @@
 import { useEffect } from "react";
 import * as Blockly from "blockly";
 
-import { useEditorStore } from "@/store";
-import { useUiStore } from "@/store";
+import { useEditorStore, useUiStore } from "@/store";
 import {
   buildToolbox,
   populateWorkspaceFromModel,
@@ -36,7 +35,8 @@ import {
 } from "../config/blockDefinitions";
 import { populateOutputVariableBlocks } from "../blocks/common/outputDispenser";
 import { isTest } from "@/models/schema";
-import type { BlocklyWorkspaceRefs } from "./blocklyWorkspaceRefs";
+import type { TestLabDocument } from "@/models/schema";
+import type { BlocklyWorkspaceRefs, BlockCatalog } from "./blocklyWorkspaceRefs";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {
@@ -48,6 +48,52 @@ function disposeStatementChain(root: Blockly.Block, inputName: string) {
     child.dispose(true);
     child = next;
   }
+}
+
+/** Full workspace rebuild from model (used on file switch / load). */
+function rebuildWorkspace(
+  ws: Blockly.WorkspaceSvg,
+  model: TestLabDocument,
+  catalog: BlockCatalog,
+  modelKind: string,
+) {
+  ws.clear();
+  const rootBlock = ws.newBlock("test_root");
+  rootBlock.initSvg();
+  rootBlock.render();
+  rootBlock.moveBy(30, 30);
+
+  if (isTest(model)) {
+    rootBlock.setFieldValue(model.name || "my_test", "NAME");
+    rootBlock.setFieldValue(model.version || "1.0", "VERSION");
+    rootBlock.setFieldValue(model.description || "", "DESCRIPTION");
+  }
+  populateWorkspaceFromModel(ws, rootBlock, model, catalog);
+  cleanupOrphanBlocks(ws, rootBlock);
+
+  const vars = collectWorkspaceVariables(ws);
+  if (vars.length > 0) {
+    const refreshedToolbox = buildToolbox(catalog, modelKind, collectCategorizedVariables(ws)) as Blockly.utils.toolbox.ToolboxDefinition;
+    ws.updateToolbox(refreshedToolbox);
+  }
+}
+
+/** Incremental step-chain replacement (used on YAML edits). */
+function incrementalUpdate(
+  ws: Blockly.WorkspaceSvg,
+  model: TestLabDocument,
+  catalog: BlockCatalog,
+) {
+  if (!isTest(model)) return;
+  const rootBlock = ws.getBlocksByType("test_root", false)[0];
+  if (!rootBlock) return;
+  rootBlock.setFieldValue(model.name || "my_test", "NAME");
+  rootBlock.setFieldValue(model.version || "1.0", "VERSION");
+  rootBlock.setFieldValue(model.description || "", "DESCRIPTION");
+  for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
+    disposeStatementChain(rootBlock, input);
+  }
+  populateWorkspaceFromModel(ws, rootBlock, model, catalog);
 }
 
 interface UseBlocklyStoreSyncParams {
@@ -101,39 +147,9 @@ export function useBlocklyStoreSync({ refs, ready, modelKind }: UseBlocklyStoreS
 
       try {
         if (isLoad) {
-          // Full rebuild: clear everything and recreate from model (file switch)
-          ws.clear();
-          const rootBlock = ws.newBlock("test_root");
-          rootBlock.initSvg();
-          rootBlock.render();
-          rootBlock.moveBy(30, 30);
-
-          if (isTest(state.model)) {
-            rootBlock.setFieldValue(state.model.name || "my_test", "NAME");
-            rootBlock.setFieldValue(state.model.version || "1.0", "VERSION");
-            rootBlock.setFieldValue(state.model.description || "", "DESCRIPTION");
-          }
-          populateWorkspaceFromModel(ws, rootBlock, state.model, catalog);
-          cleanupOrphanBlocks(ws, rootBlock);
-
-          // Refresh toolbox with new file's variables
-          const vars = collectWorkspaceVariables(ws);
-          if (vars.length > 0) {
-            const refreshedToolbox = buildToolbox(catalog, modelKind, collectCategorizedVariables(ws)) as Blockly.utils.toolbox.ToolboxDefinition;
-            ws.updateToolbox(refreshedToolbox);
-          }
-        } else if (isTest(state.model)) {
-          // Incremental update: replace step chains in-place (YAML edit)
-          const rootBlock = ws.getBlocksByType("test_root", false)[0];
-          if (rootBlock) {
-            rootBlock.setFieldValue(state.model.name || "my_test", "NAME");
-            rootBlock.setFieldValue(state.model.version || "1.0", "VERSION");
-            rootBlock.setFieldValue(state.model.description || "", "DESCRIPTION");
-            for (const input of ["SETUP", "STEPS", "TEARDOWN"]) {
-              disposeStatementChain(rootBlock, input);
-            }
-            populateWorkspaceFromModel(ws, rootBlock, state.model, catalog);
-          }
+          rebuildWorkspace(ws, state.model, catalog, modelKind);
+        } else {
+          incrementalUpdate(ws, state.model, catalog);
         }
         populateOutputVariableBlocks(Blockly, ws);
       } catch (err) {

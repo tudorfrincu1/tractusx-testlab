@@ -76,6 +76,46 @@ function serializeBlockParams(
   return params;
 }
 
+/** Serialize a field-based parameter (dropdown, text, number, variable, etc.). */
+function serializeFieldParam(
+  block: Block,
+  paramType: string,
+  fieldKey: string,
+  knownOutputs: ReadonlySet<string>,
+): unknown {
+  const val = block.getFieldValue(fieldKey);
+  switch (paramType) {
+    case "dropdown":
+    case "endpoint_ref":
+    case "schema_path":
+      return (val && val !== "__NONE__") ? val : undefined;
+    case "variable":
+      if (!val || val === "__NONE__") return undefined;
+      return knownOutputs.has(val) ? emitVarRef("steps", val) : emitVarRef("env", val);
+    case "text":
+      return val ? String(val) : undefined;
+    case "number":
+      return (val !== undefined && val !== null) ? Number(val) : undefined;
+    default:
+      return undefined;
+  }
+}
+
+/** Serialize an array-typed parameter from chained blocks. */
+function serializeArrayParam(block: Block, fieldKey: string): unknown[] | undefined {
+  const items: unknown[] = [];
+  let itemBlock = block.getInputTargetBlock(fieldKey);
+  while (itemBlock) {
+    const serialized = serializeStructuralBlock(itemBlock);
+    if (serialized !== undefined) items.push(serialized);
+    itemBlock = itemBlock.getNextBlock();
+  }
+  return items.length > 0 ? items : undefined;
+}
+
+/** Field-based param types that use getFieldValue directly. */
+const FIELD_PARAM_TYPES = new Set(["dropdown", "endpoint_ref", "schema_path", "variable", "text", "number"]);
+
 /** Serialize one parameter based on its type. */
 function serializeSingleParam(
   block: Block,
@@ -84,26 +124,10 @@ function serializeSingleParam(
   catalog: BlockCatalog,
   knownOutputs: ReadonlySet<string>,
 ): unknown {
+  if (FIELD_PARAM_TYPES.has(p.type)) {
+    return serializeFieldParam(block, p.type, fieldKey, knownOutputs);
+  }
   switch (p.type) {
-    case "dropdown":
-    case "endpoint_ref":
-    case "schema_path": {
-      const val = block.getFieldValue(fieldKey);
-      return (val && val !== "__NONE__") ? val : undefined;
-    }
-    case "variable": {
-      const val = block.getFieldValue(fieldKey);
-      if (!val || val === "__NONE__") return undefined;
-      return knownOutputs.has(val) ? emitVarRef("steps", val) : emitVarRef("env", val);
-    }
-    case "text": {
-      const val = block.getFieldValue(fieldKey);
-      return val ? String(val) : undefined;
-    }
-    case "number": {
-      const val = block.getFieldValue(fieldKey);
-      return (val !== undefined && val !== null) ? Number(val) : undefined;
-    }
     case "json":
       return serializeJsonParam(block, fieldKey, knownOutputs);
     case "steps": {
@@ -114,23 +138,11 @@ function serializeSingleParam(
       const filters = readFilterExpressionChain(block.getInputTargetBlock(fieldKey));
       return filters.length > 0 ? filters : undefined;
     }
-    case "array": {
-      const items: unknown[] = [];
-      let itemBlock = block.getInputTargetBlock(fieldKey);
-      while (itemBlock) {
-        const serialized = serializeStructuralBlock(itemBlock);
-        if (serialized !== undefined) items.push(serialized);
-        itemBlock = itemBlock.getNextBlock();
-      }
-      return items.length > 0 ? items : undefined;
-    }
+    case "array":
+      return serializeArrayParam(block, fieldKey);
     default: {
       const connectedBlock = block.getInputTargetBlock(fieldKey);
-      if (connectedBlock) {
-        const val = readValueBlockAsString(connectedBlock);
-        return val || undefined;
-      }
-      return undefined;
+      return connectedBlock ? (readValueBlockAsString(connectedBlock) || undefined) : undefined;
     }
   }
 }
@@ -161,7 +173,7 @@ function serializeJsonParam(
   }
 
   const structured = readValueBlockAsUnknown(connected);
-  return structured !== undefined ? structured : undefined;
+  return structured;
 }
 
 /** Resolve the returns/storeInMemory map for a step. */

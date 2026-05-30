@@ -24,8 +24,7 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useEditorStore } from "@/store";
-import { useServiceStore } from "@/store";
+import { useEditorStore, useServiceStore } from "@/store";
 import {
   collectWorkspaceVariables,
   collectCategorizedVariables,

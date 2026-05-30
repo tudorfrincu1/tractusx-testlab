@@ -40,10 +40,10 @@ export type VarScope = "env" | "steps" | "preconditions" | "metadata" | "setup" 
 /* ─── v2 scoped variable parsing ─── */
 
 /** Matches `${{ env.services.<path> }}` — must be tested before generic env. */
-const SERVICES_RE = /^\$\{\{\s*env\.services\.(.+?)\s*\}\}$/;
+const SERVICES_RE = /^\$\{\{\s*env\.services\.([^}]+)\}\}$/;
 
 /** Matches `${{ <scope>.<path> }}` for all v2 scopes. */
-const V2_SCOPE_RE = /^\$\{\{\s*(steps|preconditions|metadata|setup|env|execution|testdata)\.(.+?)\s*\}\}$/;
+const V2_SCOPE_RE = /^\$\{\{\s*(steps|preconditions|metadata|setup|env|execution|testdata)\.([^}]+)\}\}$/;
 
 /** Block type for each v2 variable scope. */
 export const VAR_BLOCK_TYPES: Record<string, VarScope> = {
@@ -76,10 +76,10 @@ export const SCOPE_TO_BLOCK_TYPE: Record<VarScope, string> = {
 export function parseVarRef(value: string): { scope: VarScope; path: string } | undefined {
   // Services must be checked first (it's nested under env)
   const svcMatch = SERVICES_RE.exec(value);
-  if (svcMatch) return { scope: "services", path: svcMatch[1] };
+  if (svcMatch) return { scope: "services", path: svcMatch[1].trim() };
 
   const scopeMatch = V2_SCOPE_RE.exec(value);
-  if (scopeMatch) return { scope: scopeMatch[1] as VarScope, path: scopeMatch[2] };
+  if (scopeMatch) return { scope: scopeMatch[1] as VarScope, path: scopeMatch[2].trim() };
 
   return undefined;
 }

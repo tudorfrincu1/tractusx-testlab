@@ -192,7 +192,10 @@ If any `print()` calls exist, replace with `logging.getLogger(__name__)`.
 python -m pytest tests/ -x -q
 ```
 
-### Step 6: Debug issues (if needed)
+### Step 6: SonarQube analysis
+After finishing all code changes, run `mcp_sonarqube_analyze_file_list` on every file you created or modified. Fix any CRITICAL or BLOCKER findings before delivering. MAJOR findings should be fixed when feasible. Document any accepted findings with justification.
+
+### Step 7: Debug issues (if needed)
 Use the `debug-backend` skill when diagnosing bugs. It provides a structured 4-phase workflow: Reproduce → Diagnose → Fix → Verify. Includes a cheat sheet mapping symptoms to starting points and a list of common Python/async/Pydantic failure patterns.
 
 ### Step 7. Persist New Knowledge (if needed)

@@ -85,21 +85,25 @@ def _traverse_dict(data: dict, path: str) -> Any:
     for part in parts:
         if current is None:
             return None
-        m = _PREDICATE_RE.match(part)
-        if m:
-            name, pred_key, pred_val = m.group(1), m.group(2), m.group(3)
-            current = _dict_get(current, name) if isinstance(current, dict) else None
-            if not isinstance(current, list):
-                return None
-            current = _find_by_predicate(current, pred_key, pred_val)
-        elif isinstance(current, dict):
-            current = _dict_get(current, part)
-        elif isinstance(current, list) and part.isdigit():
-            idx = int(part)
-            current = current[idx] if idx < len(current) else None
-        else:
-            return None
+        current = _resolve_path_segment(current, part)
     return current
+
+
+def _resolve_path_segment(current: Any, part: str) -> Any:
+    """Resolve a single path segment against the current value."""
+    m = _PREDICATE_RE.match(part)
+    if m:
+        name, pred_key, pred_val = m.group(1), m.group(2), m.group(3)
+        container = _dict_get(current, name) if isinstance(current, dict) else None
+        if not isinstance(container, list):
+            return None
+        return _find_by_predicate(container, pred_key, pred_val)
+    if isinstance(current, dict):
+        return _dict_get(current, part)
+    if isinstance(current, list) and part.isdigit():
+        idx = int(part)
+        return current[idx] if idx < len(current) else None
+    return None
 
 
 def extract_path(output: Any, path: Optional[str]) -> Any:
@@ -111,56 +115,84 @@ def extract_path(output: Any, path: Optional[str]) -> Any:
     """
     if path is None:
         return output
-    # Unwrap StepOutput: check value dict → response attrs → StepOutput slots
+
     from tractusx_testlab.steps.base import StepOutput as _SO
     if isinstance(output, _SO):
-        # Support compound dot-paths: split first segment for StepOutput resolution
-        parts = path.split(".", 1)
-        first = parts[0]
-        rest = parts[1] if len(parts) > 1 else None
-
-        # Map well-known aliases
-        if first == "response_body":
-            resolved = output.value if output.value is not None else (
-                output.response.body if output.response else None
-            )
-        elif isinstance(output.value, dict):
-            result = _dict_get(output.value, first)
-            if result is not None:
-                resolved = result
-            elif not rest and ("." in path or "[" in path):
-                return _traverse_dict(output.value, path)
-            else:
-                resolved = None
-        else:
-            resolved = None
-
-        # Fall back to response attrs, StepOutput slots
-        if resolved is None and output.response is not None:
-            resp_val = getattr(output.response, first, _SENTINEL)
-            if resp_val is not _SENTINEL:
-                resolved = resp_val
-        # Check response body dict for keys like asset_id, policy_id
-        if resolved is None and output.response is not None and isinstance(output.response.body, dict):
-            body_val = output.response.body.get(first)
-            if body_val is not None:
-                resolved = body_val
-        if resolved is None:
-            slot_val = getattr(output, first, _SENTINEL)
-            if slot_val is not _SENTINEL:
-                resolved = slot_val
-
-        # If there's a remaining path and resolved is navigable, continue
-        if rest and resolved is not None:
-            if isinstance(resolved, dict):
-                return _traverse_dict(resolved, rest)
-            return getattr(resolved, rest, None)
-
-        # Final fallback: full dot-path traversal on value dict
-        if resolved is None and isinstance(output.value, dict):
-            return _traverse_dict(output.value, path)
-        return resolved
+        return _extract_from_step_output(output, path)
 
     if isinstance(output, dict):
         return _traverse_dict(output, path)
     return getattr(output, path, None)
+
+
+def _extract_from_step_output(output: Any, path: str) -> Any:
+    """Extract a value from a StepOutput by resolving the first segment then traversing."""
+    parts = path.split(".", 1)
+    first = parts[0]
+    rest = parts[1] if len(parts) > 1 else None
+
+    resolved = _resolve_first_segment(output, first, rest, path)
+
+    # If there's a remaining path and resolved is navigable, continue
+    if rest and resolved is not None:
+        if isinstance(resolved, dict):
+            return _traverse_dict(resolved, rest)
+        return getattr(resolved, rest, None)
+
+    # Final fallback: full dot-path traversal on value dict
+    if resolved is None and isinstance(output.value, dict):
+        return _traverse_dict(output.value, path)
+    return resolved
+
+
+def _resolve_first_segment(output: Any, first: str, rest: Optional[str], full_path: str) -> Any:
+    """Resolve the first path segment against a StepOutput's various data sources."""
+    # Map well-known aliases
+    if first == "response_body":
+        resolved = _resolve_response_body(output)
+    elif isinstance(output.value, dict):
+        resolved = _resolve_from_value_dict(output, first, rest, full_path)
+    else:
+        resolved = None
+
+    if resolved is not None:
+        return resolved
+
+    # Fall back through response attrs → response body dict → StepOutput slots
+    return _fallback_resolution(output, first)
+
+
+def _resolve_response_body(output: Any) -> Any:
+    """Resolve the 'response_body' alias."""
+    if output.value is not None:
+        return output.value
+    return output.response.body if output.response else None
+
+
+def _fallback_resolution(output: Any, first: str) -> Any:
+    """Try response attrs, response body dict, and StepOutput slots in order."""
+    if output.response is not None:
+        resp_val = getattr(output.response, first, _SENTINEL)
+        if resp_val is not _SENTINEL:
+            return resp_val
+
+    if output.response is not None and isinstance(output.response.body, dict):
+        body_val = output.response.body.get(first)
+        if body_val is not None:
+            return body_val
+
+    slot_val = getattr(output, first, _SENTINEL)
+    if slot_val is not _SENTINEL:
+        return slot_val
+
+    return None
+
+
+def _resolve_from_value_dict(output: Any, first: str, rest: Optional[str], full_path: str) -> Any:
+    """Try to resolve the first segment from the StepOutput.value dict."""
+    result = _dict_get(output.value, first)
+    if result is not None:
+        return result
+    if not rest and ("." in full_path or "[" in full_path):
+        return _traverse_dict(output.value, full_path)
+    return None

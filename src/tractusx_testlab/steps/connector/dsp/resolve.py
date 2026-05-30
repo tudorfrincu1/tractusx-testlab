@@ -51,7 +51,8 @@ class DspResolveDidStep(BaseStep):
         import httpx
 
         did_url = params["did_url"]
-        resp = httpx.get(did_url, timeout=params.get("timeout", 30.0))
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(did_url, timeout=params.get("timeout", 30.0))
 
         try:
             body = resp.json()

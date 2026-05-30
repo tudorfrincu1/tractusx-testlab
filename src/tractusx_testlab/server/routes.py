@@ -37,10 +37,9 @@ from fastapi.responses import JSONResponse
 
 from tractusx_testlab.models import JobStatus
 from tractusx_testlab.player.execution.player import TestlabPlayer
-from tractusx_testlab.server.callbacks import CallbackManager
-from tractusx_testlab.server.mock_registry import get_mock
 from tractusx_testlab.server.storage import PackageStorage
 
+from tractusx_testlab.server._callbacks_route import callback_router
 from tractusx_testlab.server.compile import compile_router
 from tractusx_testlab.server.streaming import streaming_router
 
@@ -63,6 +62,7 @@ def _on_task_done(task: asyncio.Task) -> None:  # type: ignore[type-arg]
 router = APIRouter(prefix="/testlab", tags=["testlab"])
 router.include_router(streaming_router)
 router.include_router(compile_router)
+router.include_router(callback_router)
 
 
 def _get_player(request: Request) -> TestlabPlayer:
@@ -73,14 +73,9 @@ def _get_storage(request: Request) -> PackageStorage:
     return request.app.state.storage
 
 
-def _get_callbacks(request: Request) -> CallbackManager:
-    return request.app.state.callbacks
-
-
 # Annotated dependency aliases
 PlayerDep = Annotated[TestlabPlayer, Depends(_get_player)]
 StorageDep = Annotated[PackageStorage, Depends(_get_storage)]
-CallbacksDep = Annotated[CallbackManager, Depends(_get_callbacks)]
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -88,7 +83,14 @@ CallbacksDep = Annotated[CallbackManager, Depends(_get_callbacks)]
 # ──────────────────────────────────────────────────────────────────────
 
 
-@router.post("/packages", status_code=201)
+@router.post(
+    "/packages",
+    status_code=201,
+    responses={
+        400: {"description": "File must be a .stck archive"},
+        413: {"description": "Package exceeds maximum upload size"},
+    },
+)
 async def upload_package(
     file: UploadFile,
     player: PlayerDep,
@@ -120,7 +122,11 @@ async def list_packages(storage: StorageDep) -> JSONResponse:
     return JSONResponse(content=[package.model_dump(mode="json") for package in packages])
 
 
-@router.delete("/packages/{package_id}", status_code=204)
+@router.delete(
+    "/packages/{package_id}",
+    status_code=204,
+    responses={404: {"description": "Package not found"}},
+)
 async def delete_package(package_id: str, storage: StorageDep) -> None:
     """Delete a stored package."""
     if not storage.delete(package_id):
@@ -132,7 +138,14 @@ async def delete_package(package_id: str, storage: StorageDep) -> None:
 # ──────────────────────────────────────────────────────────────────────
 
 
-@router.post("/run/package", status_code=202)
+@router.post(
+    "/run/package",
+    status_code=202,
+    responses={
+        400: {"description": "Missing 'package_id' or 'path' in request body"},
+        404: {"description": "Package or file not found"},
+    },
+)
 async def run_test(
     request: Request,
     player: PlayerDep,
@@ -181,7 +194,10 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
         _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
 
 
-@router.get("/test-execution")
+@router.get(
+    "/test-execution",
+    responses={400: {"description": "Invalid status filter value"}},
+)
 async def list_jobs(
     player: PlayerDep,
     status: Optional[str] = None,
@@ -198,7 +214,10 @@ async def list_jobs(
     return JSONResponse(content=[job.model_dump(mode="json") for job in jobs])
 
 
-@router.get("/test-execution/{job_id}")
+@router.get(
+    "/test-execution/{job_id}",
+    responses={404: {"description": "Job not found"}},
+)
 async def get_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Get details for a specific execution."""
     job = player.jobs.get(job_id)
@@ -207,7 +226,11 @@ async def get_job(job_id: str, player: PlayerDep) -> JSONResponse:
     return JSONResponse(content=job.model_dump(mode="json"))
 
 
-@router.post("/test-execution/{job_id}/cancel", status_code=200)
+@router.post(
+    "/test-execution/{job_id}/cancel",
+    status_code=200,
+    responses={404: {"description": "Job not found"}},
+)
 async def cancel_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Cancel a running job."""
     job = player.jobs.get(job_id)
@@ -217,7 +240,14 @@ async def cancel_job(job_id: str, player: PlayerDep) -> JSONResponse:
     return JSONResponse(content={"job_id": job_id, "status": "CANCELLED"})
 
 
-@router.post("/test-execution/{job_id}/pause", status_code=200)
+@router.post(
+    "/test-execution/{job_id}/pause",
+    status_code=200,
+    responses={
+        404: {"description": "Job not found"},
+        409: {"description": "Job is not in RUNNING state"},
+    },
+)
 async def pause_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Pause a running execution."""
     job = player.jobs.get(job_id)
@@ -229,7 +259,14 @@ async def pause_job(job_id: str, player: PlayerDep) -> JSONResponse:
     return JSONResponse(content={"job_id": job_id, "status": "PAUSED"})
 
 
-@router.post("/test-execution/{job_id}/resume", status_code=200)
+@router.post(
+    "/test-execution/{job_id}/resume",
+    status_code=200,
+    responses={
+        404: {"description": "Job not found"},
+        409: {"description": "Job is not in PAUSED state"},
+    },
+)
 async def resume_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Resume a paused execution."""
     job = player.jobs.get(job_id)
@@ -239,39 +276,3 @@ async def resume_job(job_id: str, player: PlayerDep) -> JSONResponse:
         raise HTTPException(409, f"Job '{job_id}' is not paused (status: {job.status.value})")
     player.jobs.resume(job_id)
     return JSONResponse(content={"job_id": job_id, "status": "RUNNING"})
-
-
-# ──────────────────────────────────────────────────────────────────────
-# Callback webhook endpoint
-# ──────────────────────────────────────────────────────────────────────
-
-
-@router.api_route("/callbacks/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def callback_webhook(
-    path: str,
-    request: Request,
-    callbacks: CallbacksDep,
-) -> JSONResponse:
-    """Catch-all endpoint for async callback listeners."""
-    full_path = f"/callbacks/{path}"
-    method = request.method
-    headers = dict(request.headers)
-    body = None
-    if method in ("POST", "PUT"):
-        body = await request.json()
-
-    matched = callbacks.resolve(full_path, method, headers, body)
-    if not matched:
-        mock = get_mock(full_path, method)
-        if mock is not None:
-            # Also resolve so wait_for_call steps receive the payload
-            callbacks.resolve(full_path, method, headers, body)
-            return JSONResponse(content=mock.body, status_code=mock.status_code)
-        raise HTTPException(404, f"No listener registered for {method} {full_path}")
-
-    # Check for a canned mock response to return
-    mock = get_mock(full_path, method)
-    if mock is not None:
-        return JSONResponse(content=mock.body, status_code=mock.status_code)
-
-    return JSONResponse(content={"status": "received"})

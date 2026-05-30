@@ -191,6 +191,9 @@ Every test function should start with `test_` and describe the scenario:
 - `test_it_works` ✗
 - `test_1` ✗
 
+### Step 6: SonarQube analysis
+After finishing all code changes, run `mcp_sonarqube_analyze_file_list` on every file you created or modified. Fix any CRITICAL or BLOCKER findings before delivering. MAJOR findings should be fixed when feasible. Document any accepted findings with justification.
+
 ## Knowledge Base
 
 Use the `document-knowledge` skill to update `.github/kb/test-kb.md` when you discover:

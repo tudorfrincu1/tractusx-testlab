@@ -94,32 +94,46 @@ def _build_runtime_vars(
     var_overrides: Optional[list[str]],
 ) -> dict[str, str]:
     """Merge variables from config file (lower priority) and --var flags (higher priority)."""
-    import yaml as _yaml
-
     runtime_vars: dict[str, str] = {}
 
     if config_file is not None:
-        if not config_file.exists():
-            typer.echo(f"Error: config file not found: {config_file}", err=True)
-            raise typer.Exit(1)
-        with open(config_file, "r", encoding="utf-8") as config_handle:
-            config_data = _yaml.safe_load(config_handle) or {}
-        variables = config_data.get("variables", {})
-        for var_name, var_def in variables.items():
-            if isinstance(var_def, dict) and var_def.get("default") is not None:
-                runtime_vars[var_name] = str(var_def["default"])
-            elif not isinstance(var_def, dict):
-                runtime_vars[var_name] = str(var_def)
+        runtime_vars = _load_config_variables(config_file)
 
     if var_overrides:
-        for entry in var_overrides:
-            if "=" not in entry:
-                typer.echo(f"Invalid --var format (expected KEY=VALUE): {entry}", err=True)
-                raise typer.Exit(1)
-            key, value = entry.split("=", 1)
-            runtime_vars[key] = value
+        _apply_var_overrides(runtime_vars, var_overrides)
 
     return runtime_vars
+
+
+def _load_config_variables(config_file: Path) -> dict[str, str]:
+    """Load runtime variables from a config YAML file."""
+    import yaml as _yaml
+
+    if not config_file.exists():
+        typer.echo(f"Error: config file not found: {config_file}", err=True)
+        raise typer.Exit(1)
+
+    with open(config_file, "r", encoding="utf-8") as config_handle:
+        config_data = _yaml.safe_load(config_handle) or {}
+
+    result: dict[str, str] = {}
+    variables = config_data.get("variables", {})
+    for var_name, var_def in variables.items():
+        if isinstance(var_def, dict) and var_def.get("default") is not None:
+            result[var_name] = str(var_def["default"])
+        elif not isinstance(var_def, dict):
+            result[var_name] = str(var_def)
+    return result
+
+
+def _apply_var_overrides(runtime_vars: dict[str, str], var_overrides: list[str]) -> None:
+    """Apply --var KEY=VALUE overrides to the runtime vars dict."""
+    for entry in var_overrides:
+        if "=" not in entry:
+            typer.echo(f"Invalid --var format (expected KEY=VALUE): {entry}", err=True)
+            raise typer.Exit(1)
+        key, value = entry.split("=", 1)
+        runtime_vars[key] = value
 
 
 def _load_tck(
@@ -184,24 +198,25 @@ def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_step
         TimeElapsedColumn(),
     ) as progress:
         task_id = progress.add_task("Starting...", total=total_steps)
-
-        def _on_progress(event: str, payload: dict) -> None:
-            if event == "step.started":
-                step_type = payload.get("step_type", "")
-                progress.update(task_id, description=f"  Running: {step_type}")
-            elif event == "step.completed":
-                status = payload.get("status", "")
-                name = payload.get("step_name", "")
-                icon = "[green]PASS" if status == "passed" else "[red]FAIL"
-                progress.update(task_id, advance=1, description=f"  {icon} {name}")
-            elif event == "script.started":
-                script = payload.get("script", "")
-                progress.update(task_id, description=f"  Script: {script}")
-
-        player.monitor.add_callback(_on_progress)
+        player.monitor.add_callback(_make_progress_callback(progress, task_id))
         return asyncio.run(
             player.run_tck(tck, runtime_vars=runtime_vars or None)
         )
+
+
+def _make_progress_callback(progress, task_id):
+    """Create a progress callback for the player monitor."""
+    def _on_progress(event: str, payload: dict) -> None:
+        if event == "step.started":
+            progress.update(task_id, description=f"  Running: {payload.get('step_type', '')}")
+        elif event == "step.completed":
+            status = payload.get("status", "")
+            name = payload.get("step_name", "")
+            icon = "[green]PASS" if status == "passed" else "[red]FAIL"
+            progress.update(task_id, advance=1, description=f"  {icon} {name}")
+        elif event == "script.started":
+            progress.update(task_id, description=f"  Script: {payload.get('script', '')}")
+    return _on_progress
 
 
 def _print_run_results(result, step_status_cls, script_status_cls) -> None:
@@ -209,27 +224,7 @@ def _print_run_results(result, step_status_cls, script_status_cls) -> None:
     width = 76
 
     for script in result.scripts:
-        typer.echo(f"  Script: {script.script_name}")
-        typer.echo(f"  Status: {script.status.value}")
-        if script.total_duration_s is not None:
-            typer.echo(f"  Duration: {script.total_duration_s:.1f}s")
-        typer.echo()
-
-        for step in script.steps:
-            icon = "PASS" if step.status == step_status_cls.PASSED else "FAIL"
-            duration = f"{step.duration_s:.2f}s" if step.duration_s else "---"
-            typer.echo(f"    [{icon}] {step.step_name:<50} {duration}")
-            if step.error:
-                typer.echo(f"           Error: {step.error}")
-
-        if script.assertion_summary:
-            s = script.assertion_summary
-            typer.echo(
-                f"\n    Assertions: {s.total} total, "
-                f"{s.passed} passed, "
-                f"{s.failed_hard} hard-failed, "
-                f"{s.failed_soft} soft-failed"
-            )
+        _print_script_result(script, step_status_cls)
 
     status_label = "PASS" if result.status == script_status_cls.COMPLETED else "FAIL"
     typer.echo()
@@ -247,3 +242,28 @@ def _print_run_results(result, step_status_cls, script_status_cls) -> None:
     typer.echo()
 
     raise typer.Exit(0 if result.status == script_status_cls.COMPLETED else 1)
+
+
+def _print_script_result(script, step_status_cls) -> None:
+    """Print results for a single script."""
+    typer.echo(f"  Script: {script.script_name}")
+    typer.echo(f"  Status: {script.status.value}")
+    if script.total_duration_s is not None:
+        typer.echo(f"  Duration: {script.total_duration_s:.1f}s")
+    typer.echo()
+
+    for step in script.steps:
+        icon = "PASS" if step.status == step_status_cls.PASSED else "FAIL"
+        duration = f"{step.duration_s:.2f}s" if step.duration_s else "---"
+        typer.echo(f"    [{icon}] {step.step_name:<50} {duration}")
+        if step.error:
+            typer.echo(f"           Error: {step.error}")
+
+    if script.assertion_summary:
+        s = script.assertion_summary
+        typer.echo(
+            f"\n    Assertions: {s.total} total, "
+            f"{s.passed} passed, "
+            f"{s.failed_hard} hard-failed, "
+            f"{s.failed_soft} soft-failed"
+        )

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 
 import jsonschema
 
@@ -194,20 +195,41 @@ def check_assert_field(actual: object, expected: object, _output: object) -> tup
     operator = expected.get("operator", "equals")
     exp_value = expected.get("value")
 
-    if operator == "equals":
-        passed = actual == exp_value
-        return passed, "" if passed else f"Expected {exp_value!r}, got {actual!r}"
-    if operator == "not_null":
-        passed = actual is not None
-        return passed, "" if passed else "Expected non-null value, got None"
-    if operator == "not_empty":
-        passed = actual is not None and actual != "" and actual != [] and actual != {}
-        return passed, "" if passed else f"Expected non-empty value, got {actual!r}"
-    if operator == "contains":
-        passed = exp_value in actual if isinstance(actual, (str, list, dict)) else False
-        return passed, "" if passed else f"Expected {actual!r} to contain {exp_value!r}"
-    if operator == "not_contains":
-        passed = exp_value not in actual if isinstance(actual, (str, list, dict)) else True
-        return passed, "" if passed else f"Expected {actual!r} to NOT contain {exp_value!r}"
+    handler = _ASSERT_FIELD_OPERATORS.get(operator)
+    if handler is None:
+        return False, f"Unknown ASSERT_FIELD operator: {operator}"
+    return handler(actual, exp_value)
 
-    return False, f"Unknown ASSERT_FIELD operator: {operator}"
+
+def _af_equals(actual: object, exp_value: object) -> tuple[bool, str]:
+    passed = actual == exp_value
+    return passed, "" if passed else f"Expected {exp_value!r}, got {actual!r}"
+
+
+def _af_not_null(actual: object, _exp: object) -> tuple[bool, str]:
+    passed = actual is not None
+    return passed, "" if passed else "Expected non-null value, got None"
+
+
+def _af_not_empty(actual: object, _exp: object) -> tuple[bool, str]:
+    passed = actual is not None and actual != "" and actual != [] and actual != {}
+    return passed, "" if passed else f"Expected non-empty value, got {actual!r}"
+
+
+def _af_contains(actual: object, exp_value: object) -> tuple[bool, str]:
+    passed = exp_value in actual if isinstance(actual, (str, list, dict)) else False
+    return passed, "" if passed else f"Expected {actual!r} to contain {exp_value!r}"
+
+
+def _af_not_contains(actual: object, exp_value: object) -> tuple[bool, str]:
+    passed = exp_value not in actual if isinstance(actual, (str, list, dict)) else True
+    return passed, "" if passed else f"Expected {actual!r} to NOT contain {exp_value!r}"
+
+
+_ASSERT_FIELD_OPERATORS: dict[str, Callable[[object, object], tuple[bool, str]]] = {
+    "equals": _af_equals,
+    "not_null": _af_not_null,
+    "not_empty": _af_not_empty,
+    "contains": _af_contains,
+    "not_contains": _af_not_contains,
+}
