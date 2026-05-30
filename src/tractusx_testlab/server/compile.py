@@ -80,9 +80,12 @@ async def compile_yaml(request: Request) -> JSONResponse:
     has_tests = "tests" in data
 
     try:
-        kind = ScriptKind(kind_value) if kind_value else (
-            ScriptKind.TCK if has_tests else ScriptKind.TEST
-        )
+        if kind_value:
+            kind = ScriptKind(kind_value)
+        elif has_tests:
+            kind = ScriptKind.TCK
+        else:
+            kind = ScriptKind.TEST
     except ValueError:
         return JSONResponse(content={
             "status": "error",

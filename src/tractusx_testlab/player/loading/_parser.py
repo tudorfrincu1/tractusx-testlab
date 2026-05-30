@@ -169,11 +169,15 @@ def parse_service(raw: dict) -> ServiceDefinition:
     )
 
 
-def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:
+def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:  # noqa: ARG001
     """Build a ScriptDefinition from a YAML dict using local extended models.
 
     Returns an SDK ScriptDefinition created via ``model_construct()`` to
     bypass Pydantic validation of extended enum values.
+
+    Args:
+        data: Parsed YAML dictionary.
+        base_dir: Reserved for future use (include resolution). Currently unused.
     """
     variables = parse_variables(data.get(C.K_VARIABLES, {}))
     services = [parse_service(s) for s in data.get(C.K_SERVICES, [])]

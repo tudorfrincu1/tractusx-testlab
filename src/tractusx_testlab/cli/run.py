@@ -204,7 +204,7 @@ def _execute_with_progress(player, tck, runtime_vars: dict[str, str], total_step
         )
 
 
-def _print_run_results(result, StepStatus, ScriptStatus) -> None:
+def _print_run_results(result, step_status_cls, script_status_cls) -> None:
     """Print per-script step results and the final summary line."""
     width = 76
 
@@ -216,7 +216,7 @@ def _print_run_results(result, StepStatus, ScriptStatus) -> None:
         typer.echo()
 
         for step in script.steps:
-            icon = "PASS" if step.status == StepStatus.PASSED else "FAIL"
+            icon = "PASS" if step.status == step_status_cls.PASSED else "FAIL"
             duration = f"{step.duration_s:.2f}s" if step.duration_s else "---"
             typer.echo(f"    [{icon}] {step.step_name:<50} {duration}")
             if step.error:
@@ -231,7 +231,7 @@ def _print_run_results(result, StepStatus, ScriptStatus) -> None:
                 f"{s.failed_soft} soft-failed"
             )
 
-    status_label = "PASS" if result.status == ScriptStatus.COMPLETED else "FAIL"
+    status_label = "PASS" if result.status == script_status_cls.COMPLETED else "FAIL"
     typer.echo()
     typer.echo("-" * width)
     if result.duration_ms:
@@ -246,4 +246,4 @@ def _print_run_results(result, StepStatus, ScriptStatus) -> None:
     typer.echo("=" * width)
     typer.echo()
 
-    raise typer.Exit(0 if result.status == ScriptStatus.COMPLETED else 1)
+    raise typer.Exit(0 if result.status == script_status_cls.COMPLETED else 1)

@@ -72,8 +72,7 @@ class ScriptValidator:
         declared_vars: set[str] = set()
 
         # Collect variables declared in the script header
-        for var_name in script.variables:
-            declared_vars.add(var_name)
+        declared_vars.update(script.variables)
 
         # Validate precondition steps
         for idx, step_def in enumerate(script.preconditions):
@@ -130,8 +129,7 @@ class ScriptValidator:
 
         # Rule 4: declare store_in_memory variables for downstream phases
         if step_def.store_in_memory:
-            for var_name in step_def.store_in_memory:
-                declared_vars.add(var_name)
+            declared_vars.update(step_def.store_in_memory)
 
         # Check variable references in params
         self._check_var_refs(step_def.params, idx, declared_vars, result)
@@ -170,8 +168,7 @@ class ScriptValidator:
 
         # If store_in_memory is set, auto-declare the variables
         if step_def.store_in_memory:
-            for var_name in step_def.store_in_memory:
-                declared_vars.add(var_name)
+            declared_vars.update(step_def.store_in_memory)
 
     def _check_var_refs(
         self, params: dict, step_idx: int, declared: set[str], result: ValidationResult

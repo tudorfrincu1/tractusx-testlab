@@ -110,4 +110,4 @@ class DeleteContractDefinitionStep(BaseStep):
 
     async def cleanup(self, context: "StepContext") -> None:
         """No-op cleanup — resource already deleted by execute."""
-        pass
+        # Intentionally empty: the step's execute() already performs the deletion

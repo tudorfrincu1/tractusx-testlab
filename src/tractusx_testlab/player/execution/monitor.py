@@ -44,12 +44,13 @@ CallbackFn = Callable[[str, dict[str, Any]], Any]
 class ExecutionMonitor:
     """Observes execution progress, logs structured events, and fires callbacks."""
 
-    __slots__ = ("_logger", "_callbacks")
+    __slots__ = ("_logger", "_callbacks", "_background_tasks")
 
     def __init__(self, logger: StructuredLogger) -> None:
         """Initialize with a structured logger for event recording."""
         self._logger = logger
         self._callbacks: list[CallbackFn] = []
+        self._background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
 
     def add_callback(self, fn: CallbackFn) -> None:
         """Register a callback function to be invoked on every event."""
@@ -132,6 +133,8 @@ class ExecutionMonitor:
             try:
                 result = callback(event, payload)
                 if asyncio.iscoroutine(result):
-                    asyncio.ensure_future(result)
+                    task = asyncio.ensure_future(result)
+                    self._background_tasks.add(task)
+                    task.add_done_callback(self._background_tasks.discard)
             except (RuntimeError, TypeError, ValueError) as exc:
                 self._logger.warning("Callback failed for event '%s': %s", event, exc)

@@ -30,7 +30,7 @@ import asyncio
 import logging
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
@@ -77,6 +77,12 @@ def _get_callbacks(request: Request) -> CallbackManager:
     return request.app.state.callbacks
 
 
+# Annotated dependency aliases
+PlayerDep = Annotated[TestlabPlayer, Depends(_get_player)]
+StorageDep = Annotated[PackageStorage, Depends(_get_storage)]
+CallbacksDep = Annotated[CallbackManager, Depends(_get_callbacks)]
+
+
 # ──────────────────────────────────────────────────────────────────────
 # Package endpoints
 # ──────────────────────────────────────────────────────────────────────
@@ -85,8 +91,8 @@ def _get_callbacks(request: Request) -> CallbackManager:
 @router.post("/packages", status_code=201)
 async def upload_package(
     file: UploadFile,
-    player: TestlabPlayer = Depends(_get_player),
-    storage: PackageStorage = Depends(_get_storage),
+    player: PlayerDep,
+    storage: StorageDep,
 ) -> JSONResponse:
     """Upload a .stck archive."""
     if not file.filename or not file.filename.endswith(".stck"):
@@ -108,14 +114,14 @@ async def upload_package(
 
 
 @router.get("/packages")
-async def list_packages(storage: PackageStorage = Depends(_get_storage)) -> JSONResponse:
+async def list_packages(storage: StorageDep) -> JSONResponse:
     """List all uploaded packages."""
     packages = storage.list_packages()
     return JSONResponse(content=[package.model_dump(mode="json") for package in packages])
 
 
 @router.delete("/packages/{package_id}", status_code=204)
-async def delete_package(package_id: str, storage: PackageStorage = Depends(_get_storage)) -> None:
+async def delete_package(package_id: str, storage: StorageDep) -> None:
     """Delete a stored package."""
     if not storage.delete(package_id):
         raise HTTPException(404, "Package not found")
@@ -129,8 +135,8 @@ async def delete_package(package_id: str, storage: PackageStorage = Depends(_get
 @router.post("/run/package", status_code=202)
 async def run_test(
     request: Request,
-    player: TestlabPlayer = Depends(_get_player),
-    storage: PackageStorage = Depends(_get_storage),
+    player: PlayerDep,
+    storage: StorageDep,
 ) -> JSONResponse:
     """Execute a TCK from an uploaded package or a YAML path.
 
@@ -177,8 +183,8 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
 
 @router.get("/test-execution")
 async def list_jobs(
+    player: PlayerDep,
     status: Optional[str] = None,
-    player: TestlabPlayer = Depends(_get_player),
 ) -> JSONResponse:
     """List all executions, optionally filtered by status."""
     status_filter = None
@@ -193,7 +199,7 @@ async def list_jobs(
 
 
 @router.get("/test-execution/{job_id}")
-async def get_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+async def get_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Get details for a specific execution."""
     job = player.jobs.get(job_id)
     if job is None:
@@ -202,7 +208,7 @@ async def get_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> 
 
 
 @router.post("/test-execution/{job_id}/cancel", status_code=200)
-async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+async def cancel_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Cancel a running job."""
     job = player.jobs.get(job_id)
     if job is None:
@@ -212,7 +218,7 @@ async def cancel_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) 
 
 
 @router.post("/test-execution/{job_id}/pause", status_code=200)
-async def pause_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+async def pause_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Pause a running execution."""
     job = player.jobs.get(job_id)
     if job is None:
@@ -224,7 +230,7 @@ async def pause_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -
 
 
 @router.post("/test-execution/{job_id}/resume", status_code=200)
-async def resume_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) -> JSONResponse:
+async def resume_job(job_id: str, player: PlayerDep) -> JSONResponse:
     """Resume a paused execution."""
     job = player.jobs.get(job_id)
     if job is None:
@@ -244,7 +250,7 @@ async def resume_job(job_id: str, player: TestlabPlayer = Depends(_get_player)) 
 async def callback_webhook(
     path: str,
     request: Request,
-    callbacks: CallbackManager = Depends(_get_callbacks),
+    callbacks: CallbacksDep,
 ) -> JSONResponse:
     """Catch-all endpoint for async callback listeners."""
     full_path = f"/callbacks/{path}"

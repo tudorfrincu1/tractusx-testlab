@@ -31,7 +31,7 @@ import json
 import logging
 import time
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Annotated, Any
 
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -82,6 +82,11 @@ def _get_event_buffer(request: Request) -> EventBuffer:
     return request.app.state.event_buffer
 
 
+# Annotated dependency aliases
+PlayerDep = Annotated[TestlabPlayer, Depends(_get_player)]
+EventBufferDep = Annotated[EventBuffer, Depends(_get_event_buffer)]
+
+
 # ──────────────────────────────────────────────────────────────────────
 # YAML execution endpoint
 # ──────────────────────────────────────────────────────────────────────
@@ -104,9 +109,12 @@ async def _parse_and_execute_yaml(request: Request, player: TestlabPlayer) -> JS
     parser = YamlParser()
     kind_value = data.get("kind")
     has_tests = "tests" in data
-    kind = ScriptKind(kind_value) if kind_value else (
-        ScriptKind.TCK if has_tests else ScriptKind.TEST
-    )
+    if kind_value:
+        kind = ScriptKind(kind_value)
+    elif has_tests:
+        kind = ScriptKind.TCK
+    else:
+        kind = ScriptKind.TEST
 
     try:
         if kind == ScriptKind.TCK:
@@ -130,7 +138,7 @@ async def _parse_and_execute_yaml(request: Request, player: TestlabPlayer) -> JS
 @streaming_router.post("/run", status_code=202)
 async def run_test_yaml(
     request: Request,
-    player: TestlabPlayer = Depends(_get_player),
+    player: PlayerDep,
 ) -> JSONResponse:
     """Execute a TCK from a raw YAML body.
 
@@ -144,7 +152,7 @@ async def run_test_yaml(
 @streaming_router.post("/run/yaml", status_code=202)
 async def run_yaml(
     request: Request,
-    player: TestlabPlayer = Depends(_get_player),
+    player: PlayerDep,
 ) -> JSONResponse:
     """Execute a TCK from a raw YAML body (legacy alias for /run).
 
@@ -161,7 +169,7 @@ async def _execute_tck_bg(
     try:
         await player.run_tck(tck, job_id=job_id)
     except (RuntimeError, ValueError, OSError, KeyError, TypeError) as exc:
-        _logger.warning("Background execution failed for job %s: %s", job_id, exc)
+        _logger.warning("Background execution failed for job %s: %s", job_id, type(exc).__name__)
         player.monitor._emit(
             "job.completed", job_id=job_id, status="FAILED", error=str(exc),
         )
@@ -177,8 +185,8 @@ async def _execute_tck_bg(
 async def stream_job_events(
     job_id: str,
     request: Request,
-    player: TestlabPlayer = Depends(_get_player),
-    event_buffer: EventBuffer = Depends(_get_event_buffer),
+    player: PlayerDep,
+    event_buffer: EventBufferDep,
 ) -> StreamingResponse:
     """Stream live execution events for a job via Server-Sent Events.
 
@@ -289,7 +297,7 @@ async def sse_event_generator(
                 return
     except asyncio.CancelledError:
         _logger.debug("SSE stream cancelled by client disconnect")
-        return
+        raise
 
 
 def _format_sse(event_id: int, event: str, data: dict[str, Any]) -> str:

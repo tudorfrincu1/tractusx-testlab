@@ -63,7 +63,7 @@ def keygen(
         identity.save(key_dir)
         typer.echo(f"Keys saved to {key_dir}/")
 
-    typer.echo(f"  encryption.pem / encryption.pub  (RSA-4096)")
-    typer.echo(f"  signing.pem    / signing.pub     (Ed25519)")
+    typer.echo("  encryption.pem / encryption.pub  (RSA-4096)")
+    typer.echo("  signing.pem    / signing.pub     (Ed25519)")
     typer.echo(f"  Encryption fingerprint: {identity.encryption.fingerprint[:32]}...")
     typer.echo(f"  Signing    fingerprint: {identity.signing.fingerprint[:32]}...")

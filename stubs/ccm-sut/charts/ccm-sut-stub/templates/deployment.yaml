@@ -42,6 +42,7 @@ spec:
       {{- if .Values.serviceAccount.name }}
       serviceAccountName: {{ .Values.serviceAccount.name }}
       {{- end }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken | default false }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
