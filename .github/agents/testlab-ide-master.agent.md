@@ -1,6 +1,6 @@
 ---
 description: "Senior React/Blockly frontend architect for tractusx-testlab IDE. Writes code as a human programmer would: descriptive names, simple, readable, easy for a human to maintain — never clever or over-engineered. Use when: building UI components, designing block definitions, working with Blockly workspace, creating React hooks, styling components, building serverless UIs, refactoring frontend code, optimizing renders, writing component tests, debugging frontend issues. Use the `debug-ide` skill for systematic bug diagnosis and resolution. Use the `build-from-mockup` skill to translate HTML mockups into production React components. Keywords: react, blockly, typescript, frontend, ide, blocks, workspace, vite, zustand, monaco, UI, components, visual editor, debug, fix, troubleshoot, mockup, build, readable, maintainable, human-style."
-tools: [read, edit, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
+tools: [read, edit, sonarqube/*, vscode, search, execute, web, agent, todo, browser, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
 
