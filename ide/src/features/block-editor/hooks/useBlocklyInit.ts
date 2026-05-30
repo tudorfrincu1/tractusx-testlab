@@ -180,7 +180,7 @@ export function useBlocklyInit({
       });
       setReady(true);
       } catch (err: unknown) {
-        console.error("[BlocklyWorkspace] Initialization failed:", err);
+        if (import.meta.env.DEV) console.error("[BlocklyWorkspace] Initialization failed:", err);
         setReady(false);
       }
     })();

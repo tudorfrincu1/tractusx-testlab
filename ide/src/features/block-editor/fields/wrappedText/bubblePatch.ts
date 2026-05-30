@@ -85,8 +85,7 @@ export function setupWarningTooltip(
     // Only handle warning icons specifically
     if (!iconGroup.classList.contains("blocklyWarningIcon")) return;
 
-    // eslint-disable-next-line no-console
-    console.debug("[WarningTooltip] icon clicked");
+    if (import.meta.env.DEV) console.debug("[WarningTooltip] icon clicked");
 
     // Traverse up to find block with data-id (more robust in SVG than .closest)
     let current: Element | null = iconGroup.parentElement;
@@ -97,27 +96,23 @@ export function setupWarningTooltip(
       current = current.parentElement;
     }
     if (!blockId) {
-      // eslint-disable-next-line no-console
-      console.debug("[WarningTooltip] no blockId found");
+      if (import.meta.env.DEV) console.debug("[WarningTooltip] no blockId found");
       return;
     }
 
     const block = workspace.getBlockById(blockId);
     if (!block) {
-      // eslint-disable-next-line no-console
-      console.debug("[WarningTooltip] block not found for id:", blockId);
+      if (import.meta.env.DEV) console.debug("[WarningTooltip] block not found for id:", blockId);
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.debug("[WarningTooltip] block found:", block.type);
+    if (import.meta.env.DEV) console.debug("[WarningTooltip] block found:", block.type);
 
     // Check if this block has a warning icon
     let warningText: string | undefined;
     try {
       const warningIcon = block.getIcon(Blockly.icons.WarningIcon.TYPE);
-      // eslint-disable-next-line no-console
-      console.debug("[WarningTooltip] warningIcon:", warningIcon);
+      if (import.meta.env.DEV) console.debug("[WarningTooltip] warningIcon:", warningIcon);
       if (warningIcon) {
         warningText = (warningIcon as Blockly.icons.WarningIcon).getText();
       }
@@ -128,8 +123,7 @@ export function setupWarningTooltip(
       ).warning?.getText?.();
     }
 
-    // eslint-disable-next-line no-console
-    console.debug("[WarningTooltip] warningText:", warningText);
+    if (import.meta.env.DEV) console.debug("[WarningTooltip] warningText:", warningText);
 
     if (!warningText) return;
 
