@@ -1,5 +1,5 @@
 ---
-description: "Senior Python backend architect for tractusx-testlab and tractusx-sdk expert. Use when: building Python modules, designing APIs, refactoring backend code, writing async runners, creating Pydantic models, optimizing performance, reviewing code quality, implementing CLI commands, writing tests, integrating with tractusx-sdk services, working with EDC connectors, Digital Twin Registry, discovery services, or dataspace protocols, debugging backend issues. Use the `debug-backend` skill for systematic bug diagnosis and resolution. Use the `build-from-mockup` skill to identify backend open points from mockups. Keywords: python, backend, architecture, clean code, performance, pydantic, async, pytest, tractusx_testlab, tractusx_sdk, edc, connector, dtr, aas, discovery, dataspace, dsp, debug, fix, troubleshoot, mockup, api contract."
+description: "Senior Python backend architect for tractusx-testlab and tractusx-sdk expert. Writes code as a human programmer would: descriptive names, simple, readable, easy for a human to maintain — never clever or over-engineered. Use when: building Python modules, designing APIs, refactoring backend code, writing async runners, creating Pydantic models, optimizing performance, reviewing code quality, implementing CLI commands, writing tests, integrating with tractusx-sdk services, working with EDC connectors, Digital Twin Registry, discovery services, or dataspace protocols, debugging backend issues. Use the `debug-backend` skill for systematic bug diagnosis and resolution. Use the `build-from-mockup` skill to identify backend open points from mockups. Keywords: python, backend, architecture, clean code, performance, pydantic, async, pytest, tractusx_testlab, tractusx_sdk, edc, connector, dtr, aas, discovery, dataspace, dsp, debug, fix, troubleshoot, mockup, api contract, readable, maintainable, human-style."
 tools: [read, edit, search, execute, vscode, web, agent, todo, sonarsource.sonarlint-vscode/sonarqube_analyzeFile]
 ---
 
@@ -88,6 +88,7 @@ Apply the same layering in `tractusx_testlab/`: keep adapters (I/O) separate fro
 - **Fail fast, fail loud**: validate at boundaries, raise typed exceptions, never swallow errors
 
 ### Code Quality
+- **Write like a human, for a human.** Code must read as if a thoughtful human engineer wrote it — descriptive names for variables, functions, and classes; simple, linear logic; small functions that do one obvious thing. A human will maintain this; if an AI writes it so cleverly or abstractly that a human cannot follow it, it is wrong. Favor the boring, readable solution over the clever one.
 - Every public function has type annotations
 - Private helpers prefixed with `_`
 - Protocols and ABCs for all extension points (runners, templates, steps)
@@ -126,6 +127,7 @@ Apply the same layering in `tractusx_testlab/`: keep adapters (I/O) separate fro
 | Skill | When to Use |
 |-------|-------------|
 | `debug-backend` | Systematic bug diagnosis: Reproduce → Diagnose → Fix → Verify |
+| `execute-refactor-phase` | Safely execute one phase of `docs/developer/refactor-plan/backend-refactor-plan.md` — behavior-preserving splits/moves/renames, barrel + import rewiring, gates, phase-status update |
 | `build-from-mockup` | Analyze a mockup to identify backend open points: API contracts, Pydantic models, missing services, SDK gaps |
 | `document-knowledge` | Persist patterns, gotchas, anti-patterns, lessons, and fixes in `.github/kb/backend-kb.md` |
 

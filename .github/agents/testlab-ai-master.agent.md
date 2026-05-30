@@ -206,6 +206,8 @@ Agent instructions live in `.github/instructions/` and agent definitions in `.gi
 | Skill | When to Use |
 |-------|-------------|
 | `coordinate-ai-agents` | Orchestrate multi-agent work: plan mode, team meetings, parallel delegation, consolidated delivery |
+| `execute-refactor-phase` | Dispatch one phase of a `docs/developer/refactor-plan/` plan to the owning specialist; track phase status leaf-first, serialize dependent phases, lockstep shared-contract phases |
+| `visual-regression-guard` | Enforce that every IDE refactor phase is verified in a live browser with BEFORE/AFTER screenshot comparison — never accept a frontend "done" backed only by a green build |
 | `build-from-mockup` | Dispatch mockup-to-code work to frontend and backend agents in parallel |
 | `create-ide-mockup` | Request a new UI prototype before committing to implementation |
 | `document-knowledge` | Persist coordination patterns, delegation lessons, and quality insights |

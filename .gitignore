@@ -142,3 +142,4 @@ mvnw.cmd
 *.lock
 # Allow Poetry lock
 !poetry.lock
+.refactor-visuals/

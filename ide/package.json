@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "lint": "eslint src/",
+    "lint:imports": "eslint src/ --rule '{\"no-restricted-imports\": \"error\"}'",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -32,11 +34,15 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.39.4",
+    "sass": "^1.100.0",
     "typescript": "~5.8.3",
+    "typescript-eslint": "^8.60.0",
     "vite": "^6.3.3",
     "vitest": "^3.2.4"
   }

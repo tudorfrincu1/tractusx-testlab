@@ -1,0 +1,317 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+/* -- Service Card ------------------------------------------------------------ */
+
+.svc-card {
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-left: 3px solid #FFD700;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.svc-card:hover {
+  border-color: #555;
+  border-left-color: #FFD700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.svc-card.disabled {
+  border-left-color: #555;
+}
+
+.svc-card.disabled .svc-card-body {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.svc-card.disabled .svc-card-header {
+  opacity: 0.7;
+}
+
+.svc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+  background: #282828;
+}
+
+.svc-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.svc-card-header .svc-card-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFD700;
+  letter-spacing: -0.3px;
+}
+
+.svc-card-desc {
+  font-size: 11px;
+  color: #777;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.svc-card-header .svc-card-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.svc-card-header .svc-card-toggle label {
+  font-size: 11px;
+  color: #888;
+  user-select: none;
+}
+
+/* -- Card Body & Form -------------------------------------------------------- */
+
+.svc-card-body {
+  padding: 20px 20px 24px;
+}
+
+/* -- Toggle Switch (enable/disable) ------------------------------------------ */
+
+.svc-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.svc-toggle.active {
+  background: rgba(166, 227, 161, 0.3);
+  border-color: #a6e3a1;
+}
+
+.svc-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: #888;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.svc-toggle.active::after {
+  left: 19px;
+  background: #a6e3a1;
+}
+
+.svc-card-body .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.form-group input,
+.form-group select {
+  background: #1e1e1e;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.form-group input.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.form-hint {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* -- Field with Variable Toggle ---------------------------------------------- */
+
+.field-with-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-with-toggle input,
+.field-with-toggle select {
+  flex: 1;
+}
+
+.field-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.field-toggle-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 16px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch.active {
+  background: rgba(137, 180, 250, 0.3);
+  border-color: #89b4fa;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: #888;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch.active::after {
+  left: 18px;
+  background: #89b4fa;
+}
+
+/* -- Auth Section ------------------------------------------------------------ */
+
+.svc-card .auth-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #333;
+}
+
+.svc-card .auto-hint {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* -- Services Sub-headers ---------------------------------------------------- */
+
+.services-subheader {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 20px 8px;
+  margin-top: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.additional-hint {
+  font-size: 11px;
+  color: #555;
+  padding: 16px 20px;
+  font-style: italic;
+}
+
+/* -- Add Button (within section header) -------------------------------------- */
+
+.add-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #555;
+  color: #aaa;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-btn:hover {
+  border-color: #FFD700;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.05);
+}
