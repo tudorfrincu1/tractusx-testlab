@@ -23,9 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 /**
- * TypeScript types mirroring the Python Pydantic models from
- * tractusx_testlab.models.test_models.
+ * Top-level test document schema types: ScriptDefinition, TckDefinition,
+ * TestLabDocument, and document-level type guards and factories.
  */
+
+import type { ServiceDefinition, Step, PreconditionDefinition } from "./phaseSchema";
 
 export const ScriptKind = {
   TEST: "test",
@@ -33,161 +35,17 @@ export const ScriptKind = {
 } as const;
 export type ScriptKind = (typeof ScriptKind)[keyof typeof ScriptKind];
 
-export const AssertionOperator = {
-  EQUALS: "EQUALS",
-  NOT_EQUALS: "NOT_EQUALS",
-  CONTAINS: "CONTAINS",
-  NOT_CONTAINS: "NOT_CONTAINS",
-  MATCHES: "REGEX",
-  SCHEMA: "SCHEMA",
-  VALIDATES_AGAINST_SCHEMA: "SCHEMA_VALIDATION",
-  NOT_NULL: "NOT_NULL",
-  NOT_EMPTY: "NOT_EMPTY",
-  GREATER_THAN: "GREATER_THAN",
-  LESS_THAN: "LESS_THAN",
-  GREATER_OR_EQUAL: "GREATER_OR_EQUAL",
-  LESS_OR_EQUAL: "LESS_OR_EQUAL",
-  BETWEEN: "BETWEEN",
-  ASSERT_FIELD: "ASSERT_FIELD",
-  JSON_PATH_EXTRACT: "json_path_extract",
-} as const;
-export type AssertionOperator = (typeof AssertionOperator)[keyof typeof AssertionOperator];
-
-export const FailurePolicy = {
-  ABORT: "ABORT",
-  CONTINUE: "CONTINUE",
-  SKIP_REST: "SKIP_REST",
-} as const;
-export type FailurePolicy = (typeof FailurePolicy)[keyof typeof FailurePolicy];
-
-export const ValueSource = {
-  INLINE: "INLINE",
-  FILE: "FILE",
-  VARIABLE: "VARIABLE",
-} as const;
-export type ValueSource = (typeof ValueSource)[keyof typeof ValueSource];
-
 export const SdkCallMode = {
   ALLOWLIST: "ALLOWLIST",
   OPEN: "OPEN",
 } as const;
 export type SdkCallMode = (typeof SdkCallMode)[keyof typeof SdkCallMode];
 
-export const ServiceType = {
-  EDC_CONNECTOR_SATURN: "edc_connector_saturn",
-  EDC_CONNECTOR_JUPITER: "edc_connector_jupiter",
-  AAS: "aas",
-  DISCOVERY_FINDER: "discovery_finder",
-  EDC_DISCOVERY: "edc_discovery",
-  BPN_DISCOVERY: "bpn_discovery",
-} as const;
-export type ServiceType = (typeof ServiceType)[keyof typeof ServiceType];
-
-export const AuthType = {
-  OAUTH2: "oauth2",
-  API_KEY: "api_key",
-} as const;
-export type AuthType = (typeof AuthType)[keyof typeof AuthType];
-
 export interface VariableDefinition {
   type: string;
   default?: unknown;
   runtime?: boolean;
   description?: string;
-}
-
-export interface Assertion {
-  type: AssertionOperator;
-  output: string;
-  value?: unknown;
-  schema?: string;
-  min?: unknown;
-  max?: unknown;
-  path?: string;
-  operator?: string;
-  expected?: unknown;
-  json_path?: string;
-  validate?: Assertion[];
-}
-
-export interface StepDefinition {
-  id: string;
-  uses: string;
-  name?: string;
-  with: Record<string, unknown>;
-  returns?: Record<string, unknown>;
-  on_failure?: FailurePolicy;
-  timeout_s?: number;
-  validate?: Assertion[];
-  if?: string;
-}
-
-export interface TemplateStepDefinition {
-  template: string;
-  params?: Record<string, unknown>;
-  description?: string;
-}
-
-export type Step = StepDefinition | TemplateStepDefinition;
-
-export function isTemplateStep(step: Step): step is TemplateStepDefinition {
-  return "template" in step;
-}
-
-export interface ServiceAuthDefinition {
-  type: string;
-  [key: string]: unknown;
-}
-
-export interface ServiceReturnField {
-  type: string;
-  class?: string;
-}
-
-export interface ServiceDefinition {
-  name: string;
-  uses: string;
-  with?: Record<string, unknown> & { auth?: ServiceAuthDefinition };
-  returns?: Record<string, ServiceReturnField>;
-}
-
-export interface AuthDefinition {
-  name: string;
-  type: AuthType;
-  config: Record<string, unknown>;
-}
-
-export interface PolicyConstraint {
-  leftOperand: string;
-  operator: string;
-  rightOperand: string | string[];
-}
-
-export interface PolicyRule {
-  action: string;
-  constraints: PolicyConstraint[];
-}
-
-export interface InlineValidation {
-  uses: string;
-  with: Record<string, unknown>;
-}
-
-export interface PreconditionReturnField {
-  type: string;
-  class?: string;
-  generator?: string;
-  label?: string;
-  placeholder?: string;
-}
-
-export interface PreconditionDefinition {
-  id: string;
-  uses: string;
-  name: string;
-  with?: Record<string, unknown>;
-  returns?: Record<string, PreconditionReturnField>;
-  validate?: InlineValidation[];
 }
 
 export interface ScriptDefinition {

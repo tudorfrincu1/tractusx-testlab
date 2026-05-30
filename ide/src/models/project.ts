@@ -22,8 +22,21 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export * from "./environment";
-export * from "./execution";
-export * from "./project";
-export * from "./schema";
-export * from "./validator";
+/** A JSON schema file loaded into the project. */
+export interface SchemaFile {
+  name: string;
+  content: string;
+}
+
+/** A testdata file loaded into the project. */
+export interface TestdataFile {
+  name: string;
+  content: string;
+  type: string;
+}
+
+/** The active file reference in the project explorer. */
+export interface ActiveFile {
+  type: "tck" | "test" | "schema" | "testdata" | "preconditions" | "environment";
+  name: string;
+}

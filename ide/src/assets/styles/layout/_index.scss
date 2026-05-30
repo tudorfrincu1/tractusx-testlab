@@ -1,0 +1,21 @@
+// =============================================================================
+// LAYOUT — App-shell chrome: topbar, sidebar, panels, status, welcome screen.
+// =============================================================================
+
+@forward "app-shell";
+@forward "topbar";
+@forward "topbar-buttons";
+@forward "topbar-example-menu";
+@forward "topbar-hamburger-menu";
+@forward "context-bar";
+@forward "execution-controls";
+@forward "bottom-panel";
+@forward "network-detail-overlay";
+@forward "console-tab";
+@forward "network-tab";
+@forward "performance-tab";
+@forward "editable-file-name";
+@forward "notification-bar";
+@forward "status-bar";
+@forward "welcome-screen";
+@forward "welcome-cards";

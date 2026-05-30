@@ -1,0 +1,182 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+/* ── Dashboard Header — bar + expandable info ────────────────────────────── */
+
+.dashboard-header {
+  background: #242424;
+  border-bottom: 1px solid #404040;
+  flex-shrink: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.dashboard-header__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+}
+
+.dashboard-header__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-header__info-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #aaa;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.dashboard-header__info-toggle:hover {
+  color: #ddd;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-header__toggle-icon {
+  font-size: 9px;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-header__toggle-icon--expanded {
+  transform: rotate(90deg);
+}
+
+/* ── Inline edit inputs in bar ───────────────────────────────────────────── */
+
+.dashboard-header__inline-input,
+.dashboard-header__inline-select {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 32px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dashboard-header__inline-input:focus,
+.dashboard-header__inline-select:focus {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-header__inline-input--name {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 220px;
+  max-width: 400px;
+}
+
+.dashboard-header__inline-input--version {
+  width: 52px;
+  text-align: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Wrapper for VersionField inside the header bar */
+.dashboard-header__version-field {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-header__inline-select {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  width: auto;
+  max-width: 120px;
+}
+
+.dashboard-header__inline-select option {
+  background: #242424;
+  color: #fff;
+}
+
+/* ── Expandable body (smooth open/close) ─────────────────────────────────── */
+
+.dashboard-header__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.dashboard-header__body--expanded {
+  grid-template-rows: 1fr;
+}
+
+.dashboard-header__body-inner {
+  overflow: hidden;
+}
+
+/* ── TckDashboard container ──────────────────────────────────────────────── */
+
+.tck-dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tck-dashboard__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tck-dashboard__badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}

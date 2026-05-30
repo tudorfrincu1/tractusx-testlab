@@ -1,0 +1,21 @@
+/* TopBarExampleMenu styles */
+.example-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+  min-width: 240px;
+  max-height: 360px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.example-menu__section-header {
+  padding: 6px 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

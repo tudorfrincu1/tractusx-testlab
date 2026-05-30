@@ -1,0 +1,116 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+.statusbar {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: #242424;
+  border-top: 1px solid #404040;
+  font-size: 11px;
+  color: #999999;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.statusbar__left,
+.statusbar__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.statusbar__right {
+  gap: 12px;
+}
+
+.statusbar__issues-toggle {
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 6px;
+  transition: background 0.15s ease;
+}
+
+.statusbar__issues-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.statusbar__issues-toggle--active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.statusbar__issues-toggle--active:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.statusbar__badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.statusbar__badge--error {
+  color: #ff6b6b;
+}
+
+.statusbar__badge--warning {
+  color: #ffa726;
+}
+
+.statusbar__badge--success {
+  color: #66bb6a;
+}
+
+.statusbar__file--dirty {
+  color: #ffa726;
+}
+
+.statusbar__branding {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statusbar__saved {
+  color: #66bb6a;
+  font-size: 10px;
+  animation: statusbar-fade-in 0.2s ease-out;
+}
+
+@keyframes statusbar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+

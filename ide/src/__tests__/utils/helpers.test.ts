@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { describe, it, expect } from "vitest";
-import { uniqueName, buildTckTestsArray } from "@/store/selectors/helpers";
+import { uniqueName, buildTckTestsArray } from "@/store/selectors/storeBuilders";
 
 describe("uniqueName", () => {
   it("returns base name when it does not exist", () => {

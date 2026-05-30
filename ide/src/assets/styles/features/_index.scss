@@ -1,0 +1,65 @@
+// =============================================================================
+// FEATURES — Per-feature styles, organized by feature area.
+// =============================================================================
+
+// Block editor
+@forward "blockly-workspace";
+@forward "block-editor-error-boundary";
+@forward "api-path-builder-modal";
+@forward "json-editor-modal";
+@forward "path-builder-modal";
+@forward "schema-tree";
+@forward "template-string-editor-modal";
+@forward "validation-panel";
+@forward "warning-tooltip";
+
+// Environment editor
+@forward "environment-editor";
+@forward "environment-service-card";
+@forward "environment-variables-table";
+
+// Execution
+@forward "execution-panel";
+@forward "step-card";
+@forward "step-flow-view";
+
+// Export
+@forward "export-dialog";
+@forward "export-dialog-parts";
+
+// Graph view
+@forward "dependency-graph";
+@forward "graph-node-types";
+
+// Preconditions
+@forward "preconditions-panel";
+
+// Project explorer
+@forward "project-explorer";
+@forward "explorer-actions";
+@forward "explorer-context-menu";
+@forward "explorer-context-menu-parts";
+@forward "explorer-header";
+@forward "tree-row";
+
+// Sequence view
+@forward "sequence-diagram";
+
+// TCK dashboard
+@forward "tck-dashboard";
+@forward "dataflow-view";
+@forward "pipeline-graph-view";
+@forward "pipeline-graph";
+@forward "graph-info-panel";
+@forward "metadata-editor";
+@forward "metadata-summary";
+@forward "pipeline-detail-panel";
+@forward "variables-overview";
+@forward "chip-fields";
+@forward "form-fields";
+@forward "metadata-section";
+@forward "test-pipeline-table";
+@forward "test-pipeline-widgets";
+
+// YAML editor
+@forward "variable-picker";

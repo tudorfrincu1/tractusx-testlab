@@ -1,0 +1,280 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+/* This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). */
+/* It was reviewed and tested by a human committer. */
+
+.variable-picker__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.variable-picker {
+  position: relative;
+  width: 500px;
+  max-height: 480px;
+  background: #1e1e2e;
+  border: 1px solid #3a3a4a;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.variable-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #3a3a4a;
+  flex-shrink: 0;
+}
+
+.variable-picker__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.variable-picker__close {
+  all: unset;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.variable-picker__close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.variable-picker__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #3a3a4a;
+  flex-shrink: 0;
+}
+
+.variable-picker__tab {
+  flex: 1;
+  padding: 8px 14px;
+  font-size: 12px;
+  text-align: center;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.variable-picker__tab:hover {
+  color: #ccc;
+}
+
+.variable-picker__tab--active {
+  color: #ffd700;
+  border-bottom-color: #ffd700;
+}
+
+.variable-picker__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+}
+
+.variable-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.variable-picker__item {
+  font-size: 12px;
+  font-family: "Fira Code", "Cascadia Code", monospace;
+  color: #ccc;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.variable-picker__item-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  border: 1px solid #3a3a4a;
+  border-radius: 6px;
+  background: #2a2a3a;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.variable-picker__item-btn::before {
+  content: "";
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  background: transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.variable-picker__item-btn:hover {
+  background: #333345;
+  border-color: #555;
+}
+
+.variable-picker__item-btn:focus-visible {
+  outline: 1px solid #7c3aed;
+  outline-offset: 1px;
+}
+
+.variable-picker__item-btn--selected {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.variable-picker__item-btn--selected::before {
+  border-color: #ffd700;
+  background: radial-gradient(circle, #ffd700 40%, transparent 45%);
+}
+
+.variable-picker__item-btn--selected:hover {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: #ffd700;
+}
+
+.variable-picker__empty {
+  padding: 12px 8px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  font-style: italic;
+}
+
+.variable-picker__dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  background: #2a2a3a;
+  color: #ccc;
+  border: 1px solid #3a3a4a;
+  border-radius: 6px;
+  outline: none;
+}
+
+.variable-picker__dropdown:focus {
+  border-color: #ffd700;
+}
+
+.variable-picker__section-label {
+  padding: 4px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+  font-weight: 600;
+}
+
+.variable-picker-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  background: #2a2a3a;
+  color: #ffd700;
+  border: 1px solid #3a3a4a;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.variable-picker-btn:hover {
+  background: #3a3a4a;
+  border-color: #ffd700;
+}
+
+/* Variable highlight in Monaco editor — chip/badge appearance */
+.variable-highlight {
+  color: #ffd700 !important;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 3px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: default !important;
+}
+
+.variable-picker__footer {
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px;
+  border-top: 1px solid #3a3a4a;
+  flex-shrink: 0;
+}
+
+.variable-picker__add-btn {
+  padding: 8px 28px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #3a3a4a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  background: #2a2a3a;
+  color: #666;
+}
+
+.variable-picker__add-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.variable-picker__add-btn--active {
+  background: #3a3a1a;
+  color: #ffd700;
+  border-color: #ffd700;
+}
+
+.variable-picker__add-btn--active:hover {
+  background: #4a4a2a;
+}

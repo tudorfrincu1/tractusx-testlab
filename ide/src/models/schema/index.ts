@@ -22,8 +22,11 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export * from "./environment";
-export * from "./execution";
-export * from "./project";
-export * from "./schema";
-export * from "./validator";
+/**
+ * Schema module barrel — re-exports all schema types preserving the original
+ * `@/models/schema` public surface.
+ */
+
+export * from "./assertionSchema";
+export * from "./phaseSchema";
+export * from "./testSchema";
