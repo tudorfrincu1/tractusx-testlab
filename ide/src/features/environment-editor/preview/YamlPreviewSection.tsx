@@ -27,13 +27,12 @@ import Editor, { type BeforeMount } from "@monaco-editor/react";
 import type { EnvironmentYamlInput } from "./yamlPreview";
 import { generateEnvironmentYaml } from "./yamlPreview";
 import { defineTractusDarkTheme } from "../../yaml-editor/monacoSetup";
-import "../EnvironmentEditor.css";
 
 export interface YamlPreviewSectionProps {
   config: EnvironmentYamlInput;
 }
 
-export function YamlPreviewSection({ config }: YamlPreviewSectionProps) {
+export function YamlPreviewSection({ config }: Readonly<YamlPreviewSectionProps>) {
   const yaml = useMemo(() => generateEnvironmentYaml(config), [config]);
 
   const handleBeforeMount: BeforeMount = useCallback((monaco) => {

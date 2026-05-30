@@ -23,10 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo, useState } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { modelToYaml } from "@/services";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./ExportDialog.css";
 
 import FolderZipIcon from "@mui/icons-material/FolderZip";
 import CloseIcon from "@mui/icons-material/Close";

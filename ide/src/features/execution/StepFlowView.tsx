@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import type { ExecutionStep, StepStatus } from "@/models/execution";
-import "./StepFlowView.css";
 
 /* ── Status icon map ────────────────────────────────────────────────────── */
 

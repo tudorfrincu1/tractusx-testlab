@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useMemo } from "react";
-import { useExecutionStore } from "@/store/execution/useExecutionStore";
+import { useExecutionStore } from "@/store";
 import { useResizablePanel } from "@/shared/hooks/useResizablePanel";
 import { StepCard } from "./StepCard";
 import { StepFlowView } from "./StepFlowView";
@@ -33,7 +33,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import GridViewIcon from "@mui/icons-material/GridView";
-import "./ExecutionPanel.css";
 
 /* ── Phase tab definitions ──────────────────────────────────────────────── */
 

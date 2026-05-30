@@ -24,12 +24,11 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useMemo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import type { PreconditionDefinition } from "@/models/schema";
-import { PreconditionsList } from "./PreconditionsList";
-import { PreconditionEditor } from "./PreconditionEditor";
-import { AddPreconditionModal } from "./AddPreconditionModal";
-import "./PreconditionsPanel.css";
+import { PreconditionsList } from "./list/PreconditionsList";
+import { PreconditionEditor } from "./list/PreconditionEditor";
+import { AddPreconditionModal } from "./modal/AddPreconditionModal";
 
 export function PreconditionsPanel() {
   const tck = useProjectStore((s) => s.tck);

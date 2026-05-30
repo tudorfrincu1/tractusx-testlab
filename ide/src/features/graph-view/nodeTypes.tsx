@@ -26,7 +26,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./nodeTypes.css";
 
 interface CustomNodeData {
   label: string;

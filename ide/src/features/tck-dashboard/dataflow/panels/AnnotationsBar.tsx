@@ -24,7 +24,6 @@
 // It was reviewed and tested by a human committer.
 
 import { memo, useCallback } from "react";
-import "./PipelineDetailPanel.css";
 
 export interface Annotation {
   nodeId: string;

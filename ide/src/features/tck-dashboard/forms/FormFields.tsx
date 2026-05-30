@@ -24,7 +24,6 @@
 
 import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./FormFields.css";
 
 import EditIcon from "@mui/icons-material/Edit";
 

@@ -26,7 +26,6 @@ import { useEnvironmentStore } from "@/store";
 import type { ExternalServiceConfig, ConnectorVersion } from "@/models/environment";
 import { DSP_PATHS } from "@/models/environment";
 import { FieldWithToggle } from "./FieldWithToggle";
-import "./ServiceCard.css";
 
 export interface ExternalServiceCardProps {
   service: ExternalServiceConfig;

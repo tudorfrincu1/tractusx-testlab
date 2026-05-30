@@ -25,7 +25,6 @@
 import { useState, useRef } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
 import type { StandardRef } from "@/models/schema";
-import "./ChipFields.css";
 
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";

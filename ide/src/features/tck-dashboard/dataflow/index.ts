@@ -24,21 +24,27 @@
 
 export { DataFlowView } from "./DataFlowView";
 export { PipelineGraphView } from "./PipelineGraphView";
-export { PipelineGraphCanvas } from "./PipelineGraphCanvas";
-export { StageListSidebar } from "./StageListSidebar";
-export { NodeDetailPanel } from "./NodeDetailPanel";
-export { AnnotationsBar } from "./AnnotationsBar";
-export { GraphInfoPanel } from "./GraphInfoPanel";
-export { VariablesOverview } from "./VariablesOverview";
-export { buildDataFlow } from "./dataFlowBuilder";
-export type { FlowNode, FlowEdge, FlowData } from "./dataFlowBuilder";
-export { flowDataToReactFlow } from "./flowDataToReactFlow";
-export type { StageStatusMap, ReactFlowPipelineData } from "./flowDataToReactFlow";
-export { layoutPipelineGraph } from "./pipelineLayout";
-export { pipelineNodeTypes, PipelineNode } from "./PipelineNode";
-export { pipelineEdgeTypes, PipelineEdge } from "./PipelineEdge";
+
+// graph module
+export { PipelineGraphCanvas } from "./graph";
+export { pipelineNodeTypes, PipelineNode } from "./graph";
+export { pipelineEdgeTypes, PipelineEdge } from "./graph";
+export { layoutPipelineGraph } from "./graph";
+
+// panels module
+export { StageListSidebar } from "./panels";
+export { NodeDetailPanel } from "./panels";
+export { AnnotationsBar } from "./panels";
+export { GraphInfoPanel } from "./panels";
+export { VariablesOverview } from "./panels";
+
+// builder module
+export { buildDataFlow } from "./builder";
+export type { FlowNode, FlowEdge, FlowData } from "./builder";
+export { flowDataToReactFlow } from "./builder";
+export type { StageStatusMap, ReactFlowPipelineData } from "./builder";
 export type {
   PipelineStageStatus,
   PipelineNodeData,
   PipelineEdgeData,
-} from "./types";
+} from "./builder";

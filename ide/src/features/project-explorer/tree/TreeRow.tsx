@@ -24,7 +24,6 @@
 
 import { theme } from "@/shared/theme/tractusxTheme";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import "./TreeRow.css";
 
 export interface TreeRowProps {
   depth: number;

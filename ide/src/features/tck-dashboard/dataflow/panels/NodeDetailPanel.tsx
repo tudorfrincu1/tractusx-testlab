@@ -24,8 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import { memo } from "react";
-import type { PipelineNodeData, PipelineStageStatus } from "../builder/types";
-import "./PipelineDetailPanel.css";
+import type { PipelineNodeData, PipelineStageStatus } from "../builder/pipelineGraph.types";
 
 export interface NodeDetailPanelProps {
   data: PipelineNodeData;

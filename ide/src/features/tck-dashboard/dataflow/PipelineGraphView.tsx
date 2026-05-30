@@ -25,16 +25,15 @@
 
 import { useMemo, useState, useCallback, useRef } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { useProjectStore } from "@/store/project/useProjectStore";
-import { buildDataFlow } from "./dataFlowBuilder";
-import { PipelineGraphCanvas } from "./PipelineGraphCanvas";
-import { StageListSidebar } from "./StageListSidebar";
-import { NodeDetailPanel } from "./NodeDetailPanel";
-import { AnnotationsBar } from "./AnnotationsBar";
+import { useProjectStore } from "@/store";
+import { buildDataFlow } from "./builder/dataFlowBuilder";
+import { PipelineGraphCanvas } from "./graph/PipelineGraphCanvas";
+import { StageListSidebar } from "./panels/StageListSidebar";
+import { NodeDetailPanel } from "./panels/NodeDetailPanel";
+import { AnnotationsBar } from "./panels/AnnotationsBar";
 import type { LayoutDirection } from "@/shared/hooks/usePipelineLayout";
-import type { PipelineNodeData } from "./types";
+import type { PipelineNodeData } from "./builder/pipelineGraph.types";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./PipelineGraphView.css";
 
 const SIDEBAR_MIN = 200;
 const SIDEBAR_MAX = 500;

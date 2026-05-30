@@ -23,12 +23,11 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useProjectStore, type ActiveFile, type TestSummary } from "@/store/project/useProjectStore";
+import { useProjectStore, type ActiveFile, type TestSummary } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { SectionCard } from "../forms/MetadataSection";
 import { IconButton, OrderBadge } from "./TestPipelineWidgets";
 import { ConfirmDialog } from "../../ConfirmDialog";
-import "./TestPipelineTable.css";
 
 import EditIcon from "@mui/icons-material/Edit";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";

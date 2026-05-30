@@ -25,8 +25,7 @@
 
 import { memo, useCallback } from "react";
 import type { FlowNode } from "../builder/dataFlowBuilder";
-import type { PipelineStageStatus } from "../builder/types";
-import "../PipelineGraphView.css";
+import type { PipelineStageStatus } from "../builder/pipelineGraph.types";
 
 export interface StageListSidebarProps {
   nodes: FlowNode[];

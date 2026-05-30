@@ -24,9 +24,8 @@
 // It was reviewed and tested by a human committer.
 
 import { memo, useState, useCallback, useMemo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { MetadataEditor } from "./MetadataEditor";
-import "./MetadataSummary.css";
 
 const DATASPACE_COLORS: Record<string, string> = {
   saturn: "#fbbf24",

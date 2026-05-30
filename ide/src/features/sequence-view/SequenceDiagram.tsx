@@ -24,9 +24,8 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import { modelToSequence } from "@/services";
-import "./SequenceDiagram.css";
 
 const DEBOUNCE_MS = 300;
 const SCALE_MIN = 0.25;

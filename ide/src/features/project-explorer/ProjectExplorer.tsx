@@ -24,13 +24,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import { useProjectStore, type ActiveFile } from "@/store/project/useProjectStore";
-import { ExplorerContextMenu, type ContextTarget } from "./ExplorerContextMenu";
-import { ExplorerActions } from "./ExplorerActions";
-import { ExplorerHeader } from "./ExplorerHeader";
-import "./ProjectExplorer.css";
-import { TreeRow } from "./TreeRow";
-import { useTestDragReorder } from "./useTestDragReorder";
+import { useProjectStore, type ActiveFile } from "@/store";
+import { ExplorerContextMenu, type ContextTarget } from "./contextMenu";
+import { ExplorerActions } from "./actions";
+import { ExplorerHeader } from "./tree";
+import { TreeRow } from "./tree";
+import { useTestDragReorder } from "./tree";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";

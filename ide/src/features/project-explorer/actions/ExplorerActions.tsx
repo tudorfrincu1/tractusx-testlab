@@ -24,7 +24,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { yamlToModel } from "@/services";
 import type { ScriptDefinition } from "@/models/schema";
 import { SchemaDownloadDialog } from "@/shared/ui/SchemaDownloadDialog/SchemaDownloadDialog";
@@ -32,7 +32,6 @@ import { SchemaDownloadDialog } from "@/shared/ui/SchemaDownloadDialog/SchemaDow
 import AddIcon from "@mui/icons-material/Add";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
-import "./ExplorerActions.css";
 
 function generateUniqueName(base: string, existing: string[]): string {
   if (!existing.includes(base)) return base;

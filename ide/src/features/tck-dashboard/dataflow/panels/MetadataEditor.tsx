@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import { memo, useState, useCallback } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import type { VariableDefinition } from "@/models/schema";
 import {
   InlineField,
@@ -33,7 +33,6 @@ import {
   StandardsField,
   TagField,
 } from "../../forms/FormFields";
-import "./MetadataEditor.css";
 
 const DATASPACE_OPTIONS = ["saturn", "R25.03", "R25.06", "R24.12", "R24.08"] as const;
 

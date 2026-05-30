@@ -26,7 +26,6 @@ import { theme } from "@/shared/theme/tractusxTheme";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
-import "./ExplorerHeader.css";
 
 export interface ExplorerHeaderProps {
   onCollapse?: () => void;

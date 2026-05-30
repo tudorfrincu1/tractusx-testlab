@@ -22,7 +22,21 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { ProjectExplorer, type ProjectExplorerProps } from "./ProjectExplorer";
-export { TreeRow, type TreeRowProps, ExplorerHeader, useTestDragReorder } from "./tree";
-export { ExplorerActions } from "./actions";
-export { ExplorerContextMenu, type ContextTarget, YamlPreviewModal, useRenameInput } from "./contextMenu";
+/**
+ * Barrel re-export — all feature public surfaces.
+ *
+ * Each feature exposes its own barrel (`@/features/<name>`); this top-level
+ * barrel aggregates them for convenience when an external layer (app/, layout/)
+ * wants to import multiple features without listing each path.
+ */
+
+export * from "./block-editor";
+export * from "./environment-editor";
+export * from "./execution";
+export * from "./export";
+export * from "./graph-view";
+export * from "./preconditions";
+export * from "./project-explorer";
+export * from "./sequence-view";
+export * from "./tck-dashboard";
+export * from "./yaml-editor";

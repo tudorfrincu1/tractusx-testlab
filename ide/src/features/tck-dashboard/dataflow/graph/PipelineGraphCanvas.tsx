@@ -39,8 +39,7 @@ import { usePipelineLayout, type LayoutDirection } from "@/shared/hooks/usePipel
 import { pipelineNodeTypes } from "./PipelineNode";
 import { pipelineEdgeTypes } from "./PipelineEdge";
 import { theme } from "@/shared/theme/tractusxTheme";
-import type { PipelineNodeData } from "../builder/types";
-import "./PipelineGraph.css";
+import type { PipelineNodeData } from "../builder/pipelineGraph.types";
 
 export interface PipelineGraphCanvasProps {
   flowData: FlowData;

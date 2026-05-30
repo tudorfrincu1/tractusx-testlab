@@ -37,13 +37,12 @@ import {
   type NodeMouseHandler,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { modelToGraph } from "@/services";
 import { applyDagreLayout } from "./layoutEngine";
 import { nodeTypes } from "./nodeTypes";
-import type { GraphMode } from "@/store/editor/useEditorStore";
-import "./DependencyGraph.css";
+import type { GraphMode } from "@/store";
 
 const MODE_LABELS: { mode: GraphMode; label: string }[] = [
   { mode: "execution", label: "Execution Flow" },

@@ -22,7 +22,6 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { ProjectExplorer, type ProjectExplorerProps } from "./ProjectExplorer";
-export { TreeRow, type TreeRowProps, ExplorerHeader, useTestDragReorder } from "./tree";
-export { ExplorerActions } from "./actions";
-export { ExplorerContextMenu, type ContextTarget, YamlPreviewModal, useRenameInput } from "./contextMenu";
+export { ExplorerContextMenu } from "./ExplorerContextMenu";
+export { YamlPreviewModal, useRenameInput } from "./ExplorerContextMenuParts";
+export { type ContextTarget, type ExplorerContextMenuProps } from "./explorerContextMenuTypes";

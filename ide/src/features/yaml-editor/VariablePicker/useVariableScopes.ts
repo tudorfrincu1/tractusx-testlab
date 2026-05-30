@@ -23,8 +23,8 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
-import { useEnvironmentStore } from "@/store/environment/useEnvironmentStore";
+import { useProjectStore } from "@/store";
+import { useEnvironmentStore } from "@/store";
 import type { Step, PreconditionDefinition } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 

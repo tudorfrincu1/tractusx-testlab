@@ -26,7 +26,7 @@
 import { useRef, useCallback, useEffect } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { findStepLineRange } from "@/services";
 import { defineTractusDarkTheme, registerYamlCompletions } from "../monacoSetup";

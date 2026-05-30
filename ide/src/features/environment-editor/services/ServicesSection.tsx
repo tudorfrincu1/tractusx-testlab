@@ -23,10 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useCallback } from "react";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useServiceStore } from "@/store";
 import type { ServiceDefinition } from "@/models/schema";
 import { ServiceCard } from "./ServiceCard";
-import "./ServiceCard.css";
 
 export function ServicesSection() {
   const services = useServiceStore((s) => s.services);

@@ -25,7 +25,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useVariableScopes } from "./useVariableScopes";
 import type { VariableEntry, StepWithReturns } from "./useVariableScopes";
-import "./VariablePicker.css";
 
 type Scope = "env" | "metadata" | "preconditions" | "steps" | "setup";
 

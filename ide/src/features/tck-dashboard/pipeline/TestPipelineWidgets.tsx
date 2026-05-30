@@ -24,7 +24,6 @@
 
 import type { ReactNode } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./TestPipelineWidgets.css";
 
 export function OrderBadge({ order }: Readonly<{ order: number }>) {
   return (

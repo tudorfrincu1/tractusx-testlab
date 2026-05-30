@@ -26,7 +26,6 @@ import { useState } from "react";
 import type { EnvironmentVariable } from "@/models/environment";
 import { useEnvironmentStore } from "@/store";
 import { VariableRow } from "./VariableRow";
-import "./VariablesTable.css";
 
 const EMPTY_VARIABLE: EnvironmentVariable = {
   name: "",

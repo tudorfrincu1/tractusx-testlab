@@ -24,7 +24,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { ExecutionStep, StepStatus } from "@/models/execution";
-import "./StepCard.css";
 
 /* ── Status rendering ───────────────────────────────────────────────────── */
 

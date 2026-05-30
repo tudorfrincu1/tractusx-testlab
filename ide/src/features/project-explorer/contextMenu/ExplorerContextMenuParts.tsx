@@ -24,7 +24,6 @@
 
 import { useState, useCallback } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import "./ExplorerContextMenuParts.css";
 
 /** Reusable modal for displaying read-only YAML content. */
 export function YamlPreviewModal({ yaml, onClose }: { yaml: string; onClose: () => void }) {

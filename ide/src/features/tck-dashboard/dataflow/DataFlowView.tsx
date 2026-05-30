@@ -23,10 +23,9 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
-import { buildDataFlow, type FlowNode, type FlowEdge } from "./dataFlowBuilder";
-import "./DataFlowView.css";
+import { buildDataFlow, type FlowNode, type FlowEdge } from "./builder/dataFlowBuilder";
 
 import StorageIcon from "@mui/icons-material/Storage";
 import InputIcon from "@mui/icons-material/Input";
@@ -76,7 +75,7 @@ export function DataFlowView() {
 
 /* ── Sub-components ──────────────────────────────────────────────────────── */
 
-function SharedVariablesBanner({ variables }: { variables: string[] }) {
+function SharedVariablesBanner({ variables }: Readonly<{ variables: string[] }>) {
   return (
     <div className="data-flow-view__shared-banner">
       <StorageIcon sx={{ fontSize: 14, color: theme.colors.primary }} />
@@ -90,7 +89,7 @@ function SharedVariablesBanner({ variables }: { variables: string[] }) {
   );
 }
 
-function FlowNodeCard({ node, index }: { node: FlowNode; index: number }) {
+function FlowNodeCard({ node, index }: Readonly<{ node: FlowNode; index: number }>) {
   return (
     <div className="flow-node-card">
       <div className="flow-node-card__header">
@@ -102,7 +101,7 @@ function FlowNodeCard({ node, index }: { node: FlowNode; index: number }) {
           {node.name}
         </span>
         <span className="flow-node-card__step-count">
-          {node.stepCount} step{node.stepCount !== 1 ? "s" : ""}
+          {node.stepCount} step{node.stepCount === 1 ? "" : "s"}
         </span>
       </div>
 
@@ -124,13 +123,13 @@ function FlowNodeCard({ node, index }: { node: FlowNode; index: number }) {
   );
 }
 
-function PortGroup({ icon, label, names, chipBg, chipColor }: {
+function PortGroup({ icon, label, names, chipBg, chipColor }: Readonly<{
   icon: React.ReactNode;
   label: string;
   names: string[];
   chipBg: string;
   chipColor: string;
-}) {
+}>) {
   return (
     <div className="port-group">
       <div className="port-group__label">
@@ -143,7 +142,7 @@ function PortGroup({ icon, label, names, chipBg, chipColor }: {
   );
 }
 
-function EdgeConnector({ edges, direction }: { edges: FlowEdge[]; direction: "in" | "out" }) {
+function EdgeConnector({ edges, direction }: Readonly<{ edges: FlowEdge[]; direction: "in" | "out" }>) {
   const allVars = edges.flatMap((e) => e.variables);
   const label = direction === "in" ? "receives" : "produces";
   const arrowColor = direction === "in" ? "#42a5f5" : "#66bb6a";
@@ -172,7 +171,7 @@ function PipelineConnector() {
   );
 }
 
-function VariableChip({ name, color, textColor }: { name: string; color: string; textColor: string }) {
+function VariableChip({ name, color, textColor }: Readonly<{ name: string; color: string; textColor: string }>) {
   return (
     <span className="variable-chip" style={{ background: color, color: textColor }}>
       {name}

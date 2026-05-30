@@ -9,7 +9,7 @@
  *
  * This program and the accompanying materials are made available under the
  * terms of the Apache License, Version 2.0 which is available at
- * https://www.apache.org/licenses/LICENSE-2.0.
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { ProjectExplorer, type ProjectExplorerProps } from "./ProjectExplorer";
-export { TreeRow, type TreeRowProps, ExplorerHeader, useTestDragReorder } from "./tree";
-export { ExplorerActions } from "./actions";
-export { ExplorerContextMenu, type ContextTarget, YamlPreviewModal, useRenameInput } from "./contextMenu";
+export { YamlPreviewSection } from "./YamlPreviewSection";
+export type { YamlPreviewSectionProps } from "./YamlPreviewSection";
+export { generateEnvironmentYaml } from "./yamlPreview";
+export type { EnvironmentYamlInput } from "./yamlPreview";

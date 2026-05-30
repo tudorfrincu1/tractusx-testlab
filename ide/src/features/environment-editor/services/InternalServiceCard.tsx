@@ -26,7 +26,6 @@ import { useState } from "react";
 import { useEnvironmentStore } from "@/store";
 import type { InternalServiceConfig, AuthType, ConnectorVersion } from "@/models/environment";
 import { FieldWithToggle } from "./FieldWithToggle";
-import "./ServiceCard.css";
 
 export interface InternalServiceCardProps {
   service: InternalServiceConfig;

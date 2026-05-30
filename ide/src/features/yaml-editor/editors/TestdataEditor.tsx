@@ -25,7 +25,7 @@
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type * as monaco from "monaco-editor";
 import { useRef } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import {
   getVariableRanges,
@@ -35,7 +35,6 @@ import {
   isInsideVariable,
   isNavigationOrModifierKey,
 } from "./testdataEditorTransforms";
-import "../VariablePicker/VariablePicker.css";
 
 /** Ref handle exposed to parent for inserting text at cursor */
 export interface TestdataEditorHandle {

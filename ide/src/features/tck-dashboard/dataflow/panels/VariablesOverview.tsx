@@ -23,16 +23,13 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
-import type { AggregatedVariable } from "@/store/project/useProjectStore";
-import { getAggregatedVariables as computeAggregatedVariables } from "@/store/selectors/variableSelectors";
+import { useProjectStore, type AggregatedVariable, getAggregatedVariables as computeAggregatedVariables } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { SectionCard } from "../../forms/MetadataSection";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import LinkIcon from "@mui/icons-material/Link";
-import "./VariablesOverview.css";
 
 export function VariablesOverview() {
   const tck = useProjectStore((s) => s.tck);

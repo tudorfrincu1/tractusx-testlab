@@ -24,13 +24,10 @@
 
 import { useMemo } from "react";
 import { useEnvironmentStore } from "@/store";
-import { useServiceStore } from "@/store/environment/useServiceStore";
-import { ServicesSection } from "./ServicesSection";
-import { VariablesSection } from "./VariablesSection";
-import { YamlPreviewSection } from "./YamlPreviewSection";
-import "./EnvironmentEditor.css";
-import "./ServiceCard.css";
-import "./VariablesTable.css";
+import { useServiceStore } from "@/store";
+import { ServicesSection } from "./services";
+import { VariablesSection } from "./variables";
+import { YamlPreviewSection } from "./preview";
 
 export function EnvironmentEditor() {
   const variables = useEnvironmentStore((s) => s.variables);

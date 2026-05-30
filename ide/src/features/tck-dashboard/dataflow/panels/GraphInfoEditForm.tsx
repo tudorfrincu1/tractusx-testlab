@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import { memo } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import {
   InlineField,
   StandardsField,

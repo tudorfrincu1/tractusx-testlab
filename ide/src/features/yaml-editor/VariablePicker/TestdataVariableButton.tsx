@@ -28,8 +28,7 @@ import {
   getTestdataEditorInstance,
   registerOpenVariablePicker,
   unregisterOpenVariablePicker,
-} from "../TestdataEditor";
-import "./VariablePicker.css";
+} from "../editors/TestdataEditor";
 
 export function TestdataVariableButton() {
   const [isOpen, setIsOpen] = useState(false);

@@ -24,11 +24,10 @@
 // It was reviewed and tested by a human committer.
 
 import { memo, useState, useCallback } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import type { LayoutDirection } from "@/shared/hooks/usePipelineLayout";
 import { GraphInfoDisplay } from "./GraphInfoDisplay";
 import { GraphInfoEditForm } from "./GraphInfoEditForm";
-import "./GraphInfoPanel.css";
 
 const DATASPACE_COLORS: Record<string, string> = {
   saturn: "#fbbf24",

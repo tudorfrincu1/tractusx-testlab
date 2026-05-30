@@ -23,16 +23,15 @@
 // It was reviewed and tested by a human committer.
 
 import { useState, useCallback } from "react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { PipelineGraphView } from "./dataflow/PipelineGraphView";
-import { GraphInfoDisplay } from "./dataflow/GraphInfoDisplay";
-import { GraphInfoEditForm } from "./dataflow/GraphInfoEditForm";
-import { DATASPACE_OPTIONS } from "./dataflow/constants";
+import { GraphInfoDisplay } from "./dataflow/panels/GraphInfoDisplay";
+import { GraphInfoEditForm } from "./dataflow/panels/GraphInfoEditForm";
+import { DATASPACE_OPTIONS } from "./dataflow/builder/dataspaceOptions";
 import { VersionField } from "./forms/FormFields";
 
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import "./TckDashboard.css";
 
 export function TckDashboard() {
 
@@ -154,7 +153,7 @@ function DashboardHeader() {
   );
 }
 
-function Badge({ label, color, bg }: { label: string; color: string; bg: string }) {
+function Badge({ label, color, bg }: Readonly<{ label: string; color: string; bg: string }>) {
   return (
     <span className="tck-dashboard__badge" style={{
       color,

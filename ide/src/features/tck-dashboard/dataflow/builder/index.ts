@@ -22,7 +22,14 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { ProjectExplorer, type ProjectExplorerProps } from "./ProjectExplorer";
-export { TreeRow, type TreeRowProps, ExplorerHeader, useTestDragReorder } from "./tree";
-export { ExplorerActions } from "./actions";
-export { ExplorerContextMenu, type ContextTarget, YamlPreviewModal, useRenameInput } from "./contextMenu";
+export { buildDataFlow } from "./dataFlowBuilder";
+export type { FlowNode, FlowEdge, FlowData } from "./dataFlowBuilder";
+export { flowDataToReactFlow } from "./flowDataToReactFlow";
+export type { StageStatusMap, ReactFlowPipelineData } from "./flowDataToReactFlow";
+export type {
+  PipelineStageStatus,
+  PipelineNodeData,
+  PipelineEdgeData,
+  PipelineDirection,
+} from "./pipelineGraph.types";
+export { DATASPACE_OPTIONS } from "./dataspaceOptions";

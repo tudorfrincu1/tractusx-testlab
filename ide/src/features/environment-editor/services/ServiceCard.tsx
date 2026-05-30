@@ -24,8 +24,7 @@
 
 import { useState, useCallback } from "react";
 import type { ServiceDefinition, ServiceAuthDefinition, ServiceReturnField } from "@/models/schema";
-import { useServiceStore } from "@/store/environment/useServiceStore";
-import "./ServiceCard.css";
+import { useServiceStore } from "@/store";
 
 export interface ServiceCardProps {
   service: ServiceDefinition;

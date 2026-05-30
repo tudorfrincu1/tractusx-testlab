@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import Editor, { type OnMount } from "@monaco-editor/react";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { theme } from "@/shared/theme/tractusxTheme";
 
 export function SchemaEditor() {

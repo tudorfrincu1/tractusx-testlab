@@ -25,8 +25,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { PipelineDirection, PipelineNodeData, PipelineStageStatus } from "../builder/types";
-import "./PipelineGraph.css";
+import type { PipelineDirection, PipelineNodeData, PipelineStageStatus } from "../builder/pipelineGraph.types";
 
 /* ── Status icons (plain Unicode — no icon library needed) ──────────────── */
 

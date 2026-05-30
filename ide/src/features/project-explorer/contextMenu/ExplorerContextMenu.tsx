@@ -24,7 +24,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { modelToYaml, yamlToModel } from "@/services";
 
 import EditIcon from "@mui/icons-material/Edit";
@@ -43,7 +43,6 @@ import { SchemaDownloadDialog } from "@/shared/ui/SchemaDownloadDialog/SchemaDow
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { YamlPreviewModal, useRenameInput } from "./ExplorerContextMenuParts";
 import { ContextTarget, ExplorerContextMenuProps } from "./explorerContextMenuTypes";
-import "./ExplorerContextMenu.css";
 
 export type { ContextTarget, ExplorerContextMenuProps };
 

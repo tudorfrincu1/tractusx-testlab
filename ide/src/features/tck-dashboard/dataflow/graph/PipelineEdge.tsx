@@ -30,8 +30,7 @@ import {
   getBezierPath,
   type EdgeProps,
 } from "@xyflow/react";
-import type { PipelineEdgeData, PipelineStageStatus } from "../builder/types";
-import "./PipelineGraph.css";
+import type { PipelineEdgeData, PipelineStageStatus } from "../builder/pipelineGraph.types";
 
 /** Determines edge visual class based on connected node statuses. */
 export type PipelineEdgeStatus = "idle" | "active" | "error";
