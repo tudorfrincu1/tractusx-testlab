@@ -40,7 +40,7 @@ import {
   type BlockWithSegments,
   resolveParentStepSchema,
   outputDropdown,
-} from "./assertionHelpers";
+} from "./assertionBlockResolvers";
 
 export function registerAssertionBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   Blockly.Blocks["assert_equals"] = {

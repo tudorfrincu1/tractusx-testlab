@@ -22,11 +22,17 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { workspaceToModel, readStepChain } from "./workspaceToModel";
-export { serializePreconditionPolicyBlock, deserializePreconditionPolicyBlock } from "./preconditionSerializers";
+// Orchestrator for the workspace → model direction.
+export { workspaceToModel } from "./workspaceToModel";
+// Re-export each responsibility category through its own barrel.
+export { readStepChain } from "./reader";
 export {
+  blockToStep,
+  serializePreconditionPolicyBlock,
+  deserializePreconditionPolicyBlock,
   serializeConstraintChain,
   serializePolicyBlock,
   createConstraintItemBlocks,
   createPolicyRuleBlocks,
-} from "./policySerializers";
+} from "./writer";
+export { flattenValidateToSteps } from "./validation";

@@ -32,9 +32,8 @@
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import { createEmptyTest, createEmptyTck } from "@/models/schema";
-import "./BlockEditorErrorBoundary.css";
 
 interface Props {
   children: ReactNode;

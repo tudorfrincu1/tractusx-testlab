@@ -23,5 +23,5 @@
 // It was reviewed and tested by a human committer.
 
 export { populateWorkspaceFromModel, cleanupOrphanBlocks } from "./modelToWorkspace";
-export { populateAssertions } from "./populateAssertions";
+export { populateAssertions } from "./assertions";
 export { populateTest } from "./populateTest";

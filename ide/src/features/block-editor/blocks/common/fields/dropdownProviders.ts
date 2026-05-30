@@ -24,11 +24,11 @@
 // It was reviewed and tested by a human committer.
 
 import type { FieldDropdown, Workspace } from "blockly";
-import { useServiceStore } from "@/store/environment/useServiceStore";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useServiceStore } from "@/store";
+import { useProjectStore } from "@/store";
 import type { BlockCatalog } from "../catalog/catalogLoader";
-import type { TypedVariable } from "../catalog/typedVariableCollection";
-import { collectTypedUpstreamVariables, collectTypedWorkspaceVariables } from "../catalog/typedVariableCollection";
+import type { TypedVariable } from "../catalog/variables/typedVariableCollection";
+import { collectTypedUpstreamVariables, collectTypedWorkspaceVariables } from "../catalog/variables/typedVariableCollection";
 
 /** Collect all mock endpoint IDs defined in the workspace (for Wait block dropdown) */
 export function collectMockEndpointIds(workspace: Workspace): Array<[string, string]> {

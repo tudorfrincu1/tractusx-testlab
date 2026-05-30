@@ -27,7 +27,6 @@ import type { PathSegment, SegmentType } from "../core/pathBuilder";
 import { segmentsToPath } from "../core/pathBuilder";
 import { jsonToSchema } from "../core/jsonToSchema";
 import { SchemaTree } from "../schema/SchemaTree";
-import "./PathBuilderModal.css";
 
 export interface PathBuilderModalProps {
   blockId: string;

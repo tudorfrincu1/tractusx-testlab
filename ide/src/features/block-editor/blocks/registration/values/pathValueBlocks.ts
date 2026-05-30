@@ -26,7 +26,7 @@
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
-import { collectWorkspaceVariables } from "../../common/catalog/variableCollection";
+import { collectWorkspaceVariables } from "../../common/catalog/variables/variableCollection";
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";
 import {
   defaultSegments,

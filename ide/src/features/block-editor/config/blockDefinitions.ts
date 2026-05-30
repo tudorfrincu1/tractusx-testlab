@@ -44,8 +44,8 @@ import {
   registerFilterExpressionBlock,
 } from "../blocks";
 import { buildToolbox } from "../toolbox/toolboxBuilder";
-import { patchBubbleColours } from "../fields/bubblePatch";
-import { workspaceToModel } from "../serialization/serialize/workspaceToModel";
+import { patchBubbleColours } from "../fields/wrappedText";
+import { workspaceToModel } from "../serialization/serialize";
 import { populateWorkspaceFromModel, cleanupOrphanBlocks } from "../serialization/populate/modelToWorkspace";
 import { collectWorkspaceVariables, collectCategorizedVariables } from "../blocks";
 import type { CategorizedVariables } from "../blocks";

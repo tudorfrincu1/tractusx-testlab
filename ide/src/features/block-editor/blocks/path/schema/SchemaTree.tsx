@@ -25,7 +25,6 @@
 import { useCallback, useState } from "react";
 import type { PathSegment } from "../core/pathBuilder";
 import { schemaTypeIcon, typeBadgeClass } from "./schemaIcons";
-import "./SchemaTree.css";
 
 export interface SchemaNode {
   key: string;

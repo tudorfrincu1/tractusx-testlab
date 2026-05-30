@@ -24,27 +24,17 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Step, StepDefinition, ScriptDefinition } from "@/models/schema";
+import type { Step, ScriptDefinition } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useServiceStore } from "@/store";
 import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 
 import { normalizeStepParams } from "../paramNormalizers";
-import {
-  makeBlock,
-  setDropdownValue,
-  attachChain,
-  connectValue,
-  toBlockValueString,
-  createArrayItemBlocks,
-  createValueBlockFromString,
-} from "../helpers";
-import { populateAssertions } from "./populateAssertions";
-import { groupStepsWithAssertions, assertionStepToInlineValidation } from "./assertionGrouping";
-import { populateFilterExpressions } from "./populateFilterExpressions";
-import { deserializePreconditionPolicyBlock } from "../serialize/preconditionSerializers";
-import { truncateJsonPreview } from "../../blocks";
-import { trackStepOutputs, createValueBlockWithOutputResolution, type StepOutputMap } from "./stepOutputTracker";
+import { makeBlock, setDropdownValue, attachChain } from "../serializationParts";
+import { populateAssertions, groupStepsWithAssertions, assertionStepToInlineValidation } from "./assertions";
+import { deserializePreconditionPolicyBlock } from "../serialize";
+import { trackStepOutputs, type StepOutputMap } from "./stepOutputTracker";
+import { resolveParamPopulator } from "./paramPopulators";
 
 export function populateTest(ws: Workspace, root: Block, script: ScriptDefinition, catalog: BlockCatalog) {
   const createUnsupportedStepBlock = (
@@ -150,87 +140,17 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           if (paramVal === undefined || paramVal === null) continue;
           const fieldKey = `PARAM_${p.name.toUpperCase()}`;
 
-          switch (p.type) {
-            case "dropdown":
-            case "endpoint_ref":
-            case "schema_path":
-            case "precondition_ref":
-              setDropdownValue(sb, fieldKey, String(paramVal));
-              break;
-            case "variable": {
-              let val = String(paramVal);
-              if (val.startsWith("@")) val = val.slice(1);
-              else {
-                const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(val);
-                if (varsMatch) val = varsMatch[1];
-              }
-              setDropdownValue(sb, fieldKey, val);
-              break;
-            }
-            case "text":
-              sb.setFieldValue(String(paramVal), fieldKey);
-              break;
-            case "number":
-              sb.setFieldValue(Number(paramVal), fieldKey);
-              break;
-            case "json":
-              if (typeof paramVal === "string" && /^\$\{\{\s*.+?\s*\}\}$/.test(paramVal)) {
-                const varBlock = createValueBlockFromString(ws, paramVal);
-                connectValue(sb, fieldKey, varBlock);
-              } else if (typeof paramVal === "object") {
-                const vjb = makeBlock(ws, "value_json");
-                const jsonStr = JSON.stringify(paramVal, null, 2);
-                vjb.setFieldValue(jsonStr, "JSON_VALUE");
-                vjb.setFieldValue(truncateJsonPreview(jsonStr), "JSON_PREVIEW");
-                connectValue(sb, fieldKey, vjb);
-              }
-              break;
-            case "array":
-              if (Array.isArray(paramVal)) {
-                const itemBlocks = createArrayItemBlocks(ws, paramVal, p.item_type ?? "");
-                attachChain(sb, fieldKey, itemBlocks);
-              }
-              break;
-            case "steps":
-              if (Array.isArray(paramVal)) {
-                const nestedBlocks = buildStepBlocks(paramVal as StepDefinition[]);
-                attachChain(sb, fieldKey, nestedBlocks);
-              }
-              break;
-            case "filter_expression_list": {
-              // Direct array format (e.g. pull_data_filtered_from_precondition)
-              if (Array.isArray(paramVal)) {
-                const filterBlocks = populateFilterExpressions(ws, paramVal, stepOutputs);
-                attachChain(sb, fieldKey, filterBlocks);
-              } else {
-                // Nested format: effectiveParams.filter.filter_expression (query_catalog_with_filters)
-                const filterObj = effectiveParams.filter as Record<string, unknown> | undefined;
-                if (filterObj && typeof filterObj === "object") {
-                  const expressions = filterObj.filter_expression;
-                  if (Array.isArray(expressions)) {
-                    const filterBlocks = populateFilterExpressions(ws, expressions, stepOutputs);
-                    attachChain(sb, fieldKey, filterBlocks);
-                  }
-                }
-              }
-              break;
-            }
-            case "json_path": {
-              const jpb = makeBlock(ws, "value_json_path");
-              jpb.setFieldValue(String(paramVal), "VALUE");
-              connectValue(sb, fieldKey, jpb);
-              break;
-            }
-            case "api_path": {
-              const apb = makeBlock(ws, "value_api_path");
-              apb.setFieldValue(String(paramVal), "PATH");
-              connectValue(sb, fieldKey, apb);
-              break;
-            }
-            default:
-              connectValue(sb, fieldKey, createValueBlockWithOutputResolution(ws, toBlockValueString(paramVal), stepOutputs));
-              break;
-          }
+          const populateParam = resolveParamPopulator(p.type);
+          populateParam({
+            ws,
+            stepBlock: sb,
+            fieldKey,
+            paramValue: paramVal,
+            paramDefinition: p,
+            effectiveParams,
+            stepOutputs,
+            buildStepBlocks,
+          });
         }
 
         if (step.validate && step.validate.length > 0) {

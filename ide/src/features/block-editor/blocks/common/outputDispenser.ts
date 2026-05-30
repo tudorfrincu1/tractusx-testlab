@@ -84,6 +84,20 @@ export function attachOutputVariableBlocks(
   });
 }
 
+/**
+ * Fills every empty OUT_* slot on existing step blocks with a fresh variable
+ * block, without registering listeners. Call this after re-populating the
+ * workspace from a model (e.g. switching files or loading YAML), since the
+ * one-time listeners from {@link attachOutputVariableBlocks} do not fire while
+ * Blockly events are disabled during population.
+ */
+export function populateOutputVariableBlocks(
+  Blockly: typeof BlocklyType,
+  ws: BlocklyType.WorkspaceSvg,
+): void {
+  populateAllOutputSlots(Blockly, ws);
+}
+
 function populateAllOutputSlots(
   Blockly: typeof BlocklyType,
   ws: BlocklyType.WorkspaceSvg,

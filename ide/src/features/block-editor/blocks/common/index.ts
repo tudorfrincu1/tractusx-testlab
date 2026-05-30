@@ -34,15 +34,13 @@ export {
   type BlockCatalogParam,
   type BlockCatalogOutput,
   type SequenceInteraction,
-} from "./catalog/catalogLoader";
-
-export { collectWorkspaceVariables, collectCategorizedVariables, type CategorizedVariables } from "./catalog/variableCollection";
-
-export {
+  collectWorkspaceVariables,
+  collectCategorizedVariables,
+  type CategorizedVariables,
   type TypedVariable,
   collectTypedUpstreamVariables,
   collectTypedWorkspaceVariables,
-} from "./catalog/typedVariableCollection";
+} from "./catalog";
 
 export {
   dynamicDropdown,
@@ -79,4 +77,4 @@ export {
   ICON_INFO,
 } from "./fields/icons";
 
-export { attachOutputVariableBlocks } from "./outputDispenser";
+export { attachOutputVariableBlocks, populateOutputVariableBlocks } from "./outputDispenser";

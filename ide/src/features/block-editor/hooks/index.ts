@@ -23,6 +23,10 @@
 // It was reviewed and tested by a human committer.
 
 export { useBlocklyWorkspace } from "./useBlocklyWorkspace";
+export { useBlocklyInit } from "./useBlocklyInit";
+export { useBlocklyStoreSync } from "./useBlocklyStoreSync";
+export { useBlocklyResize } from "./useBlocklyResize";
+export type { BlocklyWorkspaceRefs, BlockCatalog } from "./blocklyWorkspaceRefs";
 export { useWorkspaceInit } from "./useWorkspaceInit";
 export { useModelSync } from "./useModelSync";
 export { useCanvasState } from "./useCanvasState";

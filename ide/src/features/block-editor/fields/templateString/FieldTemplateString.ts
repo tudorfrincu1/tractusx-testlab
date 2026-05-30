@@ -24,7 +24,7 @@
 
 import * as Blockly from "blockly";
 import type { VarScope } from "../../serialization/varSyntax";
-import type { TemplateSegment } from "./types";
+import type { TemplateSegment } from "./templateSegment.types";
 import { parseTemplateString, serializeTemplateString } from "./templateStringParser";
 
 const PILL_H_PAD = 4;

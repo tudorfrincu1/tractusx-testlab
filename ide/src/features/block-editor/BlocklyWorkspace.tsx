@@ -25,8 +25,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Blockly from "blockly";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
-import { collectWorkspaceVariables } from "./blocks/common/catalog/variableCollection";
-import { setupWarningTooltip, type WarningShowRequest } from "./fields/bubblePatch";
+import { collectWorkspaceVariables } from "./blocks/common/catalog/variables/variableCollection";
+import { setupWarningTooltip, type WarningShowRequest } from "./fields/wrappedText";
 import {
   setupInfoCallback,
   type InfoShowRequest,
@@ -44,7 +44,6 @@ import {
   type ApiPathSegment,
 } from "./blocks";
 import { BlockTooltip } from "./ui/WarningTooltip";
-import "./BlocklyWorkspace.css";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);

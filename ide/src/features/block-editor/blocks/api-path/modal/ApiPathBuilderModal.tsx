@@ -25,7 +25,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ApiPathSegment, ApiSegmentType } from "../core/apiPathBuilder";
 import { segmentsToApiPath } from "../core/apiPathBuilder";
-import "./ApiPathBuilderModal.css";
 
 const API_TEMPLATES: readonly string[] = [
   "/api/v1/transferprocesses",

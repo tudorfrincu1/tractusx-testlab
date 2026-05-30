@@ -26,7 +26,7 @@
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
-import { FieldWrappedText } from "../../../fields/FieldWrappedText";
+import { FieldWrappedText } from "../../../fields/wrappedText";
 import { blockIcon, ICON_STORE, ICON_SCHEMA, ICON_VARIABLE, ICON_STEP } from "../../common/fields/icons";
 import {
   dynamicDropdown,
@@ -34,7 +34,7 @@ import {
   collectTestFilePaths,
   collectExportedVariables,
 } from "../../common/fields/dropdownProviders";
-import { collectWorkspaceVariables } from "../../common/catalog/variableCollection";
+import { collectWorkspaceVariables } from "../../common/catalog/variables/variableCollection";
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";
 
 export function registerUtilityBlocks(Blockly: typeof BlocklyType, catalog?: BlockCatalog) {

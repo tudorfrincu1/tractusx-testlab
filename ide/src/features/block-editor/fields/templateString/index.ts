@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 export { FieldTemplateString } from "./FieldTemplateString";
-export type { TemplateSegment, LiteralSegment, VariableSegment } from "./types";
+export type { TemplateSegment, LiteralSegment, VariableSegment } from "./templateSegment.types";
 export {
   parseTemplateString,
   serializeTemplateString,

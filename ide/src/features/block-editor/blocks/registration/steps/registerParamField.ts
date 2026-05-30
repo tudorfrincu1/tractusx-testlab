@@ -33,7 +33,7 @@ import {
   collectSchemaPaths,
   collectPreconditionRefs,
 } from "../../common/fields/dropdownProviders";
-import { collectEnvironmentVariables } from "../../common/catalog/variableCollection";
+import { collectEnvironmentVariables } from "../../common/catalog/variables/variableCollection";
 
 export interface ParamFieldDef {
   name: string;

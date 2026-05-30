@@ -30,7 +30,6 @@ import WarningAmber from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import type { ValidationError } from "@/services/validation/validator";
-import "./ValidationPanel.css";
 
 export interface ValidationIssue {
   severity: "error" | "warning";

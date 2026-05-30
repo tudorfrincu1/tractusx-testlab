@@ -25,7 +25,7 @@
 
 import type { Block } from "blockly";
 import { AssertionOperator } from "@/models/schema";
-import { readValueBlockAsString, readValueBlockAsUnknown } from "./helpers";
+import { readValueBlockAsString, readValueBlockAsUnknown } from "./serializationParts/valueBlockBuilders";
 
 /** Workspace-level assertion shape built by readAssertionChain from Blockly blocks. */
 export interface WorkspaceAssertion {
@@ -53,107 +53,103 @@ export function readAssertionChain(block: Block | null): WorkspaceAssertion[] {
   const assertions: WorkspaceAssertion[] = [];
   let current = block;
   while (current) {
-    // assert_field has no OUTPUT field — handle before the output guard
-    if (current.type === "assert_field") {
-      const path = current.getFieldValue("PATH") || "";
-      const operator = current.getFieldValue("OPERATOR") || "equals";
-      const expectedRaw = readValueBlockAsUnknown(current.getInputTargetBlock("EXPECTED"));
-      const expected = expectedRaw !== undefined ? expectedRaw : "";
-      assertions.push({
-        type: AssertionOperator.ASSERT_FIELD,
-        output: "",
-        path,
-        operator,
-        value: expected,
-      });
-      current = current.getNextBlock();
-      continue;
-    }
-
-    // step_json_path_extract uses PARAM_VARIABLE not OUTPUT — handle before the output guard
-    if (current.type === "step_json_path_extract") {
-      const variable = current.getFieldValue("PARAM_VARIABLE") || "";
-      const pathBlock = current.getInputTargetBlock("PARAM_PATH");
-      const jsonPath = pathBlock ? (pathBlock.getFieldValue("VALUE") || "") : "";
-      const storeInVariable = readValueBlockAsString(current.getInputTargetBlock("PARAM_STORE_IN_VARIABLE")) || "";
-      const nestedAssertions = readAssertionChain(current.getInputTargetBlock("EXPECT"));
-      const entry: WorkspaceAssertion = {
-        type: AssertionOperator.JSON_PATH_EXTRACT,
-        output: variable,
-        json_path: jsonPath
-      };
-      if (nestedAssertions.length > 0) entry.validate = nestedAssertions;
-      assertions.push(entry);
-      current = current.getNextBlock();
-      continue;
-    }
-
-    const output = current.getFieldValue("OUTPUT") || "";
-    if (!output || output === "__NONE__") {
-      current = current.getNextBlock();
-      continue;
-    }
-
-    switch (current.type) {
-      case "assert_equals": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ type: AssertionOperator.EQUALS, output, value: val });
-        break;
-      }
-      case "assert_not_equals": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
-        assertions.push({ type: AssertionOperator.NOT_EQUALS, output, value: val });
-        break;
-      }
-      case "assert_contains": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ type: AssertionOperator.CONTAINS, output, value: val });
-        break;
-      }
-      case "assert_not_contains": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
-        assertions.push({ type: AssertionOperator.NOT_CONTAINS, output, value: val });
-        break;
-      }
-      case "assert_matches": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("PATTERN")) || "";
-        assertions.push({ type: AssertionOperator.MATCHES, output, value: val });
-        break;
-      }
-      case "assert_schema": {
-        const val = readValueBlockAsString(current.getInputTargetBlock("SCHEMA")) || "";
-        assertions.push({ type: AssertionOperator.SCHEMA, output, value: val });
-        break;
-      }
-      case "assert_validates_schema": {
-        const schemaRef = current.getFieldValue("SCHEMA_REF") || "";
-        const schema = schemaRef && schemaRef !== "__NONE__" ? `@${schemaRef}` : "";
-        assertions.push({ type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema });
-        break;
-      }
-      case "assert_compare": {
-        const operator = current.getFieldValue("OPERATOR") || "greater_than";
-        const val = readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "";
-        const assertType = COMPARE_OP_TO_TYPE[operator];
-        if (assertType) {
-          assertions.push({ type: assertType, output, value: val });
-        }
-        break;
-      }
-      case "assert_between": {
-        const min = readValueBlockAsString(current.getInputTargetBlock("MIN")) || "";
-        const max = readValueBlockAsString(current.getInputTargetBlock("MAX")) || "";
-        assertions.push({ type: AssertionOperator.BETWEEN, output, min, max });
-        break;
-      }
-      case "assert_not_null":
-        assertions.push({ type: AssertionOperator.NOT_NULL, output });
-        break;
-      case "assert_not_empty":
-        assertions.push({ type: AssertionOperator.NOT_EMPTY, output });
-        break;
-    }
+    const assertion = readSingleAssertion(current);
+    if (assertion) assertions.push(assertion);
     current = current.getNextBlock();
   }
   return assertions;
+}
+
+function readSingleAssertion(current: Block): WorkspaceAssertion | null {
+  if (current.type === "assert_field") {
+    return handleAssertField(current);
+  }
+
+  if (current.type === "step_json_path_extract") {
+    return handleJsonPathExtract(current);
+  }
+
+  const output = current.getFieldValue("OUTPUT") || "";
+  if (!output || output === "__NONE__") return null;
+
+  return handleComparisonBlock(current, output);
+}
+
+function handleAssertField(current: Block): WorkspaceAssertion {
+  const path = current.getFieldValue("PATH") || "";
+  const operator = current.getFieldValue("OPERATOR") || "equals";
+  const expectedRaw = readValueBlockAsUnknown(current.getInputTargetBlock("EXPECTED"));
+  const expected = expectedRaw ?? "";
+  return {
+    type: AssertionOperator.ASSERT_FIELD,
+    output: "",
+    path,
+    operator,
+    value: expected,
+  };
+}
+
+function handleJsonPathExtract(current: Block): WorkspaceAssertion {
+  const variable = current.getFieldValue("PARAM_VARIABLE") || "";
+  const pathBlock = current.getInputTargetBlock("PARAM_PATH");
+  const jsonPath = pathBlock ? (pathBlock.getFieldValue("VALUE") || "") : "";
+  const nestedAssertions = readAssertionChain(current.getInputTargetBlock("EXPECT"));
+  const entry: WorkspaceAssertion = {
+    type: AssertionOperator.JSON_PATH_EXTRACT,
+    output: variable,
+    json_path: jsonPath
+  };
+  if (nestedAssertions.length > 0) entry.validate = nestedAssertions;
+  return entry;
+}
+
+function handleComparisonBlock(current: Block, output: string): WorkspaceAssertion | null {
+  switch (current.type) {
+    case "assert_equals": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+      return { type: AssertionOperator.EQUALS, output, value: val };
+    }
+    case "assert_not_equals": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("EXPECTED")) || "";
+      return { type: AssertionOperator.NOT_EQUALS, output, value: val };
+    }
+    case "assert_contains": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
+      return { type: AssertionOperator.CONTAINS, output, value: val };
+    }
+    case "assert_not_contains": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("SUBSTRING")) || "";
+      return { type: AssertionOperator.NOT_CONTAINS, output, value: val };
+    }
+    case "assert_matches": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("PATTERN")) || "";
+      return { type: AssertionOperator.MATCHES, output, value: val };
+    }
+    case "assert_schema": {
+      const val = readValueBlockAsString(current.getInputTargetBlock("SCHEMA")) || "";
+      return { type: AssertionOperator.SCHEMA, output, value: val };
+    }
+    case "assert_validates_schema": {
+      const schemaRef = current.getFieldValue("SCHEMA_REF") || "";
+      const schema = schemaRef && schemaRef !== "__NONE__" ? `@${schemaRef}` : "";
+      return { type: AssertionOperator.VALIDATES_AGAINST_SCHEMA, output, schema };
+    }
+    case "assert_compare": {
+      const operator = current.getFieldValue("OPERATOR") || "greater_than";
+      const val = readValueBlockAsString(current.getInputTargetBlock("VALUE")) || "";
+      const assertType = COMPARE_OP_TO_TYPE[operator];
+      return assertType ? { type: assertType, output, value: val } : null;
+    }
+    case "assert_between": {
+      const min = readValueBlockAsString(current.getInputTargetBlock("MIN")) || "";
+      const max = readValueBlockAsString(current.getInputTargetBlock("MAX")) || "";
+      return { type: AssertionOperator.BETWEEN, output, min, max };
+    }
+    case "assert_not_null":
+      return { type: AssertionOperator.NOT_NULL, output };
+    case "assert_not_empty":
+      return { type: AssertionOperator.NOT_EMPTY, output };
+    default:
+      return null;
+  }
 }

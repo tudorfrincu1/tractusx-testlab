@@ -24,14 +24,14 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useEditorStore } from "@/store";
+import { useServiceStore } from "@/store";
 import {
   collectWorkspaceVariables,
   collectCategorizedVariables,
   buildToolbox,
 } from "../config/blockDefinitions";
-import type { WorkspaceRefs } from "../workspaceTypes";
+import type { WorkspaceRefs } from "../blocklyWorkspace.types";
 
 /**
  * Refreshes the Blockly toolbox when:

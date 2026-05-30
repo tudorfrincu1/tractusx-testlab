@@ -24,7 +24,7 @@
 
 export { BlocklyWorkspace } from "./BlocklyWorkspace";
 export { BlockEditorErrorBoundary } from "./BlockEditorErrorBoundary";
-export type { WorkspaceRefs } from "./workspaceTypes";
+export type { WorkspaceRefs } from "./blocklyWorkspace.types";
 
 export * from "./config";
 export * from "./hooks";

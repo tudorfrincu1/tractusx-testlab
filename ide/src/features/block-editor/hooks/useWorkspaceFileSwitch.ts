@@ -24,7 +24,7 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import { isTest } from "@/models/schema";
 import {
   buildToolbox,
@@ -33,7 +33,8 @@ import {
   collectCategorizedVariables,
   cleanupOrphanBlocks,
 } from "../config/blockDefinitions";
-import type { WorkspaceRefs } from "../workspaceTypes";
+import { populateOutputVariableBlocks } from "../blocks/common/outputDispenser";
+import type { WorkspaceRefs } from "../blocklyWorkspace.types";
 
 /**
  * Subscribes to activeFile changes and swaps the Blockly workspace content
@@ -103,6 +104,9 @@ export function useWorkspaceFileSwitch(
             // ignore population errors during file switch
           }
         }
+
+        // Re-dispense output variable blocks after population with events disabled
+        populateOutputVariableBlocks(Blockly, ws);
 
         // Refresh toolbox with new workspace's variables
         const vars = collectWorkspaceVariables(ws, catalog);

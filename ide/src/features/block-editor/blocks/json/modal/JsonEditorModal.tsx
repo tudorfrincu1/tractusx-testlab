@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useCallback, useEffect, useRef } from "react";
-import "./JsonEditorModal.css";
 import { HighlightedEditor } from "./HighlightedEditor";
 import { useJsonEditor } from "./useJsonEditor";
 

@@ -23,7 +23,6 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
 import { blockIcon, ICON_VARIABLE } from "../../common/fields/icons";
@@ -34,13 +33,13 @@ import {
   collectSetupVariables,
   collectMetadataVariables,
   collectExecutionVariables,
-} from "../../common/catalog/variableCollection";
+} from "../../common/catalog/variables/variableCollection";
 import { dynamicDropdown, collectSchemaPaths, collectTestdataPaths } from "../../common/fields/dropdownProviders";
 
 /** Registers variable reference blocks (var_steps, var_preconditions, var_env, etc.). */
 export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   Blockly.Blocks["var_steps"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("VAR")
@@ -55,7 +54,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_preconditions"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Precondition")
@@ -69,7 +68,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -83,7 +82,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_env"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Environment")
@@ -97,7 +96,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -111,7 +110,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_services"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Service")
@@ -125,7 +124,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -139,7 +138,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_metadata"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Metadata")
@@ -153,7 +152,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -167,7 +166,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_execution"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Execution")
@@ -181,7 +180,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -195,7 +194,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_setup"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Setup")
@@ -209,7 +208,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
                   : [["(none)", "__NONE__"]];
               },
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -223,7 +222,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_schema"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Schema")
@@ -232,7 +231,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
             dynamicDropdown(
               () => collectSchemaPaths(),
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )
@@ -246,7 +245,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   };
 
   Blockly.Blocks["var_testdata"] = {
-    init(this: Block) {
+    init(this: BlocklyType.Block) {
       this.appendDummyInput()
         .appendField(blockIcon(Blockly, ICON_VARIABLE))
         .appendField("Testdata")
@@ -255,7 +254,7 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
             dynamicDropdown(
               () => collectTestdataPaths(),
               "(none)",
-            ) as () => Array<[string, string]>,
+            ),
           ),
           "VAR_NAME",
         )

@@ -26,7 +26,7 @@
 import { ScriptKind } from "@/models/schema";
 import type { BlockCatalog, BlockCatalogCategory } from "../blocks";
 import type { CategorizedVariables } from "../blocks";
-import { useServiceStore } from "@/store/environment/useServiceStore";
+import { useServiceStore } from "@/store";
 import { blockColors, getCategoryColor } from "../config/blockColors";
 import { PHASE_DEFINITIONS, type PhaseBlockGroup } from "./toolboxConfig";
 import { buildConnectorCategory } from "./connectorCategory";

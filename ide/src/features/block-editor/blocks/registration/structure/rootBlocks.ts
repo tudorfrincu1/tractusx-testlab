@@ -26,7 +26,7 @@
 import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
-import { FieldWrappedText } from "../../../fields/FieldWrappedText";
+import { FieldWrappedText } from "../../../fields/wrappedText";
 import {
   blockIcon,
   ICON_TEST,

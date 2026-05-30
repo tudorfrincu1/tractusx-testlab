@@ -28,7 +28,7 @@ import type { Step } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 
-import { makeBlock, createValueBlockFromString, setDropdownValue } from "../helpers";
+import { makeBlock, createValueBlockFromString, setDropdownValue } from "../serializationParts";
 import { parseVarRef, SCOPE_TO_BLOCK_TYPE } from "../varSyntax";
 
 /** Regex for a pure variable reference: `${{ scope.path }}` v2 syntax. */
@@ -55,7 +55,7 @@ export function trackStepOutputs(
   // From returns keys
   const returns = isTemplateStep(step) ? undefined : step.returns;
   if (returns && typeof returns === "object") {
-    for (const key of Object.keys(returns as Record<string, unknown>)) {
+    for (const key of Object.keys(returns)) {
       outputs.set(key, `${stepId}.${key}`);
     }
   }

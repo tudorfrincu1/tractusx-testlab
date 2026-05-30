@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import { makeBlock, setDropdownValue, connectValue, toBlockValueString } from "../helpers";
+import { makeBlock, setDropdownValue, connectValue, toBlockValueString } from "../serializationParts";
 import { createValueBlockWithOutputResolution, type StepOutputMap } from "./stepOutputTracker";
 
 /** Map full URIs to the dropdown values used by the filter_expression block. */

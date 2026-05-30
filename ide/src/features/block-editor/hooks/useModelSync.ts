@@ -24,14 +24,15 @@
 
 import { useEffect } from "react";
 import * as Blockly from "blockly";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import {
   workspaceToModel,
   populateWorkspaceFromModel,
 } from "../config/blockDefinitions";
+import { populateOutputVariableBlocks } from "../blocks/common/outputDispenser";
 import type { TestLabDocument, ScriptDefinition } from "@/models/schema";
 import { isTest } from "@/models/schema";
-import type { WorkspaceRefs } from "../workspaceTypes";
+import type { WorkspaceRefs } from "../blocklyWorkspace.types";
 
 /** Dispose every block chained to a statement input on `root`. */
 function disposeStatementChain(root: Blockly.Block, inputName: string) {
@@ -158,6 +159,10 @@ export function useModelSync(refs: WorkspaceRefs, ready: boolean): void {
             disposeStatementChain(rootBlock, input);
           }
           populateWorkspaceFromModel(ws, rootBlock, model, catalog);
+          // Re-dispense draggable output-variable chips: population runs with
+          // Blockly events disabled, so the dispenser's BLOCK_CREATE listener
+          // never fires for these freshly created step blocks.
+          populateOutputVariableBlocks(Blockly, ws);
         }
       }
     } catch (err) {

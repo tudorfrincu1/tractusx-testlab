@@ -26,10 +26,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { VarScope } from "../../serialization/varSyntax";
 import { parseVarRef } from "../../serialization/varSyntax";
 import { VariablePicker } from "../../../yaml-editor/VariablePicker/VariablePicker";
-import type { TemplateSegment } from "./types";
+import type { TemplateSegment } from "./templateSegment.types";
 import { parseTemplateString, serializeTemplateString } from "./templateStringParser";
 import { setupTemplateEditorListener, type TemplateEditorCallback } from "./templateStringEditorBridge";
-import "./TemplateStringEditorModal.css";
 
 /** Scope-based pill colors — mirrors FieldTemplateString. */
 const SCOPE_COLORS: Record<VarScope, string> = {

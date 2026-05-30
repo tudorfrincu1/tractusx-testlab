@@ -24,11 +24,17 @@
 // It was reviewed and tested by a human committer.
 
 import type { Workspace } from "blockly";
-import type { Step } from "@/models/schema";
-import { isTemplateStep } from "@/models/schema";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useProjectStore } from "@/store";
 import type { BlockCatalog } from "../catalogLoader";
-import { findCatalogEntry } from "../catalogLoader";
+import {
+  sortedUnique,
+  collectVarsFromSteps,
+  collectVarsFromEnvBlocks,
+  collectVarsFromCatalog,
+  gatherAllServices,
+  gatherAllPreconditions,
+  collectSetupStepOutputs,
+} from "./variableCollectionHelpers";
 
 /** Variables organized by domain category for the toolbox sidebar. */
 export interface CategorizedVariables {
@@ -52,87 +58,38 @@ export function collectCategorizedVariables(workspace: Workspace): CategorizedVa
 
 export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockCatalog): string[] {
   const vars = new Set<string>();
-
-  const collectFromSteps = (steps?: Step[]) => {
-    if (!steps) return;
-    for (const step of steps) {
-      if (isTemplateStep(step)) {
-        continue;
-      }
-
-      if (step.returns) {
-        for (const varName of Object.keys(step.returns)) {
-          if (varName) vars.add(varName);
-        }
-      }
-
-      for (const val of Object.values(step.with ?? {})) {
-        if (!Array.isArray(val)) continue;
-        const nested = val.filter((item): item is Step => (
-          typeof item === "object" &&
-          item !== null &&
-          ("template" in item || "uses" in item)
-        ));
-        if (nested.length > 0) collectFromSteps(nested);
-      }
-    }
-  };
-
   const { tck, tests } = useProjectStore.getState();
+
   if (tck?.variables) {
-    for (const varName of Object.keys(tck.variables)) {
-      vars.add(varName);
-    }
+    for (const varName of Object.keys(tck.variables)) vars.add(varName);
   }
 
   if (tests) {
     for (const script of tests.values()) {
       if (script.variables) {
-        for (const varName of Object.keys(script.variables)) {
-          vars.add(varName);
-        }
+        for (const varName of Object.keys(script.variables)) vars.add(varName);
       }
-
-      collectFromSteps(script.setup);
-      collectFromSteps(script.steps);
-      collectFromSteps(script.teardown);
-
-      if (script.teardown) {
-        for (const step of script.teardown) {
-          if (isTemplateStep(step)) {
-            continue;
-          }
-
-          if (step.uses === "export_variable" && typeof step.with?.name === "string") {
-            vars.add(step.with.name);
-          }
-        }
-      }
+      collectVarsFromSteps(script.setup, vars);
+      collectVarsFromSteps(script.steps, vars);
+      collectVarsFromSteps(script.teardown, vars);
+      collectExportVarsFromTeardown(script.teardown, vars);
     }
   }
 
-  for (const b of workspace.getBlocksByType("var_env", false)) {
-    const ref = b.getFieldValue("VAR_NAME");
-    if (ref && ref !== "__NONE__") {
-      const name = ref.startsWith("env.") ? ref.slice(4) : ref;
-      if (name) vars.add(name);
+  collectVarsFromEnvBlocks(workspace, vars);
+  if (catalog) collectVarsFromCatalog(workspace, catalog, vars);
+
+  return sortedUnique(vars);
+}
+
+/** Collects export_variable names from teardown steps. */
+function collectExportVarsFromTeardown(teardown: unknown[] | undefined, vars: Set<string>): void {
+  if (!teardown) return;
+  for (const step of teardown as Array<{ uses?: string; with?: Record<string, unknown> }>) {
+    if (step.uses === "export_variable" && typeof step.with?.name === "string") {
+      vars.add(step.with.name);
     }
   }
-
-  if (catalog) {
-    for (const b of workspace.getAllBlocks(false)) {
-      if (!b.type.startsWith("step_")) continue;
-      const stepType = b.type.slice(5);
-      const entry = findCatalogEntry(stepType, catalog);
-      if (entry?.outputs) {
-        for (const output of entry.outputs) {
-          if (output.name) vars.add(output.name);
-        }
-      }
-    }
-  }
-
-  return Array.from(vars).sort((a, b) => a.localeCompare(b));
 }
 
 /**
@@ -141,72 +98,63 @@ export function collectWorkspaceVariables(workspace: Workspace, catalog?: BlockC
  */
 export function collectEnvironmentVariables(workspace: Workspace): string[] {
   const vars = new Set<string>();
-
   const { tck, tests, testdata } = useProjectStore.getState();
+
+  collectEnvVarsFromTck(tck, vars);
+  collectEnvVarsFromTests(tests, vars);
+  collectEnvVarsFromBlocks(workspace, vars);
+
+  if (testdata) {
+    for (const key of testdata.keys()) vars.add(`testdata.${key}`);
+  }
+
+  return sortedUnique(vars);
+}
+
+/** Adds TCK-level environment variables. */
+function collectEnvVarsFromTck(
+  tck: ReturnType<typeof useProjectStore.getState>["tck"],
+  vars: Set<string>,
+): void {
   if (tck?.variables) {
-    for (const varName of Object.keys(tck.variables)) {
-      vars.add(varName);
-    }
+    for (const varName of Object.keys(tck.variables)) vars.add(varName);
   }
   if (tck?.env?.variables) {
-    for (const varName of Object.keys(tck.env.variables)) {
-      vars.add(varName);
+    for (const varName of Object.keys(tck.env.variables)) vars.add(varName);
+  }
+}
+
+/** Adds test-script-level variables (ScriptDefinition.variables). */
+function collectEnvVarsFromTests(
+  tests: ReturnType<typeof useProjectStore.getState>["tests"],
+  vars: Set<string>,
+): void {
+  if (!tests) return;
+  for (const script of tests.values()) {
+    if (script.variables) {
+      for (const varName of Object.keys(script.variables)) vars.add(varName);
     }
   }
+}
 
-  if (tests) {
-    for (const script of tests.values()) {
-      if (script.variables) {
-        for (const varName of Object.keys(script.variables)) {
-          vars.add(varName);
-        }
-      }
-      if (script.env?.variables) {
-        for (const varName of Object.keys(script.env.variables)) {
-          vars.add(varName);
-        }
-      }
-    }
-  }
-
+/** Adds variables from import_variable and var_env workspace blocks. */
+function collectEnvVarsFromBlocks(workspace: Workspace, vars: Set<string>): void {
   for (const b of workspace.getBlocksByType("import_variable", false)) {
     const varName = b.getFieldValue("OUTPUT_VAR");
     if (varName) vars.add(varName);
   }
-
-  for (const b of workspace.getBlocksByType("var_env", false)) {
-    const ref = b.getFieldValue("VAR_NAME");
-    if (ref && ref !== "__NONE__") {
-      const name = ref.startsWith("env.") ? ref.slice(4) : ref;
-      if (name) vars.add(name);
-    }
-  }
-
-  if (testdata) {
-    for (const key of testdata.keys()) {
-      vars.add(`testdata.${key}`);
-    }
-  }
-
-  return Array.from(vars).sort((a, b) => a.localeCompare(b));
+  collectVarsFromEnvBlocks(workspace, vars);
 }
 
 /** Collects service variable references: `service_name.return_key` */
 export function collectServiceVariables(workspace: Workspace): string[] {
   const vars = new Set<string>();
   const { tck, tests } = useProjectStore.getState();
-  const allServices = [...(tck?.env?.services ?? [])];
-  if (tests) {
-    for (const script of tests.values()) {
-      if (script.env?.services) allServices.push(...script.env.services);
-      if (script.services) allServices.push(...script.services);
-    }
-  }
+  const allServices = gatherAllServices(tck?.env?.services, tests);
+
   for (const svc of allServices) {
     if (svc.returns) {
-      for (const key of Object.keys(svc.returns)) {
-        vars.add(`${svc.name}.${key}`);
-      }
+      for (const key of Object.keys(svc.returns)) vars.add(`${svc.name}.${key}`);
     }
   }
 
@@ -215,24 +163,18 @@ export function collectServiceVariables(workspace: Workspace): string[] {
     if (ref && ref !== "__NONE__") vars.add(ref);
   }
 
-  return Array.from(vars).sort();
+  return sortedUnique(vars);
 }
 
 /** Collects precondition output references: `precondition_id.return_key` */
 export function collectPreconditionVariables(workspace: Workspace): string[] {
   const vars = new Set<string>();
   const { tck, tests } = useProjectStore.getState();
-  const allPreconditions = [...(tck?.preconditions ?? [])];
-  if (tests) {
-    for (const script of tests.values()) {
-      if (script.preconditions) allPreconditions.push(...script.preconditions);
-    }
-  }
+  const allPreconditions = gatherAllPreconditions(tck?.preconditions, tests);
+
   for (const pre of allPreconditions) {
     if (pre.returns) {
-      for (const key of Object.keys(pre.returns)) {
-        vars.add(`${pre.id}.${key}`);
-      }
+      for (const key of Object.keys(pre.returns)) vars.add(`${pre.id}.${key}`);
     }
   }
 
@@ -241,35 +183,19 @@ export function collectPreconditionVariables(workspace: Workspace): string[] {
     if (ref && ref !== "__NONE__") vars.add(ref);
   }
 
-  return Array.from(vars).sort();
+  return sortedUnique(vars);
 }
 
 /** Collects metadata field names from the TCK definition. */
 export function collectMetadataVariables(_workspace: Workspace): string[] {
-  const { tck } = useProjectStore.getState();
-  if (!tck?.metadata) return [];
-  return Object.keys(tck.metadata).sort();
+  return [];
 }
 
 /** Collects setup step output references: `setup_step_id.return_key` */
 export function collectSetupVariables(_workspace: Workspace): string[] {
-  const results: string[] = [];
   const { tests } = useProjectStore.getState();
-  if (tests) {
-    for (const script of tests.values()) {
-      if (script.setup) {
-        for (const step of script.setup) {
-          if (isTemplateStep(step)) continue;
-          if (step.returns) {
-            for (const key of Object.keys(step.returns)) {
-              results.push(`${step.id}.${key}`);
-            }
-          }
-        }
-      }
-    }
-  }
-  return Array.from(new Set(results)).sort();
+  const results = collectSetupStepOutputs(tests);
+  return Array.from(new Set(results)).sort((a, b) => a.localeCompare(b));
 }
 
 /** Collects execution runtime variables auto-generated by the backend. */

@@ -22,11 +22,5 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { FieldWrappedText } from "./FieldWrappedText";
-export { createWrappedTextDialog } from "./wrappedTextDialog";
-export {
-  injectBubbleStyles,
-  patchBubbleColours,
-  setupWarningTooltip,
-} from "./bubblePatch";
-export type { WarningShowRequest } from "./bubblePatch";
+export * from "./wrappedText";
+export * from "./templateString";

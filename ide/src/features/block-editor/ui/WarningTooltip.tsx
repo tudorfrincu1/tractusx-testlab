@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import { useEffect, useRef } from "react";
-import "./WarningTooltip.css";
 
 export type TooltipVariant = "warning" | "info";
 

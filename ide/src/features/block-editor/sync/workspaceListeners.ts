@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import * as Blockly from "blockly";
-import { useEditorStore } from "@/store/editor/useEditorStore";
+import { useEditorStore } from "@/store";
 import {
   buildToolbox,
   workspaceToModel,

@@ -29,8 +29,7 @@ import type { BlocklyTrashcanInternal } from "../../../types/blockly-internals.d
 // Override Blockly's default maxDisplayLength (16 chars) to prevent text truncation on blocks.
 Blockly.Field.prototype.maxDisplayLength = Infinity;
 
-import { useEditorStore } from "@/store/editor/useEditorStore";
-import { useProjectStore } from "@/store/project/useProjectStore";
+import { useEditorStore, useProjectStore } from "@/store";
 import {
   registerBlocks,
   buildToolbox,
@@ -44,15 +43,20 @@ import {
 import { resolveStepIdentifier } from "../sync/blockSelection";
 import { setKnownStepTypes } from "@/services/validation/validator";
 import { createWorkspaceOptions } from "../config/workspaceConfig";
-import { injectBubbleStyles } from "../fields/bubblePatch";
+import { injectBubbleStyles } from "../fields/wrappedText";
 import type { TestLabDocument } from "@/models/schema";
 import { isTest } from "@/models/schema";
-import type { WorkspaceRefs } from "../workspaceTypes";
+import type { WorkspaceRefs } from "../blocklyWorkspace.types";
 import { useWorkspaceFileSwitch } from "./useWorkspaceFileSwitch";
 
 interface WorkspaceInitResult extends WorkspaceRefs {
   containerRef: RefObject<HTMLDivElement | null>;
   ready: boolean;
+}
+
+/** Extract all step type identifiers from the block catalog. */
+function extractStepTypes(catalog: Awaited<ReturnType<typeof loadBlockCatalog>>): string[] {
+  return catalog.flatMap((cat) => cat.blocks.map((b) => b.type));
 }
 
 export function useWorkspaceInit(
@@ -88,7 +92,7 @@ export function useWorkspaceInit(
       if (disposed) return;
       catalogRef.current = catalog;
 
-      setKnownStepTypes(catalog.flatMap((cat) => cat.blocks.map((b) => b.type)));
+      setKnownStepTypes(extractStepTypes(catalog));
       registerBlocks(Blockly, catalog);
       const toolbox = buildToolbox(catalog, modelKind) as Blockly.utils.toolbox.ToolboxDefinition;
 

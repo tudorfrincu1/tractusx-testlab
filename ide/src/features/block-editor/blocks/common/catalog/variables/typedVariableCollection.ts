@@ -36,6 +36,14 @@ export interface TypedVariable {
 
 const DEFAULT_CLASS = "string";
 
+function createVariableAdder(variables: TypedVariable[], seen: Set<string>) {
+  return (name: string, cls: string, blockType: string, label: string) => {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    variables.push({ name, class: cls, sourceBlockType: blockType, sourceBlockLabel: label });
+  };
+}
+
 /**
  * Collects typed variables from all blocks upstream of the given block.
  * Walks the block chain via getPreviousBlock() and collects outputs with class metadata.
@@ -46,12 +54,7 @@ export function collectTypedUpstreamVariables(
 ): TypedVariable[] {
   const variables: TypedVariable[] = [];
   const seen = new Set<string>();
-
-  const addVariable = (name: string, cls: string, blockType: string, label: string) => {
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    variables.push({ name, class: cls, sourceBlockType: blockType, sourceBlockLabel: label });
-  };
+  const addVariable = createVariableAdder(variables, seen);
 
   let current: Block | null = block.getPreviousBlock();
   while (current) {
@@ -72,12 +75,7 @@ export function collectTypedWorkspaceVariables(
 ): TypedVariable[] {
   const variables: TypedVariable[] = [];
   const seen = new Set<string>();
-
-  const addVariable = (name: string, cls: string, blockType: string, label: string) => {
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    variables.push({ name, class: cls, sourceBlockType: blockType, sourceBlockLabel: label });
-  };
+  const addVariable = createVariableAdder(variables, seen);
 
   for (const wsBlock of workspace.getAllBlocks(false)) {
     collectFromBlock(wsBlock, catalog, addVariable);

@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { parseVarRef } from "../../serialization/varSyntax";
-import type { TemplateSegment } from "./types";
+import type { TemplateSegment } from "./templateSegment.types";
 
 /** Regex matching `${{ scope.path }}` variable references within a string. */
 const TEMPLATE_VAR_RE = /\$\{\{\s*(.+?)\s*\}\}/;
