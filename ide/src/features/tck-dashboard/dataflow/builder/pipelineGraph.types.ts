@@ -32,7 +32,7 @@ export type PipelineDirection = "TB" | "LR";
 /** Data attached to each pipeline React Flow node. */
 export interface PipelineNodeData {
   name: string;
-  stageIndex: number;
+  stageIndex?: number;
   stepCount: number;
   completedSteps: number;
   status: PipelineStageStatus;
@@ -40,7 +40,7 @@ export interface PipelineNodeData {
   inputs: Array<{ variable: string; source: string }>;
   services: string[];
   stepNames: string[];
-  direction: PipelineDirection;
+  direction?: PipelineDirection;
   [key: string]: unknown;
 }
 

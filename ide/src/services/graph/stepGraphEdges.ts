@@ -28,7 +28,7 @@
  */
 
 import type { Node, Edge } from "@xyflow/react";
-import type { Step } from "@/models/schema";
+import type { Step, StepDefinition } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 import { getStepColor } from "@/shared/theme/tractusxTheme";
 import type { GraphMode } from "@/store/editor/useEditorStore";
@@ -70,7 +70,7 @@ export function buildStepNode(nodeId: string, step: Step, y: number, mode: Graph
 /** Add dataflow-specific edges: service connections and memory store edges. */
 export function addDataflowEdges(
   nodeId: string,
-  step: Step & { uses: string },
+  step: StepDefinition,
   nodes: Node[],
   edges: Edge[],
   serviceNodeIds: Map<string, string>,

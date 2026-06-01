@@ -30,7 +30,6 @@ import { FieldWrappedText } from "../../../fields/wrappedText";
 import {
   blockIcon,
   ICON_TEST,
-  ICON_VARIABLE,
 } from "../../common/fields/icons";
 
 export function registerRootBlocks(Blockly: typeof BlocklyType) {

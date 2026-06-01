@@ -46,7 +46,7 @@ export function getActiveDataspaceVersions(): Set<string> {
   const { services } = useServiceStore.getState();
   const versions = new Set<string>();
   for (const s of services) {
-    const v = SERVICE_TO_DATASPACE[s.type];
+    const v = SERVICE_TO_DATASPACE[s.uses];
     if (v) versions.add(v);
   }
   return versions;

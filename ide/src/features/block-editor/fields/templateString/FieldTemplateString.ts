@@ -25,7 +25,7 @@
 import * as Blockly from "blockly";
 import type { VarScope } from "../../serialization/varSyntax";
 import type { TemplateSegment } from "./templateSegment.types";
-import { parseTemplateString, serializeTemplateString } from "./templateStringParser";
+import { parseTemplateString } from "./templateStringParser";
 
 const PILL_H_PAD = 4;
 const PILL_V_PAD = 2;
@@ -44,6 +44,7 @@ const SCOPE_COLORS: Record<VarScope, string> = {
   setup: "#4a90d9",
   services: "#7c3aed",
   execution: "#0369a1",
+  testdata: "#0d9488",
 } as const;
 
 /** Shorten a dot-separated path to at most 2 segments. */
@@ -107,7 +108,7 @@ export class FieldTemplateString extends Blockly.Field<string> {
     }
   }
 
-  protected override getSize(): Blockly.utils.Size {
+  override getSize(): Blockly.utils.Size {
     if (!this.svgGroup) return new Blockly.utils.Size(0, FIELD_HEIGHT);
     const bbox = this.svgGroup.getBBox();
     const width = Math.min(bbox.width || 10, MAX_TOTAL_WIDTH + 10);

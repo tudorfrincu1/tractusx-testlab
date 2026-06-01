@@ -48,3 +48,14 @@ export interface BlocklyFieldDropdownInternal extends Field {
 export interface BlocklyTrashcanInternal {
   contents: unknown[];
 }
+
+/**
+ * Augment Blockly's `Workspace` with the runtime `disposed` flag. The flag is
+ * set by `Workspace.dispose()` at runtime but is not part of the public typings.
+ * Dropdown option generators read it to bail out on a disposed workspace.
+ */
+declare module "blockly" {
+  interface Workspace {
+    readonly disposed: boolean;
+  }
+}

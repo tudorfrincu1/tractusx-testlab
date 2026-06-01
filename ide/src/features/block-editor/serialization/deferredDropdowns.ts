@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Workspace } from "blockly";
-import type { BlocklyFieldDropdownInternal } from "../../../types/blockly-internals.d";
+import type { BlocklyFieldDropdownInternal } from "@/shared/types/blockly-internals";
 
 /**
  * Deferred dropdown queue for YAML import.

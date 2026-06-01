@@ -23,8 +23,14 @@
 // It was reviewed and tested by a human committer.
 
 import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
   test: {
     include: ["src/**/*.test.ts"],
     environment: "node",

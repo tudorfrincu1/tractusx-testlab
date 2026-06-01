@@ -103,14 +103,14 @@ function validateScript(script: ScriptDefinition, errors: ValidationError[]) {
     if (!svc.name) {
       errors.push({ path: "services", message: "Service name is required", severity: "error" });
     }
-    if (!svc.type) {
+    if (!svc.uses) {
       errors.push({
         path: `services.${svc.name}`,
         message: "Service type is required",
         severity: "error",
       });
     }
-    if (!svc.config || Object.keys(svc.config).length === 0) {
+    if (!svc.with || Object.keys(svc.with).length === 0) {
       errors.push({
         path: `services.${svc.name}`,
         message: "Service config is required",

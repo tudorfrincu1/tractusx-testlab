@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { TckDefinition, ScriptDefinition, TestLabDocument } from "@/models/schema";
+import type { TckDefinition, ScriptDefinition, TestLabDocument, ServiceDefinition } from "@/models/schema";
 import {
   isTck,
   isTest,
@@ -42,7 +42,7 @@ export interface ParsedProjectData {
   testOrder: string[];
   schemas: Map<string, SchemaFile>;
   activeFile: ActiveFile;
-  services: unknown[];
+  services: ServiceDefinition[];
 }
 
 /* ── Pure document parsing ──────────────────────────────────────────────── */
@@ -55,7 +55,7 @@ export function parseTestLabDocument(
   doc: TestLabDocument,
   name: string | undefined,
   buildTckTestsArray: (order: string[]) => unknown[],
-  currentGeneration?: number,
+  _currentGeneration?: number,
 ): ParsedProjectData | null {
   if (isTck(doc)) {
     return parseTckDocument(doc, name, buildTckTestsArray);

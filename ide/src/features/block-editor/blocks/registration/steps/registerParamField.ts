@@ -51,7 +51,7 @@ export function registerParamField(
   param: ParamFieldDef,
   fieldKey: string,
   paramLabel: string,
-  catalog: BlockCatalog,
+  _catalog: BlockCatalog,
 ): void {
   // If param has accepts, use value input (puzzle piece) for variable blocks
   if (param.accepts && param.accepts.length > 0 && param.type !== "variable") {

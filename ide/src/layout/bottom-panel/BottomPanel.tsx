@@ -26,7 +26,7 @@ import { useEffect } from "react";
 import { useEditorStore } from "@/store";
 import { useResizablePanel } from "@/shared/hooks/useResizablePanel";
 import { ConsoleTab, NetworkTab, PerformanceTab } from "./tabs";
-import type { BottomPanelTab } from "./types";
+import type { BottomPanelTab } from "./bottomPanel.types";
 import Close from "@mui/icons-material/Close";
 
 const TAB_CONFIG: readonly { value: BottomPanelTab; icon: string; label: string }[] = [

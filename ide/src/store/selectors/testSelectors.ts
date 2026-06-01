@@ -49,12 +49,9 @@ export function getTestSummaries(
       (t) => typeof t === "object" && "test" in t && (t as { test: string }).test === name
     ) as { with?: Record<string, unknown>; prerequisite_tests?: string[]; order?: number } | undefined;
 
-    const prerequisiteTests = ref?.prerequisite_tests
-      ?? script?.prerequisites?.map((entry) => entry.test)
-      ?? [];
+    const prerequisiteTests = ref?.prerequisite_tests ?? [];
 
-    const outputCount = script?.output_definitions?.length
-      ?? 0;
+    const outputCount = 0;
 
     return {
       name,
@@ -63,7 +60,7 @@ export function getTestSummaries(
       serviceNames: script?.services?.map((s) => s.name) ?? [],
       order: ref?.order ?? testOrder.indexOf(name) + 1,
       prerequisiteTests,
-      inputCount: script?.inputs?.length ?? 0,
+      inputCount: 0,
       outputCount,
       overrides: ref?.with,
     };

@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { PerformanceEntry } from "../types";
+import type { PerformanceEntry } from "../bottomPanel.types";
 
 const MAX_DURATION_MS = 2500;
 

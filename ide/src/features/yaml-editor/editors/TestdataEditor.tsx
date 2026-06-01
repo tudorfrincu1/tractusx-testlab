@@ -93,7 +93,7 @@ function updateVariableHighlights(
 }
 
 function handleVariableKeyDown(
-  e: { browserEvent: { key: string }; preventDefault: () => void; stopPropagation: () => void },
+  e: monaco.IKeyboardEvent,
   editor: monaco.editor.IStandaloneCodeEditor,
   suppressRef: { current: boolean },
 ): void {
@@ -227,7 +227,7 @@ function setupEditorListeners(editor: monaco.editor.IStandaloneCodeEditor, monac
     handleVariableKeyDown(e, editor, suppressRef);
   });
 
-  const isInsideVariableKey = editor.createContextKey('isInsideVariable', false);
+  const isInsideVariableKey = editor.createContextKey<boolean>('isInsideVariable', false);
 
   editor.onDidChangeCursorPosition((e) => {
     handleCursorPositionChange(e, editor, suppressRef, isInsideVariableKey);

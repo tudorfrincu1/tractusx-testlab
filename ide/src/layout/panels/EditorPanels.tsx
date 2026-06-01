@@ -32,6 +32,7 @@ import {
   collectBlockWarnings,
   modelErrorsToIssues,
 } from "@/features/block-editor";
+import type { ValidationError } from "@/services/validation/validator";
 import { YamlEditor, SchemaEditor, TestdataEditor, TestdataVariableButton } from "@/features/yaml-editor";
 import { DependencyGraph } from "@/features/graph-view";
 import { SequenceDiagram } from "@/features/sequence-view";
@@ -51,7 +52,7 @@ function resolveValidationStatus(showValidation: boolean, issueCount: number): s
   return issueCount === 0 ? "pass" : "fail";
 }
 
-function useValidation(showValidation: boolean, storeErrors: string[]) {
+function useValidation(showValidation: boolean, storeErrors: ValidationError[]) {
   const issues = useMemo(() => {
     if (!showValidation) return [];
     const ws = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg | null;

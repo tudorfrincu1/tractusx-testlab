@@ -27,7 +27,7 @@
  * that make up test phases (setup, steps, teardown).
  */
 
-import type { Assertion, FailurePolicy, InlineValidation } from "./assertionSchema";
+import type { FailurePolicy, InlineValidation } from "./assertionSchema";
 
 export const ValueSource = {
   INLINE: "INLINE",
@@ -60,7 +60,7 @@ export interface StepDefinition {
   returns?: Record<string, unknown>;
   on_failure?: FailurePolicy;
   timeout_s?: number;
-  validate?: Assertion[];
+  validate?: InlineValidation[];
   if?: string;
 }
 

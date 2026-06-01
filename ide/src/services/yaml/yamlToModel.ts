@@ -31,7 +31,7 @@ import yaml from "js-yaml";
 import type {
   TestLabDocument, ScriptDefinition, TckDefinition, TestRef,
   StandardRef, StepDefinition, PreconditionDefinition, InlineValidation,
-  ServiceDefinition, VariableDefinition,
+  ServiceDefinition,
 } from "@/models/schema";
 import { ScriptKind } from "@/models/schema";
 import type { StepFieldKey, PreconditionFieldKey } from "./yamlFieldMap";
@@ -144,7 +144,7 @@ function parseTck(raw: Record<string, unknown>): TckDefinition {
     dataspace_version,
     description,
     standards: parseStandards(metadata?.standards ?? raw.standards),
-    tags: Array.isArray(metadata?.tags ?? raw.tags) ? (metadata?.tags ?? raw.tags as unknown[]).map(String) : undefined,
+    tags: Array.isArray(metadata?.tags ?? raw.tags) ? ((metadata?.tags ?? raw.tags) as unknown[]).map(String) : undefined,
     env: env ? {
       variables: env.variables as TckDefinition["variables"],
       services: parseServices(env.services),

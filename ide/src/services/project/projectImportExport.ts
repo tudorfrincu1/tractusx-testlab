@@ -40,7 +40,7 @@ export async function exportProjectZip(
   tck: TckDefinition,
   tests: Map<string, ScriptDefinition>,
   schemas: Map<string, SchemaFile>,
-  testdata: Map<string, TestdataFile>,
+  _testdata: Map<string, TestdataFile>,
   testOrder: string[],
 ): Promise<void> {
   const zip = new JSZip();

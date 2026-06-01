@@ -24,7 +24,7 @@
 
 import type { RefObject } from "react";
 import * as Blockly from "blockly";
-import type { BlocklyTrashcanInternal } from "../../../types/blockly-internals.d";
+import type { BlocklyTrashcanInternal } from "@/shared/types/blockly-internals";
 
 import { useEditorStore, useProjectStore } from "@/store";
 import {

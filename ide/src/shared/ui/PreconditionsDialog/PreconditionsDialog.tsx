@@ -49,24 +49,25 @@ function loadFromPreconditions(
   preconditions: PreconditionDefinition[],
   policyType: PolicyType,
 ): PolicyState {
-  const entry = preconditions.find((p) => p.params.policy_type === policyType);
+  const entry = preconditions.find((p) => p.with?.policy_type === policyType);
   if (!entry) return buildEmptyPolicy();
+  const params = entry.with ?? {};
   return {
-    permissions: entry.params.permissions ?? [],
-    prohibitions: entry.params.prohibitions ?? [],
-    obligations: entry.params.obligations ?? [],
+    permissions: (params.permissions as PolicyRule[] | undefined) ?? [],
+    prohibitions: (params.prohibitions as PolicyRule[] | undefined) ?? [],
+    obligations: (params.obligations as PolicyRule[] | undefined) ?? [],
   };
 }
 
 function detectVersion(preconditions: PreconditionDefinition[]): Version {
-  const first = preconditions.find((p) => p.type === "precondition_policy_config");
-  return first?.params.version ?? "jupiter";
+  const first = preconditions.find((p) => p.uses === "precondition_policy_config");
+  return (first?.with?.version as Version | undefined) ?? "jupiter";
 }
 
-export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
+export function PreconditionsDialog({ onClose }: Readonly<PreconditionsDialogProps>) {
   const tck = useProjectStore((s) => s.tck);
   const existing = tck?.preconditions?.filter(
-    (p): p is PreconditionDefinition => p.type === "precondition_policy_config",
+    (p): p is PreconditionDefinition => p.uses === "precondition_policy_config",
   ) ?? [];
 
   const [version, setVersion] = useState<Version>(() => detectVersion(existing));
@@ -97,9 +98,10 @@ export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
     const accessAction = schema.allowedActions.access[0];
     if (accessPolicy.permissions.length > 0 || hasConstraints(accessPolicy)) {
       preconditions.push({
-        type: "precondition_policy_config",
-        description: "Access Policy",
-        params: {
+        id: "access-policy",
+        uses: "precondition_policy_config",
+        name: "Access Policy",
+        with: {
           version,
           policy_type: "access",
           permissions: applyAction(accessPolicy.permissions, accessAction),
@@ -109,20 +111,21 @@ export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
 
     const usageAction = schema.allowedActions.usage[0];
     if (usagePolicy.permissions.length > 0 || hasConstraints(usagePolicy)) {
-      const entry: PreconditionDefinition = {
-        type: "precondition_policy_config",
-        description: "Usage Policy",
-        params: {
-          version,
-          policy_type: "usage",
-          permissions: applyAction(usagePolicy.permissions, usageAction),
-        },
+      const usageParams: Record<string, unknown> = {
+        version,
+        policy_type: "usage",
+        permissions: applyAction(usagePolicy.permissions, usageAction),
       };
       if (version === "saturn") {
-        entry.params.prohibitions = applyAction(usagePolicy.prohibitions, usageAction);
-        entry.params.obligations = applyAction(usagePolicy.obligations, usageAction);
+        usageParams.prohibitions = applyAction(usagePolicy.prohibitions, usageAction);
+        usageParams.obligations = applyAction(usagePolicy.obligations, usageAction);
       }
-      preconditions.push(entry);
+      preconditions.push({
+        id: "usage-policy",
+        uses: "precondition_policy_config",
+        name: "Usage Policy",
+        with: usageParams,
+      });
     }
 
     useProjectStore.getState().updateTckField("preconditions", preconditions);

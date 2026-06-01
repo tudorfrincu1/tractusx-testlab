@@ -85,7 +85,7 @@ export function trackStepOutputs(
 export function createValueBlockWithOutputResolution(
   ws: Workspace,
   strVal: string,
-  stepOutputs: StepOutputMap,
+  _stepOutputs: StepOutputMap,
 ): Block {
   if (PURE_VAR_REF.test(strVal)) {
     // Try v2 scoped refs first (steps, preconditions, metadata, setup, services, env)

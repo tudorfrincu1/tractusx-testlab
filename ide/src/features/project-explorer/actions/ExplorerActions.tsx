@@ -75,7 +75,7 @@ export function ExplorerActions() {
   };
 
   const handleAddSchema = () => {
-    const existing = useProjectStore.getState().project.schemas.map(s => s.name);
+    const existing = useProjectStore.getState().getSchemaNames();
     const name = generateUniqueName("untitled_schema", existing);
     addSchema(name, "{\n  \n}");
     setActiveFile({ type: "schema", name });

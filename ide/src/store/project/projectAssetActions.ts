@@ -118,13 +118,13 @@ export function createAssetActions(set: Set, get: Get) {
 
     getTestdataNames: (): string[] => [...get().testdata.keys()],
 
-    exportFile: (name: string, type: "test" | "schema" | "tck"): void => {
+    exportFile: (name: string, type: "test" | "schema" | "tck" | "testdata"): void => {
       window.dispatchEvent(new Event("testlab:force-sync"));
       const { tck, tests, schemas, testdata } = get();
       if (type === "tck") downloadFile(`${INDEX_FILE}.yaml`, modelToYaml(tck), "application/x-yaml");
       else if (type === "test") { const m = tests.get(name); if (m) downloadFile(`${name}.yaml`, modelToYaml(m), "application/x-yaml"); }
       else if (type === "schema") { const s = schemas.get(name); if (s) downloadFile(`${name}.json`, s.content, "application/json"); }
-      else if ((type as string) === "testdata") { const td = testdata.get(name); if (td) downloadFile(`${name}.json`, td.content, td.type === "application/json" ? "application/json" : "text/plain"); }
+      else if (type === "testdata") { const td = testdata.get(name); if (td) downloadFile(`${name}.json`, td.content, td.type === "application/json" ? "application/json" : "text/plain"); }
     },
   };
 }

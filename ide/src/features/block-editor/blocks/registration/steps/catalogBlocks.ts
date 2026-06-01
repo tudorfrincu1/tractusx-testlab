@@ -26,7 +26,7 @@
 import type { Block, WorkspaceSvg } from "blockly";
 import type * as BlocklyType from "blockly";
 import { getCategoryColor } from "../../../config/blockColors";
-import type { BlockCatalog } from "../../common/catalog/catalogLoader";
+import type { BlockCatalog, BlockCatalogEntry } from "../../common/catalog/catalogLoader";
 import { blockIcon, ICON_STEP, ICON_MOCK, ICON_WAIT } from "../../common/fields/icons";
 import { createInfoIconField } from "../../common/fields/infoIconField";
 import { generateStepId } from "../../common/stepIdGenerator";
@@ -43,7 +43,7 @@ function classIdToLabel(classId: string): string {
 function initStepBlock(
   self: Block,
   Blockly: typeof BlocklyType,
-  block: { type: string; label: string; description: string; params: Array<{ name: string; required?: boolean }>; outputs?: Array<{ name: string; class?: string }>; expect?: boolean },
+  block: BlockCatalogEntry,
   categoryIcon: string,
   categoryColor: string,
   catalog: BlockCatalog,
@@ -88,7 +88,7 @@ function initStepBlock(
 /** Append EXPECT + output variable inputs if the block has outputs. */
 function appendOutputsSection(
   self: Block,
-  Blockly: typeof BlocklyType,
+  _Blockly: typeof BlocklyType,
   block: { outputs?: Array<{ name: string; class?: string }>; expect?: boolean },
 ): void {
   if (!block.outputs || block.outputs.length === 0) return;

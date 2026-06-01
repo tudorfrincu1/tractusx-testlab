@@ -75,7 +75,7 @@ export interface ExampleCardProps {
   icon: React.ReactNode;
   label: string;
   description: string;
-  category: "test" | "tck";
+  category: "template" | "tck";
   onClick: () => void;
 }
 

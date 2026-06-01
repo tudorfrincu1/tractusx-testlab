@@ -145,7 +145,7 @@ export function ProjectExplorer({ onSelectFile, onCollapse }: Readonly<ProjectEx
         />
 
         {testsOpen &&
-          testOrder.map((name, idx) => (
+          testOrder.map((name) => (
             <TreeRow
               key={name}
               depth={2}

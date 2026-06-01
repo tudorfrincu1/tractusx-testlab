@@ -48,8 +48,30 @@ export interface VariableDefinition {
   description?: string;
 }
 
+/**
+ * Optional document-level metadata block shared by tests and TCKs. All fields
+ * are optional; tests typically use name/version/description while TCKs may add
+ * authorship, licensing, standards, and tags.
+ */
+export interface DocumentMetadata {
+  name?: string;
+  version?: string;
+  description?: string;
+  dataspace_version?: string;
+  authors?: Array<{ name: string }>;
+  copyright_holders?: string[];
+  license?: string;
+  standards?: StandardRef[];
+  tags?: string[];
+}
+
 export interface ScriptDefinition {
   kind: typeof ScriptKind.TEST;
+  id?: string;
+  namespace?: string;
+  testlab?: string;
+  metadata?: DocumentMetadata;
+  env?: TckEnv;
   name: string;
   version?: string;
   dataspace_version?: string;
@@ -87,6 +109,10 @@ export interface TckEnv {
 
 export interface TckDefinition {
   kind: typeof ScriptKind.TCK;
+  id?: string;
+  namespace?: string;
+  testlab?: string;
+  metadata?: DocumentMetadata;
   name: string;
   version?: string;
   dataspace_version?: string;

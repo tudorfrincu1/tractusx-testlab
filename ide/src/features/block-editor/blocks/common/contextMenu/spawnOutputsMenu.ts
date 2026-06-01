@@ -37,6 +37,7 @@ export function registerSpawnOutputsContextMenu(
     id: SPAWN_OUTPUTS_ID,
     scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
     displayText(scope) {
+      if (!scope.block) return "Spawn Outputs";
       const entry = findCatalogEntryForBlock(scope.block, catalog);
       if (!entry?.outputs?.length) return "Spawn Outputs";
       const names = entry.outputs.map(o => `@${o.name}`).join(", ");
@@ -44,6 +45,7 @@ export function registerSpawnOutputsContextMenu(
     },
     weight: 100,
     preconditionFn(scope) {
+      if (!scope.block) return "hidden";
       const entry = findCatalogEntryForBlock(scope.block, catalog);
       if (!entry?.outputs?.length) return "hidden";
       return "enabled";

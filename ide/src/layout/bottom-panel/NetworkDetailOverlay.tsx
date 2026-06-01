@@ -25,7 +25,7 @@
 import { useState, useCallback } from "react";
 import Editor, { type BeforeMount } from "@monaco-editor/react";
 import { defineTractusDarkTheme } from "../../features/yaml-editor/monacoSetup";
-import type { NetworkEntry, NetworkDetailTab } from "./types";
+import type { NetworkEntry, NetworkDetailTab } from "./bottomPanel.types";
 
 export interface NetworkDetailOverlayProps {
   readonly entry: NetworkEntry;

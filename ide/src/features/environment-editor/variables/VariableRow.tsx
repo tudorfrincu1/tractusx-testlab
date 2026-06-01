@@ -49,7 +49,7 @@ function getBadgeClass(displayType: DisplayType): string {
 }
 
 export function VariableRow({ variable, index, isEmptyRow, onCommitEmpty }: Readonly<VariableRowProps>) {
-  const { updateVariable, toggleVariableEnabled, toggleVariableSecret, deleteVariable } =
+  const { updateVariable, toggleVariableEnabled, deleteVariable } =
     useEnvironmentStore();
 
   const [localName, setLocalName] = useState(variable.name);

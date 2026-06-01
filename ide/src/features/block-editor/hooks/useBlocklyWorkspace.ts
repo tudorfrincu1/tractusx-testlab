@@ -41,7 +41,10 @@ import type { BlocklyWorkspaceRefs } from "./blocklyWorkspaceRefs";
  * It holds the shared refs and `ready` state the three hooks coordinate on and
  * returns the same `{ workspace, catalog, ready }` shape as before the split.
  */
-export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | null>) {
+export function useBlocklyWorkspace(
+  containerRef: RefObject<HTMLDivElement | null>,
+  onTrashChange?: (hasItems: boolean) => void,
+) {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const catalogRef = useRef<Awaited<ReturnType<typeof loadBlockCatalog>> | null>(null);
   const isUpdatingFromStore = useRef(false);
@@ -62,7 +65,7 @@ export function useBlocklyWorkspace(containerRef: RefObject<HTMLDivElement | nul
     pendingToolboxRef,
   };
 
-  useBlocklyInit({ refs, modelKind, setModelFromBlocks, selectStep, setReady });
+  useBlocklyInit({ refs, modelKind, setModelFromBlocks, selectStep, setReady, onTrashChange });
   useBlocklyStoreSync({ refs, ready, modelKind });
   useBlocklyResize({ containerRef, workspaceRef, ready });
 

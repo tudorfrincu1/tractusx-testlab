@@ -84,9 +84,10 @@ export function serializePreconditionPolicyBlock(block: Block): StepDefinition |
   }
 
   return {
-    type: "precondition_policy_config",
-    description: "Policy Config",
-    params,
+    id: "precondition_policy_config",
+    uses: "precondition_policy_config",
+    name: "Policy Config",
+    with: params,
   };
 }
 
@@ -152,7 +153,7 @@ export function deserializePreconditionPolicyBlock(
   ws: Workspace,
   step: StepDefinition
 ): Block {
-  const params = step.params ?? {};
+  const params = step.with ?? {};
   const version = String(params.version ?? "saturn");
   const policyType = String(params.policy_type ?? "access");
   const isJupiter = version === "jupiter";
@@ -184,8 +185,8 @@ export function deserializePreconditionPolicyBlock(
     }
   }
 
-  if (step.description) {
-    block.setFieldValue(step.description, "DESCRIPTION");
+  if (step.name) {
+    block.setFieldValue(step.name, "DESCRIPTION");
   }
 
   return block;

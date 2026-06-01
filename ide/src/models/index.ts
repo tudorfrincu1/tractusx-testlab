@@ -26,4 +26,5 @@ export * from "./environment";
 export * from "./execution";
 export * from "./project";
 export * from "./schema";
-export * from "./validator";
+// Disambiguate AuthType (declared in both ./environment and ./schema; identical union). Use the schema variant which also exports the runtime const.
+export { AuthType } from "./schema";

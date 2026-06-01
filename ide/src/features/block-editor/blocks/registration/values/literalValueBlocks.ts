@@ -64,7 +64,7 @@ export function registerLiteralValueBlocks(Blockly: typeof BlocklyType) {
         .appendField("\"");
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueString);
-      this.setHelpUrl();
+      this.setHelpUrl("");
       this.setCommentText("This is a string")
       this.setTooltip("A literal string value");
     },
@@ -151,7 +151,7 @@ export function registerLiteralValueBlocks(Blockly: typeof BlocklyType) {
     init(this: Block) {
       this.appendDummyInput()
         .appendField("tpl")
-        .appendField(new FieldTemplateString(""), "TEMPLATE")
+        .appendField(new FieldTemplateString("") as unknown as BlocklyType.Field, "TEMPLATE")
         .appendField(new Blockly.FieldImage(
           ICON_EDIT_TEMPLATE, 16, 16, "Edit template",
           (field: InstanceType<typeof BlocklyType.FieldImage>) => {

@@ -156,10 +156,6 @@ export function SequenceDiagram() {
     setTransform((prev) => ({ ...prev, scale: clampScale(prev.scale - ZOOM_STEP) }));
   }, []);
 
-  const handleReset = useCallback(() => {
-    setTransform(INITIAL_TRANSFORM);
-  }, []);
-
   const handleFitView = useCallback(() => {
     setTransform(INITIAL_TRANSFORM);
   }, []);

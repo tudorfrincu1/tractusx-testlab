@@ -39,6 +39,7 @@ const SCOPE_COLORS: Record<VarScope, string> = {
   setup: "#4a90d9",
   services: "#7c3aed",
   execution: "#0369a1",
+  testdata: "#0d9488",
 } as const;
 
 export function TemplateStringEditorModal() {

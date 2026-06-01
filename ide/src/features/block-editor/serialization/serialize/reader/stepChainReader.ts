@@ -68,7 +68,7 @@ function serializeBlock(current: Block, catalog: BlockCatalog, knownOutputs: Set
 function serializeGenericStep(current: Block, catalog: BlockCatalog, knownOutputs: Set<string>): Step[] {
   const step = blockToStep(current, catalog, knownOutputs);
   if (!step) return [];
-  const flattenedAssertions = flattenValidateToSteps(step);
+  const flattenedAssertions = flattenValidateToSteps(step as unknown as Record<string, unknown>);
   if (step.returns) {
     for (const key of Object.keys(step.returns)) {
       knownOutputs.add(key);

@@ -45,9 +45,13 @@ import {
 } from "./blocks";
 import { BlockTooltip } from "./ui/WarningTooltip";
 
-export function BlocklyWorkspace() {
+export interface BlocklyWorkspaceProps {
+  onTrashChange?: (hasItems: boolean) => void;
+}
+
+export function BlocklyWorkspace({ onTrashChange }: Readonly<BlocklyWorkspaceProps>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { workspace, ready } = useBlocklyWorkspace(containerRef);
+  const { workspace, ready } = useBlocklyWorkspace(containerRef, onTrashChange);
   const [warning, setWarning] = useState<WarningShowRequest | null>(null);
   const [info, setInfo] = useState<InfoShowRequest | null>(null);
   const [pathReq, setPathReq] = useState<PathBuilderRequest | null>(null);

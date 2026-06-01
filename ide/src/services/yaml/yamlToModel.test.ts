@@ -26,7 +26,7 @@ import { describe, it, expect } from "vitest";
 import { yamlToModel } from "./yamlToModel";
 import { modelToYaml } from "./modelToYaml";
 import { ScriptKind } from "@/models/schema";
-import type { ScriptDefinition, TckDefinition } from "@/models/schema";
+import type { ScriptDefinition, TckDefinition, StepDefinition } from "@/models/schema";
 
 describe("yamlToModel", () => {
   it("parses a valid minimal YAML into a ScriptDefinition", () => {
@@ -35,8 +35,8 @@ kind: test
 name: minimal-test
 version: "1.0"
 steps:
-  - type: http_request
-    params:
+  - uses: http_request
+    with:
       url: https://example.com
 `;
     const result = yamlToModel(yaml);
@@ -48,7 +48,7 @@ steps:
     expect(model.name).toBe("minimal-test");
     expect(model.version).toBe("1.0");
     expect(model.steps).toHaveLength(1);
-    expect(model.steps[0].type).toBe("http_request");
+    expect((model.steps[0] as StepDefinition).uses).toBe("http_request");
   });
 
   it("returns error for empty string", () => {
@@ -80,11 +80,13 @@ name: service-test
 version: "1.0"
 services:
   - name: provider
-    type: edc_connector
-    base_url: https://provider.local
+    uses: edc_connector
+    with:
+      base_url: https://provider.local
   - name: consumer
-    type: edc_connector
-    base_url: https://consumer.local
+    uses: edc_connector
+    with:
+      base_url: https://consumer.local
 steps: []
 `;
     const result = yamlToModel(yaml);
@@ -94,7 +96,7 @@ steps: []
     const model = result.model as ScriptDefinition;
     expect(model.services).toHaveLength(2);
     expect(model.services![0].name).toBe("provider");
-    expect(model.services![1].type).toBe("edc_connector");
+    expect(model.services![1].uses).toBe("edc_connector");
   });
 
   it("parses YAML with validate blocks", () => {
@@ -103,26 +105,29 @@ kind: test
 name: validate-test
 version: "1.0"
 steps:
-  - type: http_request
-    params:
+  - uses: http_request
+    with:
       url: https://api.example.com
       method: GET
     validate:
-      - type: EQUALS
-        output: status_code
-        value: 200
-      - type: CONTAINS
-        output: body
-        value: healthy
+      - uses: EQUALS
+        with:
+          output: status_code
+          value: 200
+      - uses: CONTAINS
+        with:
+          output: body
+          value: healthy
 `;
     const result = yamlToModel(yaml);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const model = result.model as ScriptDefinition;
-    expect(model.steps[0].validate).toHaveLength(2);
-    expect(model.steps[0].validate![0].type).toBe("EQUALS");
-    expect(model.steps[0].validate![1].output).toBe("body");
+    const validatedStep = model.steps[0] as StepDefinition;
+    expect(validatedStep.validate).toHaveLength(2);
+    expect(validatedStep.validate![0].uses).toBe("EQUALS");
+    expect(validatedStep.validate![1].with.output).toBe("body");
   });
 
   it("detects TCK kind from structure when kind is missing", () => {
@@ -147,12 +152,15 @@ tests:
       kind: ScriptKind.TEST,
       name: "roundtrip-test",
       version: "2.0",
+      // Canonical v2 shape: name/version round-trip through the metadata block.
+      metadata: { name: "roundtrip-test", version: "2.0" },
       steps: [
         {
-          type: "http_request",
-          description: "Health check",
-          params: { url: "https://api.example.com/health", method: "GET" },
-          validate: [{ type: "EQUALS" as const, output: "status_code", value: 200 }],
+          id: "s1",
+          uses: "http_request",
+          name: "Health check",
+          with: { url: "https://api.example.com/health", method: "GET" },
+          validate: [{ uses: "EQUALS", with: { output: "status_code", value: 200 } }],
         },
       ],
     };
@@ -166,7 +174,8 @@ tests:
     expect(roundTripped.name).toBe(original.name);
     expect(roundTripped.version).toBe(original.version);
     expect(roundTripped.steps).toHaveLength(1);
-    expect(roundTripped.steps[0].type).toBe("http_request");
-    expect(roundTripped.steps[0].validate![0].value).toBe(200);
+    const roundTrippedStep = roundTripped.steps[0] as StepDefinition;
+    expect(roundTrippedStep.uses).toBe("http_request");
+    expect(roundTrippedStep.validate![0].with.value).toBe(200);
   });
 });

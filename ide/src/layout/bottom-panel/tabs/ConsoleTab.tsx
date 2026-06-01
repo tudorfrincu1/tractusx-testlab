@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { ConsoleEntry } from "../types";
+import type { ConsoleEntry } from "../bottomPanel.types";
 
 const MOCK_ENTRIES: readonly ConsoleEntry[] = [
   { time: "14:32:01", level: "info", message: "Compilation started for ccm-test-01.yaml" },

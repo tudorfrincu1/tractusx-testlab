@@ -51,9 +51,9 @@ describe("modelToGraph", () => {
       name: "multi-step",
       version: "1.0",
       steps: [
-        { type: "http_request", params: { url: "https://a.com" } },
-        { type: "http_request", params: { url: "https://b.com" } },
-        { type: "wait", params: { seconds: 5 } },
+        { id: "s1", uses: "http_request", with: { url: "https://a.com" } },
+        { id: "s2", uses: "http_request", with: { url: "https://b.com" } },
+        { id: "s3", uses: "wait", with: { seconds: 5 } },
       ],
     };
 
@@ -72,13 +72,15 @@ describe("modelToGraph", () => {
       version: "1.0",
       steps: [
         {
-          type: "http_request",
-          params: { url: "https://api.com" },
+          id: "s1",
+          uses: "http_request",
+          with: { url: "https://api.com" },
           returns: { auth_token: "$.token" },
         },
         {
-          type: "http_request",
-          params: { url: "https://api.com/data", headers: { Authorization: "@auth_token" } },
+          id: "s2",
+          uses: "http_request",
+          with: { url: "https://api.com/data", headers: { Authorization: "@auth_token" } },
         },
       ],
     };
@@ -101,9 +103,9 @@ describe("modelToGraph", () => {
       kind: ScriptKind.TEST,
       name: "phased-test",
       version: "1.0",
-      setup: [{ type: "http_request", params: { url: "https://setup.com" } }],
-      steps: [{ type: "http_request", params: { url: "https://main.com" } }],
-      teardown: [{ type: "http_request", params: { url: "https://teardown.com" } }],
+      setup: [{ id: "setup1", uses: "http_request", with: { url: "https://setup.com" } }],
+      steps: [{ id: "main1", uses: "http_request", with: { url: "https://main.com" } }],
+      teardown: [{ id: "teardown1", uses: "http_request", with: { url: "https://teardown.com" } }],
     };
 
     const { nodes } = modelToGraph(model, "execution");
@@ -121,9 +123,9 @@ describe("modelToGraph", () => {
       name: "service-test",
       version: "1.0",
       services: [
-        { name: "provider", type: "edc_connector", base_url: "https://provider.local" },
+        { name: "provider", uses: "edc_connector", with: { base_url: "https://provider.local" } },
       ],
-      steps: [{ type: "http_request", params: { url: "https://provider.local/api" } }],
+      steps: [{ id: "s1", uses: "http_request", with: { url: "https://provider.local/api" } }],
     };
 
     const { nodes } = modelToGraph(model, "dataflow");

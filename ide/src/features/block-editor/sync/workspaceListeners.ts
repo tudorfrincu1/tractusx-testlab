@@ -30,7 +30,7 @@ import {
   collectWorkspaceVariables,
 } from "../config/blockDefinitions";
 import { resolveStepIdentifier } from "./blockSelection";
-import type { TestLabDocument } from "@/models/schema";
+import type { TestLabDocument, ScriptKind } from "@/models/schema";
 import type { BlockCatalog } from "../config/blockDefinitions";
 
 interface ListenerRefs {
@@ -43,7 +43,7 @@ interface ListenerRefs {
 export function attachModelSyncListener(
   ws: Blockly.WorkspaceSvg,
   catalog: BlockCatalog,
-  modelKind: string,
+  modelKind: ScriptKind,
   setModelFromBlocks: (doc: TestLabDocument) => void,
   refs: ListenerRefs,
 ) {

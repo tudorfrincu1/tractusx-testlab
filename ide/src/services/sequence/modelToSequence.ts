@@ -86,7 +86,7 @@ function renderStepLines(
   const stepName = raw.name as string | undefined;
   const stepUses = raw.uses as string | undefined;
   const withObj = raw.with as Record<string, unknown> | undefined;
-  const label = sanitizeLabel(stepName ?? stepUses ?? step.type ?? "unknown");
+  const label = sanitizeLabel(stepName ?? stepUses ?? (raw.type as string | undefined) ?? "unknown");
 
   if (!stepUses) {
     return [`    Note over ${ORCHESTRATOR}: ${label}`];

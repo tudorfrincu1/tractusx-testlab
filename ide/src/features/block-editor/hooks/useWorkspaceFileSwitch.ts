@@ -26,6 +26,7 @@ import { useEffect } from "react";
 import * as Blockly from "blockly";
 import { useProjectStore } from "@/store";
 import { isTest } from "@/models/schema";
+import type { ScriptKind } from "@/models/schema";
 import {
   buildToolbox,
   populateWorkspaceFromModel,
@@ -43,7 +44,7 @@ import type { WorkspaceRefs } from "../blocklyWorkspace.types";
 export function useWorkspaceFileSwitch(
   refs: Pick<WorkspaceRefs, "workspaceRef" | "catalogRef" | "isUpdatingFromStore" | "activeFileKeyRef">,
   ready: boolean,
-  modelKind: string,
+  modelKind: ScriptKind,
 ): void {
   const { workspaceRef, catalogRef, isUpdatingFromStore, activeFileKeyRef } = refs;
 

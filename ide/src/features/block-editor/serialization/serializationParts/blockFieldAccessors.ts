@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block } from "blockly";
-import type { BlocklyFieldDropdownInternal } from "../../../../types/blockly-internals.d";
+import type { BlocklyFieldDropdownInternal } from "@/shared/types/blockly-internals";
 import * as deferredDropdowns from "../deferredDropdowns";
 
 /** Set a dropdown field's value, bypassing validation and queueing it for re-application. */

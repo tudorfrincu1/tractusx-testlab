@@ -208,7 +208,7 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
       tspan.textContent = lineText;
       tspan.setAttribute("x", xPos);
       tspan.setAttribute("dy", i === 0 ? "0" : String(lineHeight));
-      this.textElement_.appendChild(tspan);
+      this.textElement_!.appendChild(tspan);
       this.tspans.push(tspan);
     }
   }
@@ -228,7 +228,7 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
     hint.setAttribute("font-size", "10");
     hint.setAttribute("opacity", "0.7");
     hint.style.cursor = "pointer";
-    this.textElement_.appendChild(hint);
+    this.textElement_!.appendChild(hint);
     this.hintTspan = hint;
     this.lineCount += 1;
     if (this.isExpanded) {

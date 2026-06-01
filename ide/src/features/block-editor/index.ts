@@ -31,3 +31,5 @@ export * from "./hooks";
 export * from "./sync";
 export * from "./fields";
 export * from "./ui";
+// Disambiguate BlockCatalog (re-exported by both ./config and ./hooks; identical structural type)
+export type { BlockCatalog } from "./config";

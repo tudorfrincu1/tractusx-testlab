@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Block, Workspace } from "blockly";
-import type { Step, ScriptDefinition } from "@/models/schema";
+import type { Step, StepDefinition, ScriptDefinition } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 import { useServiceStore } from "@/store";
 import { findCatalogEntry, type BlockCatalog } from "../../blocks";
@@ -106,8 +106,8 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
   };
 
   const buildGenericStepBlock = (
-    step: Step & { uses: string; with?: Record<string, unknown> },
-    assertions: Step[],
+    step: StepDefinition,
+    assertions: StepDefinition[],
   ): Block | null => {
     const catalogStepType = resolveCatalogStepType(step);
     const entry = findCatalogEntry(catalogStepType, catalog);
@@ -161,7 +161,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
       console.warn(`[populateTest] Skipping step "${stepDesc}" (type: ${stepType}):`, err);
     }
     try {
-      blocks.push(createUnsupportedStepBlock(step.id, stepDesc, stepType ?? "unknown", isTemplateStep(step) ? step.params : step.with));
+      blocks.push(createUnsupportedStepBlock(isTemplateStep(step) ? undefined : step.id, stepDesc, stepType ?? "unknown", isTemplateStep(step) ? step.params : step.with));
     } catch {
       // Last-resort: skip the step entirely if even the fallback fails
     }
@@ -174,7 +174,7 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
     for (const { step, assertions } of groups) {
       try {
         if (isTemplateStep(step)) {
-          blocks.push(createUnsupportedStepBlock(step.id, step.description, step.template, step.params));
+          blocks.push(createUnsupportedStepBlock(undefined, step.description, step.template, step.params));
           continue;
         }
 

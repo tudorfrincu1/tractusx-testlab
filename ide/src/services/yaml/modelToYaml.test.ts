@@ -33,12 +33,15 @@ describe("modelToYaml", () => {
       kind: ScriptKind.TEST,
       name: "minimal-test",
       version: "1.0",
+      metadata: { name: "minimal-test", version: "1.0" },
       steps: [],
     };
 
     const result = modelToYaml(model);
 
+    // Canonical v2 shape: name/version live UNDER metadata, not at the root.
     expect(result).toContain("kind: test");
+    expect(result).toContain("metadata:");
     expect(result).toContain("name: minimal-test");
     expect(result).toContain("version: \"1.0\"");
   });
@@ -52,8 +55,9 @@ describe("modelToYaml", () => {
       setup: [],
       steps: [
         {
-          type: "http_request",
-          params: { url: "https://example.com" },
+          id: "s1",
+          uses: "http_request",
+          with: { url: "https://example.com" },
         },
       ],
       teardown: [],
@@ -64,24 +68,27 @@ describe("modelToYaml", () => {
     expect(result).not.toContain("setup:");
     expect(result).not.toContain("teardown:");
     expect(result).not.toContain("description:");
-    expect(result).toContain("type: http_request");
+    expect(result).toContain("uses: http_request");
   });
 
-  it("renames variables to shared_variables for TCK documents", () => {
+  it("emits TCK shared variables under env.variables", () => {
     const model: TckDefinition = {
       kind: ScriptKind.TCK,
       name: "my-tck",
       version: "2.0",
-      variables: {
-        base_url: { type: "string", default: "http://localhost" },
+      env: {
+        variables: {
+          base_url: { type: "string", default: "http://localhost" },
+        },
       },
       tests: ["test-a.yaml"],
     };
 
     const result = modelToYaml(model);
 
-    expect(result).toContain("shared_variables:");
-    expect(result).not.toMatch(/^\s*variables:/m);
+    // Canonical v2 shape: shared variables live UNDER env, not at the root.
+    expect(result).toContain("env:");
+    expect(result).toContain("variables:");
     expect(result).toContain("base_url:");
   });
 
@@ -92,17 +99,17 @@ describe("modelToYaml", () => {
       version: "1.0",
       steps: [
         {
-          type: "http_request",
-          description: "Call the API",
-          params: {
+          id: "s1",
+          uses: "http_request",
+          name: "Call the API",
+          with: {
             url: "https://api.example.com/health",
             method: "GET",
           },
           validate: [
             {
-              type: "EQUALS" as const,
-              output: "status_code",
-              value: 200,
+              uses: "EQUALS",
+              with: { output: "status_code", value: 200 },
             },
           ],
         },
@@ -111,9 +118,9 @@ describe("modelToYaml", () => {
 
     const result = modelToYaml(model);
 
-    expect(result).toContain("description: Call the API");
+    expect(result).toContain("name: Call the API");
     expect(result).toContain("method: GET");
-    expect(result).toContain("type: EQUALS");
+    expect(result).toContain("uses: EQUALS");
     expect(result).toContain("value: 200");
   });
 

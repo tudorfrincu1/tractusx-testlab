@@ -23,8 +23,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { FieldDropdown, Workspace } from "blockly";
-import { useServiceStore } from "@/store";
+import type { FieldDropdown, MenuOption, Workspace } from "blockly";
 import { useProjectStore } from "@/store";
 import type { BlockCatalog } from "../catalog/catalogLoader";
 import type { TypedVariable } from "../catalog/variables/typedVariableCollection";
@@ -139,7 +138,7 @@ export function dynamicDropdown(
       setTimeout(() => {
         const blk = this.getSourceBlock?.();
         if (!blk || blk.disposed) return;
-        const self = this as unknown as { menuOptions_: Array<[string, string]> | null };
+        const self = this as unknown as { menuOptions_: MenuOption[] | null };
         self.menuOptions_ = null;
         const fresh = this.getOptions(false);
         if (fresh.length > 0 && fresh[0][1] !== "__NONE__") {
@@ -168,7 +167,7 @@ export function dynamicDropdown(
       setTimeout(() => {
         const blk = this.getSourceBlock?.();
         if (!blk || blk.disposed) return;
-        const self = this as unknown as { menuOptions_: Array<[string, string]> | null };
+        const self = this as unknown as { menuOptions_: MenuOption[] | null };
         self.menuOptions_ = null;
         const fresh = this.getOptions(false);
         if (fresh.length > 0 && fresh[0][1] !== "__NONE__") {

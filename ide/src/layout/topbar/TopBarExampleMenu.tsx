@@ -26,12 +26,8 @@ import { theme } from "@/shared/theme/tractusxTheme";
 import { DropdownItem } from "./TopBarButtons";
 
 import HttpIcon from "@mui/icons-material/Http";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import StorageIcon from "@mui/icons-material/Storage";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import ScienceIcon from "@mui/icons-material/Science";
 
 interface ExampleEntry {
   file: string;

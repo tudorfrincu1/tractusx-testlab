@@ -22,5 +22,5 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-export { TestPipelineWidgets, OrderBadge, IconButton } from "./TestPipelineWidgets";
+export { OrderBadge, IconButton } from "./TestPipelineWidgets";
 export { TestPipelineTable } from "./TestPipelineTable";

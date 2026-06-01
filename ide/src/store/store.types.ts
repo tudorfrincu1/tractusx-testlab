@@ -51,6 +51,7 @@ export interface ProjectState {
   activeFile: ActiveFile | null;
   dirty: Map<string, boolean>;
   workspaceStates: Record<string, object>;
+  lastSavedAt: number | null;
 
   createProject: (name?: string) => void;
   addTest: (name?: string) => string;
@@ -64,6 +65,11 @@ export interface ProjectState {
   addSchema: (name: string, content: string) => void;
   removeSchema: (name: string) => void;
   renameSchema: (oldName: string, newName: string) => void;
+  addTestdata: (name: string, content: string, type: string) => void;
+  removeTestdata: (name: string) => void;
+  renameTestdata: (oldName: string, newName: string) => void;
+  updateTestdataContent: (name: string, content: string) => void;
+  getTestdataNames: () => string[];
   markDirty: (name: string) => void;
   markClean: (name: string) => void;
   isDirty: (name: string) => boolean;
@@ -75,7 +81,7 @@ export interface ProjectState {
   getTestSummaries: () => TestSummary[];
   updateTckField: <K extends keyof TckDefinition>(field: K, value: TckDefinition[K]) => void;
   exportZip: () => Promise<void>;
-  exportFile: (name: string, type: "test" | "schema" | "tck") => void;
+  exportFile: (name: string, type: "test" | "schema" | "tck" | "testdata") => void;
   saveToLocalStorage: () => void;
   loadFromLocalStorage: () => boolean;
   loadFromDocument: (doc: TestLabDocument, name?: string) => void;

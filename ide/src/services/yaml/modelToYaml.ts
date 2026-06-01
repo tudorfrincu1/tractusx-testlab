@@ -27,8 +27,8 @@
  */
 
 import yaml from "js-yaml";
-import type { TestLabDocument, ScriptDefinition, TckDefinition, StepDefinition, PreconditionDefinition } from "@/models/schema";
-import { isTck, isTestRef } from "@/models/schema";
+import type { TestLabDocument, ScriptDefinition, TckDefinition, Step, PreconditionDefinition } from "@/models/schema";
+import { isTck, isTestRef, isTemplateStep } from "@/models/schema";
 import { STEP_FIELDS, PRECONDITION_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS, buildOrderedRecord } from "./yamlFieldMap";
 
 export function modelToYaml(model: TestLabDocument): string {
@@ -79,7 +79,10 @@ function buildTckObject(model: TckDefinition): Record<string, unknown> {
   });
 }
 
-function buildStep(step: StepDefinition): Record<string, unknown> {
+function buildStep(step: Step): Record<string, unknown> {
+  // Template steps have no canonical YAML field map and were historically not
+  // emitted; preserve that by skipping them (stripEmpty removes empty records).
+  if (isTemplateStep(step)) return {};
   return buildOrderedRecord(STEP_FIELDS, {
     id: step.id,
     uses: step.uses,

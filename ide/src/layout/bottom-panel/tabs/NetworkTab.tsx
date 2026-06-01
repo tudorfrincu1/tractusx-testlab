@@ -24,7 +24,7 @@
 
 import { useState } from "react";
 import { useEditorStore } from "@/store";
-import type { NetworkEntry, NetworkFilter } from "../types";
+import type { NetworkEntry, NetworkFilter } from "../bottomPanel.types";
 
 const MOCK_ENTRIES: readonly NetworkEntry[] = [
   {

@@ -35,7 +35,7 @@ import {
 } from "../config/blockDefinitions";
 import { populateOutputVariableBlocks } from "../blocks/common/outputDispenser";
 import { isTest } from "@/models/schema";
-import type { TestLabDocument } from "@/models/schema";
+import type { TestLabDocument, ScriptKind } from "@/models/schema";
 import type { BlocklyWorkspaceRefs, BlockCatalog } from "./blocklyWorkspaceRefs";
 
 /** Dispose every block chained to a statement input on `root`. */
@@ -55,7 +55,7 @@ function rebuildWorkspace(
   ws: Blockly.WorkspaceSvg,
   model: TestLabDocument,
   catalog: BlockCatalog,
-  modelKind: string,
+  modelKind: ScriptKind,
 ) {
   ws.clear();
   const rootBlock = ws.newBlock("test_root");
@@ -99,7 +99,7 @@ function incrementalUpdate(
 interface UseBlocklyStoreSyncParams {
   refs: BlocklyWorkspaceRefs;
   ready: boolean;
-  modelKind: string;
+  modelKind: ScriptKind;
 }
 
 /**

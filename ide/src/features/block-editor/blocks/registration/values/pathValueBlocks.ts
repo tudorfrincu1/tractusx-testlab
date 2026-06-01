@@ -24,6 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type * as BlocklyType from "blockly";
+import type { Block } from "blockly";
 import { blockColors } from "../../../config/blockColors";
 import { collectWorkspaceVariables } from "../../common/catalog/variables/variableCollection";
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";

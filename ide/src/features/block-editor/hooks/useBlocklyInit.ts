@@ -45,14 +45,17 @@ import { createWorkspaceOptions } from "../config/workspaceConfig";
 import { attachModelSyncListener, attachFlyoutListener, attachSelectionListener } from "../sync/workspaceListeners";
 import { attachPhaseEnforcementListener } from "../sync/phaseEnforcement";
 import { isTest } from "@/models/schema";
+import type { ScriptKind } from "@/models/schema";
 import type { BlocklyWorkspaceRefs } from "./blocklyWorkspaceRefs";
+import type { BlocklyTrashcanInternal } from "@/shared/types/blockly-internals";
 
 interface UseBlocklyInitParams {
   refs: BlocklyWorkspaceRefs;
-  modelKind: string;
+  modelKind: ScriptKind;
   setModelFromBlocks: ReturnType<typeof useEditorStore.getState>["setModelFromBlocks"];
   selectStep: ReturnType<typeof useEditorStore.getState>["selectStep"];
   setReady: Dispatch<SetStateAction<boolean>>;
+  onTrashChange?: (hasItems: boolean) => void;
 }
 
 /**
@@ -69,6 +72,7 @@ export function useBlocklyInit({
   setModelFromBlocks,
   selectStep,
   setReady,
+  onTrashChange,
 }: UseBlocklyInitParams) {
   const {
     containerRef,
@@ -168,6 +172,17 @@ export function useBlocklyInit({
       attachFlyoutListener(ws);
       attachSelectionListener(ws, selectStep);
       attachPhaseEnforcementListener(ws, catalog);
+
+      // Track trashcan contents so the toolbar delete indicator stays in sync.
+      ws.addChangeListener((event: Blockly.Events.Abstract) => {
+        if (
+          event.type === Blockly.Events.BLOCK_DELETE ||
+          event.type === Blockly.Events.TRASHCAN_OPEN
+        ) {
+          const trashContents = (ws.trashcan as unknown as BlocklyTrashcanInternal | undefined)?.contents;
+          onTrashChange?.((trashContents?.length ?? 0) > 0);
+        }
+      });
 
       // Force Blockly to recalculate dimensions after inject.
       // The async catalog load means the container may have settled its layout

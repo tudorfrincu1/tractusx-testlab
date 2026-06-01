@@ -26,7 +26,7 @@
 import type { Node, Edge } from "@xyflow/react";
 import { MarkerType } from "@xyflow/react";
 import type { FlowData, FlowEdge, FlowNode } from "./dataFlowBuilder";
-import type { PipelineNodeData, PipelineEdgeData, PipelineStageStatus } from "./types";
+import type { PipelineNodeData, PipelineEdgeData, PipelineStageStatus } from "./pipelineGraph.types";
 
 /** Status map keyed by test/node name — injected from execution state. */
 export interface StageStatusMap {
