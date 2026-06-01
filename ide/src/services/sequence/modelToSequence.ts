@@ -82,7 +82,6 @@ function renderStepLines(
   step: StepDefinition,
   serviceNames: string[]
 ): string[] {
-  const lines: string[] = [];
   const raw = step as unknown as Record<string, unknown>;
   const stepName = raw.name as string | undefined;
   const stepUses = raw.uses as string | undefined;
@@ -90,69 +89,101 @@ function renderStepLines(
   const label = sanitizeLabel(stepName ?? stepUses ?? step.type ?? "unknown");
 
   if (!stepUses) {
-    lines.push(`    Note over ${ORCHESTRATOR}: ${label}`);
-    return lines;
+    return [`    Note over ${ORCHESTRATOR}: ${label}`];
   }
 
   const classification = classifyByCategory(stepUses);
 
   if (classification.type === "internal") {
-    lines.push(`    ${ORCHESTRATOR}->>${ORCHESTRATOR}: ${label}`);
-    return lines;
+    return [`    ${ORCHESTRATOR}->>${ORCHESTRATOR}: ${label}`];
   }
 
-  // Determine target participant
-  let target: string | undefined;
-  const matchedService = extractServiceFromWith(withObj);
-  if (matchedService && serviceNames.includes(matchedService)) {
-    target = sanitizeParticipantId(matchedService);
-  } else if (serviceNames.length > 0) {
-    target = sanitizeParticipantId(serviceNames[0]);
-  }
-
-  if (classification.type === "outbound") {
-    const isConnectorCategory = stepUses?.startsWith("connector") ?? false;
-    const isHttpCategory = stepUses?.startsWith("http") ?? false;
-
-    if (isConnectorCategory && target) {
-      lines.push(`    ${ORCHESTRATOR}->>${target}: ${label}`);
-      lines.push(`    ${target}->>${TESTED_CONNECTOR}: DSP HTTP request`);
-      if (classification.has_response) {
-        lines.push(`    ${TESTED_CONNECTOR}-->>${target}: DSP HTTP response`);
-        lines.push(`    ${target}-->>${ORCHESTRATOR}: response`);
-      }
-    } else if (isHttpCategory) {
-      lines.push(`    ${ORCHESTRATOR}->>${TESTED_CONNECTOR}: ${label}`);
-      lines.push(`    ${TESTED_CONNECTOR}->>${TESTED_APPLICATION}: forward`);
-      if (classification.has_response) {
-        lines.push(`    ${TESTED_APPLICATION}-->>${TESTED_CONNECTOR}: response`);
-        lines.push(`    ${TESTED_CONNECTOR}-->>${ORCHESTRATOR}: response`);
-      }
-    } else {
-      const dest = target ?? TESTED_CONNECTOR;
-      lines.push(`    ${ORCHESTRATOR}->>${dest}: ${label}`);
-      if (classification.has_response) {
-        lines.push(`    ${dest}-->>${ORCHESTRATOR}: response`);
-      }
-    }
-  } else {
-    // inbound (mock steps)
-    const isWait = stepUses?.includes("wait") ?? false;
-    if (isWait) {
-      // Wait steps: SUT calls TestLab mock endpoint → TestLab returns mocked response
-      lines.push(`    ${TESTED_APPLICATION}->>${ORCHESTRATOR}: ${label}`);
-      lines.push(`    ${ORCHESTRATOR}-->>${TESTED_APPLICATION}: mocked response`);
-    } else {
-      // Expose/register steps: just a local setup (reflexive only)
-      lines.push(`    ${ORCHESTRATOR}->>${ORCHESTRATOR}: ${label}`);
-    }
-  }
+  const target = resolveTarget(withObj, serviceNames);
+  const lines = renderClassifiedStep(classification, label, target, stepUses);
 
   if (step.validate && step.validate.length > 0) {
     lines.push(`    Note right of ${ORCHESTRATOR}: PASS Assertion`);
   }
 
   return lines;
+}
+
+function resolveTarget(
+  withObj: Record<string, unknown> | undefined,
+  serviceNames: string[],
+): string | undefined {
+  const matchedService = extractServiceFromWith(withObj);
+  if (matchedService && serviceNames.includes(matchedService)) {
+    return sanitizeParticipantId(matchedService);
+  }
+  if (serviceNames.length > 0) {
+    return sanitizeParticipantId(serviceNames[0]);
+  }
+  return undefined;
+}
+
+function renderClassifiedStep(
+  classification: { type: string; has_response?: boolean },
+  label: string,
+  target: string | undefined,
+  stepUses: string,
+): string[] {
+  const lines: string[] = [];
+
+  if (classification.type === "outbound") {
+    renderOutboundStep(lines, classification, label, target, stepUses);
+  } else {
+    renderInboundStep(lines, label, stepUses);
+  }
+
+  return lines;
+}
+
+function renderOutboundStep(
+  lines: string[],
+  classification: { has_response?: boolean },
+  label: string,
+  target: string | undefined,
+  stepUses: string,
+): void {
+  const isConnectorCategory = stepUses.startsWith("connector");
+  const isHttpCategory = stepUses.startsWith("http");
+
+  if (isConnectorCategory && target) {
+    lines.push(`    ${ORCHESTRATOR}->>${target}: ${label}`);
+    lines.push(`    ${target}->>${TESTED_CONNECTOR}: DSP HTTP request`);
+    if (classification.has_response) {
+      lines.push(`    ${TESTED_CONNECTOR}-->>${target}: DSP HTTP response`);
+      lines.push(`    ${target}-->>${ORCHESTRATOR}: response`);
+    }
+  } else if (isHttpCategory) {
+    lines.push(`    ${ORCHESTRATOR}->>${TESTED_CONNECTOR}: ${label}`);
+    lines.push(`    ${TESTED_CONNECTOR}->>${TESTED_APPLICATION}: forward`);
+    if (classification.has_response) {
+      lines.push(`    ${TESTED_APPLICATION}-->>${TESTED_CONNECTOR}: response`);
+      lines.push(`    ${TESTED_CONNECTOR}-->>${ORCHESTRATOR}: response`);
+    }
+  } else {
+    const dest = target ?? TESTED_CONNECTOR;
+    lines.push(`    ${ORCHESTRATOR}->>${dest}: ${label}`);
+    if (classification.has_response) {
+      lines.push(`    ${dest}-->>${ORCHESTRATOR}: response`);
+    }
+  }
+}
+
+function renderInboundStep(
+  lines: string[],
+  label: string,
+  stepUses: string,
+): void {
+  const isWait = stepUses.includes("wait");
+  if (isWait) {
+    lines.push(`    ${TESTED_APPLICATION}->>${ORCHESTRATOR}: ${label}`);
+    lines.push(`    ${ORCHESTRATOR}-->>${TESTED_APPLICATION}: mocked response`);
+  } else {
+    lines.push(`    ${ORCHESTRATOR}->>${ORCHESTRATOR}: ${label}`);
+  }
 }
 
 function renderPhase(

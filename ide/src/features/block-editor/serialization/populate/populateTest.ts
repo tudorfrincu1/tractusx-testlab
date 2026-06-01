@@ -53,7 +53,119 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
     return block;
   };
 
+  const buildImportVariableBlock = (step: Step & { uses: string; with?: Record<string, unknown> }): Block | null => {
+    if ((step.uses !== "util/import_variable" && step.uses !== "import_variable") || (!step.with?.file && !step.with?.test)) {
+      return null;
+    }
+    const ib = makeBlock(ws, "import_variable");
+    const fileValue = step.with.file
+      ? String(step.with.file)
+      : `tests/${String(step.with.test)}.yaml`;
+    setDropdownValue(ib, "FILE", fileValue);
+    const exportVar = step.with.export || step.with.select;
+    if (exportVar) {
+      setDropdownValue(ib, "EXPORT_VAR", String(exportVar));
+    } else if (Array.isArray(step.with.outputs) && step.with.outputs.length > 0) {
+      setDropdownValue(ib, "EXPORT_VAR", String(step.with.outputs[0]));
+    }
+    const varName = step.with.store_in_variable || step.with.variable || exportVar || "imported_var";
+    ib.setFieldValue(String(varName), "OUTPUT_VAR");
+    return ib;
+  };
+
+  const buildExportVariableBlock = (step: Step & { uses: string; with?: Record<string, unknown> }): Block | null => {
+    if ((step.uses !== "util/export_env" && step.uses !== "export_variable") || !step.with?.name) {
+      return null;
+    }
+    const eb = makeBlock(ws, "export_variable");
+    setDropdownValue(eb, "VAR_NAME", String(step.with.name));
+    return eb;
+  };
+
+  const buildLoadSchemaBlock = (step: Step & { uses: string; with?: Record<string, unknown> }): Block | null => {
+    if (step.uses !== "load_schema" || step.with?.source !== "file" || !step.with?.path) {
+      return null;
+    }
+    const sb = makeBlock(ws, "schema_import");
+    setDropdownValue(sb, "SCHEMA_PATH", String(step.with.path));
+    sb.setFieldValue(String(step.with.name || "schema_var"), "OUTPUT_SCHEMA");
+    return sb;
+  };
+
   const stepOutputs: StepOutputMap = new Map();
+
+  const resolveCatalogStepType = (step: Step & { uses: string; with?: Record<string, unknown> }): string => {
+    const catalogStepType = step.uses;
+    if (catalogStepType === "query_catalog" || catalogStepType === "connector/consumer/query_catalog") {
+      const filterExpr = (step.with?.filter as Record<string, unknown> | undefined)?.filter_expression;
+      if (Array.isArray(filterExpr) && filterExpr.length >= 2) {
+        return "connector/consumer/query_catalog_with_filters";
+      }
+    }
+    return catalogStepType;
+  };
+
+  const buildGenericStepBlock = (
+    step: Step & { uses: string; with?: Record<string, unknown> },
+    assertions: Step[],
+  ): Block | null => {
+    const catalogStepType = resolveCatalogStepType(step);
+    const entry = findCatalogEntry(catalogStepType, catalog);
+    if (!entry) return null;
+
+    const effectiveParams = normalizeStepParams(entry.type, step.with ?? {});
+    const blockType = `step_${entry.type}`;
+    const sb = makeBlock(ws, blockType);
+    if (step.id) sb.setFieldValue(step.id, "STEP_ID");
+    sb.setFieldValue(step.name || "", "DESCRIPTION");
+
+    const returns = step.returns;
+    if (returns && typeof returns === "object") {
+      sb.data = JSON.stringify({ returns });
+    }
+
+    for (const p of entry.params) {
+      const paramVal = effectiveParams[p.name];
+      if (paramVal === undefined || paramVal === null) continue;
+      const fieldKey = `PARAM_${p.name.toUpperCase()}`;
+      const populateParam = resolveParamPopulator(p.type);
+      populateParam({
+        ws,
+        stepBlock: sb,
+        fieldKey,
+        paramValue: paramVal,
+        paramDefinition: p,
+        effectiveParams,
+        stepOutputs,
+        buildStepBlocks,
+      });
+    }
+
+    if (step.validate && step.validate.length > 0) {
+      populateAssertions(ws, sb, step.validate);
+    }
+
+    if (assertions.length > 0) {
+      const inlineAssertions = assertions.map(assertionStepToInlineValidation);
+      populateAssertions(ws, sb, inlineAssertions);
+    }
+
+    trackStepOutputs(sb, step, catalog, stepOutputs);
+    return sb;
+  };
+
+  const handleStepError = (step: Step, err: unknown, blocks: Block[]) => {
+    const stepType = isTemplateStep(step) ? step.template : step.uses;
+    const stepDesc = isTemplateStep(step) ? step.description ?? "" : step.name ?? "";
+    if (import.meta.env.DEV) {
+      console.warn(`[populateTest] Skipping step "${stepDesc}" (type: ${stepType}):`, err);
+    }
+    try {
+      blocks.push(createUnsupportedStepBlock(step.id, stepDesc, stepType ?? "unknown", isTemplateStep(step) ? step.params : step.with));
+    } catch {
+      // Last-resort: skip the step entirely if even the fallback fails
+    }
+  };
 
   const buildStepBlocks = (steps: Step[]): Block[] => {
     const blocks: Block[] = [];
@@ -66,126 +178,22 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
           continue;
         }
 
-        if ((step.uses === "util/import_variable" || step.uses === "import_variable") && (step.with?.file || step.with?.test)) {
-          const ib = makeBlock(ws, "import_variable");
-          const fileValue = step.with.file
-            ? String(step.with.file)
-            : `tests/${String(step.with.test)}.yaml`;
-          setDropdownValue(ib, "FILE", fileValue);
-          const exportVar = step.with.export || step.with.select;
-          if (exportVar) {
-            setDropdownValue(ib, "EXPORT_VAR", String(exportVar));
-          } else if (Array.isArray(step.with.outputs) && step.with.outputs.length > 0) {
-            setDropdownValue(ib, "EXPORT_VAR", String(step.with.outputs[0]));
-          }
-          const varName = step.with.store_in_variable || step.with.variable || exportVar || "imported_var";
-          ib.setFieldValue(String(varName), "OUTPUT_VAR");
-          blocks.push(ib);
-          continue;
-        }
-
-        if ((step.uses === "util/export_env" || step.uses === "export_variable") && step.with?.name) {
-          const eb = makeBlock(ws, "export_variable");
-          setDropdownValue(eb, "VAR_NAME", String(step.with.name));
-          blocks.push(eb);
-          continue;
-        }
-
-        if (step.uses === "load_schema" && step.with?.source === "file" && step.with?.path) {
-          const sb = makeBlock(ws, "schema_import");
-          setDropdownValue(sb, "SCHEMA_PATH", String(step.with.path));
-          sb.setFieldValue(String(step.with.name || "schema_var"), "OUTPUT_SCHEMA");
-          blocks.push(sb);
-          continue;
-        }
+        const specialBlock = buildImportVariableBlock(step) || buildExportVariableBlock(step) || buildLoadSchemaBlock(step);
+        if (specialBlock) { blocks.push(specialBlock); continue; }
 
         if (step.uses === "precondition_policy_config") {
           blocks.push(deserializePreconditionPolicyBlock(ws, step));
           continue;
         }
 
-        let catalogStepType = step.uses;
-
-        // Auto-upgrade: query_catalog with 2+ filter expressions → query_catalog_with_filters
-        if (catalogStepType === "query_catalog" || catalogStepType === "connector/consumer/query_catalog") {
-          const filterExpr = (step.with?.filter as Record<string, unknown> | undefined)?.filter_expression;
-          if (Array.isArray(filterExpr) && filterExpr.length >= 2) {
-            catalogStepType = "connector/consumer/query_catalog_with_filters";
-          }
-        }
-
-        const entry = findCatalogEntry(catalogStepType, catalog);
-        if (!entry) {
+        const genericBlock = buildGenericStepBlock(step, assertions);
+        if (genericBlock) {
+          blocks.push(genericBlock);
+        } else {
           blocks.push(createUnsupportedStepBlock(step.id, step.name, step.uses, step.with));
-          continue;
         }
-
-        const effectiveParams = normalizeStepParams(entry.type, step.with ?? {});
-
-        const blockType = `step_${entry.type}`;
-        const sb = makeBlock(ws, blockType);
-        if (step.id) {
-          sb.setFieldValue(step.id, "STEP_ID");
-        }
-        sb.setFieldValue(step.name || "", "DESCRIPTION");
-
-        // Store custom returns as data on the block for roundtrip fidelity
-        const returns = step.returns;
-        if (returns && typeof returns === "object") {
-          sb.data = JSON.stringify({ returns: returns });
-        }
-
-        for (const p of entry.params) {
-          const paramVal = effectiveParams[p.name];
-          if (paramVal === undefined || paramVal === null) continue;
-          const fieldKey = `PARAM_${p.name.toUpperCase()}`;
-
-          const populateParam = resolveParamPopulator(p.type);
-          populateParam({
-            ws,
-            stepBlock: sb,
-            fieldKey,
-            paramValue: paramVal,
-            paramDefinition: p,
-            effectiveParams,
-            stepOutputs,
-            buildStepBlocks,
-          });
-        }
-
-        if (step.validate && step.validate.length > 0) {
-          populateAssertions(ws, sb, step.validate);
-        }
-
-        // Attach grouped v2 assertion steps (validate/assert) to this step's EXPECT chain
-        if (assertions.length > 0) {
-          const inlineAssertions = assertions.map(assertionStepToInlineValidation);
-          populateAssertions(ws, sb, inlineAssertions);
-        }
-
-        trackStepOutputs(sb, step, catalog, stepOutputs);
-        blocks.push(sb);
       } catch (err) {
-        const stepType = isTemplateStep(step) ? step.template : step.uses;
-        const stepDesc = isTemplateStep(step) ? step.description ?? "" : step.name ?? "";
-        if (import.meta.env.DEV) {
-          console.warn(
-            `[populateTest] Skipping step "${stepDesc}" (type: ${stepType}):`,
-            err,
-          );
-        }
-        try {
-          blocks.push(
-            createUnsupportedStepBlock(
-              step.id,
-              stepDesc,
-              stepType ?? "unknown",
-              isTemplateStep(step) ? step.params : step.with,
-            ),
-          );
-        } catch {
-          // Last-resort: skip the step entirely if even the fallback fails
-        }
+        handleStepError(step, err, blocks);
       }
     }
 

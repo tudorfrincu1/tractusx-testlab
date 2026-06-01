@@ -37,62 +37,15 @@ from tractusx_testlab.models.preconditions import (
 )
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
+from tractusx_testlab.steps.precondition._policy_builders import (
+    _build_jupiter_policy,
+    _build_saturn_policy,
+)
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
 
 _logger = logging.getLogger(__name__)
-
-
-def _build_jupiter_policy(
-    policy_type: str,
-    permissions: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Build a policy body following Jupiter (EDC v0.8–v0.10) conventions.
-
-    Jupiter forces ``odrl:use`` as the action, adds ``tx:``/``cx-policy:``
-    prefixes to constraint operand left-hand sides, and omits
-    prohibition/obligation.
-    """
-    processed_permissions: list[dict[str, Any]] = []
-    for perm in permissions:
-        constraints = []
-        for c in perm.get("constraints", []):
-            constraints.append({
-                "leftOperand": f"tx:{c['leftOperand']}",
-                "operator": c.get("operator", "eq"),
-                "rightOperand": f"cx-policy:{c['rightOperand']}",
-            })
-        processed_permissions.append({
-            "action": "odrl:use",
-            "constraints": constraints,
-        })
-
-    return {
-        "policy_type": policy_type,
-        "version": "jupiter",
-        "permissions": processed_permissions,
-    }
-
-
-def _build_saturn_policy(
-    policy_type: str,
-    permissions: list[dict[str, Any]],
-    prohibitions: list[dict[str, Any]],
-    obligations: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Build a policy body following Saturn (EDC v0.11+, DSP 2025-1) conventions.
-
-    Saturn uses the action as-is (use/access), does not add prefixes,
-    and includes prohibition/obligation when provided.
-    """
-    return {
-        "policy_type": policy_type,
-        "version": "saturn",
-        "permissions": permissions,
-        "prohibitions": prohibitions,
-        "obligations": obligations,
-    }
 
 
 @step("precondition_policy_config")

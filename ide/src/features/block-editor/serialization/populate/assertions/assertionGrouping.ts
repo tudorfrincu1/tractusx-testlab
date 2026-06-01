@@ -53,7 +53,7 @@ export function assertionStepToInlineValidation(step: StepDefinition): { uses: s
   const w = { ...step.with } as Record<string, unknown>;
   // Strip ${{ steps.X.Y }} → just "Y" so the OUTPUT dropdown gets the output name
   if (typeof w.input === "string") {
-    const stepsRef = /^\$\{\{\s*steps\.\w+\.(.+?)\s*\}\}$/.exec(w.input as string);
+    const stepsRef = /^\$\{\{\s*steps\.\w+\.([^{}]+?)\s*\}\}$/.exec(w.input as string);
     if (stepsRef) {
       w.input = stepsRef[1];
     }

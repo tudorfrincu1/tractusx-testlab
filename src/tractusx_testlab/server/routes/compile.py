@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -33,7 +33,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from tractusx_testlab.compiler.validator import ScriptValidator
+from tractusx_testlab.compiler.validation.validator import ScriptValidator
 from tractusx_testlab.models.enums import ScriptKind
 from tractusx_testlab.scripting.parser import YamlParser
 

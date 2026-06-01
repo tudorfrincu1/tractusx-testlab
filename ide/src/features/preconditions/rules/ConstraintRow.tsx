@@ -72,6 +72,12 @@ function getModeLabel(mode: InputMode, def: RightOperandDef): string {
   }
 }
 
+function getInputType(type: string): string {
+  if (type === "number") return "number";
+  if (type === "date") return "date";
+  return "text";
+}
+
 export function ConstraintRow({ constraint, registry, onChange, onDelete }: Readonly<ConstraintRowProps>) {
   const def = registry[constraint.leftOperand];
   const operators = def?.operators ?? ["eq"];
@@ -115,7 +121,7 @@ export function ConstraintRow({ constraint, registry, onChange, onDelete }: Read
 
   const renderValueInput = () => {
     if (mode === "custom" || rightDef.type === "pattern" || rightDef.type === "custom" || rightDef.type === "number" || rightDef.type === "date") {
-      const inputType = rightDef.type === "number" ? "number" : rightDef.type === "date" ? "date" : "text";
+      const inputType = getInputType(rightDef.type);
       return <input className="preconditions-constraint__input" type={inputType} value={currentValue} placeholder={rightDef.placeholder} onChange={(e) => handleValueChange(e.target.value)} />;
     }
     return (

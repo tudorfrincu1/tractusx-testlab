@@ -38,7 +38,7 @@ from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.server.streaming import streaming_router
 
-_STREAMING_MODULE = "tractusx_testlab.server.streaming"
+_STREAMING_MODULE = "tractusx_testlab.server.streaming.routes"
 
 
 # ──────────────────────────────────────────────────────────────────────

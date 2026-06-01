@@ -61,16 +61,8 @@ export interface DeserializedProject {
 /* ── Pure serialization ─────────────────────────────────────────────────── */
 
 /** Serialize project state into a JSON string for localStorage. */
-export function serializeProject(
-  projectName: string,
-  tck: TckDefinition,
-  tests: Map<string, ScriptDefinition>,
-  schemas: Map<string, SchemaFile>,
-  testdata: Map<string, TestdataFile>,
-  testOrder: string[],
-  activeFile: ActiveFile | null,
-  workspaceStates: Record<string, object>,
-): string {
+export function serializeProject(options: DeserializedProject): string {
+  const { projectName, tck, tests, schemas, testdata, testOrder, activeFile, workspaceStates } = options;
   const serialized: SerializedProject = {
     projectName,
     tckYaml: modelToYaml(tck),

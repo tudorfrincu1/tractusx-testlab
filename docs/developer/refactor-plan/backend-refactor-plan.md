@@ -489,16 +489,16 @@ watch-list guard and the conditional model nesting.
 | # | Phase | Target (seam) | Priority | Status |
 |---|-------|---------------|:--------:|:------:|
 | 1 | `consume.py` split | `_dsp_consumer.py` + `catalog_query.py` + `dsp/negotiate.py` + `dsp/transfer.py`; `consume.py` → barrel | P1 | **Done** ✅ |
-| 2 | `_phase_runners.py` dedup | `execution/phases/` — one `_run_phase` driver + thin setup/main/teardown wrappers | P1 | Pending |
-| 3 | `conditions.py` grammar isolation | `_condition_parsing.py` (regexes + `_evaluate_*`); `conditions.py` orchestration only | P2 | Pending |
-| 4 | `policy_config.py` dedupe | `_policy_builders.py` (Jupiter/Saturn ODRL builders) | P2 | Pending |
-| 5 | `steps/_checks/` package | nest check families: `status` · `equality` · `json_path` · `extraction` | P2 | Pending |
-| 6 | `compiler/` nesting | `compiler/ir/` (builder/helpers/assets/compilation) + `compiler/validation/` (validator/rules/expressions) | P2 | Pending |
-| 7 | `services/manager.py` split | `_factory.py` (SDK service creation) + `manager.py` lifecycle facade | P2 | Pending |
-| 8 | `server/` nesting | `server/routes/` (compile/callbacks/mock) + `server/streaming/` (lifecycle/formatter/buffer) | P2 | Pending |
-| 9 | `player/execution/player.py` split | extract `_trace_formatter.py`; `player.py` keeps orchestration | P3 | Pending |
-| 10 | Watch-list guard | no moves — record watch list (`_parser.py`, `cli/compile.py`, `_builders.py`) in repo memory | P3 | Pending |
-| 11 | `models/` conditional nesting | `models/enums/`, `models/results/` **only if** the families separate cleanly (guardrail) | P3 | Pending |
+| 2 | `_phase_runners.py` dedup | `execution/phases/` — one `_run_phase` driver + thin setup/main/teardown wrappers | P1 | **Done** ✅ |
+| 3 | `conditions.py` grammar isolation | `_condition_parsing.py` (regexes + `_evaluate_*`); `conditions.py` orchestration only | P2 | **Done** ✅ |
+| 4 | `policy_config.py` dedupe | `_policy_builders.py` (Jupiter/Saturn ODRL builders) | P2 | **Done** ✅ |
+| 5 | `steps/_checks/` package | nest check families: `status` · `equality` · `json_path` · `extraction` | P2 | **Done** ✅ |
+| 6 | `compiler/` nesting | `compiler/ir/` (builder/helpers/assets/compilation) + `compiler/validation/` (validator/rules/expressions) | P2 | **Done** ✅ |
+| 7 | `services/manager.py` split | `_factory.py` (SDK service creation) + `manager.py` lifecycle facade | P2 | **Done** ✅ |
+| 8 | `server/` nesting | `server/routes/` (compile/callbacks/mock) + `server/streaming/` (lifecycle/formatter/buffer) | P2 | **Done** ✅ |
+| 9 | `player/execution/player.py` split | extract `_trace_formatter.py`; `player.py` keeps orchestration | P3 | **Done** ✅ |
+| 10 | Watch-list guard | no moves — record watch list (`_parser.py`, `cli/compile.py`, `_builders.py`) in repo memory | P3 | **Done** ✅ |
+| 11 | `models/` conditional nesting | `models/enums/`, `models/results/` — guardrail: cohesive, no split needed | P3 | **Done** ✅ |
 
 ### Phase 1 — `steps/connector/consume.py` (P1, at limit) ✅
 1. Create `steps/connector/_dsp_consumer.py`; move `_DspConsumer`.

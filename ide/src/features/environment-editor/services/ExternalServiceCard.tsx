@@ -57,27 +57,31 @@ export function ExternalServiceCard({ service, index, variables }: ExternalServi
           <span className="svc-card-desc">Connector controlled by the application/service under test (SUT)</span>
         </div>
         <div className="svc-card-toggle">
-          <label>Enabled</label>
+          <label id={`ext-svc-toggle-label-${index}`}>Enabled</label>
           <div
             className={`svc-toggle${service.enabled ? " active" : ""}`}
             onClick={() => toggleExternalEnabled(index)}
             role="switch"
             aria-checked={service.enabled}
+            aria-labelledby={`ext-svc-toggle-label-${index}`}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleExternalEnabled(index); } }}
           />
         </div>
       </div>
       <div className="svc-card-body">
         <div className="form-grid">
           <div className="form-group">
-            <label>Dataspace Version</label>
-            <select value={service.version} onChange={handleVersionChange}>
+            <label htmlFor={`ext-svc-version-${index}`}>Dataspace Version</label>
+            <select id={`ext-svc-version-${index}`} value={service.version} onChange={handleVersionChange}>
               <option value="saturn">Saturn (EDC 0.11+)</option>
               <option value="jupiter">Jupiter (EDC 0.8–0.10)</option>
             </select>
           </div>
           <div className="form-group">
-            <label>DSP Path</label>
+            <label htmlFor={`ext-svc-dsp-path-${index}`}>DSP Path</label>
             <input
+              id={`ext-svc-dsp-path-${index}`}
               type="text"
               className="mono"
               value={service.dsp_path}

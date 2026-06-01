@@ -36,15 +36,15 @@ from typing import Any, Optional
 
 import yaml
 
-from tractusx_testlab.compiler._expressions import resolve_expression
+from tractusx_testlab.compiler.validation._expressions import resolve_expression
 from tractusx_testlab.compiler._fingerprint import build_fingerprint
-from tractusx_testlab.compiler._assets import build_asset_entries
-from tractusx_testlab.compiler._ir_compilation import build_compiled_tests
-from tractusx_testlab.compiler._ir_helpers import (
+from tractusx_testlab.compiler.ir._assets import build_asset_entries
+from tractusx_testlab.compiler.ir._compilation import build_compiled_tests
+from tractusx_testlab.compiler.ir._helpers import (
     _infer_type, build_global_symbols, compute_source_hash,
     infer_testdata_type as _infer_testdata_type,
 )
-from tractusx_testlab.compiler._validation import validate_tck_manifest
+from tractusx_testlab.compiler.validation._rules import validate_tck_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +253,7 @@ def _build_tests_list(
     manifest_data: dict[str, Any], base_dir: Path,
 ) -> list[dict[str, Any]]:
     """Build the tests reference list with source hashes."""
-    from tractusx_testlab.compiler._ir_helpers import (
+    from tractusx_testlab.compiler.ir._helpers import (
         compute_source_hash,
         load_test_file,
         resolve_test_path,

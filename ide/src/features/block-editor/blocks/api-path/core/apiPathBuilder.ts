@@ -56,7 +56,7 @@ export function requestOpenApiPathBuilder(req: ApiPathBuilderRequest): void {
 }
 
 /** Regex matching `${{ env.name }}` variable references in a path segment. */
-const ENV_VAR_RE = /^\$\{\{\s*env\.(.+?)\s*\}\}$/;
+const ENV_VAR_RE = /^\$\{\{\s*env\.([^{}]+?)\s*\}\}$/;
 
 /** Parse a slash-separated API path string into typed segments. */
 export function parseApiPath(path: string): ApiPathSegment[] {

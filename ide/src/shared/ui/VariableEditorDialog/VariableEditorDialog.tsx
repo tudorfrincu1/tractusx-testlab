@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { TckVariableTable } from "./TckVariableTable";
 import { TestOverridesPanel } from "./TestOverridesPanel";
 
@@ -31,24 +31,24 @@ export interface VariableEditorDialogProps {
 }
 
 export function VariableEditorDialog({ onClose }: VariableEditorDialogProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose],
-  );
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    dialogRef.current?.showModal();
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) onClose();
+  };
 
   return (
-    <div className="var-dialog__overlay" onClick={onClose}>
-      <div
-        className="var-dialog__panel"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <dialog
+      ref={dialogRef}
+      className="var-dialog__overlay"
+      onCancel={onClose}
+      onClick={handleBackdropClick}
+    >
+      <div className="var-dialog__panel">
         <div className="var-dialog__header">
           <h3 className="var-dialog__title">Variables</h3>
           <button
@@ -71,6 +71,6 @@ export function VariableEditorDialog({ onClose }: VariableEditorDialogProps) {
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -155,7 +155,7 @@ export function ValidationPanel({ issues, onClose }: ValidationPanelProps) {
         ) : (
           issues.map((issue, idx) => (
             <button
-              key={idx}
+              key={`${issue.source}-${issue.message}-${idx}`}
               className="validation-panel__row"
               onClick={() => issue.blockId && centerOnBlock(issue.blockId)}
               title={issue.blockId ? "Click to focus block" : undefined}

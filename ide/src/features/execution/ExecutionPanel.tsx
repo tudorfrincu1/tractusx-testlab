@@ -111,7 +111,8 @@ export function ExecutionPanel() {
       )}
 
       {/* Header */}
-      <div
+      <button
+        type="button"
         className="execution-panel__header"
         onClick={() => setIsExpanded((v) => !v)}
       >
@@ -161,7 +162,7 @@ export function ExecutionPanel() {
         >
           <CloseIcon sx={{ fontSize: 14 }} />
         </button>
-      </div>
+      </button>
 
       {/* Phase tabs + step list (only when expanded) */}
       {isExpanded && (
@@ -190,13 +191,15 @@ export function ExecutionPanel() {
           </div>
 
           <div className="execution-panel__steps">
-            {phaseSteps.length === 0 ? (
+            {phaseSteps.length === 0 && (
               <div className="execution-panel__empty">
                 No steps in this phase yet
               </div>
-            ) : viewMode === "flow" ? (
+            )}
+            {phaseSteps.length > 0 && viewMode === "flow" && (
               <StepFlowView steps={phaseSteps} />
-            ) : (
+            )}
+            {phaseSteps.length > 0 && viewMode !== "flow" && (
               phaseSteps.map((step) => (
                 <StepCard key={step.index} step={step} />
               ))

@@ -23,7 +23,6 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
 import { blockColors } from "../../../config/blockColors";
 import { collectWorkspaceVariables } from "../../common/catalog/variables/variableCollection";
@@ -63,28 +62,84 @@ interface BlockWithApiSegments {
 }
 
 /**
+ * Check a step block's inputs for a connected variable block and return the variable name.
+ */
+function getVariableFromStepBlock(block: Block): string | undefined {
+  for (const input of block.inputList) {
+    const connected = input.connection?.targetBlock();
+    if (connected?.type.startsWith("var_")) {
+      const varName = connected.getFieldValue("VAR_NAME");
+      if (varName && varName !== "__NONE__") return String(varName);
+    }
+  }
+  const dropdownVar = block.getFieldValue("PARAM_VARIABLE");
+  if (dropdownVar && dropdownVar !== "__NONE__") return String(dropdownVar);
+  return undefined;
+}
+
+/**
  * Walk up from a value block to the nearest parent `step_*` block and read the
  * source variable name from its `variable` input (connected variable_get block).
  * Returns `undefined` when the context cannot be resolved.
  */
 function resolveParentSourceVariable(block: Block): string | undefined {
-  let current: Block | null = block.getParent();
+  let current: BlocklyType.Block | null = block.getParent();
   while (current) {
     if (current.type.startsWith("step_")) {
-      for (const input of current.inputList) {
-        const connected = input.connection?.targetBlock();
-        if (connected?.type.startsWith("var_")) {
-          const varName = connected.getFieldValue("VAR_NAME");
-          if (varName && varName !== "__NONE__") return String(varName);
-        }
-      }
-      const dropdownVar = current.getFieldValue("PARAM_VARIABLE");
-      if (dropdownVar && dropdownVar !== "__NONE__") return String(dropdownVar);
-      return undefined;
+      return getVariableFromStepBlock(current);
     }
     current = current.getParent();
   }
   return undefined;
+}
+
+function handleJsonPathEditClick(
+  field: InstanceType<typeof import("blockly").FieldImage>,
+  catalog?: BlockCatalog,
+): void {
+  const block = field.getSourceBlock();
+  if (!block) return;
+  const svgRoot = field.getSvgRoot();
+  const rect = svgRoot?.getBoundingClientRect();
+  const pos = rect ? { x: rect.right + 8, y: rect.top } : { x: 400, y: 300 };
+  const currentPath = block.getFieldValue("VALUE") || "";
+  const storedSegments = (block as BlockWithSegments).__segments;
+  const segments: PathSegment[] =
+    (storedSegments && segmentsToPath(storedSegments) === currentPath)
+      ? storedSegments
+      : parsePathToSegments(currentPath);
+  const sourceVariable = resolveParentSourceVariable(block);
+  const sourceSchema = sourceVariable && catalog
+    ? resolveVariableSchema(sourceVariable, block.workspace, catalog)
+    : undefined;
+  requestOpenPathBuilder({
+    blockId: block.id,
+    segments,
+    position: pos,
+    sourceVariable,
+    sourceSchema,
+  });
+}
+
+function handleApiPathEditClick(
+  field: InstanceType<typeof import("blockly").FieldImage>,
+  catalog?: BlockCatalog,
+): void {
+  const block = field.getSourceBlock();
+  if (!block) return;
+  const svgRoot = field.getSvgRoot();
+  const rect = svgRoot?.getBoundingClientRect();
+  const pos = rect ? { x: rect.right + 8, y: rect.top } : { x: 400, y: 300 };
+  const currentPath = block.getFieldValue("PATH") || "";
+  const segments: ApiPathSegment[] =
+    (block as unknown as BlockWithApiSegments).__segments ?? parseApiPath(currentPath);
+  const variables = collectWorkspaceVariables(block.workspace, catalog);
+  requestOpenApiPathBuilder({
+    blockId: block.id,
+    segments,
+    position: pos,
+    variables,
+  });
 }
 
 /** Registers path-based value blocks (value_json_path, value_api_path). */
@@ -98,32 +153,7 @@ export function registerPathValueBlocks(Blockly: typeof BlocklyType, catalog?: B
         .appendField(new Blockly.FieldLabelSerializable(path), "VALUE")
         .appendField(new Blockly.FieldImage(
           ICON_EDIT_PENCIL, 16, 16, "✏ Edit path",
-          (field: InstanceType<typeof BlocklyType.FieldImage>) => {
-            const block = field.getSourceBlock();
-            if (!block) return;
-            const svgRoot = field.getSvgRoot();
-            const rect = svgRoot?.getBoundingClientRect();
-            const pos = rect
-              ? { x: rect.right + 8, y: rect.top }
-              : { x: 400, y: 300 };
-            const currentPath = block.getFieldValue("VALUE") || "";
-            const storedSegments = (block as BlockWithSegments).__segments;
-            const segments: PathSegment[] =
-              (storedSegments && segmentsToPath(storedSegments) === currentPath)
-                ? storedSegments
-                : parsePathToSegments(currentPath);
-            const sourceVariable = resolveParentSourceVariable(block);
-            const sourceSchema = sourceVariable && catalog
-              ? resolveVariableSchema(sourceVariable, block.workspace, catalog)
-              : undefined;
-            requestOpenPathBuilder({
-              blockId: block.id,
-              segments,
-              position: pos,
-              sourceVariable,
-              sourceSchema,
-            });
-          },
+          (field: InstanceType<typeof BlocklyType.FieldImage>) => handleJsonPathEditClick(field, catalog),
         ));
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueJsonPath);
@@ -141,26 +171,7 @@ export function registerPathValueBlocks(Blockly: typeof BlocklyType, catalog?: B
         .appendField(new Blockly.FieldLabelSerializable(path), "PATH")
         .appendField(new Blockly.FieldImage(
           ICON_EDIT_PENCIL, 16, 16, "Edit path",
-          (field: InstanceType<typeof BlocklyType.FieldImage>) => {
-            const block = field.getSourceBlock();
-            if (!block) return;
-            const svgRoot = field.getSvgRoot();
-            const rect = svgRoot?.getBoundingClientRect();
-            const pos = rect
-              ? { x: rect.right + 8, y: rect.top }
-              : { x: 400, y: 300 };
-            const currentPath = block.getFieldValue("PATH") || "";
-            const segments: ApiPathSegment[] =
-              (block as unknown as BlockWithApiSegments).__segments
-              ?? parseApiPath(currentPath);
-            const variables = collectWorkspaceVariables(block.workspace, catalog);
-            requestOpenApiPathBuilder({
-              blockId: block.id,
-              segments,
-              position: pos,
-              variables,
-            });
-          },
+          (field: InstanceType<typeof BlocklyType.FieldImage>) => handleApiPathEditClick(field, catalog),
         ));
       this.setOutput(true, "param_value");
       this.setColour(blockColors.valueApiPath);

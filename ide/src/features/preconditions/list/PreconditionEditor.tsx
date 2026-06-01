@@ -36,29 +36,50 @@ export interface PreconditionEditorProps {
 function preconditionToYaml(p: PreconditionDefinition): string {
   const ind = (n: number) => "  ".repeat(n);
   let yaml = `- id: ${p.id}\n  uses: ${p.uses}\n  name: ${p.name}\n`;
-  if (p.with && Object.keys(p.with).length > 0) {
-    yaml += `  with:\n`;
-    for (const [k, v] of Object.entries(p.with)) {
-      yaml += `${ind(2)}${k}: ${typeof v === "object" ? JSON.stringify(v) : String(v)}\n`;
-    }
+  yaml += renderWithSection(p.with, ind);
+  yaml += renderReturnsSection(p.returns, ind);
+  yaml += renderValidateSection(p.validate, ind);
+  return yaml;
+}
+
+function renderWithSection(
+  withObj: Record<string, unknown> | undefined,
+  ind: (n: number) => string,
+): string {
+  if (!withObj || Object.keys(withObj).length === 0) return "";
+  let yaml = `  with:\n`;
+  for (const [k, v] of Object.entries(withObj)) {
+    yaml += `${ind(2)}${k}: ${typeof v === "object" ? JSON.stringify(v) : String(v)}\n`;
   }
-  if (p.returns && Object.keys(p.returns).length > 0) {
-    yaml += `  returns:\n`;
-    for (const [k, field] of Object.entries(p.returns)) {
-      yaml += `${ind(2)}${k}:\n${ind(3)}type: ${field.type}\n`;
-      if (field.class) yaml += `${ind(3)}class: ${field.class}\n`;
-      if (field.generator) yaml += `${ind(3)}generator: ${field.generator}\n`;
-    }
+  return yaml;
+}
+
+function renderReturnsSection(
+  returns: PreconditionDefinition["returns"],
+  ind: (n: number) => string,
+): string {
+  if (!returns || Object.keys(returns).length === 0) return "";
+  let yaml = `  returns:\n`;
+  for (const [k, field] of Object.entries(returns)) {
+    yaml += `${ind(2)}${k}:\n${ind(3)}type: ${field.type}\n`;
+    if (field.class) yaml += `${ind(3)}class: ${field.class}\n`;
+    if (field.generator) yaml += `${ind(3)}generator: ${field.generator}\n`;
   }
-  if (p.validate && p.validate.length > 0) {
-    yaml += `  validate:\n`;
-    for (const v of p.validate) {
-      yaml += `${ind(2)}- uses: ${v.uses}\n`;
-      if (Object.keys(v.with).length > 0) {
-        yaml += `${ind(3)}with:\n`;
-        for (const [wk, wv] of Object.entries(v.with)) {
-          yaml += `${ind(4)}${wk}: ${typeof wv === "object" ? JSON.stringify(wv) : String(wv)}\n`;
-        }
+  return yaml;
+}
+
+function renderValidateSection(
+  validate: PreconditionDefinition["validate"],
+  ind: (n: number) => string,
+): string {
+  if (!validate || validate.length === 0) return "";
+  let yaml = `  validate:\n`;
+  for (const v of validate) {
+    yaml += `${ind(2)}- uses: ${v.uses}\n`;
+    if (Object.keys(v.with).length > 0) {
+      yaml += `${ind(3)}with:\n`;
+      for (const [wk, wv] of Object.entries(v.with)) {
+        yaml += `${ind(4)}${wk}: ${typeof wv === "object" ? JSON.stringify(wv) : String(wv)}\n`;
       }
     }
   }
@@ -94,16 +115,17 @@ export function PreconditionEditor({ precondition, onChange, onDelete, onDuplica
       <div className="preconditions-config">
         <div className="preconditions-config__title">Configuration</div>
         <div className="preconditions-field">
-          <label className="preconditions-field__label">ID</label>
+          <label className="preconditions-field__label" htmlFor="precondition-id-input">ID</label>
           <input
+            id="precondition-id-input"
             className="preconditions-field__input"
             value={precondition.id}
             onChange={(e) => onChange({ ...precondition, id: e.target.value })}
           />
         </div>
         <div className="preconditions-field">
-          <label className="preconditions-field__label">Uses</label>
-          <input className="preconditions-field__input" value={precondition.uses} readOnly />
+          <label className="preconditions-field__label" htmlFor="precondition-uses-input">Uses</label>
+          <input id="precondition-uses-input" className="preconditions-field__input" value={precondition.uses} readOnly />
         </div>
 
         {precondition.with && Object.keys(precondition.with).length > 0 && (
@@ -128,7 +150,7 @@ export function PreconditionEditor({ precondition, onChange, onDelete, onDuplica
             {Object.entries(precondition.returns).map(([key, field]) => (
               <div key={key} className="preconditions-field">
                 <label className="preconditions-field__label">{key}</label>
-                <input className="preconditions-field__input" value={`${field.type}${field.class ? ` (${field.class})` : ""}`} readOnly />
+                <input className="preconditions-field__input" value={field.class ? `${field.type} (${field.class})` : field.type} readOnly />
               </div>
             ))}
           </>

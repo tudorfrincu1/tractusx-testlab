@@ -123,8 +123,8 @@ export function PathBuilderModal({
   }, [handleDone]);
 
   return (
-    <div className="path-builder-overlay" onMouseDown={handleOverlayClick}>
-      <div className="path-builder-modal">
+    <div className="path-builder-overlay" onMouseDown={handleOverlayClick} role="presentation">
+      <dialog className="path-builder-modal" open>
         <div className="path-builder-header">
           <span className="path-builder-title">Build Path</span>
           <div className="path-builder-preview">{preview}</div>
@@ -187,7 +187,7 @@ export function PathBuilderModal({
             <div className="path-builder-panel-label">Path Segments</div>
             <div className="path-builder-segment-list" ref={listRef}>
               {segments.map((seg, idx) => (
-                <div className="path-builder-seg-row" key={idx}>
+                <div className="path-builder-seg-row" key={`${seg.type}-${seg.value}-${idx}`}>
                   <select
                     value={seg.type}
                     onChange={(e) => handleTypeChange(idx, e.target.value as SegmentType)}
@@ -229,7 +229,7 @@ export function PathBuilderModal({
             Source: <span className="path-builder-var-ref">@{sourceVariable}</span>
           </div>
         )}
-      </div>
+      </dialog>
     </div>
   );
 }

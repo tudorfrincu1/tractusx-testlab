@@ -69,11 +69,11 @@ export class BlockEditorErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private handleReload = () => {
+  private readonly handleReload = () => {
     this.setState({ hasError: false, errorMessage: "" });
   };
 
-  private handleReset = () => {
+  private readonly handleReset = () => {
     const kind = useEditorStore.getState().model.kind;
     const emptyModel = kind === "tck" ? createEmptyTck() : createEmptyTest();
     useEditorStore.getState().loadModel(emptyModel);

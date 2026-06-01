@@ -38,7 +38,7 @@ export interface PanelHeaderProps {
   extra?: ReactNode;
 }
 
-export function PanelHeader({ title, icon, afterTitle, extra }: PanelHeaderProps) {
+export function PanelHeader({ title, icon, afterTitle, extra }: Readonly<PanelHeaderProps>) {
   return (
     <div className="panel-header">
       <span className="panel-header__icon">{icon}</span>
@@ -57,7 +57,7 @@ export interface IconBtnProps {
   children: ReactNode;
 }
 
-export function IconBtn({ title, onClick, isActive, children }: IconBtnProps) {
+export function IconBtn({ title, onClick, isActive, children }: Readonly<IconBtnProps>) {
   return (
     <button
       title={title}
@@ -86,7 +86,7 @@ export interface PanelTabBarProps {
   onCollapse?: () => void;
 }
 
-export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOnly, onRefresh, onCollapse }: PanelTabBarProps) {
+export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOnly, onRefresh, onCollapse }: Readonly<PanelTabBarProps>) {
   return (
     <div className="panel-tab-bar">
       {onCollapse && (
@@ -127,17 +127,21 @@ export function PanelTabBar({ activeTab, onTabChange, isReadOnly, onToggleReadOn
           <div
             className="readonly-toggle"
             title={isReadOnly ? "Click to enable editing" : "Click to lock"}
+            role="switch"
+            aria-checked={!isReadOnly}
+            tabIndex={0}
             onClick={onToggleReadOnly}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggleReadOnly(); }}
           >
-            <span className={`readonly-toggle__label${!isReadOnly ? " readonly-toggle__label--on" : ""}`}>
+            <span className={`readonly-toggle__label${isReadOnly ? "" : " readonly-toggle__label--on"}`}>
               Locked
             </span>
-            <div className={`readonly-toggle__track${!isReadOnly ? " readonly-toggle__track--on" : ""}`}>
-              <div className={`readonly-toggle__knob${!isReadOnly ? " readonly-toggle__knob--on" : ""}`}>
+            <div className={`readonly-toggle__track${isReadOnly ? "" : " readonly-toggle__track--on"}`}>
+              <div className={`readonly-toggle__knob${isReadOnly ? "" : " readonly-toggle__knob--on"}`}>
                 {isReadOnly && <LockIcon sx={{ fontSize: 8, color: "var(--tx-border)" }} />}
               </div>
             </div>
-            <span className={`readonly-toggle__label${!isReadOnly ? " readonly-toggle__label--on" : ""}`}>
+            <span className={`readonly-toggle__label${isReadOnly ? "" : " readonly-toggle__label--on"}`}>
               Edit
             </span>
           </div>

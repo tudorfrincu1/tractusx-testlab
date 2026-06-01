@@ -32,7 +32,7 @@ import { makeBlock, createValueBlockFromString, setDropdownValue } from "../seri
 import { parseVarRef, SCOPE_TO_BLOCK_TYPE } from "../varSyntax";
 
 /** Regex for a pure variable reference: `${{ scope.path }}` v2 syntax. */
-const PURE_VAR_REF = /^\$\{\{\s*(?:env|steps|preconditions|metadata|setup)\..+?\s*\}\}$/;
+const PURE_VAR_REF = /^\$\{\{\s*(?:env|steps|preconditions|metadata|setup)\.[^\s}]+\s*\}\}$/;
 
 /**
  * Tracks step output variable names as steps are built, mapping

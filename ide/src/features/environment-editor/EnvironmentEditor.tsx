@@ -23,8 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import { useMemo } from "react";
-import { useEnvironmentStore } from "@/store";
-import { useServiceStore } from "@/store";
+import { useEnvironmentStore, useServiceStore } from "@/store";
 import { ServicesSection } from "./services";
 import { VariablesSection } from "./variables";
 import { YamlPreviewSection } from "./preview";

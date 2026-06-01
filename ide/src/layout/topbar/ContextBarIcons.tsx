@@ -144,7 +144,7 @@ export function ClipboardIcon() {
 }
 
 /** Map file type to its corresponding icon component */
-export function FileTypeIcon({ type }: { type: string }) {
+export function FileTypeIcon({ type }: Readonly<{ type: string }>) {
   switch (type) {
     case "test":
       return <FlaskIcon />;
@@ -163,7 +163,7 @@ export function FileTypeIcon({ type }: { type: string }) {
 }
 
 /** Map TCK-level view type to its corresponding icon component */
-export function ViewTypeIcon({ type }: { type: string }) {
+export function ViewTypeIcon({ type }: Readonly<{ type: string }>) {
   switch (type) {
     case "tck":
       return <InfoIcon />;

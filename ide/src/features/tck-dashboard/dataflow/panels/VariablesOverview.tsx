@@ -89,10 +89,10 @@ export function VariablesOverview() {
 
 /* ── Row ────────────────────────────────────────────────────────────────── */
 
-function VariableRow({ variable, onDefaultChange }: {
+function VariableRow({ variable, onDefaultChange }: Readonly<{
   variable: AggregatedVariable;
   onDefaultChange: (value: string) => void;
-}) {
+}>) {
   const { name, definition, usedBy, isTckLevel } = variable;
 
   return (

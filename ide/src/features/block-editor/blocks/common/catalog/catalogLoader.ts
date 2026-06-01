@@ -158,6 +158,33 @@ async function fetchBlockSafe(base: string, path: string): Promise<BlockCatalogE
   }
 }
 
+interface RawShortcutGroup {
+  name: string;
+  description?: string;
+  blocks?: string[];
+  subcategories?: Array<{ name: string; blocks: string[] }>;
+}
+
+async function loadShortcutGroups(base: string, groups: RawShortcutGroup[]): Promise<BlockCatalogShortcutGroup[]> {
+  return Promise.all(groups.map((group) => loadSingleShortcutGroup(base, group)));
+}
+
+async function loadSingleShortcutGroup(base: string, group: RawShortcutGroup): Promise<BlockCatalogShortcutGroup> {
+  if (group.subcategories) {
+    const subcategories = await Promise.all(
+      group.subcategories.map(async (sub) => {
+        const results = await Promise.all(sub.blocks.map((p) => fetchBlockSafe(base, p)));
+        return { name: sub.name, blocks: results.filter((b): b is BlockCatalogEntry => b !== null) };
+      })
+    );
+    const allBlocks = subcategories.flatMap((s) => s.blocks);
+    return { name: group.name, description: group.description, blocks: allBlocks, subcategories };
+  }
+  const groupResults = await Promise.all((group.blocks ?? []).map((p) => fetchBlockSafe(base, p)));
+  const groupBlocks = groupResults.filter((b): b is BlockCatalogEntry => b !== null);
+  return { name: group.name, description: group.description, blocks: groupBlocks };
+}
+
 export async function loadBlockCatalog(): Promise<BlockCatalog> {
   if (catalogCache) return catalogCache;
   const base = import.meta.env.BASE_URL;
@@ -193,23 +220,7 @@ export async function loadBlockCatalog(): Promise<BlockCatalog> {
 
           let shortcuts: BlockCatalogShortcutGroup[] | undefined;
           if (cat.shortcuts) {
-            shortcuts = await Promise.all(
-              cat.shortcuts.map(async (group) => {
-                if (group.subcategories) {
-                  const subcategories = await Promise.all(
-                    group.subcategories.map(async (sub) => {
-                      const results = await Promise.all(sub.blocks.map((p) => fetchBlockSafe(base, p)));
-                      return { name: sub.name, blocks: results.filter((b): b is BlockCatalogEntry => b !== null) };
-                    })
-                  );
-                  const allBlocks = subcategories.flatMap((s) => s.blocks);
-                  return { name: group.name, description: group.description, blocks: allBlocks, subcategories };
-                }
-                const groupResults = await Promise.all((group.blocks ?? []).map((p) => fetchBlockSafe(base, p)));
-                const groupBlocks = groupResults.filter((b): b is BlockCatalogEntry => b !== null);
-                return { name: group.name, description: group.description, blocks: groupBlocks };
-              })
-            );
+            shortcuts = await loadShortcutGroups(base, cat.shortcuts);
           }
 
           return {
@@ -231,15 +242,24 @@ export async function loadBlockCatalog(): Promise<BlockCatalog> {
 
 export function findCatalogEntry(stepType: string, catalog: BlockCatalog): BlockCatalogEntry | null {
   for (const cat of catalog) {
-    for (const b of cat.blocks) {
+    const found = findInBlocks(cat.blocks, stepType) ?? findInShortcuts(cat.shortcuts, stepType);
+    if (found) return found;
+  }
+  return null;
+}
+
+function findInBlocks(blocks: BlockCatalogEntry[], stepType: string): BlockCatalogEntry | null {
+  for (const b of blocks) {
+    if (matchesUses(b, stepType)) return b;
+  }
+  return null;
+}
+
+function findInShortcuts(shortcuts: BlockCatalogShortcutGroup[] | undefined, stepType: string): BlockCatalogEntry | null {
+  if (!shortcuts) return null;
+  for (const group of shortcuts) {
+    for (const b of group.blocks) {
       if (matchesUses(b, stepType)) return b;
-    }
-    if (cat.shortcuts) {
-      for (const group of cat.shortcuts) {
-        for (const b of group.blocks) {
-          if (matchesUses(b, stepType)) return b;
-        }
-      }
     }
   }
   return null;
@@ -261,24 +281,35 @@ export function findOutputSchema(
   catalog: BlockCatalog,
 ): Record<string, unknown> | undefined {
   for (const cat of catalog) {
-    for (const block of cat.blocks) {
-      for (const output of block.outputs ?? []) {
-        if (output.name === variableName && output.schema) {
-          return output.schema;
-        }
+    const schema = findOutputInBlocks(cat.blocks, variableName)
+      ?? findOutputInShortcutGroups(cat.shortcuts, variableName);
+    if (schema) return schema;
+  }
+  return undefined;
+}
+
+function findOutputInBlocks(
+  blocks: BlockCatalogEntry[],
+  variableName: string,
+): Record<string, unknown> | undefined {
+  for (const block of blocks) {
+    for (const output of block.outputs ?? []) {
+      if (output.name === variableName && output.schema) {
+        return output.schema;
       }
     }
-    if (cat.shortcuts) {
-      for (const group of cat.shortcuts) {
-        for (const block of group.blocks) {
-          for (const output of block.outputs ?? []) {
-            if (output.name === variableName && output.schema) {
-              return output.schema;
-            }
-          }
-        }
-      }
-    }
+  }
+  return undefined;
+}
+
+function findOutputInShortcutGroups(
+  shortcuts: BlockCatalogShortcutGroup[] | undefined,
+  variableName: string,
+): Record<string, unknown> | undefined {
+  if (!shortcuts) return undefined;
+  for (const group of shortcuts) {
+    const schema = findOutputInBlocks(group.blocks, variableName);
+    if (schema) return schema;
   }
   return undefined;
 }

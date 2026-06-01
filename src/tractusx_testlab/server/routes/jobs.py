@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
 """FastAPI routes for job execution and management."""
@@ -39,8 +39,8 @@ from tractusx_testlab.models import JobStatus
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.server.storage import PackageStorage
 
-from tractusx_testlab.server._callbacks_route import callback_router
-from tractusx_testlab.server.compile import compile_router
+from tractusx_testlab.server.routes.callbacks import callback_router
+from tractusx_testlab.server.routes.compile import compile_router
 from tractusx_testlab.server.streaming import streaming_router
 
 _logger = logging.getLogger(__name__)
@@ -191,7 +191,7 @@ async def _execute_in_background(player: TestlabPlayer, target: Path, runtime_va
     try:
         await player.run(target, runtime_vars=runtime_vars)
     except (RuntimeError, ValueError, OSError) as exc:
-        _logger.warning("Background execution failed: %s", exc)  # Errors are also captured in the Job result
+        _logger.warning("Background execution failed: %s", exc)
 
 
 @router.get(

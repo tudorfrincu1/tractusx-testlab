@@ -73,28 +73,14 @@ export function setupWarningTooltip(
 
   function handlePointerDown(e: PointerEvent) {
     const target = e.target as Element | null;
-    if (!target) return;
+    if (!target || !svgEl.contains(target)) return;
 
-    // Check if click is inside the workspace SVG
-    if (!svgEl.contains(target)) return;
-
-    // Find nearest icon group ancestor
     const iconGroup = target.closest(".blocklyIconGroup") as SVGElement | null;
-    if (!iconGroup) return;
-
-    // Only handle warning icons specifically
-    if (!iconGroup.classList.contains("blocklyWarningIcon")) return;
+    if (!iconGroup?.classList.contains("blocklyWarningIcon")) return;
 
     if (import.meta.env.DEV) console.debug("[WarningTooltip] icon clicked");
 
-    // Traverse up to find block with data-id (more robust in SVG than .closest)
-    let current: Element | null = iconGroup.parentElement;
-    let blockId: string | null = null;
-    while (current && current !== svgEl) {
-      blockId = current.getAttribute("data-id");
-      if (blockId) break;
-      current = current.parentElement;
-    }
+    const blockId = findBlockId(iconGroup, svgEl);
     if (!blockId) {
       if (import.meta.env.DEV) console.debug("[WarningTooltip] no blockId found");
       return;
@@ -108,29 +94,11 @@ export function setupWarningTooltip(
 
     if (import.meta.env.DEV) console.debug("[WarningTooltip] block found:", block.type);
 
-    // Check if this block has a warning icon
-    let warningText: string | undefined;
-    try {
-      const warningIcon = block.getIcon(Blockly.icons.WarningIcon.TYPE);
-      if (import.meta.env.DEV) console.debug("[WarningTooltip] warningIcon:", warningIcon);
-      if (warningIcon) {
-        warningText = (warningIcon as Blockly.icons.WarningIcon).getText();
-      }
-    } catch {
-      // Fallback: try getWarningText if available
-      warningText = (
-        block as unknown as { warning?: { getText?: () => string } }
-      ).warning?.getText?.();
-    }
-
+    const warningText = extractWarningText(block);
     if (import.meta.env.DEV) console.debug("[WarningTooltip] warningText:", warningText);
-
     if (!warningText) return;
 
-    // Position tooltip near the icon
     const rect = iconGroup.getBoundingClientRect();
-
-    // Use setTimeout to escape Blockly's gesture system interference
     setTimeout(() => {
       onShowWarning({
         text: warningText,
@@ -142,7 +110,30 @@ export function setupWarningTooltip(
     e.preventDefault();
   }
 
-  // Attach to document in capture phase — fires before any element-level handlers
   document.addEventListener("pointerdown", handlePointerDown, true);
   return () => document.removeEventListener("pointerdown", handlePointerDown, true);
+}
+
+/** Traverse up from the icon to find the block's data-id. */
+function findBlockId(iconGroup: SVGElement, svgEl: SVGElement): string | null {
+  let current: Element | null = iconGroup.parentElement;
+  while (current && current !== svgEl) {
+    const id = (current as SVGElement).dataset?.id ?? null;
+    if (id) return id;
+    current = current.parentElement;
+  }
+  return null;
+}
+
+/** Extract warning text from a block's warning icon. */
+function extractWarningText(block: Blockly.BlockSvg): string | undefined {
+  try {
+    const warningIcon = block.getIcon(Blockly.icons.WarningIcon.TYPE);
+    if (warningIcon) {
+      return (warningIcon as Blockly.icons.WarningIcon).getText();
+    }
+  } catch {
+    // Fallback: try getWarningText if available
+  }
+  return (block as unknown as { warning?: { getText?: () => string } }).warning?.getText?.();
 }

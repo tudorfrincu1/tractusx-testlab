@@ -47,7 +47,7 @@ import { BlockTooltip } from "./ui/WarningTooltip";
 
 export function BlocklyWorkspace() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { workspace, catalog, ready } = useBlocklyWorkspace(containerRef);
+  const { workspace, ready } = useBlocklyWorkspace(containerRef);
   const [warning, setWarning] = useState<WarningShowRequest | null>(null);
   const [info, setInfo] = useState<InfoShowRequest | null>(null);
   const [pathReq, setPathReq] = useState<PathBuilderRequest | null>(null);

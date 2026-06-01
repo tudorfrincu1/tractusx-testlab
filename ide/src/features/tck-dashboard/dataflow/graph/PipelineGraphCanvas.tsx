@@ -23,7 +23,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -56,7 +56,7 @@ export function PipelineGraphCanvas({
   direction,
   onDirectionChange,
   onNodeSelect,
-}: PipelineGraphCanvasProps) {
+}: Readonly<PipelineGraphCanvasProps>) {
   const { fitView } = useReactFlow();
   const { nodes, edges, onNodesChange, onEdgesChange } = usePipelineLayout(flowData, direction);
 

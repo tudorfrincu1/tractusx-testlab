@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useServiceStore, SERVICE_SCHEMAS } from "@/store/environment/useServiceStore";
 import type { ServiceDefinition } from "@/models/schema";
 import { theme } from "@/shared/theme/tractusxTheme";
@@ -92,18 +92,35 @@ export function ServiceDialog({ onClose }: ServiceDialogProps) {
 
   const handleCancel = () => setEditTarget(null);
 
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) onClose();
+  };
+
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0, 0, 0, 0.6)",
+        background: "transparent",
+        border: "none",
+        padding: 0,
+        maxWidth: "none",
+        maxHeight: "none",
+        width: "100vw",
+        height: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
       }}
-      onClick={onClose}
+      onCancel={onClose}
+      onClick={handleBackdropClick}
     >
       <div
         style={{
@@ -191,7 +208,7 @@ export function ServiceDialog({ onClose }: ServiceDialogProps) {
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

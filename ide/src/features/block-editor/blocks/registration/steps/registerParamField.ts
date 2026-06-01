@@ -23,8 +23,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import type { Block } from "blockly";
 import type * as BlocklyType from "blockly";
+type Block = BlocklyType.Block;
 import type { BlockCatalog } from "../../common/catalog/catalogLoader";
 import { blockIcon, ICON_JSON } from "../../common/fields/icons";
 import {
@@ -108,7 +108,7 @@ export function registerParamField(
         .appendField(paramLabel)
         .appendField(
           new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectMockEndpointIds(ws)) as () => Array<[string, string]>
+            dynamicDropdown((ws) => collectMockEndpointIds(ws))
           ),
           fieldKey
         );
@@ -119,7 +119,7 @@ export function registerParamField(
         .appendField(paramLabel)
         .appendField(
           new Blockly.FieldDropdown(
-            dynamicDropdown(() => collectSchemaPaths()) as () => Array<[string, string]>
+            dynamicDropdown(() => collectSchemaPaths())
           ),
           fieldKey
         );
@@ -137,7 +137,7 @@ export function registerParamField(
                   : [["(no variables)", "__NONE__"]];
               },
               "(no variables)"
-            ) as () => Array<[string, string]>
+            )
           ),
           fieldKey
         );
@@ -157,7 +157,7 @@ export function registerParamField(
         .appendField(paramLabel)
         .appendField(
           new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectPreconditionRefs(ws)) as () => Array<[string, string]>
+            dynamicDropdown((ws) => collectPreconditionRefs(ws))
           ),
           fieldKey
         );

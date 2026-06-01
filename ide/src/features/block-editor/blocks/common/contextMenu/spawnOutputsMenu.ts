@@ -78,17 +78,27 @@ function findCatalogEntryForBlock(
 ): BlockCatalogEntry | undefined {
   if (!block) return undefined;
   const type = block.type.startsWith("step_") ? block.type.slice(5) : block.type;
+  return findEntryByType(catalog, type);
+}
+
+function findEntryByType(catalog: BlockCatalog, type: string): BlockCatalogEntry | undefined {
   for (const category of catalog) {
-    for (const entry of category.blocks) {
-      if (entry.type === type) return entry;
-    }
-    if (category.shortcuts) {
-      for (const group of category.shortcuts) {
-        for (const entry of group.blocks) {
-          if (entry.type === type) return entry;
-        }
-      }
-    }
+    const found = category.blocks.find(e => e.type === type);
+    if (found) return found;
+    const shortcutEntry = findInShortcuts(category.shortcuts, type);
+    if (shortcutEntry) return shortcutEntry;
+  }
+  return undefined;
+}
+
+function findInShortcuts(
+  shortcuts: BlockCatalog[number]["shortcuts"],
+  type: string,
+): BlockCatalogEntry | undefined {
+  if (!shortcuts) return undefined;
+  for (const group of shortcuts) {
+    const found = group.blocks.find(e => e.type === type);
+    if (found) return found;
   }
   return undefined;
 }

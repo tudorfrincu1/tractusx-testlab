@@ -33,7 +33,6 @@ import { NodeDetailPanel } from "./panels/NodeDetailPanel";
 import { AnnotationsBar } from "./panels/AnnotationsBar";
 import type { LayoutDirection } from "@/shared/hooks/usePipelineLayout";
 import type { PipelineNodeData } from "./builder/pipelineGraph.types";
-import { theme } from "@/shared/theme/tractusxTheme";
 
 const SIDEBAR_MIN = 200;
 const SIDEBAR_MAX = 500;
@@ -127,8 +126,10 @@ export function PipelineGraphView() {
           onSelectNode={setSelectedNodeId}
         />
 
-        <div
+        <button
+          type="button"
           className="pipeline-graph-view__resize-handle"
+          aria-label="Resize panel"
           onMouseDown={handleMouseDown}
         />
 

@@ -182,7 +182,7 @@ export function VariablePicker({ onInsert, onClose }: VariablePickerProps) {
   };
 
   return (
-    <div className="variable-picker__overlay" onMouseDown={handleOverlayClick} role="dialog" aria-modal="true" aria-label="Insert Variable">
+    <dialog className="variable-picker__overlay" open onMouseDown={handleOverlayClick} aria-label="Insert Variable">
       <div className="variable-picker">
         <div className="variable-picker__header">
           <span className="variable-picker__title">Insert Variable</span>
@@ -215,6 +215,6 @@ export function VariablePicker({ onInsert, onClose }: VariablePickerProps) {
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

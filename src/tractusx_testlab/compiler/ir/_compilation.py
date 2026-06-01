@@ -29,7 +29,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from tractusx_testlab.compiler._ir_helpers import (
+from tractusx_testlab.compiler.ir._helpers import (
     build_instructions,
     build_test_symbols,
     load_test_file,
@@ -43,25 +43,19 @@ def build_compiled_tests(
 ) -> list[dict[str, Any]]:
     """Build compiled test dicts with symbol tables and instructions."""
     tests_raw = manifest_data.get("tests", [])
-    env_raw = manifest_data.get("env", {})
-    preconditions_raw = manifest_data.get("preconditions", [])
     compiled: list[dict[str, Any]] = []
 
     for entry in tests_raw:
         file_ref = entry if isinstance(entry, str) else entry.get("test", entry.get("file", ""))
         test_path = resolve_test_path(file_ref, base_dir)
         test_data = load_test_file(test_path)
-        compiled.append(
-            _compile_single_test(test_data, env_raw, preconditions_raw)
-        )
+        compiled.append(_compile_single_test(test_data))
 
     return compiled
 
 
 def _compile_single_test(
     test_data: dict[str, Any],
-    env_raw: dict[str, Any],
-    preconditions_raw: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Compile a single test into its IR representation."""
     metadata = test_data.get("metadata", {})

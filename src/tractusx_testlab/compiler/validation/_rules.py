@@ -35,7 +35,7 @@ from jsonschema import Draft202012Validator
 
 logger = logging.getLogger(__name__)
 
-_SCHEMAS_DIR = Path(__file__).parent / "schemas"
+_SCHEMAS_DIR = Path(__file__).parent.parent / "schemas"
 
 
 def _load_schema(schema_name: str) -> dict[str, Any]:

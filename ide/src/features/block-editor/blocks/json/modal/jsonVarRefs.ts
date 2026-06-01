@@ -51,54 +51,84 @@ const PLACEHOLDER_RE_UNQUOTED = new RegExp(
  *
  * Uses a character-level scanner to correctly skip over quoted strings so that
  * `@` characters inside string values are left untouched.
+/** Result of scanning a single character position outside a string. */
+interface ScanAction {
+  /** How many characters were consumed. */
+  advance: number;
+  /** The variable name found, if any. */
+  varName?: string;
+}
+
+const AT_VAR_RE = /^@([a-zA-Z_][a-zA-Z0-9_]*)/;
+const EXPR_VAR_RE = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/;
+
+/** Try to match a variable reference at position `i` (outside a string). */
+function tryMatchVarRef(text: string, i: number): ScanAction {
+  if (text[i] === "@") {
+    const match = AT_VAR_RE.exec(text.slice(i));
+    if (match) return { advance: match[0].length, varName: match[1] };
+  } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
+    const match = EXPR_VAR_RE.exec(text.slice(i));
+    if (match) return { advance: match[0].length, varName: match[1] };
+  }
+  return { advance: 1 };
+}
+
+/**
+ * Generic character-level scanner that iterates text, skipping JSON strings,
+ * and calls `onVarRef` for each variable reference found outside strings.
+ * Characters inside strings (or non-variable chars) go to `onLiteral`.
  */
-export function replaceVarRefs(text: string): string {
-  let result = "";
+function scanJsonText(
+  text: string,
+  onLiteral: (char: string) => void,
+  onVarRef: (varName: string) => string | void,
+): void {
   let inString = false;
   let i = 0;
 
   while (i < text.length) {
     if (inString) {
       if (text[i] === "\\" && i + 1 < text.length) {
-        result += text[i] + text[i + 1];
+        onLiteral(text[i] + text[i + 1]);
         i += 2;
         continue;
       }
-      if (text[i] === '"') {
-        inString = false;
-      }
-      result += text[i];
+      if (text[i] === '"') inString = false;
+      onLiteral(text[i]);
       i++;
     } else if (text[i] === '"') {
       inString = true;
-      result += text[i];
+      onLiteral(text[i]);
       i++;
-    } else if (text[i] === "@") {
-      const rest = text.slice(i);
-      const match = /^@([a-zA-Z_][a-zA-Z0-9_]*)/.exec(rest);
-      if (match) {
-        result += `"${PLACEHOLDER_PREFIX}${match[1]}${PLACEHOLDER_SUFFIX}"`;
-        i += match[0].length;
-      } else {
-        result += text[i];
-        i++;
-      }
-    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
-      const rest = text.slice(i);
-      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
-      if (match) {
-        result += `"${PLACEHOLDER_PREFIX}${match[1]}${PLACEHOLDER_SUFFIX}"`;
-        i += match[0].length;
-      } else {
-        result += text[i];
-        i++;
-      }
     } else {
-      result += text[i];
-      i++;
+      const action = tryMatchVarRef(text, i);
+      if (action.varName) {
+        const replacement = onVarRef(action.varName);
+        if (replacement !== undefined) onLiteral(replacement);
+        i += action.advance;
+      } else {
+        onLiteral(text[i]);
+        i++;
+      }
     }
   }
+}
 
+/**
+ * Replace `@variable_name` tokens that appear outside of JSON strings with
+ * valid placeholder strings like `"__TESTLAB_VAR__name__"`.
+ */
+export function replaceVarRefs(text: string): string {
+  let result = "";
+  scanJsonText(
+    text,
+    (chars) => { result += chars; },
+    (varName) => {
+      const placeholder = `"${PLACEHOLDER_PREFIX}${varName}${PLACEHOLDER_SUFFIX}"`;
+      result += placeholder;
+    },
+  );
   return result;
 }
 
@@ -167,43 +197,7 @@ export const VAR_REF_PATTERN = /\$\{\{\s*(?:vars|env)\.([a-zA-Z_][a-zA-Z0-9_]*)\
  */
 export function countVarRefsOutsideStrings(text: string): number {
   let count = 0;
-  let inString = false;
-  let i = 0;
-
-  while (i < text.length) {
-    if (inString) {
-      if (text[i] === "\\" && i + 1 < text.length) {
-        i += 2;
-        continue;
-      }
-      if (text[i] === '"') inString = false;
-      i++;
-    } else if (text[i] === '"') {
-      inString = true;
-      i++;
-    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
-      const rest = text.slice(i);
-      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
-      if (match) {
-        count++;
-        i += match[0].length;
-      } else {
-        i++;
-      }
-    } else if (text[i] === "@") {
-      const rest = text.slice(i);
-      const match = /^@([a-zA-Z_][a-zA-Z0-9_]*)/.exec(rest);
-      if (match) {
-        count++;
-        i += match[0].length;
-      } else {
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
-
+  scanJsonText(text, () => {}, () => { count++; });
   return count;
 }
 
@@ -212,43 +206,7 @@ export function countVarRefsOutsideStrings(text: string): number {
  */
 export function collectVarRefsOutsideStrings(text: string): string[] {
   const refs = new Set<string>();
-  let inString = false;
-  let i = 0;
-
-  while (i < text.length) {
-    if (inString) {
-      if (text[i] === "\\" && i + 1 < text.length) {
-        i += 2;
-        continue;
-      }
-      if (text[i] === '"') inString = false;
-      i++;
-    } else if (text[i] === '"') {
-      inString = true;
-      i++;
-    } else if (text[i] === "$" && text.slice(i, i + 3) === "${{") {
-      const rest = text.slice(i);
-      const match = /^\$\{\{\s*vars\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/.exec(rest);
-      if (match) {
-        refs.add(match[1]);
-        i += match[0].length;
-      } else {
-        i++;
-      }
-    } else if (text[i] === "@") {
-      const rest = text.slice(i);
-      const match = /^@([a-zA-Z_][a-zA-Z0-9_]*)/.exec(rest);
-      if (match) {
-        refs.add(match[1]);
-        i += match[0].length;
-      } else {
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
-
+  scanJsonText(text, () => {}, (varName) => { refs.add(varName); });
   return [...refs];
 }
 

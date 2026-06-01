@@ -26,7 +26,7 @@ import { parseVarRef } from "../../serialization/varSyntax";
 import type { TemplateSegment } from "./templateSegment.types";
 
 /** Regex matching `${{ scope.path }}` variable references within a string. */
-const TEMPLATE_VAR_RE = /\$\{\{\s*(.+?)\s*\}\}/;
+const TEMPLATE_VAR_RE = /\$\{\{\s*([^{}]+?)\s*\}\}/;
 
 /**
  * Returns true if `value` contains embedded `${{ }}` references but is NOT
@@ -79,9 +79,6 @@ export function serializeTemplateString(segments: TemplateSegment[]): string {
 
 /**
  * Format segments as a human-readable preview using `${{ env.path }}` for variables.
+ * Alias for serializeTemplateString — same output format.
  */
-export function formatSegmentPreview(segments: TemplateSegment[]): string {
-  return segments
-    .map((seg) => (seg.type === "literal" ? seg.value : `\${{ ${seg.scope}.${seg.path} }}`))
-    .join("");
-}
+export const formatSegmentPreview = serializeTemplateString;

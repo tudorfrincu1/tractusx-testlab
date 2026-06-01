@@ -86,6 +86,40 @@ export interface ImportedProject {
   testOrder: string[];
 }
 
+async function readTestsFromZip(
+  zip: JSZip,
+  testPrefix: string,
+): Promise<{ tests: Map<string, ScriptDefinition>; testOrder: string[] }> {
+  const tests = new Map<string, ScriptDefinition>();
+  const testOrder: string[] = [];
+  for (const [path, entry] of Object.entries(zip.files)) {
+    if (entry.dir || !path.startsWith(testPrefix) || !/\.(yaml|yml)$/.test(path)) continue;
+    const content = await entry.async("text");
+    const result = yamlToModel(content);
+    if (result.ok && isTest(result.model)) {
+      const name = path.slice(testPrefix.length).replace(/\.(yaml|yml)$/, "");
+      result.model.name = name;
+      tests.set(name, result.model);
+      testOrder.push(name);
+    }
+  }
+  return { tests, testOrder };
+}
+
+async function readSchemasFromZip(
+  zip: JSZip,
+  schemaPrefix: string,
+): Promise<Map<string, SchemaFile>> {
+  const schemas = new Map<string, SchemaFile>();
+  for (const [path, entry] of Object.entries(zip.files)) {
+    if (entry.dir || !path.startsWith(schemaPrefix)) continue;
+    const content = await entry.async("text");
+    const name = path.slice(schemaPrefix.length).replace(/\.json$/, "");
+    schemas.set(name, { name, content });
+  }
+  return schemas;
+}
+
 export async function importProjectZip(file: File): Promise<ImportedProject | null> {
   const zip = await JSZip.loadAsync(file);
 
@@ -104,45 +138,16 @@ export async function importProjectZip(file: File): Promise<ImportedProject | nu
   if (!tcResult.ok || !isTck(tcResult.model)) return null;
 
   // Read tests/ folder
-  const tests = new Map<string, ScriptDefinition>();
-  const testOrder: string[] = [];
   const testPrefix = `${rootPrefix}tests/`;
-
-  for (const [path, entry] of Object.entries(zip.files)) {
-    if (entry.dir) continue;
-    if (!path.startsWith(testPrefix)) continue;
-    if (!/\.(yaml|yml)$/.test(path)) continue;
-
-    const content = await entry.async("text");
-    const result = yamlToModel(content);
-    if (result.ok && isTest(result.model)) {
-      const name = path
-        .slice(testPrefix.length)
-        .replace(/\.(yaml|yml)$/, "");
-      result.model.name = name;
-      tests.set(name, result.model);
-      testOrder.push(name);
-    }
-  }
+  const { tests, testOrder } = await readTestsFromZip(zip, testPrefix);
 
   // Preserve order from tck.tests[] if available
   const orderedFromTc = extractOrderFromTck(tcResult.model, tests);
   const finalOrder = orderedFromTc.length > 0 ? orderedFromTc : testOrder;
 
   // Read schemas/ folder
-  const schemas = new Map<string, SchemaFile>();
   const schemaPrefix = `${rootPrefix}schemas/`;
-
-  for (const [path, entry] of Object.entries(zip.files)) {
-    if (entry.dir) continue;
-    if (!path.startsWith(schemaPrefix)) continue;
-
-    const content = await entry.async("text");
-    const name = path
-      .slice(schemaPrefix.length)
-      .replace(/\.json$/, "");
-    schemas.set(name, { name, content });
-  }
+  const schemas = await readSchemasFromZip(zip, schemaPrefix);
 
   return {
     projectName,
@@ -181,26 +186,30 @@ function findRootPrefix(entries: string[]): string {
   return allMatch ? prefix : "";
 }
 
+function extractNameFromEntry(entry: unknown): string | null {
+  if (typeof entry === "string") {
+    return entry.replace(/^!include\s+/, "").replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
+  }
+  if (typeof entry === "object" && entry !== null) {
+    if ("test" in entry && typeof (entry as { test: string }).test === "string") {
+      return (entry as { test: string }).test;
+    }
+    if ("name" in entry) {
+      return (entry as { name: string }).name;
+    }
+  }
+  return null;
+}
+
 function extractOrderFromTck(
   tc: TckDefinition,
   available: Map<string, ScriptDefinition>,
 ): string[] {
   const order: string[] = [];
   for (const entry of tc.tests) {
-    if (typeof entry === "string") {
-      const name = entry.replace(/^!include\s+/, "").replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
-      if (available.has(name)) order.push(name);
-    } else if (typeof entry === "object" && entry !== null) {
-      if ("test" in entry && typeof (entry as { test: string }).test === "string") {
-        const name = (entry as { test: string }).test;
-        if (available.has(name)) order.push(name);
-      } else if ("name" in entry) {
-        const name = (entry as { name: string }).name;
-        if (available.has(name)) order.push(name);
-      }
-    }
+    const name = extractNameFromEntry(entry);
+    if (name && available.has(name)) order.push(name);
   }
-  // Add any tests not referenced in TCK
   for (const name of available.keys()) {
     if (!order.includes(name)) order.push(name);
   }

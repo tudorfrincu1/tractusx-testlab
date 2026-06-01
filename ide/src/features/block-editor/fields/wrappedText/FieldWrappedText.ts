@@ -147,7 +147,7 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
     }
     if (currentLine) lines.push(currentLine);
 
-    this.textElement_.removeChild(measureEl);
+    measureEl.remove();
     return lines.length > 0 ? lines : [""];
   }
 
@@ -188,13 +188,20 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
     const lineHeight = fontSize * LINE_HEIGHT_FACTOR;
     const xPos = this.textElement_.getAttribute("x") ?? "0";
 
+    this.renderDisplayLines(displayLines, isTruncated, xPos, lineHeight);
+    this.renderToggleHint(isTruncated, xPos, lineHeight);
+    this.resizeForMultiline(lineHeight);
+  }
+
+  private renderDisplayLines(
+    displayLines: string[],
+    isTruncated: boolean,
+    xPos: string,
+    lineHeight: number,
+  ): void {
     for (let i = 0; i < displayLines.length; i++) {
-      const tspan = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "tspan",
-      );
+      const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
       let lineText = displayLines[i];
-      // Add ellipsis to last displayed line if truncated
       if (isTruncated && i === displayLines.length - 1) {
         lineText = lineText.substring(0, lineText.length - 1) + "\u2026";
       }
@@ -204,33 +211,32 @@ export class FieldWrappedText extends Blockly.FieldTextInput {
       this.textElement_.appendChild(tspan);
       this.tspans.push(tspan);
     }
+  }
 
-    // Add toggle hint after the last line
-    if (isTruncated || (this.isTruncatable && this.isExpanded)) {
-      const hint = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "tspan",
-      );
-      hint.textContent = isTruncated ? "\u25B6 Details" : "\u25BC Details";
-      hint.setAttribute("x", xPos);
-      hint.setAttribute("dy", String(lineHeight));
-      hint.setAttribute("fill", "#FFD700");
-      hint.setAttribute("font-size", "10");
-      hint.setAttribute("opacity", "0.7");
-      hint.style.cursor = "pointer";
-      this.textElement_.appendChild(hint);
-      this.hintTspan = hint;
-      this.lineCount += 1;
-      // Allow collapsing when expanded by clicking the hint
-      if (this.isExpanded) {
-        hint.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.collapseText();
-        });
-      }
+  private renderToggleHint(
+    isTruncated: boolean,
+    xPos: string,
+    lineHeight: number,
+  ): void {
+    if (!isTruncated && !(this.isTruncatable && this.isExpanded)) return;
+
+    const hint = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+    hint.textContent = isTruncated ? "\u25B6 Details" : "\u25BC Details";
+    hint.setAttribute("x", xPos);
+    hint.setAttribute("dy", String(lineHeight));
+    hint.setAttribute("fill", "#FFD700");
+    hint.setAttribute("font-size", "10");
+    hint.setAttribute("opacity", "0.7");
+    hint.style.cursor = "pointer";
+    this.textElement_.appendChild(hint);
+    this.hintTspan = hint;
+    this.lineCount += 1;
+    if (this.isExpanded) {
+      hint.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.collapseText();
+      });
     }
-
-    this.resizeForMultiline(lineHeight);
   }
 
   private applyRightPadding(): void {

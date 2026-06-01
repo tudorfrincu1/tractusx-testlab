@@ -46,10 +46,10 @@ export function VariablesSection() {
 
   return (
     <div className="section">
-      <div className="section-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+      <button type="button" className="section-header" onClick={() => setIsCollapsed(!isCollapsed)}>
         <span>{isCollapsed ? "▶" : "▼"} Variables</span>
         <span className="count-badge">{variables.length}</span>
-      </div>
+      </button>
 
       {!isCollapsed && (
         <div className="section-body">
@@ -66,7 +66,7 @@ export function VariablesSection() {
             </thead>
             <tbody>
               {variables.map((variable, i) => (
-                <VariableRow key={i} variable={variable} index={i} />
+                <VariableRow key={variable.name || `var-${i}`} variable={variable} index={i} />
               ))}
               <VariableRow
                 variable={EMPTY_VARIABLE}

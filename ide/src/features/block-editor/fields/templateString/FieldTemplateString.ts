@@ -147,7 +147,7 @@ export class FieldTemplateString extends Blockly.Field<string> {
   private clearSvg(): void {
     if (!this.svgGroup) return;
     while (this.svgGroup.firstChild) {
-      this.svgGroup.removeChild(this.svgGroup.firstChild);
+      this.svgGroup.firstChild.remove();
     }
   }
 

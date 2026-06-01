@@ -81,57 +81,65 @@ export function parsePathToSegments(path: string): PathSegment[] {
   let i = 0;
 
   while (i < path.length) {
-    if (path[i] === ".") {
-      i++; // skip the dot separator
-    }
-
+    if (path[i] === ".") i++;
     if (i >= path.length) break;
 
     if (path[i] === "[") {
-      i++; // skip '['
-      if (i < path.length && path[i] === "'") {
-        // Bracket-quoted key: ['...']
-        i++; // skip opening quote
-        let value = "";
-        while (i < path.length) {
-          if (path[i] === "'" && i + 1 < path.length && path[i + 1] === "]") {
-            break;
-          }
-          if (path[i] === "\\" && i + 1 < path.length) {
-            i++;
-            value += path[i];
-          } else {
-            value += path[i];
-          }
-          i++;
-        }
-        i += 2; // skip closing ']
-        segments.push({ type: "key", value });
-      } else {
-        // Numeric index: [0]
-        let value = "";
-        while (i < path.length && path[i] !== "]") {
-          value += path[i];
-          i++;
-        }
-        i++; // skip ']'
-        segments.push({ type: "index", value });
-      }
+      i++;
+      const result = path[i] === "'"
+        ? parseBracketQuotedKey(path, i)
+        : parseBracketIndex(path, i);
+      segments.push(result.segment);
+      i = result.nextIndex;
     } else {
-      // Simple dot-notation key: read until next `.` or `[`
-      let value = "";
-      while (i < path.length && path[i] !== "." && path[i] !== "[") {
-        value += path[i];
-        i++;
-      }
-      if (value) {
-        const isIndex = /^\d+$/.test(value);
-        segments.push({ type: isIndex ? "index" : "key", value });
-      }
+      const result = parseDotKey(path, i);
+      if (result.segment) segments.push(result.segment);
+      i = result.nextIndex;
     }
   }
 
   return segments;
+}
+
+/** Parse a bracket-quoted key segment: `['complex.key']` starting after the opening `'`. */
+function parseBracketQuotedKey(path: string, startAfterBracket: number): { segment: PathSegment; nextIndex: number } {
+  let i = startAfterBracket + 1; // skip opening quote
+  let value = "";
+  while (i < path.length) {
+    if (path[i] === "'" && i + 1 < path.length && path[i + 1] === "]") break;
+    if (path[i] === "\\" && i + 1 < path.length) {
+      i++;
+      value += path[i];
+    } else {
+      value += path[i];
+    }
+    i++;
+  }
+  return { segment: { type: "key", value }, nextIndex: i + 2 };
+}
+
+/** Parse a numeric index segment: `[0]` starting after the `[`. */
+function parseBracketIndex(path: string, start: number): { segment: PathSegment; nextIndex: number } {
+  let i = start;
+  let value = "";
+  while (i < path.length && path[i] !== "]") {
+    value += path[i];
+    i++;
+  }
+  return { segment: { type: "index", value }, nextIndex: i + 1 };
+}
+
+/** Parse a simple dot-notation key starting at `start`. */
+function parseDotKey(path: string, start: number): { segment: PathSegment | null; nextIndex: number } {
+  let i = start;
+  let value = "";
+  while (i < path.length && path[i] !== "." && path[i] !== "[") {
+    value += path[i];
+    i++;
+  }
+  if (!value) return { segment: null, nextIndex: i };
+  const type = /^\d+$/.test(value) ? "index" : "key";
+  return { segment: { type, value }, nextIndex: i };
 }
 
 /**

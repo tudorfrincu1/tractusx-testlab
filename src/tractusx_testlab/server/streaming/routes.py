@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""SSE streaming routes and utilities for live test execution events."""
+"""SSE streaming routes for live test execution events."""
 
 from __future__ import annotations
 
@@ -41,8 +41,8 @@ from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck
 
-from tractusx_testlab.server._event_buffer import EventBuffer
-from tractusx_testlab.server._sse_generator import create_event_queue, sse_event_generator
+from tractusx_testlab.server.streaming._event_buffer import EventBuffer
+from tractusx_testlab.server.streaming.lifecycle import create_event_queue, sse_event_generator
 
 _logger = logging.getLogger(__name__)
 
@@ -236,4 +236,3 @@ async def stream_job_events(
             "X-Accel-Buffering": "no",
         },
     )
-

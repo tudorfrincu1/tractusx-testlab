@@ -90,8 +90,8 @@ export function JsonEditorModal({
   const hasVariables = editor.availableVariables.length > 0;
 
   return (
-    <div className="json-editor-overlay" onMouseDown={handleOverlayClick}>
-      <div className="json-editor-modal">
+    <div className="json-editor-overlay" onMouseDown={handleOverlayClick} role="presentation">
+      <dialog className="json-editor-modal" open>
         <div className="json-editor-title">{"{}"} Edit JSON</div>
         <HighlightedEditor
           value={editor.text}
@@ -145,7 +145,7 @@ export function JsonEditorModal({
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }

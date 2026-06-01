@@ -127,6 +127,22 @@ function validateStep(
   memoryVars: Set<string>,
   errors: ValidationError[]
 ) {
+  validateStepRequiredFields(step, path, errors);
+  validateStepValidations(step, path, errors);
+  validateStepVarRefs(step, path, definedVars, memoryVars, errors);
+
+  if (step.returns) {
+    for (const key of Object.keys(step.returns)) {
+      memoryVars.add(key);
+    }
+  }
+}
+
+function validateStepRequiredFields(
+  step: StepDefinition,
+  path: string,
+  errors: ValidationError[],
+): void {
   if (!step.uses) {
     errors.push({ path, message: "Step 'uses' is required", severity: "error" });
   } else if (knownStepTypes && !knownStepTypes.has(step.uses)) {
@@ -148,7 +164,13 @@ function validateStep(
       severity: "error",
     });
   }
+}
 
+function validateStepValidations(
+  step: StepDefinition,
+  path: string,
+  errors: ValidationError[],
+): void {
   for (const validation of step.validate ?? []) {
     if (!validation.uses) {
       errors.push({
@@ -158,15 +180,17 @@ function validateStep(
       });
     }
   }
+}
 
+function validateStepVarRefs(
+  step: StepDefinition,
+  path: string,
+  definedVars: Set<string>,
+  memoryVars: Set<string>,
+  errors: ValidationError[],
+): void {
   const paramStr = JSON.stringify(step.with ?? {});
-  // Match ${{ vars.name }} and @var_name syntaxes
-  const newVarRefs = paramStr.match(/\$\{\{\s*vars\.(\w+)\s*\}\}/g) ?? [];
-  const atVarRefs = paramStr.match(/@(\w+)/g) ?? [];
-  const allRefs: string[] = [
-    ...newVarRefs.map((r) => { const m = /vars\.(\w+)/.exec(r); return m ? m[1] : ""; }).filter(Boolean),
-    ...atVarRefs.map((r) => r.slice(1)),
-  ];
+  const allRefs = extractVarRefsFromParams(paramStr);
   for (const varName of allRefs) {
     if (varName.startsWith("!")) continue;
     if (!definedVars.has(varName) && !memoryVars.has(varName)) {
@@ -177,12 +201,15 @@ function validateStep(
       });
     }
   }
+}
 
-  if (step.returns) {
-    for (const key of Object.keys(step.returns)) {
-      memoryVars.add(key);
-    }
-  }
+function extractVarRefsFromParams(paramStr: string): string[] {
+  const newVarRefs = paramStr.match(/\$\{\{\s*vars\.(\w+)\s*\}\}/g) ?? [];
+  const atVarRefs = paramStr.match(/@(\w+)/g) ?? [];
+  return [
+    ...newVarRefs.map((r) => { const m = /vars\.(\w+)/.exec(r); return m ? m[1] : ""; }).filter(Boolean),
+    ...atVarRefs.map((r) => r.slice(1)),
+  ];
 }
 
 function validateTck(tc: TckDefinition, errors: ValidationError[]) {

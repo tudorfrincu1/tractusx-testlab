@@ -37,42 +37,11 @@ export function buildConnectorCategory(
   const colour = getCategoryColor(cat.name);
 
   if (!cat.subcategories || cat.subcategories.length === 0) {
-    // Fallback: flat list if no subcategories defined
-    const contents = cat.blocks
-      .filter(
-        (b) =>
-          !b.custom_registration &&
-          (!b.dataspace_version ||
-            activeVersions.size === 0 ||
-            activeVersions.has(b.dataspace_version)),
-      )
-      .map((b) => ({ kind: "block", type: `step_${b.type}` }));
+    const contents = filterBlocksByVersion(cat.blocks, activeVersions);
     return { kind: "category", name: cat.name, colour, contents };
   }
 
-  const subCategories: object[] = [];
-
-  for (const sub of cat.subcategories) {
-    const contents: object[] = [];
-
-    // Add catalog-loaded blocks (filtered by dataspace version)
-    for (const b of sub.blocks) {
-      if (b.custom_registration) continue;
-      if (b.dataspace_version && activeVersions.size > 0 && !activeVersions.has(b.dataspace_version)) continue;
-      contents.push({ kind: "block", type: `step_${b.type}` });
-    }
-
-    // Add programmatic blocks (registered in TypeScript, not from JSON)
-    if (sub.programmatic_blocks) {
-      for (const blockType of sub.programmatic_blocks) {
-        contents.push({ kind: "block", type: blockType });
-      }
-    }
-
-    if (contents.length > 0) {
-      subCategories.push({ kind: "category", name: sub.name, colour, contents });
-    }
-  }
+  const subCategories = buildSubCategories(cat.subcategories, activeVersions, colour);
 
   return {
     kind: "category",
@@ -80,4 +49,57 @@ export function buildConnectorCategory(
     colour,
     contents: subCategories,
   };
+}
+
+function filterBlocksByVersion(
+  blocks: BlockCatalogCategory["blocks"],
+  activeVersions: Set<string>,
+): object[] {
+  return blocks
+    .filter(
+      (b) =>
+        !b.custom_registration &&
+        (!b.dataspace_version ||
+          activeVersions.size === 0 ||
+          activeVersions.has(b.dataspace_version)),
+    )
+    .map((b) => ({ kind: "block", type: `step_${b.type}` }));
+}
+
+function buildSubCategories(
+  subcategories: NonNullable<BlockCatalogCategory["subcategories"]>,
+  activeVersions: Set<string>,
+  colour: string,
+): object[] {
+  const result: object[] = [];
+
+  for (const sub of subcategories) {
+    const contents = buildSubCategoryContents(sub, activeVersions);
+    if (contents.length > 0) {
+      result.push({ kind: "category", name: sub.name, colour, contents });
+    }
+  }
+
+  return result;
+}
+
+function buildSubCategoryContents(
+  sub: { blocks: BlockCatalogCategory["blocks"]; programmatic_blocks?: string[] },
+  activeVersions: Set<string>,
+): object[] {
+  const contents: object[] = [];
+
+  for (const b of sub.blocks) {
+    if (b.custom_registration) continue;
+    if (b.dataspace_version && activeVersions.size > 0 && !activeVersions.has(b.dataspace_version)) continue;
+    contents.push({ kind: "block", type: `step_${b.type}` });
+  }
+
+  if (sub.programmatic_blocks) {
+    for (const blockType of sub.programmatic_blocks) {
+      contents.push({ kind: "block", type: blockType });
+    }
+  }
+
+  return contents;
 }

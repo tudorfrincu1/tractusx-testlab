@@ -169,7 +169,7 @@ def parse_service(raw: dict) -> ServiceDefinition:
     )
 
 
-def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:  # noqa: ARG001
+def build_script(data: dict) -> SdkScriptDefinition:
     """Build a ScriptDefinition from a YAML dict using local extended models.
 
     Returns an SDK ScriptDefinition created via ``model_construct()`` to
@@ -177,7 +177,6 @@ def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefini
 
     Args:
         data: Parsed YAML dictionary.
-        base_dir: Reserved for future use (include resolution). Currently unused.
     """
     variables = parse_variables(data.get(C.K_VARIABLES, {}))
     services = [parse_service(s) for s in data.get(C.K_SERVICES, [])]
@@ -212,7 +211,7 @@ def parse_script_file(path: Path) -> SdkScriptDefinition:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):
         raise ValueError(f"Expected a YAML dict in {path}, got {type(data).__name__}")
-    return build_script(data, base_dir=path.parent)
+    return build_script(data)
 
 
 def build_test_case(
@@ -229,23 +228,7 @@ def build_test_case(
     tests_raw = data.get(C.K_TESTS, [])
     tests: list[Union[SdkScriptDefinition, str]] = []
     for entry in tests_raw:
-        if isinstance(entry, str):
-            if base_dir:
-                script_path = (base_dir / entry).resolve()
-                if script_path.exists():
-                    tests.append(parse_script_file(script_path))
-                    continue
-            tests.append(entry)
-        elif isinstance(entry, dict) and "test" in entry:
-            # IDE format: {test: "tests/foo.yaml", description: "..."}
-            rel_path = entry["test"]
-            if base_dir:
-                script_path = (base_dir / rel_path).resolve()
-                tests.append(parse_script_file(script_path))
-            else:
-                tests.append(rel_path)
-        elif isinstance(entry, dict):
-            tests.append(build_script(entry, base_dir=base_dir))
+        tests.append(_resolve_test_entry(entry, base_dir))
 
     imports = [
         ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
@@ -269,3 +252,24 @@ def _to_sdk_script_kind(raw: str):
         return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TCK}.get(raw, SdkScriptKind.TEST)
     except ImportError:
         return raw
+
+
+def _resolve_test_entry(
+    entry: Union[str, dict], base_dir: Optional[Path],
+) -> Union[SdkScriptDefinition, str]:
+    """Resolve a single test entry to a ScriptDefinition or path string."""
+    if isinstance(entry, str):
+        if base_dir:
+            script_path = (base_dir / entry).resolve()
+            if script_path.exists():
+                return parse_script_file(script_path)
+        return entry
+    if isinstance(entry, dict) and "test" in entry:
+        rel_path = entry["test"]
+        if base_dir:
+            script_path = (base_dir / rel_path).resolve()
+            return parse_script_file(script_path)
+        return rel_path
+    if isinstance(entry, dict):
+        return build_script(entry)
+    return str(entry)

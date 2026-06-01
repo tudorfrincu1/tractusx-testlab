@@ -23,8 +23,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useEditorStore } from "@/store";
-import { useProjectStore } from "@/store";
+import { useEditorStore, useProjectStore } from "@/store";
 import { isTest, isTck } from "@/models/schema";
 
 import ErrorOutlined from "@mui/icons-material/ErrorOutlined";

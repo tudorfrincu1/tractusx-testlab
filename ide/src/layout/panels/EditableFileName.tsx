@@ -89,13 +89,14 @@ export function EditableFileName({ name, extension, onRename }: EditableFileName
   }
 
   return (
-    <span
+    <button
+      type="button"
       className="editable-filename"
       onClick={() => setIsEditing(true)}
       title="Click to rename"
     >
       <span className="editable-filename__name">{name}</span>
       <span className="editable-filename__ext">{extension}</span>
-    </span>
+    </button>
   );
 }

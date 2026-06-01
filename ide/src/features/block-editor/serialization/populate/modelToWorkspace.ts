@@ -52,7 +52,7 @@ export function populateWorkspaceFromModel(
   for (const block of ws.getAllBlocks(false)) {
     const isTopLevel =
       !block.getParent() &&
-      (!block.previousConnection || !block.previousConnection.targetConnection);
+      !block.previousConnection?.targetConnection;
     if (isTopLevel) {
       (block as unknown as { render: () => void }).render();
     }

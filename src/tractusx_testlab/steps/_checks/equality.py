@@ -19,10 +19,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Individual assertion check functions used by AssertionEngine."""
+"""Equality, comparison, content-matching, and schema assertion checks."""
 
 from __future__ import annotations
 
@@ -37,13 +37,6 @@ def check_exact(actual: object, expected: object, _output: object) -> tuple[bool
     """Check that actual value equals expected exactly."""
     passed = actual == expected
     return passed, "" if passed else f"Expected {expected!r}, got {actual!r}"
-
-
-def check_status_code(actual: object, expected: object, output: object) -> tuple[bool, str]:
-    """Check that the HTTP status code matches expected."""
-    actual_code = actual if isinstance(actual, int) else getattr(output, "status_code", None)
-    passed = actual_code == expected
-    return passed, "" if passed else f"Expected status_code={expected}, got {actual_code}"
 
 
 def check_contains(actual: object, expected: object, _output: object) -> tuple[bool, str]:
@@ -89,10 +82,7 @@ def check_schema(actual: object, expected: object, _output: object) -> tuple[boo
 
 
 def check_schema_validation(actual: object, expected: object, _output: object) -> tuple[bool, str]:
-    """Validate *actual* against a JSON schema provided in *expected*.
-
-    *expected* should be a parsed JSON schema dict (loaded by ``load_schema``).
-    """
+    """Validate *actual* against a JSON schema provided in *expected*."""
     if expected is None:
         return False, "SCHEMA_VALIDATION: no schema provided"
     try:
@@ -103,22 +93,6 @@ def check_schema_validation(actual: object, expected: object, _output: object) -
         return False, f"Schema validation failed: {exc.message}"
     except (json.JSONDecodeError, TypeError) as exc:
         return False, f"Invalid schema: {exc}"
-
-
-def check_not_null(actual: object, _expected: object, _output: object) -> tuple[bool, str]:
-    """Check that actual is not None."""
-    passed = actual is not None
-    return passed, "" if passed else "Expected non-null value, got None"
-
-
-def check_not_empty(actual: object, _expected: object, _output: object) -> tuple[bool, str]:
-    """Check that actual is not empty (None, empty string, list, or dict)."""
-    if actual is None:
-        return False, "Expected non-empty value, got None"
-    if isinstance(actual, (str, list, dict)):
-        passed = len(actual) > 0
-        return passed, "" if passed else f"Expected non-empty value, got empty {type(actual).__name__}"
-    return True, ""
 
 
 def check_equals(actual: object, expected: object, _output: object) -> tuple[bool, str]:

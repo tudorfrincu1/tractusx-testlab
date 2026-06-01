@@ -59,7 +59,9 @@ export function attachOutputVariableBlocks(
       const newBlock = ws.newBlock("var_steps");
       newBlock.initSvg();
       newBlock.render();
-      input.connection.connect(newBlock.outputConnection!);
+      if (newBlock.outputConnection) {
+        input.connection.connect(newBlock.outputConnection);
+      }
       newBlock.setFieldValue(displayName, "VAR_NAME");
     } finally {
       Blockly.Events.setGroup(false);
@@ -75,7 +77,7 @@ export function attachOutputVariableBlocks(
     if (!createEvent.blockId) return;
 
     const block = ws.getBlockById(createEvent.blockId);
-    if (!block || !block.type.startsWith("step_")) return;
+    if (!block?.type.startsWith("step_")) return;
 
     setTimeout(() => {
       if (block.disposed) return;
@@ -115,7 +117,7 @@ function populateBlockOutputSlots(
 ): void {
   for (const input of block.inputList) {
     if (!input.name.startsWith("OUT_")) continue;
-    if (input.connection?.targetBlock()) continue;
+    if (!input.connection || input.connection.targetBlock()) continue;
 
     const stepId = block.getFieldValue("STEP_ID") || "step";
     const varName = inputNameToVarName(input.name);
@@ -126,7 +128,9 @@ function populateBlockOutputSlots(
       const varBlock = ws.newBlock("var_steps");
       varBlock.initSvg();
       varBlock.render();
-      input.connection!.connect(varBlock.outputConnection!);
+      if (varBlock.outputConnection) {
+        input.connection.connect(varBlock.outputConnection);
+      }
       varBlock.setFieldValue(displayName, "VAR_NAME");
     } finally {
       Blockly.Events.enable();

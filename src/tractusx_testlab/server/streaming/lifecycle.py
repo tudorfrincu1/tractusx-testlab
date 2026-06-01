@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -22,23 +22,21 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""SSE event generator utilities — queue creation, formatting, and streaming."""
+"""SSE connection lifecycle — queue creation, replay, keepalive, and timeout."""
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import time
 from collections.abc import AsyncGenerator
 from typing import Any
 
 from tractusx_testlab.player.execution.monitor import ExecutionMonitor
-from tractusx_testlab.server._event_buffer import BufferedEvent, EventBuffer
+from tractusx_testlab.server.streaming._event_buffer import BufferedEvent, EventBuffer
+from tractusx_testlab.server.streaming.formatter import TERMINAL_EVENTS, format_sse
 
 _logger = logging.getLogger(__name__)
-
-_TERMINAL_EVENTS = frozenset({"job.completed", "job.failed", "job.cancelled"})
 
 
 def create_event_queue(monitor: ExecutionMonitor) -> asyncio.Queue[tuple[str, dict[str, Any]]]:
@@ -80,7 +78,7 @@ async def sse_event_generator(
     # Phase 1: replay buffered events
     if last_event_id is not None:
         for buffered in event_buffer.get_events_after(job_id, last_event_id):
-            yield _format_sse(buffered.id, buffered.event, buffered.data)
+            yield format_sse(buffered.id, buffered.event, buffered.data)
 
     # Phase 2: live stream with heartbeat
     last_real_event = time.monotonic()
@@ -95,7 +93,7 @@ async def sse_event_generator(
                     event_buffer.append(
                         job_id, BufferedEvent(id=event_id, event="stream.timeout", data=timeout_data),
                     )
-                    yield _format_sse(event_id, "stream.timeout", timeout_data)
+                    yield format_sse(event_id, "stream.timeout", timeout_data)
                     return
                 yield ":keepalive\n\n"
                 continue
@@ -103,16 +101,10 @@ async def sse_event_generator(
             last_real_event = time.monotonic()
             event_id = event_buffer.next_id(job_id)
             event_buffer.append(job_id, BufferedEvent(id=event_id, event=event, data=payload))
-            yield _format_sse(event_id, event, payload)
+            yield format_sse(event_id, event, payload)
 
-            if event in _TERMINAL_EVENTS:
+            if event in TERMINAL_EVENTS:
                 return
     except asyncio.CancelledError:
         _logger.debug("SSE stream cancelled by client disconnect")
         raise
-
-
-def _format_sse(event_id: int, event: str, data: dict[str, Any]) -> str:
-    """Format a single SSE message with an ``id:`` field."""
-    payload = json.dumps(data, default=str)
-    return f"id: {event_id}\nevent: {event}\ndata: {payload}\n\n"

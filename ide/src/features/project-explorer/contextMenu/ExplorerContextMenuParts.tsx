@@ -22,15 +22,31 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
 
 /** Reusable modal for displaying read-only YAML content. */
-export function YamlPreviewModal({ yaml, onClose }: { yaml: string; onClose: () => void }) {
+export function YamlPreviewModal({ yaml, onClose }: Readonly<{ yaml: string; onClose: () => void }>) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === dialog) onClose();
+    };
+    dialog.addEventListener("click", handleClick);
+    return () => dialog.removeEventListener("click", handleClick);
+  }, [onClose]);
+
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="yaml-preview-overlay"
-      onClick={onClose}
+      aria-label="YAML Preview"
+      onClose={onClose}
     >
       <div
         className="yaml-preview-dialog"
@@ -38,14 +54,14 @@ export function YamlPreviewModal({ yaml, onClose }: { yaml: string; onClose: () 
           background: theme.colors.bgLighter,
           border: `1px solid ${theme.colors.border}`,
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div
           className="yaml-preview-header"
           style={{ color: theme.colors.text }}
         >
-          YAML Preview
+          <span>YAML Preview</span>
           <button
+            type="button"
             onClick={onClose}
             className="yaml-preview-close-btn"
             style={{ color: theme.colors.textMuted }}
@@ -60,7 +76,7 @@ export function YamlPreviewModal({ yaml, onClose }: { yaml: string; onClose: () 
           {yaml}
         </pre>
       </div>
-    </div>
+    </dialog>
   );
 }
 

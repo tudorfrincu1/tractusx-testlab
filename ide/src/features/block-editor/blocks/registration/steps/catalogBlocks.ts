@@ -39,6 +39,81 @@ function classIdToLabel(classId: string): string {
     .join(" ");
 }
 
+/** Shared init logic for step blocks (both main and shortcut). */
+function initStepBlock(
+  self: Block,
+  Blockly: typeof BlocklyType,
+  block: { type: string; label: string; description: string; params: Array<{ name: string; required?: boolean }>; outputs?: Array<{ name: string; class?: string }>; expect?: boolean },
+  categoryIcon: string,
+  categoryColor: string,
+  catalog: BlockCatalog,
+  connectionTypes: string | string[] = "step",
+): void {
+  self.appendDummyInput()
+    .appendField(blockIcon(Blockly, categoryIcon))
+    .appendField(block.label)
+    .appendField(createInfoIconField(Blockly, block.description));
+
+  const idField = new Blockly.FieldTextInput(generateStepId(block.type, self.workspace));
+  idField.maxDisplayLength = 80;
+  self.appendDummyInput("STEP_ID_ROW")
+    .appendField("id:")
+    .appendField(idField, "STEP_ID");
+
+  const descField = new Blockly.FieldTextInput("");
+  descField.maxDisplayLength = 80;
+  self.appendDummyInput()
+    .appendField("description:")
+    .appendField(descField, "DESCRIPTION");
+
+  if (block.params.length > 0) {
+    self.appendDummyInput("INPUTS_HEADER")
+      .appendField("\u2500\u2500\u2500 inputs \u2500\u2500\u2500");
+  }
+
+  for (const param of block.params) {
+    const fieldKey = `PARAM_${param.name.toUpperCase()}`;
+    const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
+    registerParamField(self, Blockly, param, fieldKey, paramLabel, catalog);
+  }
+
+  appendOutputsSection(self, Blockly, block);
+
+  self.setPreviousStatement(true, connectionTypes);
+  self.setNextStatement(true, connectionTypes);
+  self.setColour(categoryColor);
+  self.setTooltip(`${block.label}\n${block.description}`);
+}
+
+/** Append EXPECT + output variable inputs if the block has outputs. */
+function appendOutputsSection(
+  self: Block,
+  Blockly: typeof BlocklyType,
+  block: { outputs?: Array<{ name: string; class?: string }>; expect?: boolean },
+): void {
+  if (!block.outputs || block.outputs.length === 0) return;
+
+  if (block.expect !== false) {
+    self.appendStatementInput("EXPECT")
+      .appendField("validate:")
+      .setCheck("assertion");
+  }
+
+  self.appendDummyInput("OUTPUTS_SPACER").appendField(" ");
+  self.appendDummyInput("OUTPUTS_HEADER")
+    .appendField("\u2500\u2500\u2500 output variables (drag to use) \u2500\u2500\u2500");
+
+  for (const output of block.outputs) {
+    const inputName = `OUT_${output.name.toUpperCase()}`;
+    const label = output.class
+      ? classIdToLabel(output.class) + ":"
+      : classIdToLabel(output.name) + ":";
+    self.appendValueInput(inputName)
+      .appendField(label)
+      .setCheck("param_value");
+  }
+}
+
 export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog) {
   for (const category of catalog) {
     const categoryColor = getCategoryColor(category.name);
@@ -52,68 +127,10 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
 
       Blockly.Blocks[blockType] = {
         init(this: Block) {
-          this.appendDummyInput()
-            .appendField(blockIcon(Blockly, categoryIcon))
-            .appendField(block.label)
-            .appendField(createInfoIconField(Blockly, block.description));
-
-          const stepIdField = new Blockly.FieldTextInput(generateStepId(block.type, this.workspace));
-          stepIdField.maxDisplayLength = 80;
-          this.appendDummyInput("STEP_ID_ROW")
-            .appendField("id:")
-            .appendField(stepIdField, "STEP_ID");
-
-          const descField = new Blockly.FieldTextInput("");
-          descField.maxDisplayLength = 80;
-          this.appendDummyInput()
-            .appendField("description:")
-            .appendField(descField, "DESCRIPTION");
-
-          if (block.params.length > 0) {
-            this.appendDummyInput("INPUTS_HEADER")
-              .appendField("\u2500\u2500\u2500 inputs \u2500\u2500\u2500");
-          }
-
-          for (const param of block.params) {
-            const fieldKey = `PARAM_${param.name.toUpperCase()}`;
-            const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
-            registerParamField(this, Blockly, param, fieldKey, paramLabel, catalog);
-          }
-
-          if (block.outputs && block.outputs.length > 0) {
-            if (block.expect !== false) {
-              this.appendStatementInput("EXPECT")
-                .appendField("validate:")
-                .setCheck("assertion");
-            }
-
-            // Spacer before outputs section
-            this.appendDummyInput("OUTPUTS_SPACER")
-              .appendField(" ");
-
-            // Divider + hint before outputs
-            this.appendDummyInput("OUTPUTS_HEADER")
-              .appendField("\u2500\u2500\u2500 output variables (drag to use) \u2500\u2500\u2500");
-
-            for (const output of block.outputs) {
-              const inputName = `OUT_${output.name.toUpperCase()}`;
-              const label = output.class
-                ? classIdToLabel(output.class) + ":"
-                : classIdToLabel(output.name) + ":";
-              this.appendValueInput(inputName)
-                .appendField(label)
-                .setCheck("param_value");
-            }
-          }
-
-          // json_path_extract can appear both as a step and inside assertion chains
           const connectionTypes = block.type === "json_path_extract"
             ? ["step", "assertion"]
             : "step";
-          this.setPreviousStatement(true, connectionTypes);
-          this.setNextStatement(true, connectionTypes);
-          this.setColour(categoryColor);
-          this.setTooltip(`${block.label}\n${block.description}`);
+          initStepBlock(this, Blockly, block, categoryIcon, categoryColor, catalog, connectionTypes);
         },
         onchange(this: Block) {
           if (!this.workspace) return;
@@ -154,64 +171,7 @@ export function registerCatalogBlocks(Blockly: typeof BlocklyType, catalog: Bloc
 
           Blockly.Blocks[blockType] = {
             init(this: Block) {
-              this.appendDummyInput()
-                .appendField(blockIcon(Blockly, categoryIcon))
-                .appendField(block.label)
-                .appendField(createInfoIconField(Blockly, block.description));
-
-              const shortcutIdField = new Blockly.FieldTextInput(generateStepId(block.type, this.workspace));
-              shortcutIdField.maxDisplayLength = 80;
-              this.appendDummyInput("STEP_ID_ROW")
-                .appendField("id:")
-                .appendField(shortcutIdField, "STEP_ID");
-
-              const shortcutDescField = new Blockly.FieldTextInput("");
-              shortcutDescField.maxDisplayLength = 80;
-              this.appendDummyInput()
-                .appendField("description:")
-                .appendField(shortcutDescField, "DESCRIPTION");
-
-              if (block.params.length > 0) {
-                this.appendDummyInput("INPUTS_HEADER")
-                  .appendField("\u2500\u2500\u2500 inputs \u2500\u2500\u2500");
-              }
-
-              for (const param of block.params) {
-                const fieldKey = `PARAM_${param.name.toUpperCase()}`;
-                const paramLabel = param.required ? `${param.name}:` : `(opt) ${param.name}:`;
-                registerParamField(this, Blockly, param, fieldKey, paramLabel, catalog);
-              }
-
-              if (block.outputs && block.outputs.length > 0) {
-                if (block.expect !== false) {
-                  this.appendStatementInput("EXPECT")
-                    .appendField("validate:")
-                    .setCheck("assertion");
-                }
-
-                // Spacer before outputs section
-                this.appendDummyInput("OUTPUTS_SPACER")
-                  .appendField(" ");
-
-                // Divider + hint before outputs
-                this.appendDummyInput("OUTPUTS_HEADER")
-                  .appendField("\u2500\u2500\u2500 output variables (drag to use) \u2500\u2500\u2500");
-
-                for (const output of block.outputs) {
-                  const inputName = `OUT_${output.name.toUpperCase()}`;
-                  const label = output.class
-                    ? classIdToLabel(output.class) + ":"
-                    : classIdToLabel(output.name) + ":";
-                  this.appendValueInput(inputName)
-                    .appendField(label)
-                    .setCheck("param_value");
-                }
-              }
-
-              this.setPreviousStatement(true, "step");
-              this.setNextStatement(true, "step");
-              this.setColour(categoryColor);
-              this.setTooltip(`${block.label}\n${block.description}`);
+              initStepBlock(this, Blockly, block, categoryIcon, categoryColor, catalog);
             },
           };
         }

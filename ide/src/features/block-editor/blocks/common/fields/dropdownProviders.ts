@@ -196,9 +196,7 @@ export function typedVariableDropdown(
     const block = this.getSourceBlock?.();
     const rawWs = block?.workspace;
     if (!rawWs || rawWs.isClearing || rawWs.disposed) {
-      const cur = this.getValue?.() ?? "";
-      if (cur && cur !== "__NONE__" && cur !== "__SEP__") return [[cur, cur]];
-      return [["(no variables)", "__NONE__"]];
+      return fallbackOption(this.getValue?.() ?? "");
     }
     // If block is in a flyout, use the target (main) workspace for variable collection
     const ws = (rawWs as unknown as { targetWorkspace?: Workspace }).targetWorkspace ?? rawWs;
@@ -215,44 +213,55 @@ export function typedVariableDropdown(
       return typedVars.map((v): [string, string] => [v.name, v.name]);
     }
 
-    const acceptSet = new Set(accepts);
-    const compatible: Array<[string, string]> = [];
-    const incompatible: Array<[string, string]> = [];
-
-    for (const v of typedVars) {
-      if (acceptSet.has(v.class)) {
-        compatible.push([v.name, v.name]);
-      } else {
-        incompatible.push([`[!] ${v.name} (${v.class})`, v.name]);
-      }
-    }
-
-    const options: Array<[string, string]> = [];
-    if (compatible.length > 0) {
-      options.push(...compatible);
-    }
-    if (incompatible.length > 0) {
-      if (compatible.length > 0) {
-        options.push(SEPARATOR_OPTION);
-      }
-      options.push(...incompatible);
-    }
-
+    const options = classifyVariableOptions(typedVars, new Set(accepts));
     if (options.length === 0) {
       return [["(no variables)", "__NONE__"]];
     }
 
-    // Preserve current value if it's not in the options
-    const currentVal = this.getValue?.() ?? "";
-    if (
-      currentVal &&
-      currentVal !== "__NONE__" &&
-      currentVal !== "__SEP__" &&
-      !options.some(([, val]) => val === currentVal)
-    ) {
-      options.unshift([currentVal, currentVal]);
-    }
-
-    return options;
+    return preserveCurrentValue(options, this.getValue?.() ?? "");
   };
+}
+
+function fallbackOption(currentVal: string): Array<[string, string]> {
+  if (currentVal && currentVal !== "__NONE__" && currentVal !== "__SEP__") return [[currentVal, currentVal]];
+  return [["(no variables)", "__NONE__"]];
+}
+
+function classifyVariableOptions(
+  typedVars: TypedVariable[],
+  acceptSet: Set<string>,
+): Array<[string, string]> {
+  const compatible: Array<[string, string]> = [];
+  const incompatible: Array<[string, string]> = [];
+
+  for (const v of typedVars) {
+    if (acceptSet.has(v.class)) {
+      compatible.push([v.name, v.name]);
+    } else {
+      incompatible.push([`[!] ${v.name} (${v.class})`, v.name]);
+    }
+  }
+
+  const options: Array<[string, string]> = [];
+  if (compatible.length > 0) options.push(...compatible);
+  if (incompatible.length > 0) {
+    if (compatible.length > 0) options.push(SEPARATOR_OPTION);
+    options.push(...incompatible);
+  }
+  return options;
+}
+
+function preserveCurrentValue(
+  options: Array<[string, string]>,
+  currentVal: string,
+): Array<[string, string]> {
+  if (
+    currentVal &&
+    currentVal !== "__NONE__" &&
+    currentVal !== "__SEP__" &&
+    !options.some(([, val]) => val === currentVal)
+  ) {
+    return [[currentVal, currentVal], ...options];
+  }
+  return options;
 }

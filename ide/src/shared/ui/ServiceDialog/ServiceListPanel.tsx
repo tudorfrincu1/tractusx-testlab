@@ -56,7 +56,8 @@ interface ListItemProps {
 
 export function ListItem({ name, subtitle, isActive, onEdit, onDelete }: ListItemProps) {
   return (
-    <div
+    <button
+      type="button"
       style={{
         display: "flex",
         alignItems: "center",
@@ -65,6 +66,11 @@ export function ListItem({ name, subtitle, isActive, onEdit, onDelete }: ListIte
         background: isActive ? theme.colors.bgLighter : "transparent",
         borderLeft: isActive ? `2px solid ${theme.colors.primary}` : "2px solid transparent",
         cursor: "pointer",
+        border: "none",
+        width: "100%",
+        textAlign: "left",
+        font: "inherit",
+        color: "inherit",
       }}
       onClick={onEdit}
     >
@@ -89,7 +95,7 @@ export function ListItem({ name, subtitle, isActive, onEdit, onDelete }: ListIte
           <DeleteIcon sx={{ fontSize: 13, color: theme.colors.error }} />
         </button>
       </div>
-    </div>
+    </button>
   );
 }
 

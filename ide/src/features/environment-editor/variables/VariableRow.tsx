@@ -48,7 +48,7 @@ function getBadgeClass(displayType: DisplayType): string {
   return `var-badge ${displayType}`;
 }
 
-export function VariableRow({ variable, index, isEmptyRow, onCommitEmpty }: VariableRowProps) {
+export function VariableRow({ variable, index, isEmptyRow, onCommitEmpty }: Readonly<VariableRowProps>) {
   const { updateVariable, toggleVariableEnabled, toggleVariableSecret, deleteVariable } =
     useEnvironmentStore();
 

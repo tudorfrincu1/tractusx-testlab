@@ -202,25 +202,9 @@ function buildPhaseGroups(catalog: BlockCatalog, categorizedVars: CategorizedVar
   const phases: object[] = [];
 
   for (const phase of PHASE_DEFINITIONS) {
-    const children: object[] = [];
-    for (const catName of phase.categories) {
-      const cat = categoryMap.get(catName);
-      if (cat) children.push(cat);
-    }
-    if (phase.blockGroups) {
-      for (const group of phase.blockGroups) {
-        const result = buildBlockGroupCategory(group, categorizedVars);
-        if (Array.isArray(result)) {
-          children.push(...result);
-        } else {
-          children.push(result);
-        }
-      }
-    }
+    const children = buildPhaseChildren(phase, categoryMap, categorizedVars);
     if (children.length > 0) {
-      if (phases.length > 0) {
-        phases.push({ kind: "sep" });
-      }
+      if (phases.length > 0) phases.push({ kind: "sep" });
       phases.push({
         kind: "category",
         name: phase.name,
@@ -232,6 +216,29 @@ function buildPhaseGroups(catalog: BlockCatalog, categorizedVars: CategorizedVar
   }
 
   return phases;
+}
+
+function buildPhaseChildren(
+  phase: (typeof PHASE_DEFINITIONS)[number],
+  categoryMap: Map<string, object>,
+  categorizedVars: CategorizedVariables,
+): object[] {
+  const children: object[] = [];
+  for (const catName of phase.categories) {
+    const cat = categoryMap.get(catName);
+    if (cat) children.push(cat);
+  }
+  if (phase.blockGroups) {
+    for (const group of phase.blockGroups) {
+      const result = buildBlockGroupCategory(group, categorizedVars);
+      if (Array.isArray(result)) {
+        children.push(...result);
+      } else {
+        children.push(result);
+      }
+    }
+  }
+  return children;
 }
 
 const EMPTY_CATEGORIZED: CategorizedVariables = {

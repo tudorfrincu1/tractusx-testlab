@@ -133,16 +133,17 @@ export default function App() {
                 <div className="app__explorer-panel" style={{ width: explorerWidth }}>
                   <ProjectExplorer onSelectFile={handleSelectFile} onCollapse={() => setExplorerOpen(false)} />
                 </div>
-                <div className="app__drag-handle" onMouseDown={handleDragStart} />
+                <div className="app__drag-handle" role="separator" aria-orientation="vertical" onMouseDown={handleDragStart} />
               </div>
             ) : (
-              <div
+              <button
+                type="button"
                 className="app__explorer-collapsed"
                 title="Show Explorer"
                 onClick={() => setExplorerOpen(true)}
               >
                 Explorer
-              </div>
+              </button>
             )}
             {isTck && (
               <div className="app__tck-wrapper">

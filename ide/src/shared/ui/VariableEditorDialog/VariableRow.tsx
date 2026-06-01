@@ -35,7 +35,7 @@ export interface VariableRowProps {
   onDelete: (name: string) => void;
 }
 
-export function VariableRow({ variable, onUpdateTck, onUpdateTest, onPromote, onDelete }: VariableRowProps) {
+export function VariableRow({ variable, onUpdateTck, onUpdateTest, onPromote, onDelete }: Readonly<VariableRowProps>) {
   const { name, definition, usedBy, isTckLevel } = variable;
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

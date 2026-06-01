@@ -89,31 +89,32 @@ export function populateAssertions(
 ): void {
   const assertBlocks: Block[] = [];
   for (const raw of assertions) {
-    try {
-      let normalized: RawAssertion;
-      if (isInlineValidation(raw)) {
-        normalized = normalizeInlineValidation(raw);
-      } else {
-        normalized = raw as RawAssertion;
-      }
-      const output = String(normalized.output ?? "");
-      const assertType = String(normalized.type ?? "");
-      if (!assertType) continue;
-      if (!output && assertType !== AssertionOperator.ASSERT_FIELD && assertType !== AssertionOperator.JSON_PATH_EXTRACT) continue;
-
-      const ab = createAssertionBlock(ws, assertType, output, normalized);
-      if (ab) assertBlocks.push(ab);
-    } catch (err) {
-      const r = raw as RawAssertion;
-      if (import.meta.env.DEV) {
-        console.warn(
-          `[populateAssertions] Skipping assertion (output: ${r.output ?? "?"}):`,
-          err,
-        );
-      }
-    }
+    const block = tryCreateAssertionFromRaw(ws, raw);
+    if (block) assertBlocks.push(block);
   }
   attachChain(sb, "EXPECT", assertBlocks);
+}
+
+function tryCreateAssertionFromRaw(ws: Workspace, raw: AssertionInput): Block | null {
+  try {
+    const normalized = isInlineValidation(raw)
+      ? normalizeInlineValidation(raw)
+      : raw as RawAssertion;
+    const output = String(normalized.output ?? "");
+    const assertType = String(normalized.type ?? "");
+    if (!assertType) return null;
+    if (!output && assertType !== AssertionOperator.ASSERT_FIELD && assertType !== AssertionOperator.JSON_PATH_EXTRACT) return null;
+    return createAssertionBlock(ws, assertType, output, normalized);
+  } catch (err) {
+    const r = raw as RawAssertion;
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[populateAssertions] Skipping assertion (output: ${r.output ?? "?"}):`,
+        err,
+      );
+    }
+    return null;
+  }
 }
 
 function createAssertionBlock(
@@ -135,30 +136,13 @@ function createAssertionBlock(
       return makeValueAssertion(ws, "assert_matches", output, "PATTERN", a.value);
     case AssertionOperator.SCHEMA:
       return makeValueAssertion(ws, "assert_schema", output, "SCHEMA", a.value);
-    case AssertionOperator.VALIDATES_AGAINST_SCHEMA: {
-      const ab = makeBlock(ws, "assert_validates_schema");
-      setDropdownValue(ab, "OUTPUT", output);
-      const rawSchema = typeof a.schema === "string" ? a.schema : "";
-      let schemaVal = rawSchema;
-      if (schemaVal.startsWith("@")) {
-        schemaVal = schemaVal.slice(1);
-      } else {
-        const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(schemaVal);
-        if (varsMatch) schemaVal = varsMatch[1];
-      }
-      if (schemaVal) setDropdownValue(ab, "SCHEMA_REF", schemaVal);
-      return ab;
-    }
+    case AssertionOperator.VALIDATES_AGAINST_SCHEMA:
+      return createValidatesSchemaBlock(ws, output, a);
     case AssertionOperator.GREATER_THAN:
     case AssertionOperator.LESS_THAN:
     case AssertionOperator.GREATER_OR_EQUAL:
-    case AssertionOperator.LESS_OR_EQUAL: {
-      const ab = makeBlock(ws, "assert_compare");
-      setDropdownValue(ab, "OUTPUT", output);
-      setDropdownValue(ab, "OPERATOR", TYPE_TO_COMPARE_OP[assertType] ?? "greater_than");
-      connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(a.value)));
-      return ab;
-    }
+    case AssertionOperator.LESS_OR_EQUAL:
+      return createCompareBlock(ws, output, assertType, a);
     case AssertionOperator.BETWEEN: {
       const ab = makeBlock(ws, "assert_between");
       setDropdownValue(ab, "OUTPUT", output);
@@ -176,45 +160,72 @@ function createAssertionBlock(
       setDropdownValue(ab, "OUTPUT", output);
       return ab;
     }
-    case AssertionOperator.ASSERT_FIELD: {
-      const ab = makeBlock(ws, "assert_field");
-      const path = typeof a.path === "string" ? a.path : "";
-      if (path) ab.setFieldValue(path, "PATH");
-      const operator = typeof a.operator === "string" ? a.operator : "equals";
-      setDropdownValue(ab, "OPERATOR", operator);
-      const expectedVal = a.value ?? a.expected;
-      if (expectedVal !== undefined && expectedVal !== "") {
-        const valueBlock = createAssertFieldValueBlock(ws, operator, expectedVal);
-        connectValue(ab, "EXPECTED", valueBlock);
-      }
-      return ab;
-    }
-    case AssertionOperator.JSON_PATH_EXTRACT: {
-      const ab = makeBlock(ws, "step_json_path_extract");
-      // Override connection types to allow use inside assertion chains
-      ab.previousConnection?.setCheck("assertion");
-      ab.nextConnection?.setCheck("assertion");
-      setDropdownValue(ab, "PARAM_VARIABLE", output);
-      const jsonPath = typeof a.json_path === "string" ? a.json_path : "";
-      if (jsonPath) {
-        const jpb = makeBlock(ws, "value_json_path");
-        jpb.setFieldValue(jsonPath, "VALUE");
-        connectValue(ab, "PARAM_PATH", jpb);
-      }
-      const storeVar = typeof a.store_in_variable === "string" ? a.store_in_variable : "";
-      if (storeVar) {
-        connectValue(ab, "PARAM_STORE_IN_VARIABLE", createValueBlockFromString(ws, storeVar));
-      }
-      // Recursively populate nested assertions
-      const nested = a.validate;
-      if (Array.isArray(nested) && nested.length > 0) {
-        populateAssertions(ws, ab, nested as AssertionInput[]);
-      }
-      return ab;
-    }
+    case AssertionOperator.ASSERT_FIELD:
+      return createAssertFieldBlock(ws, a);
+    case AssertionOperator.JSON_PATH_EXTRACT:
+      return createJsonPathExtractBlock(ws, output, a);
     default:
       return null;
   }
+}
+
+function createValidatesSchemaBlock(ws: Workspace, output: string, a: RawAssertion): Block {
+  const ab = makeBlock(ws, "assert_validates_schema");
+  setDropdownValue(ab, "OUTPUT", output);
+  const rawSchema = typeof a.schema === "string" ? a.schema : "";
+  let schemaVal = rawSchema;
+  if (schemaVal.startsWith("@")) {
+    schemaVal = schemaVal.slice(1);
+  } else {
+    const varsMatch = /^\$\{\{\s*vars\.(.+?)\s*\}\}$/.exec(schemaVal);
+    if (varsMatch) schemaVal = varsMatch[1];
+  }
+  if (schemaVal) setDropdownValue(ab, "SCHEMA_REF", schemaVal);
+  return ab;
+}
+
+function createCompareBlock(ws: Workspace, output: string, assertType: string, a: RawAssertion): Block {
+  const ab = makeBlock(ws, "assert_compare");
+  setDropdownValue(ab, "OUTPUT", output);
+  setDropdownValue(ab, "OPERATOR", TYPE_TO_COMPARE_OP[assertType] ?? "greater_than");
+  connectValue(ab, "VALUE", createValueBlockFromString(ws, toBlockValueString(a.value)));
+  return ab;
+}
+
+function createAssertFieldBlock(ws: Workspace, a: RawAssertion): Block {
+  const ab = makeBlock(ws, "assert_field");
+  const path = typeof a.path === "string" ? a.path : "";
+  if (path) ab.setFieldValue(path, "PATH");
+  const operator = typeof a.operator === "string" ? a.operator : "equals";
+  setDropdownValue(ab, "OPERATOR", operator);
+  const expectedVal = a.value ?? a.expected;
+  if (expectedVal !== undefined && expectedVal !== "") {
+    const valueBlock = createAssertFieldValueBlock(ws, operator, expectedVal);
+    connectValue(ab, "EXPECTED", valueBlock);
+  }
+  return ab;
+}
+
+function createJsonPathExtractBlock(ws: Workspace, output: string, a: RawAssertion): Block {
+  const ab = makeBlock(ws, "step_json_path_extract");
+  ab.previousConnection?.setCheck("assertion");
+  ab.nextConnection?.setCheck("assertion");
+  setDropdownValue(ab, "PARAM_VARIABLE", output);
+  const jsonPath = typeof a.json_path === "string" ? a.json_path : "";
+  if (jsonPath) {
+    const jpb = makeBlock(ws, "value_json_path");
+    jpb.setFieldValue(jsonPath, "VALUE");
+    connectValue(ab, "PARAM_PATH", jpb);
+  }
+  const storeVar = typeof a.store_in_variable === "string" ? a.store_in_variable : "";
+  if (storeVar) {
+    connectValue(ab, "PARAM_STORE_IN_VARIABLE", createValueBlockFromString(ws, storeVar));
+  }
+  const nested = a.validate;
+  if (Array.isArray(nested) && nested.length > 0) {
+    populateAssertions(ws, ab, nested as AssertionInput[]);
+  }
+  return ab;
 }
 
 function makeValueAssertion(

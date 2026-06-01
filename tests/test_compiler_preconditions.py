@@ -30,7 +30,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tractusx_testlab.compiler.validator import ScriptValidator, ValidationResult
+from tractusx_testlab.compiler.validation.validator import ScriptValidator, ValidationResult
 from tractusx_testlab.models.definitions import ScriptDefinition
 
 from factories import create_script_with_preconditions, create_step_definition
@@ -47,7 +47,7 @@ def validator() -> ScriptValidator:
 
 
 class TestValidatorAcceptsValidPreconditions:
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_accepts_valid_precondition_step(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -60,7 +60,7 @@ class TestValidatorAcceptsValidPreconditions:
         result = validator.validate(script)
         assert result.valid
 
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_accepts_empty_preconditions(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -70,7 +70,7 @@ class TestValidatorAcceptsValidPreconditions:
 
 
 class TestValidatorRejectsInvalidPreconditions:
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_rejects_non_prefixed_step_type(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -85,7 +85,7 @@ class TestValidatorRejectsInvalidPreconditions:
         assert len(errors) >= 1
         assert "precondition_" in errors[0].message
 
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_rejects_unknown_step_type(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -101,7 +101,7 @@ class TestValidatorRejectsInvalidPreconditions:
 
 
 class TestValidatorPreconditionWarnings:
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_warns_if_precondition_references_service(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -120,7 +120,7 @@ class TestValidatorPreconditionWarnings:
 
 
 class TestValidatorPreconditionVarsDeclared:
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_precondition_store_in_memory_declares_vars(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:
@@ -153,7 +153,7 @@ class TestValidatorPreconditionVarsDeclared:
         ]
         assert len(ref_warnings) == 0
 
-    @patch("tractusx_testlab.compiler.validator.StepRegistry")
+    @patch("tractusx_testlab.compiler.validation.validator.StepRegistry")
     def test_phase_is_precondition_in_issues(
         self, mock_registry: MagicMock, validator: ScriptValidator,
     ) -> None:

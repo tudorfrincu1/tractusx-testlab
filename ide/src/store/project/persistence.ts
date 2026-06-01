@@ -49,7 +49,7 @@ export function saveProjectToLocalStorage(
   try {
     const { projectName, tck, tests, schemas, testdata, testOrder, activeFile, workspaceStates } = get();
     const json = serializeProject(
-      projectName, tck, tests, schemas, testdata, testOrder, activeFile, workspaceStates,
+      { projectName, tck, tests, schemas, testdata, testOrder, activeFile, workspaceStates },
     );
     localStorage.setItem(STORAGE_KEY, json);
     set({ dirty: new Map() });

@@ -70,27 +70,31 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
           <span className="svc-card-desc">TestLab internal connector used for test orchestration and data exchange</span>
         </div>
         <div className="svc-card-toggle">
-          <label>Enabled</label>
+          <label id={`int-svc-toggle-label-${index}`}>Enabled</label>
           <div
             className={`svc-toggle${service.enabled ? " active" : ""}`}
             onClick={() => toggleInternalEnabled(index)}
             role="switch"
             aria-checked={service.enabled}
+            aria-labelledby={`int-svc-toggle-label-${index}`}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleInternalEnabled(index); } }}
           />
         </div>
       </div>
       <div className="svc-card-body">
         <div className="form-grid">
           <div className="form-group">
-            <label>Version</label>
-            <select value={service.version} onChange={handleVersionChange}>
+            <label htmlFor={`int-svc-version-${index}`}>Version</label>
+            <select id={`int-svc-version-${index}`} value={service.version} onChange={handleVersionChange}>
               <option value="saturn">Saturn (EDC 0.11+)</option>
               <option value="jupiter">Jupiter (EDC 0.8–0.10)</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Management Path</label>
+            <label htmlFor={`int-svc-mgmt-path-${index}`}>Management Path</label>
             <input
+              id={`int-svc-mgmt-path-${index}`}
               type="text"
               className="mono"
               value={service.management_path}
@@ -106,8 +110,8 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
             placeholder="https://connector.example.com"
           />
           <div className="form-group">
-            <label>Auth Type</label>
-            <select value={service.auth.type} onChange={handleAuthTypeChange}>
+            <label htmlFor={`int-svc-auth-type-${index}`}>Auth Type</label>
+            <select id={`int-svc-auth-type-${index}`} value={service.auth.type} onChange={handleAuthTypeChange}>
               <option value="oauth2">OAuth2</option>
               <option value="api_key">API Key</option>
             </select>
@@ -119,8 +123,9 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
             {service.auth.type === "oauth2" ? (
               <>
                 <div className="form-group full-width">
-                  <label>Token URL</label>
+                  <label htmlFor={`int-svc-token-url-${index}`}>Token URL</label>
                   <input
+                    id={`int-svc-token-url-${index}`}
                     type="text"
                     className="mono"
                     value={service.auth.token_url}
@@ -129,17 +134,19 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
                   />
                 </div>
                 <div className="form-group">
-                  <label>Client ID</label>
+                  <label htmlFor={`int-svc-client-id-${index}`}>Client ID</label>
                   <input
+                    id={`int-svc-client-id-${index}`}
                     type="text"
                     value={service.auth.client_id}
                     onChange={(e) => handleAuthFieldChange("client_id", e.target.value)}
                   />
                 </div>
                 <div className="form-group">
-                  <label>Client Secret</label>
+                  <label htmlFor={`int-svc-client-secret-${index}`}>Client Secret</label>
                   <div className="field-with-toggle">
                     <input
+                      id={`int-svc-client-secret-${index}`}
                       type={showSecret ? "text" : "password"}
                       value={service.auth.client_secret}
                       onChange={(e) => handleAuthFieldChange("client_secret", e.target.value)}
@@ -157,8 +164,9 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
             ) : (
               <>
                 <div className="form-group">
-                  <label>Auth Header</label>
+                  <label htmlFor={`int-svc-auth-header-${index}`}>Auth Header</label>
                   <input
+                    id={`int-svc-auth-header-${index}`}
                     type="text"
                     value={service.auth.auth_header}
                     onChange={(e) => handleAuthFieldChange("auth_header", e.target.value)}
@@ -166,9 +174,10 @@ export function InternalServiceCard({ service, index, variables }: InternalServi
                   />
                 </div>
                 <div className="form-group">
-                  <label>API Key</label>
+                  <label htmlFor={`int-svc-api-key-${index}`}>API Key</label>
                   <div className="field-with-toggle">
                     <input
+                      id={`int-svc-api-key-${index}`}
                       type={showSecret ? "text" : "password"}
                       value={service.auth.api_key}
                       onChange={(e) => handleAuthFieldChange("api_key", e.target.value)}

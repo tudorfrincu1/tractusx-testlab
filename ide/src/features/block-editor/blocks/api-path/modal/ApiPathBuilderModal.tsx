@@ -52,7 +52,6 @@ export function ApiPathBuilderModal({
     initialSegments.length > 0 ? initialSegments.map((s) => ({ ...s })) : [],
   );
   const listRef = useRef<HTMLDivElement>(null);
-  const preview = segmentsToApiPath(segments);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => { listRef.current?.scrollTo(0, listRef.current.scrollHeight); });
@@ -101,8 +100,8 @@ export function ApiPathBuilderModal({
   }, [onClose]);
 
   return (
-    <div className="api-path-modal-overlay" onMouseDown={handleOverlayClick}>
-      <div className="api-path-modal">
+    <div className="api-path-modal-overlay" onMouseDown={handleOverlayClick} role="presentation">
+      <dialog className="api-path-modal" open>
         <div className="api-path-modal-header">
           <span className="api-path-modal-title">Edit API Path</span>
           <button className="api-path-modal-close" onClick={onClose} title="Close">&#x2715;</button>
@@ -111,15 +110,15 @@ export function ApiPathBuilderModal({
         <div className="api-path-modal-preview">{renderPreview(segments)}</div>
 
         <div className="api-path-modal-body">
-          <label className="api-path-modal-label">START FROM TEMPLATE</label>
-          <select className="api-path-modal-template" onChange={handleTemplateChange} defaultValue="">
+          <label className="api-path-modal-label" htmlFor="api-path-template-select">START FROM TEMPLATE</label>
+          <select id="api-path-template-select" className="api-path-modal-template" onChange={handleTemplateChange} defaultValue="">
             <option value="" disabled>Select a template...</option>
             {API_TEMPLATES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
 
           <div className="api-path-modal-segments" ref={listRef}>
             {segments.map((seg, idx) => (
-              <div className="api-path-modal-row" key={idx}>
+              <div className="api-path-modal-row" key={`${seg.type}-${idx}`}>
                 <span className="api-path-modal-slash">/</span>
                 {seg.type === "literal" ? (
                   <input
@@ -164,14 +163,14 @@ export function ApiPathBuilderModal({
           <button className="api-path-modal-btn-cancel" onClick={onClose}>Cancel</button>
           <button className="api-path-modal-btn-apply" onClick={handleApply}>Apply Path</button>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
 
 function renderPreview(segments: ApiPathSegment[]): React.ReactNode {
   if (segments.length === 0) return <span className="api-path-modal-preview-empty">/</span>;
-  return segments.map((s, i) => (<span key={i}>
+  return segments.map((s, i) => (<span key={`${s.type}-${s.value}-${i}`}>
     <span className="api-path-modal-preview-slash">/</span>
     <span className={s.type === "variable" ? "api-path-modal-preview-var" : "api-path-modal-preview-lit"}>
       {s.type === "variable" ? `\${{ env.${s.value} }}` : s.value}</span>

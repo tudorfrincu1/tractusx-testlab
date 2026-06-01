@@ -120,8 +120,8 @@ export const MetadataEditor = memo(function MetadataEditor({ onClose }: Metadata
 
         {/* Variables — kept inline since no shared component exists yet */}
         <div className="metadata-editor__field">
-          <label className="metadata-editor__label">Variables</label>
-          <div className="metadata-editor__var-table">
+          <span className="metadata-editor__label" id="metadata-variables-label">Variables</span>
+          <div className="metadata-editor__var-table" aria-labelledby="metadata-variables-label">
             {Object.entries(variables).map(([key, val]) => (
               <div key={key} className="metadata-editor__var-row">
                 <span className="metadata-editor__var-name">{key}</span>

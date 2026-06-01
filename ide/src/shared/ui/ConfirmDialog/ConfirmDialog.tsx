@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 export interface ConfirmDialogProps {
   title: string;
@@ -41,24 +41,24 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-    },
-    [onCancel],
-  );
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    dialogRef.current?.showModal();
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) onCancel();
+  };
 
   return (
-    <div className="confirm-dialog__overlay" onClick={onCancel}>
-      <div
-        className="confirm-dialog__panel"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <dialog
+      ref={dialogRef}
+      className="confirm-dialog__overlay"
+      onCancel={onCancel}
+      onClick={handleBackdropClick}
+    >
+      <div className="confirm-dialog__panel">
         <h3 className="confirm-dialog__title">{title}</h3>
         <p className="confirm-dialog__message">{message}</p>
         <div className="confirm-dialog__actions">
@@ -76,6 +76,6 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

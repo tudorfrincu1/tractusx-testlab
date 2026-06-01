@@ -53,35 +53,44 @@ function buildPhaseAllowMap(
   catalog: BlockCatalog,
 ): Map<string, Set<PhaseName>> {
   const allowMap = new Map<string, Set<PhaseName>>();
-
-  const categoryToBlockTypes = new Map<string, string[]>();
-  for (const category of catalog) {
-    const types = category.blocks.map((b) => `${STEP_PREFIX}${b.type}`);
-    categoryToBlockTypes.set(category.name, types);
-  }
+  const categoryToBlockTypes = buildCategoryToBlockTypes(catalog);
 
   for (const phase of PHASE_DEFINITIONS) {
     const phaseInput = PHASE_NAME_TO_INPUT[phase.name];
     if (!phaseInput) continue;
-
-    for (const categoryName of phase.categories) {
-      const blockTypes = categoryToBlockTypes.get(categoryName);
-      if (!blockTypes) continue;
-      for (const blockType of blockTypes) {
-        let phases = allowMap.get(blockType);
-        if (!phases) {
-          phases = new Set();
-          allowMap.set(blockType, phases);
-        }
-        phases.add(phaseInput);
-      }
-    }
-
-    // blockGroups are for toolbox display only — not for enforcement
-    // Value/utility blocks are never phase-restricted
+    addPhaseCategoriesToAllowMap(allowMap, phase.categories, categoryToBlockTypes, phaseInput);
   }
 
   return allowMap;
+}
+
+function buildCategoryToBlockTypes(catalog: BlockCatalog): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const category of catalog) {
+    const types = category.blocks.map((b) => `${STEP_PREFIX}${b.type}`);
+    map.set(category.name, types);
+  }
+  return map;
+}
+
+function addPhaseCategoriesToAllowMap(
+  allowMap: Map<string, Set<PhaseName>>,
+  categories: readonly string[],
+  categoryToBlockTypes: Map<string, string[]>,
+  phaseInput: PhaseName,
+): void {
+  for (const categoryName of categories) {
+    const blockTypes = categoryToBlockTypes.get(categoryName);
+    if (!blockTypes) continue;
+    for (const blockType of blockTypes) {
+      let phases = allowMap.get(blockType);
+      if (!phases) {
+        phases = new Set();
+        allowMap.set(blockType, phases);
+      }
+      phases.add(phaseInput);
+    }
+  }
 }
 
 /**

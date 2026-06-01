@@ -178,13 +178,13 @@ interface DropdownItem {
   onClick: () => void;
 }
 
-function DropdownButton({ icon, label, isOpen, onToggle, items }: {
+function DropdownButton({ icon, label, isOpen, onToggle, items }: Readonly<{
   icon: React.ReactNode;
   label: string;
   isOpen: boolean;
   onToggle: () => void;
   items: DropdownItem[];
-}) {
+}>) {
   return (
     <div className="dropdown-button__wrapper">
       {isOpen && (
@@ -224,11 +224,11 @@ function DropdownButton({ icon, label, isOpen, onToggle, items }: {
   );
 }
 
-function ActionButton({ icon, label, onClick }: {
+function ActionButton({ icon, label, onClick }: Readonly<{
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
-}) {
+}>) {
   return (
     <button
       onClick={onClick}

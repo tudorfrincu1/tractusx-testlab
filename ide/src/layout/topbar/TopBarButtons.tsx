@@ -29,12 +29,12 @@ export function ToolbarButton({
   icon,
   onClick,
   active = false,
-}: {
+}: Readonly<{
   label: string;
   icon?: React.ReactNode;
   onClick: () => void;
   active?: boolean;
-}) {
+}>) {
   const activeBackground = `rgba(255, 215, 0, 0.15)`;
   const activeBorder = theme.colors.primary;
   const activeColor = theme.colors.primary;
@@ -74,12 +74,12 @@ export function DropdownItem({
   description,
   icon,
   onClick,
-}: {
+}: Readonly<{
   label: string;
   description: string;
   icon: React.ReactNode;
   onClick: () => void;
-}) {
+}>) {
   return (
     <button
       onClick={onClick}

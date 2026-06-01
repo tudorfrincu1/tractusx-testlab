@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { theme } from "@/shared/theme/tractusxTheme";
 import { useProjectStore } from "@/store/project/useProjectStore";
 import {
@@ -172,9 +172,19 @@ export function SchemaDownloadDialog({ onClose }: SchemaDownloadDialogProps) {
     }
   };
 
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) onClose();
+  };
+
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+    <dialog ref={dialogRef} style={overlayStyle} onCancel={onClose} onClick={handleBackdropClick}>
+      <div style={dialogStyle}>
         <div style={headerStyle}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>
             Download Semantic Schema
@@ -258,7 +268,7 @@ export function SchemaDownloadDialog({ onClose }: SchemaDownloadDialogProps) {
           </span>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

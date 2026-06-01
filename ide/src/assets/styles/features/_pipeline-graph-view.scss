@@ -144,6 +144,10 @@
 }
 
 .stage-item {
+  list-style: none;
+}
+
+.stage-item__button {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -151,13 +155,18 @@
   cursor: pointer;
   transition: background 0.12s ease;
   font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: none;
+  border: none;
+  color: inherit;
+  width: 100%;
+  text-align: left;
 }
 
-.stage-item:hover {
+.stage-item__button:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.stage-item--selected {
+.stage-item--selected .stage-item__button {
   background: rgba(255, 215, 0, 0.08);
   border-left: 2px solid #FFD700;
 }

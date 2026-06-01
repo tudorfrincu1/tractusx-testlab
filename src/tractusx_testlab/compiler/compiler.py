@@ -32,7 +32,7 @@ from typing import Optional
 import yaml
 
 from tractusx_testlab.compiler.packager import Packager
-from tractusx_testlab.compiler.validator import ScriptValidator, ValidationResult
+from tractusx_testlab.compiler.validation.validator import ScriptValidator, ValidationResult
 from tractusx_testlab.models import PackageManifest
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.security.trust.identity import PlayerIdentity
@@ -115,7 +115,7 @@ class Compiler:
         Returns:
             Tuple of (manifest_dict, execution_dict).
         """
-        from tractusx_testlab.compiler.ir_builder import build_ir
+        from tractusx_testlab.compiler.ir.builder import build_ir
 
         if output_path is None:
             output_path = manifest_path.parent / "plain"

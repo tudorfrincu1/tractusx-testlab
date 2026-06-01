@@ -66,7 +66,8 @@ export function TreeRow({
   const paddingLeft = 4 + depth * 12;
 
   return (
-    <div
+    <button
+      type="button"
       className={`pe-row ${isDragOver === "top" ? "pe-drag-over" : ""} ${isDragOver === "bottom" ? "pe-drag-over-bottom" : ""}`}
       draggable={isDraggable}
       style={{
@@ -122,6 +123,6 @@ export function TreeRow({
           {badge}
         </span>
       )}
-    </div>
+    </button>
   );
 }

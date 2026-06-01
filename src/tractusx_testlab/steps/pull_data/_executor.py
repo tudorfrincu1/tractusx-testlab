@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -105,6 +106,9 @@ async def _do_dsp_flow(
     counter_party_address = params.get("counter_party_address", "")
     max_wait = params.get("max_wait", DEFAULT_MAX_WAIT)
     poll_interval = params.get("poll_interval", DEFAULT_POLL_INTERVAL)
+
+    # Yield to event loop before blocking SDK call
+    await asyncio.sleep(0)
 
     endpoint, token = consumer.do_dsp(
         counter_party_id=params.get("counter_party_id", ""),

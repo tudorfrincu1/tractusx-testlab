@@ -119,8 +119,14 @@ export async function fetchSchemas(
   const schemaPathSet = collectSchemaPaths(tc, tests);
 
   const schemaFetches = [...schemaPathSet].map(async (schemaPath) => {
-    const resolved = schemaPath.startsWith("../") ? schemaPath.slice(3)
-      : schemaPath.startsWith("schemas/") ? schemaPath : `schemas/${schemaPath}`;
+    let resolved: string;
+    if (schemaPath.startsWith("../")) {
+      resolved = schemaPath.slice(3);
+    } else if (schemaPath.startsWith("schemas/")) {
+      resolved = schemaPath;
+    } else {
+      resolved = `schemas/${schemaPath}`;
+    }
     const url = `${folderUrl}${resolved}`;
     const r = await fetch(url);
     if (!r.ok) return null;

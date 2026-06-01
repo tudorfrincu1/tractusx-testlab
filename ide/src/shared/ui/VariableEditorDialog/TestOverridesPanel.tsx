@@ -40,7 +40,7 @@ export function TestOverridesPanel() {
     for (const script of tests.values()) {
       for (const key of Object.keys(script.variables ?? {})) names.add(key);
     }
-    return [...names].sort();
+    return [...names].sort((a, b) => a.localeCompare(b));
   }, [tck.variables, tests]);
 
   const updateTestWith = useCallback(

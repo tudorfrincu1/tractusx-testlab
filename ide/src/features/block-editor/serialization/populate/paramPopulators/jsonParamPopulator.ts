@@ -33,7 +33,7 @@ import type { ParamPopulator } from "./paramPopulator.types";
  * formatted JSON plus a truncated preview.
  */
 export const jsonParamPopulator: ParamPopulator = ({ ws, stepBlock, fieldKey, paramValue }) => {
-  if (typeof paramValue === "string" && /^\$\{\{\s*.+?\s*\}\}$/.test(paramValue)) {
+  if (typeof paramValue === "string" && /^\$\{\{\s*[^{}]+?\s*\}\}$/.test(paramValue)) {
     const variableBlock = createValueBlockFromString(ws, paramValue);
     connectValue(stepBlock, fieldKey, variableBlock);
   } else if (typeof paramValue === "object") {

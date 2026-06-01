@@ -32,7 +32,7 @@ from typing import Any
 
 import yaml
 
-from tractusx_testlab.compiler._expressions import resolve_expression
+from tractusx_testlab.compiler.validation._expressions import resolve_expression
 
 
 def build_instructions(
@@ -57,38 +57,49 @@ def build_instructions(
             instruction = _build_instruction(step, global_index, phase, phase_index)
             instructions.append(instruction)
 
-            # Collect step output symbols
-            returns = step.get("returns", {})
-            if phase == "setup":
-                source = "setup_output"
-            elif phase == "teardown":
-                source = "teardown_output"
-            else:
-                source = "step_output"
-            for field_name, field_def in returns.items():
-                step_symbols.append({
-                    "id": step.get("id", ""),
-                    "field": field_name,
-                    "type": field_def.get("type", "string") if isinstance(field_def, dict) else "string",
-                    "class": field_def.get("class", "") if isinstance(field_def, dict) else "",
-                    "produced_by": global_index,
-                    "source": source,
-                })
-
-            # Auto-add "exported" symbol for util/export_env steps
-            if step.get("uses") == "util/export_env" and not returns:
-                step_symbols.append({
-                    "id": step.get("id", ""),
-                    "field": "exported",
-                    "type": "string",
-                    "class": "",
-                    "produced_by": global_index,
-                    "source": source,
-                })
+            source = _source_for_phase(phase)
+            _collect_step_symbols(step, global_index, source, step_symbols)
 
             global_index += 1
 
     return instructions, step_symbols
+
+
+def _source_for_phase(phase: str) -> str:
+    """Map a phase name to the symbol source label."""
+    if phase == "setup":
+        return "setup_output"
+    if phase == "teardown":
+        return "teardown_output"
+    return "step_output"
+
+
+def _collect_step_symbols(
+    step: dict[str, Any], global_index: int, source: str,
+    step_symbols: list[dict[str, Any]],
+) -> None:
+    """Collect output symbols from a step definition."""
+    returns = step.get("returns", {})
+    for field_name, field_def in returns.items():
+        step_symbols.append({
+            "id": step.get("id", ""),
+            "field": field_name,
+            "type": field_def.get("type", "string") if isinstance(field_def, dict) else "string",
+            "class": field_def.get("class", "") if isinstance(field_def, dict) else "",
+            "produced_by": global_index,
+            "source": source,
+        })
+
+    # Auto-add "exported" symbol for util/export_env steps
+    if step.get("uses") == "util/export_env" and not returns:
+        step_symbols.append({
+            "id": step.get("id", ""),
+            "field": "exported",
+            "type": "string",
+            "class": "",
+            "produced_by": global_index,
+            "source": source,
+        })
 
 
 def _build_instruction(
@@ -151,9 +162,18 @@ def build_global_symbols(
     No `produced_by` field — globals are always available.
     """
     symbols: dict[str, Any] = {}
+    _collect_variable_symbols(env_raw.get("variables", {}), symbols)
+    _collect_service_symbols(env_raw.get("services", []), symbols)
+    _collect_simple_symbols(env_raw.get("schemas", {}), "env.schemas", "object", symbols)
+    _collect_simple_symbols(env_raw.get("testdata", {}), "env.testdata", "object", symbols)
+    _collect_precondition_symbols(preconditions_raw, symbols)
+    return symbols
 
-    # env.variables — each gets a "default" field
-    variables = env_raw.get("variables", {})
+
+def _collect_variable_symbols(
+    variables: dict[str, Any], symbols: dict[str, Any],
+) -> None:
+    """Add env.variables to the symbol table."""
     for name, val in variables.items():
         symbols[f"env.{name}"] = {
             "source": "env.variables",
@@ -161,19 +181,17 @@ def build_global_symbols(
             "default": val,
         }
 
-    # env.services
-    services = env_raw.get("services", [])
+
+def _collect_service_symbols(
+    services: list[dict[str, Any]], symbols: dict[str, Any],
+) -> None:
+    """Add env.services to the symbol table."""
     for svc in services:
         svc_name = svc.get("name", "")
         returns = svc.get("returns", {})
         if returns:
             for field_name, field_def in returns.items():
-                entry: dict[str, Any] = {
-                    "source": "env.services",
-                    "type": field_def.get("type", "class") if isinstance(field_def, dict) else "string",
-                }
-                if isinstance(field_def, dict) and "class" in field_def:
-                    entry["class"] = field_def["class"]
+                entry = _build_field_entry(field_def, "env.services", default_type="class")
                 symbols[f"env.services.{svc_name}.{field_name}"] = entry
         else:
             symbols[f"env.services.{svc_name}.service"] = {
@@ -182,33 +200,38 @@ def build_global_symbols(
                 "class": _service_class_from_uses(svc.get("uses", "")),
             }
 
-    # env.schemas
-    schemas = env_raw.get("schemas", {})
-    for name in schemas:
-        symbols[f"env.schemas.{name}"] = {
-            "source": "env.schemas",
-            "type": "object",
+
+def _build_field_entry(field_def: Any, source: str, default_type: str = "string") -> dict[str, Any]:
+    """Build a symbol entry from a field definition."""
+    entry: dict[str, Any] = {
+        "source": source,
+        "type": field_def.get("type", default_type) if isinstance(field_def, dict) else "string",
+    }
+    if isinstance(field_def, dict) and "class" in field_def:
+        entry["class"] = field_def["class"]
+    return entry
+
+
+def _collect_simple_symbols(
+    mapping: dict[str, Any], prefix: str, type_str: str, symbols: dict[str, Any],
+) -> None:
+    """Add schemas or testdata symbols to the symbol table."""
+    for name in mapping:
+        symbols[f"{prefix}.{name}"] = {
+            "source": prefix,
+            "type": type_str,
         }
 
-    # env.testdata
-    testdata = env_raw.get("testdata", {})
-    for name in testdata:
-        symbols[f"env.testdata.{name}"] = {
-            "source": "env.testdata",
-            "type": "object",
-        }
 
-    # env.preconditions
+def _collect_precondition_symbols(
+    preconditions_raw: list[dict[str, Any]], symbols: dict[str, Any],
+) -> None:
+    """Add env.preconditions to the symbol table."""
     for pc in preconditions_raw:
         pc_id = pc.get("id", "")
         returns = pc.get("returns", {})
         for field_name, field_def in returns.items():
-            entry = {
-                "source": "env.preconditions",
-                "type": field_def.get("type", "string") if isinstance(field_def, dict) else "string",
-            }
-            if isinstance(field_def, dict) and "class" in field_def:
-                entry["class"] = field_def["class"]
+            entry = _build_field_entry(field_def, "env.preconditions")
             symbols[f"env.preconditions.{pc_id}.{field_name}"] = entry
 
         # Apply seed mappings to env variables
@@ -217,8 +240,6 @@ def build_global_symbols(
             env_symbol_key = f"env.{env_var}"
             if env_symbol_key in symbols:
                 symbols[env_symbol_key]["seeded_by"] = f"{pc_id}.{returns_key}"
-
-    return symbols
 
 
 def build_test_symbols(step_symbols: list[dict[str, Any]]) -> dict[str, Any]:

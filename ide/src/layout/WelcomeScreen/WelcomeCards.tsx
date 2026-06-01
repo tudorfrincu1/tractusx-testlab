@@ -32,7 +32,7 @@ export interface ActionCardProps {
   isPrimary?: boolean;
 }
 
-export function ActionCard({ icon, title, description, onClick, isPrimary }: ActionCardProps) {
+export function ActionCard({ icon, title, description, onClick, isPrimary }: Readonly<ActionCardProps>) {
   return (
     <button
       onClick={onClick}
@@ -79,7 +79,7 @@ export interface ExampleCardProps {
   onClick: () => void;
 }
 
-export function ExampleCard({ icon, label, description, category, onClick }: ExampleCardProps) {
+export function ExampleCard({ icon, label, description, category, onClick }: Readonly<ExampleCardProps>) {
   return (
     <button
       onClick={onClick}

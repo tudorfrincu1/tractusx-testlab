@@ -42,9 +42,10 @@ import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import { SchemaDownloadDialog } from "@/shared/ui/SchemaDownloadDialog/SchemaDownloadDialog";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { YamlPreviewModal, useRenameInput } from "./ExplorerContextMenuParts";
-import { ContextTarget, ExplorerContextMenuProps } from "./explorerContextMenuTypes";
+import { ExplorerContextMenuProps } from "./explorerContextMenuTypes";
 
-export type { ContextTarget, ExplorerContextMenuProps };
+export type { ContextTarget } from "./explorerContextMenuTypes";
+export type { ExplorerContextMenuProps };
 
 export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<ExplorerContextMenuProps>) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -116,7 +117,7 @@ export function ExplorerContextMenu({ x, y, target, onClose }: Readonly<Explorer
       { label: "Move Up", icon: <ArrowUpwardIcon sx={{ fontSize: 15 }} />, action: () => { reorderTest(target.name, idx - 1); onClose(); }, disabled: idx <= 0 },
       { label: "Move Down", icon: <ArrowDownwardIcon sx={{ fontSize: 15 }} />, action: () => { reorderTest(target.name, idx + 1); onClose(); }, disabled: idx >= testOrder.length - 1 },
       { label: "Export YAML", icon: <FileDownloadIcon sx={{ fontSize: 15 }} />, action: () => { exportFile(target.name, "test"); onClose(); } },
-      { label: "View YAML", icon: <VisibilityIcon sx={{ fontSize: 15 }} />, action: () => { const m = tests.get(target.name); if (m) setYamlPreview(modelToYaml(m)); onClose(); } },
+      { label: "View YAML", icon: <VisibilityIcon sx={{ fontSize: 15 }} />, action: () => { const m = tests.get(target.name); if (m) { setYamlPreview(modelToYaml(m)); } onClose(); } },
     );
   } else if (target.type === "tck") {
     items.push(

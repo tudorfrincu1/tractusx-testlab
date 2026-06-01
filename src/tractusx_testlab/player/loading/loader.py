@@ -124,7 +124,7 @@ class Loader:
         if kind == ScriptKind.TCK:
             definition = build_test_case(data, base_dir=base_dir)
         else:
-            script_def = build_script(data, base_dir=base_dir)
+            script_def = build_script(data)
             definition = TckDefinition.model_construct(
                 name=script_def.name,
                 tests=[script_def],

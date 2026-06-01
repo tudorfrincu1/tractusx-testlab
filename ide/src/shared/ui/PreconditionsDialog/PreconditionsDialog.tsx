@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProjectStore } from "@/store";
 import { PolicySection } from "./PolicySection";
 import { VERSION_SCHEMAS } from "./constraintSchemas";
@@ -74,14 +74,15 @@ export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
   const [accessPolicy, setAccessPolicy] = useState<PolicyState>(() => loadFromPreconditions(existing, "access"));
   const [usagePolicy, setUsagePolicy] = useState<PolicyState>(() => loadFromPreconditions(existing, "usage"));
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    dialogRef.current?.showModal();
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === dialogRef.current) onClose();
+  };
 
   const handleVersionChange = (v: Version) => {
     setVersion(v);
@@ -133,7 +134,12 @@ export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
   const versionSchema = VERSION_SCHEMAS[version];
 
   return (
-    <div className="precond-dialog__overlay" onClick={onClose}>
+    <dialog
+      ref={dialogRef}
+      className="precond-dialog__overlay"
+      onCancel={onClose}
+      onClick={handleBackdropClick}
+    >
       <div className="precond-dialog__panel" onClick={(e) => e.stopPropagation()}>
         <div className="precond-dialog__header">
           <h3 className="precond-dialog__title">Preconditions</h3>
@@ -211,7 +217,7 @@ export function PreconditionsDialog({ onClose }: PreconditionsDialogProps) {
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

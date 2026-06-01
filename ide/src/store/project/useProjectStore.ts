@@ -28,15 +28,15 @@ import { createEmptyTck } from "@/models/schema";
 import { exportProjectZip } from "@/services/project";
 import { buildTckTestsArray } from "../selectors/storeBuilders";
 import { getAggregatedVariables as computeAggregatedVariables } from "../selectors/variableSelectors";
-import type { AggregatedVariable } from "../selectors/variableSelectors";
 import { getTestSummaries as computeTestSummaries } from "../selectors/testSelectors";
-import type { TestSummary } from "../selectors/testSelectors";
 import { saveProjectToLocalStorage, loadProjectFromLocalStorage, loadDocumentIntoStore } from "./persistence";
-import type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "../store.types";
+import type { ProjectState } from "../store.types";
 import { createTestActions } from "./projectTestActions";
 import { createAssetActions } from "./projectAssetActions";
 
-export type { AggregatedVariable, TestSummary, ActiveFile, SchemaFile, TestdataFile, ProjectState };
+export type { AggregatedVariable } from "../selectors/variableSelectors";
+export type { TestSummary } from "../selectors/testSelectors";
+export type { ActiveFile, SchemaFile, TestdataFile, ProjectState } from "../store.types";
 
 const INDEX_FILE = "index";
 
@@ -68,8 +68,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
   workspaceStates: {},
   lastSavedAt: null,
 
-  createProject: (name) => {
-    const projectName = name ?? "new-tck";
+  createProject: (name = "new-tck") => {
+    const projectName = name;
     const tc = createEmptyTck();
     tc.name = projectName;
     set({
@@ -127,7 +127,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         const filename = key.endsWith(ext) || ext === "" ? key : `${key}${ext}`;
         tdEnv[key] = { file: `testdata/${filename}`, type: entry.type };
       }
-      return { ...tck, env: { ...(tck.env ?? {}), testdata: tdEnv } };
+      return { ...tck, env: { ...tck.env, testdata: tdEnv } };
     }
     if (activeFile.type === "test") return tests.get(activeFile.name) ?? null;
     return null;
@@ -146,7 +146,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     get().saveToLocalStorage();
   },
   exportZip: async () => {
-    window.dispatchEvent(new Event("testlab:force-sync"));
+    globalThis.dispatchEvent(new Event("testlab:force-sync"));
     return exportProjectZip(get().projectName, get().tck, get().tests, get().schemas, get().testdata, get().testOrder);
   },
 

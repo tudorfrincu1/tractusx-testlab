@@ -26,7 +26,7 @@
 
 from tractusx_testlab.compiler.compiler import Compiler
 from tractusx_testlab.compiler.packager import Packager
-from tractusx_testlab.compiler.validator import ScriptValidator
+from tractusx_testlab.compiler.validation.validator import ScriptValidator
 from tractusx_testlab.config.loader import ConfigLoader
 from tractusx_testlab.config.settings import TestlabConfig
 from tractusx_testlab.player.execution.context import StepContext

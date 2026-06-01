@@ -31,6 +31,12 @@ import { useExecutionStore } from "@/store";
 import { useNotificationStore } from "@/store";
 import type { NotificationSeverity } from "@/store";
 
+function getNotificationIcon(severity: NotificationSeverity) {
+  if (severity === "error") return <ErrorOutlined sx={{ fontSize: 15 }} />;
+  if (severity === "warning") return <WarningAmberOutlined sx={{ fontSize: 15 }} />;
+  return <CheckCircleOutlined sx={{ fontSize: 15 }} />;
+}
+
 /** Auto-dismiss delay for success messages (ms). */
 const SUCCESS_AUTO_DISMISS_MS = 5_000;
 
@@ -96,10 +102,7 @@ export function NotificationBar() {
 
   const barClass = `notification-bar notification-bar--${current.severity}`;
 
-  const icon =
-    current.severity === "error" ? <ErrorOutlined sx={{ fontSize: 15 }} />
-    : current.severity === "warning" ? <WarningAmberOutlined sx={{ fontSize: 15 }} />
-    : <CheckCircleOutlined sx={{ fontSize: 15 }} />;
+  const icon = getNotificationIcon(current.severity);
 
   return (
     <div className={barClass} role="alert">

@@ -40,7 +40,7 @@ interface ExportDialogProps {
   onClose: () => void;
 }
 
-export function ExportDialog({ onClose }: ExportDialogProps) {
+export function ExportDialog({ onClose }: Readonly<ExportDialogProps>) {
   const projectName = useProjectStore((s) => s.projectName);
   const tck = useProjectStore((s) => s.tck);
   const tests = useProjectStore((s) => s.tests);
@@ -89,16 +89,20 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
   };
 
   return (
-    <div
+    <dialog
       className="export-dialog__overlay"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
+      open
       aria-label="Export project"
     >
-      <div
+      <button
+        type="button"
+        className="export-dialog__backdrop"
+        aria-label="Close export dialog"
+        onClick={onClose}
+        onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+      />
+      <section
         className="export-dialog__panel"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="export-dialog__header">
@@ -168,7 +172,7 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
         {/* Footer */}
         <div className="export-dialog__footer">
           <span className="export-dialog__footer-info">
-            {fileTree.length} file{fileTree.length !== 1 ? "s" : ""} •{" "}
+            {fileTree.length} file{fileTree.length === 1 ? "" : "s"} •{" "}
             {formatSize(fileTree.reduce((sum, f) => sum + f.size, 0))}
           </span>
           <div className="export-dialog__footer-actions">
@@ -180,8 +184,8 @@ export function ExportDialog({ onClose }: ExportDialogProps) {
             />
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </dialog>
   );
 }
 

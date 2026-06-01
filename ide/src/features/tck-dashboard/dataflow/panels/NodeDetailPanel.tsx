@@ -42,7 +42,7 @@ const STATUS_LABELS: Record<PipelineStageStatus, string> = {
 export const NodeDetailPanel = memo(function NodeDetailPanel({
   data,
   onClose,
-}: NodeDetailPanelProps) {
+}: Readonly<NodeDetailPanelProps>) {
   const progressLabel = `${data.completedSteps}/${data.stepCount} steps · ${STATUS_LABELS[data.status]}`;
 
   return (
@@ -91,7 +91,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
           {data.stepNames.map((name, i) => {
             const stepStatus = resolveStepStatus(i, data);
             return (
-              <li key={i} className="node-detail-panel__step-item">
+              <li key={`${i}-${name}`} className="node-detail-panel__step-item">
                 <span className="node-detail-panel__step-number">{i + 1}.</span>
                 <span className="node-detail-panel__step-name">{name}</span>
                 <span className={`node-detail-panel__step-dot node-detail-panel__step-dot--${stepStatus}`} />
@@ -118,7 +118,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function DetailSection({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <div className="node-detail-panel__section">
       <div className="node-detail-panel__section-title">{title}</div>

@@ -27,6 +27,13 @@ import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputCompone
 import { useExecutionStore } from "../../../store/execution/useExecutionStore";
 import { isValidBackendUrl } from "../../../store/execution/executionApi";
 
+function resolveDotClass(isConnected: boolean, isError: boolean, isConnecting: boolean): string {
+  if (isConnected) return "backend-status-dot--connected";
+  if (isError) return "backend-status-dot--error";
+  if (isConnecting) return "backend-status-dot--connecting";
+  return "backend-status-dot--disconnected";
+}
+
 /**
  * Gear/plug icon button with a popover for configuring the backend URL.
  * Supports connecting, connected, error, and disconnected states.
@@ -95,13 +102,7 @@ export function BackendSettings() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [isOpen]);
 
-  const dotClass = isConnected
-    ? "backend-status-dot--connected"
-    : isError
-      ? "backend-status-dot--error"
-      : isConnecting
-        ? "backend-status-dot--connecting"
-        : "backend-status-dot--disconnected";
+  const dotClass = resolveDotClass(isConnected, isError, isConnecting);
 
   return (
     <div className="backend-popover-anchor" ref={anchorRef}>
@@ -162,7 +163,7 @@ export function BackendSettings() {
               {isConnecting && (
                 <>
                   <span className="backend-popover__spinner" />
-                  Connecting…
+                  {" "}Connecting…
                 </>
               )}
               {isConnected && `Connected to ${backendUrl}`}

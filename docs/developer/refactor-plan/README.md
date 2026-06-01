@@ -205,16 +205,16 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | Split `steps/connector/consume.py` → `_dsp_consumer` + `catalog_query` + `dsp/negotiate` + `dsp/transfer`; `consume.py` → barrel | ✅ |
-| 2 | Dedup `player/execution/_phase_runners.py` → `execution/phases/` (one `_run_phase` driver + setup/main/teardown wrappers) | ⬜ |
-| 3 | Isolate `steps/conditions.py` grammar → `_condition_parsing.py`; `conditions.py` orchestration only | ⬜ |
-| 4 | Dedupe `steps/precondition/policy_config.py` → `_policy_builders.py` (Jupiter/Saturn ODRL) | ⬜ |
-| 5 | Nest `steps/_checks.py` → `steps/_checks/` (status · equality · json_path · extraction) | ⬜ |
-| 6 | Nest `compiler/` → `compiler/ir/` + `compiler/validation/` | ⬜ |
-| 7 | Split `services/manager.py` → `_factory.py` (creation) + `manager.py` (lifecycle) | ⬜ |
-| 8 | Nest `server/` → `server/routes/` + `server/streaming/` | ⬜ |
-| 9 | Extract `player/execution/player.py` trace formatting → `_trace_formatter.py` | ⬜ |
-| 10 | Watch-list guard — record near-limit files in repo memory (no moves) | ⬜ |
-| 11 | Conditional `models/` nesting (`enums/`, `results/`) — only if families separate cleanly | ⬜ |
+| 2 | Dedup `player/execution/_phase_runners.py` → `execution/phases/` (one `_run_phase` driver + setup/main/teardown wrappers) | ✅ |
+| 3 | Isolate `steps/conditions.py` grammar → `_condition_parsing.py`; `conditions.py` orchestration only | ✅ |
+| 4 | Dedupe `steps/precondition/policy_config.py` → `_policy_builders.py` (Jupiter/Saturn ODRL) | ✅ |
+| 5 | Nest `steps/_checks.py` → `steps/_checks/` (status · equality · json_path · extraction) | ✅ |
+| 6 | Nest `compiler/` → `compiler/ir/` + `compiler/validation/` | ✅ |
+| 7 | Split `services/manager.py` → `_factory.py` (creation) + `manager.py` (lifecycle) | ✅ |
+| 8 | Nest `server/` → `server/routes/` + `server/streaming/` | ✅ |
+| 9 | Extract `player/execution/player.py` trace formatting → `_trace_formatter.py` | ✅ |
+| 10 | Watch-list guard — record near-limit files in repo memory (no moves) | ✅ |
+| 11 | Conditional `models/` nesting (`enums/`, `results/`) — guardrail: cohesive, no split needed | ✅ |
 
 > Phase 1 splits today's at-limit file. Phases 2–9 carry the deep modularization
 > across the backend — mixed-concern files and flat packages (steps · compiler ·

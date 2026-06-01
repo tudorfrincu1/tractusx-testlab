@@ -23,7 +23,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 // It was reviewed and tested by a human committer.
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { PreconditionDefinition } from "@/models/schema";
 import { POLICY_TEMPLATES } from "../rules/templatePolicies";
 
@@ -33,23 +33,34 @@ export interface AddPreconditionModalProps {
 }
 
 export function AddPreconditionModal({ onAdd, onClose }: Readonly<AddPreconditionModalProps>) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }, []);
+
+  const handleCancel = () => {
+    onClose();
+  };
 
   return (
-    <div className="preconditions-modal-overlay" onClick={onClose} onKeyDown={(e) => e.key === "Escape" && onClose()} role="dialog" aria-modal="true">
-      <div className="preconditions-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+    <dialog
+      ref={dialogRef}
+      className="preconditions-modal-overlay"
+      onCancel={handleCancel}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="preconditions-modal">
         <h3>Add Precondition</h3>
         <p className="preconditions-modal__subtitle">Choose a template to get started quickly, or start blank.</p>
         <div className="preconditions-modal__options">
           {POLICY_TEMPLATES.map((tpl) => (
             <button
               key={tpl.id}
+              type="button"
               className="preconditions-modal__option"
               onClick={() => onAdd(tpl.create())}
             >
@@ -63,10 +74,10 @@ export function AddPreconditionModal({ onAdd, onClose }: Readonly<AddPreconditio
             </button>
           ))}
         </div>
-        <button className="preconditions-modal__cancel" onClick={onClose}>
+        <button type="button" className="preconditions-modal__cancel" onClick={onClose}>
           Cancel
         </button>
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -56,11 +56,11 @@ export class AppErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private handleTryAgain = () => {
+  private readonly handleTryAgain = () => {
     this.setState({ hasError: false, errorMessage: "" });
   };
 
-  private handleReload = () => {
+  private readonly handleReload = () => {
     window.location.reload();
   };
 

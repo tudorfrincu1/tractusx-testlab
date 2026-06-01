@@ -39,6 +39,32 @@ def topological_sort(scripts: list["TestScript"]) -> list["TestScript"]:
     Scripts without dependencies retain their original relative order.
     Raises ``ValueError`` if a cycle is detected.
     """
+    by_name, in_degree, dependents = _build_dependency_graph(scripts)
+
+    queue: deque[str] = deque()
+    for script in scripts:
+        if in_degree[script.name] == 0:
+            queue.append(script.name)
+
+    ordered: list["TestScript"] = []
+    while queue:
+        name = queue.popleft()
+        ordered.append(by_name[name])
+        for dep_name in dependents[name]:
+            in_degree[dep_name] -= 1
+            if in_degree[dep_name] == 0:
+                queue.append(dep_name)
+
+    if len(ordered) != len(scripts):
+        _raise_cycle_error(scripts, ordered)
+
+    return ordered
+
+
+def _build_dependency_graph(
+    scripts: list["TestScript"],
+) -> tuple[dict[str, "TestScript"], dict[str, int], dict[str, list[str]]]:
+    """Build name lookup, in-degree counts, and dependents adjacency list."""
     by_name: dict[str, "TestScript"] = {}
     in_degree: dict[str, int] = defaultdict(int)
     dependents: dict[str, list[str]] = defaultdict(list)
@@ -57,25 +83,15 @@ def topological_sort(scripts: list["TestScript"]) -> list["TestScript"]:
             in_degree[script.name] += 1
             dependents[dep].append(script.name)
 
-    queue: deque[str] = deque()
-    for script in scripts:
-        if in_degree[script.name] == 0:
-            queue.append(script.name)
+    return by_name, in_degree, dependents
 
-    ordered: list["TestScript"] = []
-    while queue:
-        name = queue.popleft()
-        ordered.append(by_name[name])
-        for dep_name in dependents[name]:
-            in_degree[dep_name] -= 1
-            if in_degree[dep_name] == 0:
-                queue.append(dep_name)
 
-    if len(ordered) != len(scripts):
-        sorted_names = {script.name for script in ordered}
-        cycle_names = [script.name for script in scripts if script.name not in sorted_names]
-        raise ValueError(
-            f"Dependency cycle detected among tests: {', '.join(cycle_names)}"
-        )
-
-    return ordered
+def _raise_cycle_error(
+    scripts: list["TestScript"], ordered: list["TestScript"],
+) -> None:
+    """Raise a descriptive error when a dependency cycle is detected."""
+    sorted_names = {script.name for script in ordered}
+    cycle_names = [script.name for script in scripts if script.name not in sorted_names]
+    raise ValueError(
+        f"Dependency cycle detected among tests: {', '.join(cycle_names)}"
+    )

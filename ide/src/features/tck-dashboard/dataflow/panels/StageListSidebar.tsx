@@ -90,15 +90,17 @@ const StageItem = memo(function StageItem({
   const selectedClass = isSelected ? "stage-item--selected" : "";
 
   return (
-    <li className={`stage-item ${statusClass} ${selectedClass}`} onClick={handleClick}>
-      <span className="stage-item__icon">{STATUS_ICONS[status]}</span>
-      <div className="stage-item__info">
-        <span className="stage-item__name">{index + 1}. {node.name}</span>
-        <span className="stage-item__meta">
-          {node.stepCount} step{node.stepCount !== 1 ? "s" : ""}
-          {node.services.length > 0 && ` · ${node.services[0]}`}
-        </span>
-      </div>
+    <li className={`stage-item ${statusClass} ${selectedClass}`}>
+      <button type="button" className="stage-item__button" onClick={handleClick}>
+        <span className="stage-item__icon">{STATUS_ICONS[status]}</span>
+        <div className="stage-item__info">
+          <span className="stage-item__name">{index + 1}. {node.name}</span>
+          <span className="stage-item__meta">
+            {node.stepCount} step{node.stepCount === 1 ? "" : "s"}
+            {node.services.length > 0 && ` · ${node.services[0]}`}
+          </span>
+        </div>
+      </button>
     </li>
   );
 });

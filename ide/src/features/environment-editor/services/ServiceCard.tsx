@@ -76,7 +76,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
   return (
     <div className="svc-card">
       <div className="svc-card-header">
-        <div className="svc-card-title" onClick={() => setIsExpanded(!isExpanded)}>
+        <button type="button" className="svc-card-title" onClick={() => setIsExpanded(!isExpanded)}>
           <span className="svc-collapse-icon">{isExpanded ? "▼" : "▶"}</span>
           <input
             type="text"
@@ -86,7 +86,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
             onClick={(e) => e.stopPropagation()}
           />
           <span className="svc-uses-badge">{service.uses}</span>
-        </div>
+        </button>
         <button type="button" className="svc-remove-btn" onClick={() => removeService(service.name)}>
           ×
         </button>

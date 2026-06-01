@@ -43,10 +43,10 @@ export function ServicesSection() {
 
   return (
     <div className="section">
-      <div className="section-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+      <button type="button" className="section-header" onClick={() => setIsCollapsed(!isCollapsed)}>
         <span>{isCollapsed ? "▶" : "▼"} Services</span>
         <span className="count-badge">{services.length}</span>
-      </div>
+      </button>
 
       {!isCollapsed && (
         <div className="services-list">

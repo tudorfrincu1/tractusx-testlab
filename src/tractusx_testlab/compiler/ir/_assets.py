@@ -30,7 +30,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from tractusx_testlab.compiler._ir_helpers import (
+from tractusx_testlab.compiler.ir._helpers import (
     compute_source_hash,
     infer_testdata_type,
 )

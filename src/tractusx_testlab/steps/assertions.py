@@ -38,7 +38,7 @@ from tractusx_testlab.models import (
 from tractusx_testlab.models.definitions import Assertion
 from tractusx_testlab.models.enums import AssertionType
 from tractusx_testlab.steps import _checks
-from tractusx_testlab.steps._path_extraction import (
+from tractusx_testlab.steps._checks.extraction import (
     extract_path,
     _traverse_dict,
     _dict_get,
@@ -71,7 +71,7 @@ class AssertionEngine:
         context_vars: dict[str, object],
     ) -> AssertionResult:
         if assertion.type == AssertionType.JSON_PATH_EXTRACT:
-            from tractusx_testlab.steps._json_path_validation import (
+            from tractusx_testlab.steps._checks.json_path import (
                 evaluate_json_path_extract,
             )
             return evaluate_json_path_extract(

@@ -102,6 +102,7 @@ function SchemaTreeNode({
       <div
         className={`schema-tree-row${isLeaf ? " schema-tree-leaf" : ""}${isSelected ? " schema-tree-selected" : ""} schema-tree-depth-${Math.min(depth, 6)}`}
         role="treeitem"
+        aria-selected={isSelected}
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}

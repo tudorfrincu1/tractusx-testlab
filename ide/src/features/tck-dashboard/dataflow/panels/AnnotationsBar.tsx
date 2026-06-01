@@ -94,7 +94,8 @@ const AnnotationItem = memo(function AnnotationItem({
   const icon = SEVERITY_ICONS[annotation.severity ?? "warning"];
 
   return (
-    <li className="annotations-bar__item" onClick={handleClick}>
+    <li className="annotations-bar__item">
+      <button type="button" className="annotations-bar__item-btn" onClick={handleClick}>
       <span className={`annotations-bar__severity annotations-bar__severity--${annotation.severity ?? "warning"}`}>
         {icon}
       </span>
@@ -103,6 +104,7 @@ const AnnotationItem = memo(function AnnotationItem({
         <span className="annotations-bar__step">· {annotation.step}</span>
       )}
       <span className="annotations-bar__message">{annotation.message}</span>
+      </button>
     </li>
   );
 });

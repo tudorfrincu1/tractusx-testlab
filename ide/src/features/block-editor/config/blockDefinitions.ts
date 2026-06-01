@@ -30,7 +30,6 @@
 
 import type * as BlocklyType from "blockly";
 import {
-  loadBlockCatalog,
   type BlockCatalog,
   registerStructuralBlocks,
   registerValueBlocks,
@@ -43,16 +42,13 @@ import {
   registerAuthBlocks,
   registerFilterExpressionBlock,
 } from "../blocks";
-import { buildToolbox } from "../toolbox/toolboxBuilder";
 import { patchBubbleColours } from "../fields/wrappedText";
-import { workspaceToModel } from "../serialization/serialize";
-import { populateWorkspaceFromModel, cleanupOrphanBlocks } from "../serialization/populate/modelToWorkspace";
-import { collectWorkspaceVariables, collectCategorizedVariables } from "../blocks";
-import type { CategorizedVariables } from "../blocks";
 
-export type { BlockCatalog, CategorizedVariables };
-
-export { loadBlockCatalog, buildToolbox, workspaceToModel, populateWorkspaceFromModel, collectWorkspaceVariables, collectCategorizedVariables, cleanupOrphanBlocks };
+export type { BlockCatalog, CategorizedVariables } from "../blocks";
+export { loadBlockCatalog, collectWorkspaceVariables, collectCategorizedVariables } from "../blocks";
+export { buildToolbox } from "../toolbox/toolboxBuilder";
+export { workspaceToModel } from "../serialization/serialize";
+export { populateWorkspaceFromModel, cleanupOrphanBlocks } from "../serialization/populate/modelToWorkspace";
 
 /** Register all block types from the modular sub-modules. */
 export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalog): void {

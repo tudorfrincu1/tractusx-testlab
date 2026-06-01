@@ -58,7 +58,7 @@ export function PreconditionsList({
   searchQuery,
   onSearchChange,
   onSelect,
-}: PreconditionsListProps) {
+}: Readonly<PreconditionsListProps>) {
   const filtered = useMemo(() => {
     if (!searchQuery) return preconditions.map((p, i) => ({ def: p, index: i }));
     const q = searchQuery.toLowerCase();
@@ -102,7 +102,8 @@ export function PreconditionsList({
                 {meta.label} ({items.length})
               </div>
               {items.map(({ def, index }) => (
-                <div
+                <button
+                  type="button"
                   key={index}
                   className={`preconditions-list__item ${index === activeIndex ? "preconditions-list__item--active" : ""}`}
                   onClick={() => onSelect(index)}
@@ -123,7 +124,7 @@ export function PreconditionsList({
                       </span>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           );

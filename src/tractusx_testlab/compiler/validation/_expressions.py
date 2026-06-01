@@ -29,8 +29,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-_EXPR_PATTERN = re.compile(r"\$\{\{\s*(.+?)\s*\}\}")
-_FULL_EXPR_PATTERN = re.compile(r"^\$\{\{\s*(.+?)\s*\}\}$")
+_EXPR_PATTERN = re.compile(r"\$\{\{((?:[^}]|\}(?!\}))+)\}\}")
+_FULL_EXPR_PATTERN = re.compile(r"^\$\{\{((?:[^}]|\}(?!\}))+)\}\}$")
 
 
 def resolve_expression(value: Any) -> Any:

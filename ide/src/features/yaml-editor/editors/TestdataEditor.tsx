@@ -92,6 +92,152 @@ function updateVariableHighlights(
   variableRangesCache = getVariableRanges(model, monacoRef);
 }
 
+function handleVariableKeyDown(
+  e: { browserEvent: { key: string }; preventDefault: () => void; stopPropagation: () => void },
+  editor: monaco.editor.IStandaloneCodeEditor,
+  suppressRef: { current: boolean },
+): void {
+  if (isNavigationOrModifierKey(e)) return;
+  const position = editor.getPosition();
+  if (!position) return;
+  const key = e.browserEvent.key;
+  const inside = isInsideVariable(position, variableRangesCache);
+
+  if (!inside) {
+    handleKeyOutsideVariable(e, editor, suppressRef, position, key);
+    return;
+  }
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (key === "Backspace" || key === "Delete") {
+    const varRange = getVariableRangeAt(position, variableRangesCache);
+    if (varRange) {
+      suppressRef.current = true;
+      editor.executeEdits("variable-delete", [{ range: varRange, text: "" }]);
+    }
+  }
+}
+
+function handleKeyOutsideVariable(
+  e: { preventDefault: () => void; stopPropagation: () => void },
+  editor: monaco.editor.IStandaloneCodeEditor,
+  suppressRef: { current: boolean },
+  position: monaco.IPosition,
+  key: string,
+): void {
+  let varRange: monaco.IRange | null = null;
+  if (key === "Backspace") {
+    varRange = getVariableEndingAt(position, variableRangesCache);
+  } else if (key === "Delete") {
+    varRange = getVariableStartingAt(position, variableRangesCache);
+  }
+  if (varRange) { deleteVariable(e, editor, suppressRef, varRange); }
+}
+
+function deleteVariable(
+  e: { preventDefault: () => void; stopPropagation: () => void },
+  editor: monaco.editor.IStandaloneCodeEditor,
+  suppressRef: { current: boolean },
+  range: monaco.IRange,
+): void {
+  e.preventDefault();
+  e.stopPropagation();
+  suppressRef.current = true;
+  editor.executeEdits("variable-delete", [{ range, text: "" }]);
+}
+
+function handleCursorPositionChange(
+  e: { position: monaco.IPosition; source: string },
+  editor: monaco.editor.IStandaloneCodeEditor,
+  suppressRef: { current: boolean },
+  isInsideVariableKey: { set: (v: boolean) => void },
+): void {
+  if (suppressRef.current) {
+    suppressRef.current = false;
+    return;
+  }
+  const varRange = getVariableRangeAt(e.position, variableRangesCache);
+  isInsideVariableKey.set(!!varRange);
+  if (e.source === "mouse" || e.source === "keyboard") {
+    if (varRange) {
+      editor.setSelection(varRange as monaco.IRange & monaco.Selection);
+    }
+  }
+}
+
+function registerEditorActions(editor: monaco.editor.IStandaloneCodeEditor): void {
+  editor.addAction({
+    id: 'testdata.insertVariable',
+    label: 'Insert Variable',
+    contextMenuGroupId: 'modification',
+    contextMenuOrder: 1,
+    run: () => { if (openVariablePickerCallback) openVariablePickerCallback(); },
+  });
+  editor.addAction({
+    id: 'testdata.deleteVariable',
+    label: 'Delete Variable',
+    contextMenuGroupId: 'modification',
+    contextMenuOrder: 2,
+    precondition: 'isInsideVariable',
+    run: (ed) => {
+      const pos = ed.getPosition();
+      if (!pos) return;
+      const range = getVariableRangeAt(pos, variableRangesCache);
+      if (range) ed.executeEdits('variable-delete', [{ range, text: '' }]);
+    },
+  });
+}
+
+function defineTestdataTheme(monacoInstance: typeof monaco): void {
+  monacoInstance.editor.defineTheme("tractus-x-dark", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "comment", foreground: "6A9955" },
+      { token: "keyword", foreground: "FFD700" },
+      { token: "string", foreground: "CE9178" },
+      { token: "number", foreground: "B5CEA8" },
+      { token: "type", foreground: "4EC9B0" },
+    ],
+    colors: {
+      "editor.background": theme.colors.bgLighter,
+      "editor.foreground": theme.colors.text,
+      "editor.lineHighlightBackground": "#2a2a2a",
+      "editorLineNumber.foreground": "#555555",
+      "editorCursor.foreground": theme.colors.primary,
+      "editor.selectionBackground": "#264f78",
+      "editorIndentGuide.background": "#404040",
+      "editorBracketMatch.background": "#0064001a",
+      "editorBracketMatch.border": theme.colors.primary,
+    },
+  });
+  monacoInstance.editor.setTheme("tractus-x-dark");
+}
+
+function setupEditorListeners(editor: monaco.editor.IStandaloneCodeEditor, monacoInstance: typeof monaco): void {
+  editor.onDidChangeModelContent(() => {
+    updateVariableHighlights(editor, monacoInstance);
+  });
+
+  let suppressCursorSelect = false;
+  const suppressRef = { get current() { return suppressCursorSelect; }, set current(v: boolean) { suppressCursorSelect = v; } };
+
+  editor.onKeyDown((e) => {
+    handleVariableKeyDown(e, editor, suppressRef);
+  });
+
+  const isInsideVariableKey = editor.createContextKey('isInsideVariable', false);
+
+  editor.onDidChangeCursorPosition((e) => {
+    handleCursorPositionChange(e, editor, suppressRef, isInsideVariableKey);
+  });
+
+  editor.onDidPaste(() => {
+    updateVariableHighlights(editor, monacoInstance);
+  });
+}
+
 export function TestdataEditor() {
   const activeFile = useProjectStore((s) => s.activeFile);
   const testdata = useProjectStore((s) => s.testdata);
@@ -107,140 +253,9 @@ export function TestdataEditor() {
     monacoRef.current = monacoInstance;
     decorationsCollection = editor.createDecorationsCollection();
     editor.onDidDispose(() => { editorInstance = null; decorationsCollection = null; variableRangesCache = []; });
-
-    // Highlight variables on content change
-    editor.onDidChangeModelContent(() => {
-      updateVariableHighlights(editor, monacoInstance);
-    });
-
-    // --- Variable edit protection ---
-    let suppressCursorSelect = false;
-
-    editor.onKeyDown((e) => {
-      if (isNavigationOrModifierKey(e)) return;
-
-      const position = editor.getPosition();
-      if (!position) return;
-
-      const key = e.browserEvent.key;
-
-      // Backspace at boundary: cursor right after a variable
-      if (key === "Backspace" && !isInsideVariable(position, variableRangesCache)) {
-        const varRange = getVariableEndingAt(position, variableRangesCache);
-        if (varRange) {
-          e.preventDefault();
-          e.stopPropagation();
-          suppressCursorSelect = true;
-          editor.executeEdits("variable-delete", [{ range: varRange, text: "" }]);
-          return;
-        }
-      }
-
-      // Delete at boundary: cursor right before a variable
-      if (key === "Delete" && !isInsideVariable(position, variableRangesCache)) {
-        const varRange = getVariableStartingAt(position, variableRangesCache);
-        if (varRange) {
-          e.preventDefault();
-          e.stopPropagation();
-          suppressCursorSelect = true;
-          editor.executeEdits("variable-delete", [{ range: varRange, text: "" }]);
-          return;
-        }
-      }
-
-      // Inside a variable: Backspace/Delete = delete whole variable, else block
-      if (isInsideVariable(position, variableRangesCache)) {
-        const varRange = getVariableRangeAt(position, variableRangesCache);
-        if (key === "Backspace" || key === "Delete") {
-          e.preventDefault();
-          e.stopPropagation();
-          if (varRange) {
-            suppressCursorSelect = true;
-            editor.executeEdits("variable-delete", [{ range: varRange, text: "" }]);
-          }
-        } else {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }
-    });
-
-    // Context key for conditional context menu actions
-    const isInsideVariableKey = editor.createContextKey('isInsideVariable', false);
-
-    // Click inside a variable selects the entire variable
-    editor.onDidChangeCursorPosition((e) => {
-      if (suppressCursorSelect) {
-        suppressCursorSelect = false;
-        return;
-      }
-      const varRange = getVariableRangeAt(e.position, variableRangesCache);
-      isInsideVariableKey.set(!!varRange);
-      if (e.source === "mouse" || e.source === "keyboard") {
-        if (varRange) {
-          editor.setSelection(varRange as monaco.IRange & monaco.Selection);
-        }
-      }
-    });
-
-    // --- Context menu actions ---
-    editor.addAction({
-      id: 'testdata.insertVariable',
-      label: 'Insert Variable',
-      contextMenuGroupId: 'modification',
-      contextMenuOrder: 1,
-      run: () => {
-        if (openVariablePickerCallback) openVariablePickerCallback();
-      },
-    });
-
-    editor.addAction({
-      id: 'testdata.deleteVariable',
-      label: 'Delete Variable',
-      contextMenuGroupId: 'modification',
-      contextMenuOrder: 2,
-      precondition: 'isInsideVariable',
-      run: (ed) => {
-        const pos = ed.getPosition();
-        if (!pos) return;
-        const range = getVariableRangeAt(pos, variableRangesCache);
-        if (range) {
-          ed.executeEdits('variable-delete', [{ range, text: '' }]);
-        }
-      },
-    });
-
-    // Paste protection: block paste if cursor is inside a variable without full selection
-    editor.onDidPaste(() => {
-      // After paste, recompute ranges (content already changed)
-      updateVariableHighlights(editor, monacoInstance);
-    });
-
-    monacoInstance.editor.defineTheme("tractus-x-dark", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [
-        { token: "comment", foreground: "6A9955" },
-        { token: "keyword", foreground: "FFD700" },
-        { token: "string", foreground: "CE9178" },
-        { token: "number", foreground: "B5CEA8" },
-        { token: "type", foreground: "4EC9B0" },
-      ],
-      colors: {
-        "editor.background": theme.colors.bgLighter,
-        "editor.foreground": theme.colors.text,
-        "editor.lineHighlightBackground": "#2a2a2a",
-        "editorLineNumber.foreground": "#555555",
-        "editorCursor.foreground": theme.colors.primary,
-        "editor.selectionBackground": "#264f78",
-        "editorIndentGuide.background": "#404040",
-        "editorBracketMatch.background": "#0064001a",
-        "editorBracketMatch.border": theme.colors.primary,
-      },
-    });
-    monacoInstance.editor.setTheme("tractus-x-dark");
-
-    // Initial highlight pass
+    setupEditorListeners(editor, monacoInstance);
+    registerEditorActions(editor);
+    defineTestdataTheme(monacoInstance);
     updateVariableHighlights(editor, monacoInstance);
   };
 

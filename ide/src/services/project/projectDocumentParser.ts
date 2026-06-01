@@ -58,70 +58,91 @@ export function parseTestLabDocument(
   currentGeneration?: number,
 ): ParsedProjectData | null {
   if (isTck(doc)) {
-    const tc = doc;
-    const projectName = name ?? tc.name ?? "Untitled";
-    const testsMap = new Map<string, ScriptDefinition>();
-    const order: string[] = [];
-
-    for (const entry of tc.tests) {
-      if (typeof entry === "object" && entry !== null && "kind" in entry && entry.kind === ScriptKind.TEST) {
-        const script = entry as ScriptDefinition;
-        testsMap.set(script.name, script);
-        order.push(script.name);
-      } else if (isTestRef(entry)) {
-        const testName = entry.test;
-        order.push(testName);
-        if (!testsMap.has(testName)) {
-          const empty = createEmptyTest();
-          empty.name = testName;
-          testsMap.set(testName, empty);
-        }
-      } else if (typeof entry === "string") {
-        const path = entry.replace(/^!include\s+/, "");
-        const baseName = path.replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
-        order.push(baseName);
-        if (!testsMap.has(baseName)) {
-          const empty = createEmptyTest();
-          empty.name = baseName;
-          testsMap.set(baseName, empty);
-        }
-      }
-    }
-
-    const cleanTc: TckDefinition = {
-      ...tc,
-      name: projectName,
-      tests: buildTckTestsArray(order) as TckDefinition["tests"],
-    };
-
-    return {
-      projectName,
-      tck: cleanTc,
-      tests: testsMap,
-      testOrder: order,
-      schemas: new Map(),
-      activeFile: { type: "tck", name: "index" },
-      services: tc.env?.services ?? [],
-    };
+    return parseTckDocument(doc, name, buildTckTestsArray);
   }
 
   if (isTest(doc)) {
-    const script = doc as ScriptDefinition;
-    const projectName = name ?? script.name ?? "Untitled";
-    const tc = createEmptyTck();
-    tc.name = projectName;
-    tc.tests = [{ test: script.name }];
-
-    return {
-      projectName,
-      tck: tc,
-      tests: new Map([[script.name, script]]),
-      testOrder: [script.name],
-      schemas: new Map(),
-      activeFile: { type: "test", name: script.name },
-      services: [],
-    };
+    return parseTestDocument(doc as ScriptDefinition, name);
   }
 
   return null;
+}
+
+function parseTckDocument(
+  tc: TckDefinition,
+  name: string | undefined,
+  buildTckTestsArray: (order: string[]) => unknown[],
+): ParsedProjectData {
+  const projectName = name ?? tc.name ?? "Untitled";
+  const testsMap = new Map<string, ScriptDefinition>();
+  const order: string[] = [];
+
+  for (const entry of tc.tests) {
+    parseTckEntry(entry, testsMap, order);
+  }
+
+  const cleanTc: TckDefinition = {
+    ...tc,
+    name: projectName,
+    tests: buildTckTestsArray(order) as TckDefinition["tests"],
+  };
+
+  return {
+    projectName,
+    tck: cleanTc,
+    tests: testsMap,
+    testOrder: order,
+    schemas: new Map(),
+    activeFile: { type: "tck", name: "index" },
+    services: tc.env?.services ?? [],
+  };
+}
+
+function parseTckEntry(
+  entry: unknown,
+  testsMap: Map<string, ScriptDefinition>,
+  order: string[],
+): void {
+  if (typeof entry === "object" && entry !== null && "kind" in entry && (entry as { kind: string }).kind === ScriptKind.TEST) {
+    const script = entry as ScriptDefinition;
+    testsMap.set(script.name, script);
+    order.push(script.name);
+  } else if (isTestRef(entry)) {
+    const testName = (entry as { test: string }).test;
+    order.push(testName);
+    if (!testsMap.has(testName)) {
+      const empty = createEmptyTest();
+      empty.name = testName;
+      testsMap.set(testName, empty);
+    }
+  } else if (typeof entry === "string") {
+    const path = entry.replace(/^!include\s+/, "");
+    const baseName = path.replace(/^.*\//, "").replace(/\.(yaml|yml)$/, "");
+    order.push(baseName);
+    if (!testsMap.has(baseName)) {
+      const empty = createEmptyTest();
+      empty.name = baseName;
+      testsMap.set(baseName, empty);
+    }
+  }
+}
+
+function parseTestDocument(
+  script: ScriptDefinition,
+  name: string | undefined,
+): ParsedProjectData {
+  const projectName = name ?? script.name ?? "Untitled";
+  const tc = createEmptyTck();
+  tc.name = projectName;
+  tc.tests = [{ test: script.name }];
+
+  return {
+    projectName,
+    tck: tc,
+    tests: new Map([[script.name, script]]),
+    testOrder: [script.name],
+    schemas: new Map(),
+    activeFile: { type: "test", name: script.name },
+    services: [],
+  };
 }

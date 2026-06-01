@@ -59,11 +59,10 @@ export function useJsonEditor(
     [text, validation.isValid],
   );
 
-  const statusMessage = validation.isValid
-    ? varCount > 0
-      ? `Valid JSON — detected ${varCount} variable(s) ✓`
-      : "Valid JSON ✓"
-    : `Invalid JSON: ${validation.error}`;
+  const validMessage = varCount > 0
+    ? `Valid JSON — detected ${varCount} variable(s) ✓`
+    : "Valid JSON ✓";
+  const statusMessage = validation.isValid ? validMessage : `Invalid JSON: ${validation.error}`;
 
   const availableVariables = variables;
 

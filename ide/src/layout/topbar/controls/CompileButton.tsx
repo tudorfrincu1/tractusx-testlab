@@ -34,7 +34,7 @@ import { modelToYaml } from "../../../services";
 import type { CompileStatus } from "../../../store/compile/useCompileStore";
 
 /** Map compile status to the appropriate icon. */
-function CompileStatusIcon({ status }: { status: CompileStatus }) {
+function CompileStatusIcon({ status }: Readonly<{ status: CompileStatus }>) {
   switch (status) {
     case "ok":
       return <CheckCircleIcon sx={{ fontSize: 14 }} />;
@@ -57,6 +57,13 @@ const STATUS_CLASS: Record<CompileStatus, string> = {
   error: "compile-btn--error",
   stale: "compile-btn--stale",
 } as const;
+
+function resolveCompileTooltip(status: CompileStatus, errorCount: number): string {
+  if (status === "error" && errorCount > 0) return `${errorCount} error${errorCount > 1 ? "s" : ""}`;
+  if (status === "stale") return "YAML changed \u2014 recompile needed";
+  if (status === "ok") return "Compilation passed";
+  return "Compile YAML";
+}
 
 /**
  * Compile button for the top bar.
@@ -83,14 +90,7 @@ export function CompileButton() {
 
   const isCompiling = compileStatus === "compiling";
   const errorCount = compileErrors.length;
-  const tooltip =
-    compileStatus === "error" && errorCount > 0
-      ? `${errorCount} error${errorCount > 1 ? "s" : ""}`
-      : compileStatus === "stale"
-        ? "YAML changed — recompile needed"
-        : compileStatus === "ok"
-          ? "Compilation passed"
-          : "Compile YAML";
+  const tooltip = resolveCompileTooltip(compileStatus, errorCount);
 
   return (
     <button

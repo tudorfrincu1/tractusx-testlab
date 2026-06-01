@@ -31,7 +31,7 @@ import { theme } from "@/shared/theme/tractusxTheme";
 import { findStepLineRange } from "@/services";
 import { defineTractusDarkTheme, registerYamlCompletions } from "../monacoSetup";
 
-export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
+export function YamlEditor({ readOnly = false }: Readonly<{ readOnly?: boolean }>) {
   const yaml = useEditorStore((s) => s.yaml);
   const errors = useEditorStore((s) => s.errors);
   const lastEditSource = useEditorStore((s) => s.lastEditSource);
@@ -133,9 +133,7 @@ export function YamlEditor({ readOnly = false }: { readOnly?: boolean }) {
     const m = monacoRef.current;
     if (!edtr || !m) return;
 
-    if (!decorationsRef.current) {
-      decorationsRef.current = edtr.createDecorationsCollection();
-    }
+    decorationsRef.current ??= edtr.createDecorationsCollection();
 
     // Never highlight or scroll while the user is typing in YAML
     if (!selectedStepType || isEditorFocused.current) {
