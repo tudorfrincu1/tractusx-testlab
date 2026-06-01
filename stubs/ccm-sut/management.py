@@ -131,7 +131,15 @@ async def mgmt_create_contract_def(request: Request) -> JSONResponse:
 
 
 @router.delete("/assets/{asset_id}")
+async def mgmt_delete_asset(asset_id: str) -> JSONResponse:
+    return JSONResponse(status_code=204, content=None)
+
+
 @router.delete("/policydefinitions/{policy_id}")
+async def mgmt_delete_policy(policy_id: str) -> JSONResponse:
+    return JSONResponse(status_code=204, content=None)
+
+
 @router.delete("/contractdefinitions/{contract_id}")
-async def mgmt_delete_resource(request: Request) -> JSONResponse:
+async def mgmt_delete_contract_def(contract_id: str) -> JSONResponse:
     return JSONResponse(status_code=204, content=None)

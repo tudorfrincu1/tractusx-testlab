@@ -208,6 +208,7 @@ Agent instructions live in `.github/instructions/` and agent definitions in `.gi
 | `coordinate-ai-agents` | Orchestrate multi-agent work: plan mode, team meetings, parallel delegation, consolidated delivery |
 | `execute-refactor-phase` | Dispatch one phase of a `docs/developer/refactor-plan/` plan to the owning specialist; track phase status leaf-first, serialize dependent phases, lockstep shared-contract phases |
 | `visual-regression-guard` | Enforce that every IDE refactor phase is verified in a live browser with BEFORE/AFTER screenshot comparison — never accept a frontend "done" backed only by a green build |
+| `fix-sonarqube-findings` | Drive large-scale SonarQube remediation: collect all findings into the tracking report, dispatch batches by rule/directory, enforce the scan-after-edit anti-regression loop (net count must drop, zero new rule IDs, build+tests green) before each commit |
 | `build-from-mockup` | Dispatch mockup-to-code work to frontend and backend agents in parallel |
 | `create-ide-mockup` | Request a new UI prototype before committing to implementation |
 | `document-knowledge` | Persist coordination patterns, delegation lessons, and quality insights |

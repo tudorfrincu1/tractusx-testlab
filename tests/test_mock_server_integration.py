@@ -40,7 +40,7 @@ _SRC_DIR = str(Path(__file__).resolve().parent.parent / "src")
 
 
 @pytest.fixture()
-def mock_app() -> Generator[FastAPI, None, None]:
+def mock_app(tmp_path: Path) -> Generator[FastAPI, None, None]:
     """Create a FastAPI app with SDK dependencies mocked out."""
     path_inserted = _SRC_DIR not in sys.path
     if path_inserted:
@@ -76,7 +76,7 @@ def mock_app() -> Generator[FastAPI, None, None]:
         importlib.reload(app_module)
 
         mock_config = MagicMock()
-        mock_config.storage_dir = "/tmp/testlab-mock-test"
+        mock_config.storage_dir = tmp_path / "testlab-mock-test"
         application = app_module.create_app(config=mock_config)
         yield application
     finally:

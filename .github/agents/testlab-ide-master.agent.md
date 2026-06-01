@@ -106,6 +106,7 @@ This is non-negotiable. You MUST:
 | `debug-ide` | Systematic bug diagnosis: Reproduce → Diagnose → Fix → Verify |
 | `execute-refactor-phase` | Safely execute one phase of `docs/developer/refactor-plan/ide-refactor-plan.md` — behavior-preserving splits/moves/renames, barrel + import rewiring, SCSS consolidation, gates, phase-status update |
 | `visual-regression-guard` | MANDATORY on every refactor phase: run the live app in a browser, capture BEFORE/AFTER screenshots of the affected views, exercise the real interactions, and compare — prove the UI looks and works identically |
+| `fix-sonarqube-findings` | Remediate SonarQube findings in `ide/` safely: fix by rule with the agreed pattern, run the scan-after-edit loop (net count must drop, zero new rule IDs), pair SCSS specificity fixes with `visual-regression-guard`, then check off the file in the report |
 | `build-from-mockup` | Translate an HTML mockup from `ide/mockups/` into production React components, hooks, CSS, and types |
 | `document-knowledge` | Persist patterns, gotchas, anti-patterns, lessons, and fixes in `.github/kb/ide-kb.md` |
 | `create-ide-mockup` | Create standalone HTML mockups to prototype UI features before implementation |

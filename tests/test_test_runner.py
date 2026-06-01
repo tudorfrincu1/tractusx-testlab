@@ -58,16 +58,16 @@ def _write_tck(tmp_path: Path) -> Path:
 class TestTestlabPlayerInit:
     """Tests for TestlabPlayer instantiation."""
 
-    def test_player_creates_with_mock_config(self) -> None:
+    def test_player_creates_with_mock_config(self, tmp_path: Path) -> None:
         mock_config = MagicMock()
-        mock_config.logs_dir = "/tmp/testlab-logs"
+        mock_config.logs_dir = tmp_path / "testlab-logs"
         player = TestlabPlayer(config=mock_config)
         assert player.jobs is not None
         assert player.monitor is not None
 
-    def test_player_jobs_manager_is_accessible(self) -> None:
+    def test_player_jobs_manager_is_accessible(self, tmp_path: Path) -> None:
         mock_config = MagicMock()
-        mock_config.logs_dir = "/tmp/testlab-logs"
+        mock_config.logs_dir = tmp_path / "testlab-logs"
         player = TestlabPlayer(config=mock_config)
         assert player.jobs is not None
 
@@ -75,19 +75,19 @@ class TestTestlabPlayerInit:
 class TestTestlabPlayerRun:
     """Tests for TestlabPlayer loading — full run requires mock server infrastructure."""
 
-    def test_player_loader_is_available(self) -> None:
+    def test_player_loader_is_available(self, tmp_path: Path) -> None:
         # Arrange
         mock_config = MagicMock()
-        mock_config.logs_dir = Path("/tmp/testlab-logs")
+        mock_config.logs_dir = tmp_path / "testlab-logs"
         player = TestlabPlayer(config=mock_config)
 
         # Assert — loader is initialized and accessible internally
         assert player._loader is not None
 
-    def test_player_monitor_tracks_state(self) -> None:
+    def test_player_monitor_tracks_state(self, tmp_path: Path) -> None:
         # Arrange
         mock_config = MagicMock()
-        mock_config.logs_dir = Path("/tmp/testlab-logs")
+        mock_config.logs_dir = tmp_path / "testlab-logs"
         player = TestlabPlayer(config=mock_config)
 
         # Assert

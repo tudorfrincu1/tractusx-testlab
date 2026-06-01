@@ -137,6 +137,7 @@ The factory makes each test state only what matters for its scenario, and it is 
 
 | Skill | When to Use |
 |-------|-------------|
+| `fix-sonarqube-findings` | Remediate SonarQube findings in `tests/` safely: fix by rule with the agreed pattern, run the scan-after-edit loop (net count must drop, zero new rule IDs, `pytest` green), then check off the file in the report |
 | `document-knowledge` | Persist testing patterns, gotchas, anti-patterns, and lessons learned |
 
 ## Constraints

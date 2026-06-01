@@ -128,6 +128,7 @@ Apply the same layering in `tractusx_testlab/`: keep adapters (I/O) separate fro
 |-------|-------------|
 | `debug-backend` | Systematic bug diagnosis: Reproduce → Diagnose → Fix → Verify |
 | `execute-refactor-phase` | Safely execute one phase of `docs/developer/refactor-plan/backend-refactor-plan.md` — behavior-preserving splits/moves/renames, barrel + import rewiring, gates, phase-status update |
+| `fix-sonarqube-findings` | Remediate SonarQube findings in `src/` and stubs safely: fix by rule with the agreed pattern, run the scan-after-edit loop (net count must drop, zero new rule IDs, `pytest` green), then check off the file in the report |
 | `build-from-mockup` | Analyze a mockup to identify backend open points: API contracts, Pydantic models, missing services, SDK gaps |
 | `document-knowledge` | Persist patterns, gotchas, anti-patterns, lessons, and fixes in `.github/kb/backend-kb.md` |
 

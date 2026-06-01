@@ -36,80 +36,123 @@ export interface YamlLineRange {
  */
 export function findStepLineRange(yaml: string, stepType: string): YamlLineRange | null {
   const lines = yaml.split("\n");
-
-  let insideStepArray = false;
-  let stepArrayIndent = -1;
-  let itemIndent = -1;
-  let currentItemStart = -1;
-  let currentItemType: string | null = null;
-
-  const stepArrayPattern = /^(\s*)(setup|steps|cleanup)\s*:/;
-  const listItemPattern = /^(\s*)-\s/;
+  const state = createScanState();
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    const arrayMatch = line.match(stepArrayPattern);
-    if (arrayMatch) {
-      const result = flushMatch(lines);
-      if (result) return result;
-      insideStepArray = true;
-      stepArrayIndent = arrayMatch[1].length;
-      itemIndent = -1;
-      currentItemStart = -1;
-      currentItemType = null;
-      continue;
-    }
-
-    if (!insideStepArray) continue;
-    if (line.trim() === "" || line.trim().startsWith("#")) continue;
-
-    const lineIndent = line.search(/\S/);
-    if (lineIndent !== -1 && lineIndent <= stepArrayIndent) {
-      const result = flushMatch(lines);
-      if (result) return result;
-      insideStepArray = false;
-      continue;
-    }
-
-    const itemMatch = line.match(listItemPattern);
-    if (itemMatch && itemMatch[1].length > stepArrayIndent) {
-      if (itemIndent === -1) {
-        itemIndent = itemMatch[1].length;
-      }
-      if (itemMatch[1].length === itemIndent) {
-        const result = flushMatch(lines);
-        if (result) return result;
-
-        currentItemStart = i;
-        currentItemType = null;
-        continue;
-      }
-    }
-
-    if (currentItemStart !== -1) {
-      const typeMatch = line.match(/^\s*type:\s*(.+)/);
-      if (typeMatch) {
-        currentItemType = typeMatch[1].replace(/^["']|["']$/g, "").trim();
-      }
-    }
+    const result = scanLine(state, lines, i, stepType);
+    if (result) return result;
   }
 
-  return flushMatch(lines) ?? null;
+  return tryFlush(state, lines, stepType);
+}
 
-  function flushMatch(allLines: string[]): YamlLineRange | null {
-    if (currentItemStart === -1 || currentItemType !== stepType) return null;
+/**
+ * Processes a single YAML line, updating the scan state. Returns a matching
+ * range when the current step item is flushed and matches `stepType`, otherwise
+ * `null` to continue scanning.
+ */
+function scanLine(state: ScanState, lines: string[], i: number, stepType: string): YamlLineRange | null {
+  const line = lines[i];
 
-    const endLine = findItemEndLine(allLines, currentItemStart, itemIndent);
-    const range: YamlLineRange = {
-      startLine: currentItemStart + 1,
-      endLine: endLine + 1,
-    };
-
-    currentItemStart = -1;
-    currentItemType = null;
-    return range;
+  const arrayMatch = line.match(STEP_ARRAY_PATTERN);
+  if (arrayMatch) {
+    const result = tryFlush(state, lines, stepType);
+    if (result) return result;
+    resetToNewArray(state, arrayMatch[1].length);
+    return null;
   }
+
+  if (!state.insideStepArray) return null;
+  if (line.trim() === "" || line.trim().startsWith("#")) return null;
+
+  const lineIndent = line.search(/\S/);
+  if (lineIndent !== -1 && lineIndent <= state.stepArrayIndent) {
+    const result = tryFlush(state, lines, stepType);
+    if (result) return result;
+    state.insideStepArray = false;
+    return null;
+  }
+
+  const itemOutcome = handleListItem(state, lines, i, line, stepType);
+  if (itemOutcome === "consumed") return null;
+  if (itemOutcome) return itemOutcome;
+
+  captureItemType(state, line);
+  return null;
+}
+
+/**
+ * Handles a `- ` list-item line. Returns a flushed range, the marker
+ * `"consumed"` when a new item started, or `null` when the line is not a
+ * top-level item start.
+ */
+function handleListItem(
+  state: ScanState,
+  lines: string[],
+  i: number,
+  line: string,
+  stepType: string,
+): YamlLineRange | "consumed" | null {
+  const itemMatch = line.match(LIST_ITEM_PATTERN);
+  if (itemMatch && itemMatch[1].length > state.stepArrayIndent) {
+    if (state.itemIndent === -1) state.itemIndent = itemMatch[1].length;
+    if (itemMatch[1].length === state.itemIndent) {
+      const result = tryFlush(state, lines, stepType);
+      if (result) return result;
+      state.currentItemStart = i;
+      state.currentItemType = null;
+      return "consumed";
+    }
+  }
+  return null;
+}
+
+/** Records the `type:` field of the current item when present. */
+function captureItemType(state: ScanState, line: string): void {
+  if (state.currentItemStart !== -1) {
+    const typeMatch = line.match(TYPE_FIELD_PATTERN);
+    if (typeMatch) {
+      state.currentItemType = typeMatch[1].replace(/^["']|["']$/g, "").trim();
+    }
+  }
+}
+
+const STEP_ARRAY_PATTERN = /^(\s*)(setup|steps|cleanup)\s*:/;
+const LIST_ITEM_PATTERN = /^(\s*)-\s/;
+const TYPE_FIELD_PATTERN = /^\s*type:\s*(.+)/;
+
+interface ScanState {
+  insideStepArray: boolean;
+  stepArrayIndent: number;
+  itemIndent: number;
+  currentItemStart: number;
+  currentItemType: string | null;
+}
+
+function createScanState(): ScanState {
+  return { insideStepArray: false, stepArrayIndent: -1, itemIndent: -1, currentItemStart: -1, currentItemType: null };
+}
+
+function resetToNewArray(state: ScanState, indent: number): void {
+  state.insideStepArray = true;
+  state.stepArrayIndent = indent;
+  state.itemIndent = -1;
+  state.currentItemStart = -1;
+  state.currentItemType = null;
+}
+
+function tryFlush(state: ScanState, lines: string[], stepType: string): YamlLineRange | null {
+  if (state.currentItemStart === -1 || state.currentItemType !== stepType) return null;
+
+  const endLine = findItemEndLine(lines, state.currentItemStart, state.itemIndent);
+  const range: YamlLineRange = {
+    startLine: state.currentItemStart + 1,
+    endLine: endLine + 1,
+  };
+
+  state.currentItemStart = -1;
+  state.currentItemType = null;
+  return range;
 }
 
 function findItemEndLine(lines: string[], startIdx: number, itemIndent: number): number {
