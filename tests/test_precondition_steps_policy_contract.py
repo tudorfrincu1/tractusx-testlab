@@ -30,7 +30,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLogCategory,
     PreconditionLogType,
 )

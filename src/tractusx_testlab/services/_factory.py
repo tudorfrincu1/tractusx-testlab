@@ -29,8 +29,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from tractusx_testlab.models.definitions import ServiceDefinition
-from tractusx_testlab.models.enums import ServiceType
+from tractusx_testlab.models.authoring.definitions import ServiceDefinition
+from tractusx_testlab.models.primitives.enums import ServiceType
 from tractusx_testlab.syntax import defaults
 
 logger = logging.getLogger(__name__)

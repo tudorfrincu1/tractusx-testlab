@@ -35,8 +35,8 @@ from tractusx_testlab.models import (
     StepResult,
     ValueSource,
 )
-from tractusx_testlab.models.definitions import Assertion
-from tractusx_testlab.models.enums import AssertionType
+from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models.primitives.enums import AssertionType
 from tractusx_testlab.steps import _checks
 from tractusx_testlab.steps._checks.extraction import (
     extract_path,

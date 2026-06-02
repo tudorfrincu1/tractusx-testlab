@@ -31,8 +31,8 @@ from enum import Enum, auto
 from typing import Any
 
 from tractusx_testlab.models import ScriptStatus, StepStatus
-from tractusx_testlab.models.enums import StepPhase
-from tractusx_testlab.models.results import StepResult
+from tractusx_testlab.models.primitives.enums import StepPhase
+from tractusx_testlab.models.runtime.results import StepResult
 from tractusx_testlab.player.execution.context import StepContext
 from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager

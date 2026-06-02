@@ -37,8 +37,8 @@ from tractusx_testlab.models import (
     ServiceNotFoundError,
     ServiceState,
 )
-from tractusx_testlab.models.definitions import ServiceDefinition
-from tractusx_testlab.models.enums import ServiceType
+from tractusx_testlab.models.authoring.definitions import ServiceDefinition
+from tractusx_testlab.models.primitives.enums import ServiceType
 from tractusx_testlab.services._factory import (
     cache_key,
     create_instance,

@@ -38,8 +38,8 @@ import yaml
 from fastapi import APIRouter, FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from tractusx_testlab.models.definitions import ScriptDefinition, TckDefinition
-from tractusx_testlab.models.enums import ScriptKind
+from tractusx_testlab.models.authoring.definitions import ScriptDefinition, TckDefinition
+from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck, TestScript
 

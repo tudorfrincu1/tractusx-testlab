@@ -65,7 +65,7 @@ from tractusx_testlab.steps._condition_parsing import (
 )
 
 if TYPE_CHECKING:
-    from tractusx_testlab.models.results import StepResult
+    from tractusx_testlab.models.runtime.results import StepResult
     from tractusx_testlab.player.execution.context import StepContext
 
 

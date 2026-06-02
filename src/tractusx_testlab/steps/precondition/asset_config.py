@@ -29,7 +29,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from tractusx_testlab.models import StepDefinition
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,

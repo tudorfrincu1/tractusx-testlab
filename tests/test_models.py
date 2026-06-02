@@ -29,7 +29,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     Assertion,
     ScriptDefinition,
     ServiceDefinition,
@@ -37,7 +37,7 @@ from tractusx_testlab.models.definitions import (
     TckDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.primitives.enums import (
     AssertionType,
     FailurePolicy,
     ScriptKind,

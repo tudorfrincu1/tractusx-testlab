@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tractusx_testlab.compiler.validation.validator import ScriptValidator, ValidationResult
-from tractusx_testlab.models.definitions import ScriptDefinition
+from tractusx_testlab.models.authoring.definitions import ScriptDefinition
 
 from factories import create_script_with_preconditions, create_step_definition
 

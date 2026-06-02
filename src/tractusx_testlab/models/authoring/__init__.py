@@ -19,33 +19,27 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 ## It was reviewed and tested by a human committer.
 
-"""Server models — uploaded packages and vault configuration."""
+"""Authoring-time structures: script, step, service and TCK definitions."""
 
-from __future__ import annotations
+from tractusx_testlab.models.authoring.definitions import (
+    Assertion,
+    ImportDefinition,
+    ScriptDefinition,
+    ServiceDefinition,
+    StepDefinition,
+    TckDefinition,
+    VariableDefinition,
+)
 
-from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel
-
-from tractusx_testlab.models.enums import PackageFormat
-
-
-class UploadedPackage(BaseModel):
-    package_id: str
-    name: str
-    version: str
-    format: PackageFormat = PackageFormat.PLAIN
-    size_bytes: int = 0
-    uploaded_at: Optional[datetime] = None
-    checksum: str = ""
-    file_path: Optional[str] = None
-
-
-class VaultConfig(BaseModel):
-    vault_url: str
-    vault_token: str = ""
-    vault_secret_path: str = "secret/data/testlab"
+__all__ = [
+    "Assertion",
+    "ImportDefinition",
+    "ScriptDefinition",
+    "ServiceDefinition",
+    "StepDefinition",
+    "TckDefinition",
+    "VariableDefinition",
+]

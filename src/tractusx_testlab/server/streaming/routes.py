@@ -35,8 +35,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
-from tractusx_testlab.models.definitions import TckDefinition
-from tractusx_testlab.models.enums import ScriptKind
+from tractusx_testlab.models.authoring.definitions import TckDefinition
+from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck

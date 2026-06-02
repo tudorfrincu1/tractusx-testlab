@@ -26,6 +26,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+// The IDE ships from `index.html` (production app). `poc.html` is a dev-only,
+// isolated entry that hosts React proof-of-concepts under `src/poc/`. It is a
+// separate Rollup input, so POC code never reaches the production bundle that
+// `index.html` produces.
 export default defineConfig({
   plugins: [react()],
   base: "/tractusx-testlab/ide/",
@@ -36,5 +40,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        poc: path.resolve(__dirname, "poc.html"),
+      },
+    },
   },
 });

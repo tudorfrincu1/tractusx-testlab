@@ -36,7 +36,7 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.player.loading.resolver import resolve_params
 from tractusx_testlab.scripting.script import TestScript
 from tractusx_testlab.steps.assertions import AssertionEngine
-from tractusx_testlab.models.results import AssertionResult, AssertionSummary, ScriptResult, StepResult
+from tractusx_testlab.models.runtime.results import AssertionResult, AssertionSummary, ScriptResult, StepResult
 from tractusx_testlab.player.execution._helpers import seed_script_defaults, register_script_services
 from tractusx_testlab.player.execution._phase_runners import (
     execute_setup_steps,

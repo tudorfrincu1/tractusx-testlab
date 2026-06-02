@@ -32,7 +32,7 @@ from tractusx_testlab.models import (
     ScriptDefinition as SdkScriptDefinition,
     TckDefinition as SdkTckDefinition,
 )
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     ScriptDefinition,
     TckDefinition,
 )

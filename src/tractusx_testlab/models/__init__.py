@@ -29,18 +29,18 @@ Re-exports all public symbols so that ``from tractusx_testlab.models import X``
 continues to work unchanged.
 """
 
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     ImportDefinition,
     ServiceDefinition,
     TckDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.definitions import (  # local overrides
+from tractusx_testlab.models.authoring.definitions import (  # local overrides
     Assertion,       # adds schema_ref, min, max fields
     ScriptDefinition,  # adds preconditions field
     StepDefinition,    # no name field
 )
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     FailurePolicy,
     JobStatus,
@@ -51,11 +51,11 @@ from tractusx_testlab.models.enums import (
     StepStatus,
     ValueSource,
 )
-from tractusx_testlab.models.enums import AssertionType  # local override — adds typed assertion types
-from tractusx_testlab.models.enums import ScriptKind  # local override — adds TCK
-from tractusx_testlab.models.enums import ServiceType  # local override — adds EDC connector types
-from tractusx_testlab.models.enums import StepPhase  # local override — adds PRECONDITION
-from tractusx_testlab.models.exceptions import (
+from tractusx_testlab.models.primitives.enums import AssertionType  # local override — adds typed assertion types
+from tractusx_testlab.models.primitives.enums import ScriptKind  # local override — adds TCK
+from tractusx_testlab.models.primitives.enums import ServiceType  # local override — adds EDC connector types
+from tractusx_testlab.models.primitives.enums import StepPhase  # local override — adds PRECONDITION
+from tractusx_testlab.models.primitives.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
     ServiceNotFoundError,
@@ -63,18 +63,18 @@ from tractusx_testlab.models.exceptions import (
     ServiceTypeMismatchError,
     StepConfigError,
 )
-from tractusx_testlab.models.jobs import (
+from tractusx_testlab.models.runtime.jobs import (
     Job,
     JobEvent,
     JobMemory,
 )
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,
 )
-from tractusx_testlab.models.results import StepResult  # local override — adds precondition_logs
-from tractusx_testlab.models.results import (
+from tractusx_testlab.models.runtime.results import StepResult  # local override — adds precondition_logs
+from tractusx_testlab.models.runtime.results import (
     AssertionResult,
     AssertionSummary,
     CallbackResult,
@@ -83,13 +83,13 @@ from tractusx_testlab.models.results import (
     ScriptResult,
     TckResult
 )
-from tractusx_testlab.models.security import (
+from tractusx_testlab.models.domain.security import (
     Base64Bytes,
     EncryptedKeyBlock,
     PackageManifest,
     SecurityBlock,
 )
-from tractusx_testlab.models.server import (
+from tractusx_testlab.models.domain.server import (
     UploadedPackage,
     VaultConfig,
 )

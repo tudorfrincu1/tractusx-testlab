@@ -33,7 +33,7 @@ from typing import Optional
 
 from tractusx_testlab.models import Job, JobEvent, JobMemory
 
-from tractusx_testlab.models.enums import JobStatus
+from tractusx_testlab.models.primitives.enums import JobStatus
 
 
 class JobManager:

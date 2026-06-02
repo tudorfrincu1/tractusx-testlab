@@ -29,13 +29,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tractusx_testlab.models.enums import StepPhase
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.primitives.enums import StepPhase
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,
 )
-from tractusx_testlab.models.results import StepResult
+from tractusx_testlab.models.runtime.results import StepResult
 from tractusx_testlab.player.execution.preconditions import (
     _extract_precondition_logs,
     execute_precondition_steps,

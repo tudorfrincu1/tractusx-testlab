@@ -26,7 +26,7 @@
 
 from __future__ import annotations
 
-from tractusx_testlab.models.enums import ServiceState, ServiceType
+from tractusx_testlab.models.primitives.enums import ServiceState, ServiceType
 
 
 class ServiceNotFoundError(Exception):

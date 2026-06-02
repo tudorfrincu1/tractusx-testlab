@@ -30,7 +30,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from tractusx_testlab.models import StepDefinition
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,

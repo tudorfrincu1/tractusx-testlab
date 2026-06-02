@@ -31,14 +31,14 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from tractusx_testlab.models.definitions import Assertion
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     ScriptStatus,
     StepStatus,
 )
-from tractusx_testlab.models.enums import StepPhase
-from tractusx_testlab.models.preconditions import PreconditionLog
+from tractusx_testlab.models.primitives.enums import StepPhase
+from tractusx_testlab.models.runtime.preconditions import PreconditionLog
 
 
 class HttpRequest(BaseModel):

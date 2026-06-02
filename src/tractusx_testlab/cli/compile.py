@@ -158,7 +158,7 @@ def _compile_encrypted(
     # Detect whether input is a TCK manifest or a single test
     import yaml as _yaml
     from tractusx_testlab.player.loading.loader import _detect_kind
-    from tractusx_testlab.models.enums import ScriptKind
+    from tractusx_testlab.models.primitives.enums import ScriptKind
     with open(script, "r", encoding="utf-8") as script_handle:
         raw = _yaml.safe_load(script_handle)
     is_tck = isinstance(raw, dict) and _detect_kind(raw) == ScriptKind.TCK

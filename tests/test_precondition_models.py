@@ -29,14 +29,14 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from tractusx_testlab.models.definitions import ScriptDefinition, StepDefinition
-from tractusx_testlab.models.enums import StepPhase
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.authoring.definitions import ScriptDefinition, StepDefinition
+from tractusx_testlab.models.primitives.enums import StepPhase
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,
 )
-from tractusx_testlab.models.results import StepResult
+from tractusx_testlab.models.runtime.results import StepResult
 
 from factories import create_precondition_log, create_step_definition
 

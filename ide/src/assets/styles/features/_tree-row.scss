@@ -4,6 +4,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
   font-size: 13px;
   transition: background 0.1s;
   min-height: 28px;

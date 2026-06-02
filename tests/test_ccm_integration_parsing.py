@@ -31,7 +31,7 @@ import pytest
 import yaml
 
 import tractusx_testlab.steps  # noqa: F401 — trigger @step registrations
-from tractusx_testlab.models.enums import AssertionType, ServiceType
+from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
 from tractusx_testlab.scripting import StepRegistry
 from tractusx_testlab.scripting._builders import parse_assertion, parse_service
 

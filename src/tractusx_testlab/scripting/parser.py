@@ -39,13 +39,13 @@ from tractusx_testlab.syntax.keys import PRECONDITIONS as _PRECONDITIONS_KEY
 from tractusx_testlab.models import (
     SdkCallMode,
 )
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     ImportDefinition,
     ScriptDefinition,
     ServiceDefinition,
     TckDefinition,
 )
-from tractusx_testlab.models.enums import ScriptKind, ServiceType
+from tractusx_testlab.models.primitives.enums import ScriptKind, ServiceType
 
 from tractusx_testlab.scripting._builders import (
     parse_step,

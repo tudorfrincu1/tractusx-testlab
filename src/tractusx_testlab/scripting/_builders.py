@@ -37,8 +37,8 @@ from tractusx_testlab.models import (
     ValueSource,
     VariableDefinition,
 )
-from tractusx_testlab.models.definitions import Assertion, ServiceDefinition, StepDefinition
-from tractusx_testlab.models.enums import AssertionType, ServiceType
+from tractusx_testlab.models.authoring.definitions import Assertion, ServiceDefinition, StepDefinition
+from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
 
 # Maps compact assertion keys to (AssertionType, has_value).
 _COMPACT_ASSERTION_MAP: dict[str, tuple[AssertionType, bool]] = {

@@ -35,9 +35,9 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.scripting.registry import StepRegistry
 from tractusx_testlab.scripting.script import TestScript
 from tractusx_testlab.steps.conditions import ConditionEvaluator
-from tractusx_testlab.models.enums import StepPhase
-from tractusx_testlab.models.preconditions import PreconditionLog
-from tractusx_testlab.models.results import StepResult
+from tractusx_testlab.models.primitives.enums import StepPhase
+from tractusx_testlab.models.runtime.preconditions import PreconditionLog
+from tractusx_testlab.models.runtime.results import StepResult
 from tractusx_testlab.player.execution.step_runner import run_step, store_step_outputs
 
 

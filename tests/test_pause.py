@@ -32,7 +32,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from tractusx_testlab.models.enums import JobStatus
+from tractusx_testlab.models.primitives.enums import JobStatus
 from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.server.routes import router

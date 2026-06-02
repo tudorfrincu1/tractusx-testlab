@@ -34,7 +34,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from tractusx_testlab.compiler.validation.validator import ScriptValidator
-from tractusx_testlab.models.enums import ScriptKind
+from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.scripting.parser import YamlParser
 
 _logger = logging.getLogger(__name__)

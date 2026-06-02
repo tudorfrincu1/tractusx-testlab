@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 
 from tractusx_testlab.syntax import patterns
 
-from tractusx_testlab.models.definitions import ServiceDefinition
+from tractusx_testlab.models.authoring.definitions import ServiceDefinition
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext

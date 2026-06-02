@@ -100,6 +100,10 @@
 ### ANTI-4: Reimplementing SDK protocols
 - Any attempt to reimplement EDC catalog negotiation, DSP flows, or DTR operations directly in testlab code creates an unmaintainable fork.
 
+### ANTI-5: Parallel abandoned UI implementations
+- **Date**: 2026-06-01
+- The precondition configurator has THREE overlapping trees: the active `features/preconditions/` panel (renders `with` as raw `JSON.stringify` in plain inputs), a dead schema-aware editor `shared/ui/PreconditionsDialog/` (pill toggles, version schemas, constraint registry — never rendered), and a half-ported `features/preconditions/rules/` (`RuleSection` only exported, never consumed). Rebuilding a feature from scratch instead of moving the existing structured editor left two dead trees and shipped the worst UX. Before building a "new" view, search for an existing implementation of the same concept and relocate it.
+
 ---
 
 ## Known Risks
@@ -133,6 +137,10 @@
 <!-- Specific lessons from past work — what went wrong and what worked -->
 
 _No entries yet. Append lessons here as they are discovered._
+
+### LESSON-1: Check for an existing implementation before building a "new" view
+- **Date**: 2026-06-01
+- The precondition gap analysis revealed a fully schema-aware editor already existed (`shared/ui/PreconditionsDialog/`, matching the mockup) but was abandoned when the `features/preconditions/` panel was rebuilt with raw-JSON inputs. The fix is mostly *relocation + wiring*, not new construction. Always grep for the concept (`Precondition`, `Policy`, `Constraint`) across `features/` AND `shared/` before scoping a rebuild.
 
 ---
 

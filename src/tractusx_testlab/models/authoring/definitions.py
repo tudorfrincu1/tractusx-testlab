@@ -30,13 +30,13 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     FailurePolicy,
     SdkCallMode,
     ValueSource,
 )
-from tractusx_testlab.models.enums import AssertionType, ScriptKind, ServiceType
+from tractusx_testlab.models.primitives.enums import AssertionType, ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):

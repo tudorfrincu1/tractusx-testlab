@@ -28,8 +28,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from tractusx_testlab.models.definitions import ScriptDefinition, StepDefinition
-from tractusx_testlab.models.preconditions import (
+from tractusx_testlab.models.authoring.definitions import ScriptDefinition, StepDefinition
+from tractusx_testlab.models.runtime.preconditions import (
     PreconditionLog,
     PreconditionLogCategory,
     PreconditionLogType,

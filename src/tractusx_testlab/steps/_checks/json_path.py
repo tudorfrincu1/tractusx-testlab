@@ -28,8 +28,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from tractusx_testlab.models.definitions import Assertion
-from tractusx_testlab.models.results import AssertionResult
+from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models.runtime.results import AssertionResult
 
 
 def evaluate_json_path_extract(

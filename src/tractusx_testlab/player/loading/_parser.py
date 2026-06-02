@@ -58,21 +58,21 @@ except ImportError:
         import_ref: str; override: dict | None = None  # noqa: E702
 
 try:
-    from tractusx_testlab.models.definitions import (
+    from tractusx_testlab.models.authoring.definitions import (
         ScriptDefinition as SdkScriptDefinition,
     )
 except ImportError:
     from pydantic import BaseModel as _SFB
     class SdkScriptDefinition(_SFB, extra="allow"): pass  # type: ignore[no-redef,call-arg]
 
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     Assertion,
     ScriptDefinition,
     ServiceDefinition,
     StepDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     AssertionType,
     ScriptKind,
@@ -248,7 +248,7 @@ def build_test_case(
 def _to_sdk_script_kind(raw: str):
     """Convert a raw kind string to the SDK ScriptKind enum."""
     try:
-        from tractusx_testlab.models.enums import ScriptKind as SdkScriptKind
+        from tractusx_testlab.models.primitives.enums import ScriptKind as SdkScriptKind
         return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TCK}.get(raw, SdkScriptKind.TEST)
     except ImportError:
         return raw
