@@ -82,4 +82,12 @@ def _normalize_ref(expr: str) -> str:
         return expr
     if expr.startswith("metadata."):
         return expr
+    # ADR-0019: `infrastructure.<side>.<capability>` is a first-class capability
+    # handle (e.g. `infrastructure.engine.connector`); deeper segments such as
+    # `infrastructure.sut.connector.counter_party_address` are operator-supplied
+    # binding fields resolved from the binding profile at runtime. The path is
+    # already canonical, so — like `steps.`/`setup.`/`metadata.` — it is kept
+    # verbatim and never rewritten under `env.`.
+    if expr.startswith("infrastructure."):
+        return expr
     return expr

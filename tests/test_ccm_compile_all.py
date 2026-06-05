@@ -28,6 +28,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import yaml
 
 from tractusx_testlab.scripting.parser import YamlParser
 
@@ -58,6 +59,9 @@ class TestCcmCompileAll:
         assert len(script.steps) > 0, f"{yaml_path.name} must have at least one step"
 
     def test_has_name(self, yaml_path: Path) -> None:
-        script = YamlParser.parse_script(yaml_path)
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
 
-        assert script.name, f"{yaml_path.name} must have a non-empty name"
+        metadata_name = (data.get("metadata") or {}).get("name")
+
+        assert metadata_name, f"{yaml_path.name} must carry a human-readable metadata.name"

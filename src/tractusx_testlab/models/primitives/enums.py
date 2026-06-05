@@ -109,6 +109,18 @@ class ValueSource(str, enum.Enum):
     VARIABLE = "VARIABLE"
 
 
+class VariableSource(str, enum.Enum):
+    """How a declared variable obtains its value (LOCKED GRAMMAR v1).
+
+    ``VALUE`` is a literal provided now, ``INPUT`` is asked from the operator at
+    runtime, and ``GENERATED`` is produced by a named generator.
+    """
+
+    VALUE = "value"
+    INPUT = "input"
+    GENERATED = "generated"
+
+
 class SdkCallMode(str, enum.Enum):
     """Controls which SDK calls are permitted during execution."""
 

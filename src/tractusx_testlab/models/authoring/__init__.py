@@ -33,12 +33,22 @@ from tractusx_testlab.models.authoring.definitions import (
     TckDefinition,
     VariableDefinition,
 )
+from tractusx_testlab.models.authoring.infrastructure import (
+    CapabilityRequirement,
+    DataspaceContext,
+    InfrastructureConfig,
+    Standard,
+)
 
 __all__ = [
     "Assertion",
+    "CapabilityRequirement",
+    "DataspaceContext",
     "ImportDefinition",
+    "InfrastructureConfig",
     "ScriptDefinition",
     "ServiceDefinition",
+    "Standard",
     "StepDefinition",
     "TckDefinition",
     "VariableDefinition",

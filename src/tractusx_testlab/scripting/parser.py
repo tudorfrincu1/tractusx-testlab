@@ -45,6 +45,10 @@ from tractusx_testlab.models.authoring.definitions import (
     ServiceDefinition,
     TckDefinition,
 )
+from tractusx_testlab.models.authoring.infrastructure import (
+    DataspaceContext,
+    InfrastructureConfig,
+)
 from tractusx_testlab.models.primitives.enums import ScriptKind, ServiceType
 
 from tractusx_testlab.scripting._builders import (
@@ -53,6 +57,18 @@ from tractusx_testlab.scripting._builders import (
 )
 
 _INCLUDE_PREFIX = "!include "
+
+
+def _parse_dataspace(data: dict) -> Optional[DataspaceContext]:
+    """Parse the ADR-0019 ``dataspace`` block, if present."""
+    raw = data.get(keys.DATASPACE)
+    return DataspaceContext.model_validate(raw) if isinstance(raw, dict) else None
+
+
+def _parse_infrastructure(data: dict) -> Optional[InfrastructureConfig]:
+    """Parse the ADR-0019 ``infrastructure`` block, if present."""
+    raw = data.get(keys.INFRASTRUCTURE)
+    return InfrastructureConfig.model_validate(raw) if isinstance(raw, dict) else None
 
 
 def _parse_service(raw: dict) -> ServiceDefinition:
@@ -113,6 +129,8 @@ class YamlParser:
             name=data.get(keys.NAME, defaults.NAME),
             version=data.get(keys.VERSION, defaults.VERSION),
             description=data.get(keys.DESCRIPTION),
+            dataspace=_parse_dataspace(data),
+            infrastructure=_parse_infrastructure(data),
             shared_variables=shared_vars or None,
             tests=tests,
             imports=imports,
@@ -165,9 +183,12 @@ class YamlParser:
         steps = [parse_step(step_data).model_dump() for step_data in data.get(keys.STEPS, [])]
         teardown = [parse_step(step_data).model_dump() for step_data in data.get(keys.TEARDOWN, [])]
         services = [_parse_service(service_data) for service_data in data.get(keys.SERVICES, [])]
+        dataspace = _parse_dataspace(data)
+        infrastructure = _parse_infrastructure(data)
 
         return YamlParser._merge_with_base(
             data, base_def, variables, preconditions, setup, steps, teardown, services,
+            dataspace, infrastructure,
         )
 
     @staticmethod
@@ -202,6 +223,8 @@ class YamlParser:
         steps: list,
         teardown: list,
         services: list,
+        dataspace: Optional[DataspaceContext] = None,
+        infrastructure: Optional[InfrastructureConfig] = None,
     ) -> ScriptDefinition:
         """Build a ScriptDefinition using parsed fields, falling back to base_def when importing."""
         get = YamlParser._field_or_base
@@ -213,11 +236,23 @@ class YamlParser:
             else get(data, "allow_sdk_calls", base_def, SdkCallMode.ALLOWLIST)
         )
 
+        # ADR-0019: when a `dataspace` block is present its version is the single
+        # source of the dataspace version; the legacy `dataspace_version` field
+        # remains a backward-compatible fallback (defaulting to "saturn").
+        effective_dataspace = dataspace or (base_def.dataspace if base_def else None)
+        dataspace_version = (
+            effective_dataspace.version
+            if effective_dataspace is not None
+            else get(data, keys.DATASPACE_VERSION, base_def, defaults.DATASPACE_VERSION)
+        )
+
         return ScriptDefinition(
             kind=ScriptKind.TEST,
             name=get(data, keys.NAME, base_def, defaults.NAME),
             version=get(data, keys.VERSION, base_def, defaults.VERSION),
-            dataspace_version=get(data, keys.DATASPACE_VERSION, base_def, defaults.DATASPACE_VERSION),
+            dataspace_version=dataspace_version,
+            dataspace=effective_dataspace,
+            infrastructure=infrastructure or (base_def.infrastructure if base_def else None),
             description=get(data, keys.DESCRIPTION, base_def, None),
             import_from=import_path,
             allow_sdk_calls=sdk_calls,

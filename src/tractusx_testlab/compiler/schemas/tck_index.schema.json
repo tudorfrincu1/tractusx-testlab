@@ -65,14 +65,27 @@
       "type": "object",
       "properties": {
         "variables": {
-          "type": "object",
-          "additionalProperties": {
-            "oneOf": [
-              { "type": "string" },
-              { "type": "number" },
-              { "type": "boolean" }
-            ]
-          }
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  { "type": "object" }
+                ]
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "uses"],
+                "additionalProperties": true
+              }
+            }
+          ]
         },
         "services": {
           "type": "array",

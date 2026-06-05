@@ -51,6 +51,7 @@ from tractusx_testlab.models.primitives.enums import (
     StepStatus,
     ValueSource,
 )
+from tractusx_testlab.models.primitives.enums import VariableSource  # verb-form variable source
 from tractusx_testlab.models.primitives.enums import AssertionType  # local override — adds typed assertion types
 from tractusx_testlab.models.primitives.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.primitives.enums import ServiceType  # local override — adds EDC connector types
@@ -117,6 +118,7 @@ __all__ = [
     "StepDefinition",
     "TckDefinition",
     "VariableDefinition",
+    "VariableSource",
     # security
     "Base64Bytes",
     "EncryptedKeyBlock",

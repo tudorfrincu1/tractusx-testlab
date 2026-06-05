@@ -80,18 +80,13 @@ from tractusx_testlab.models.primitives.enums import (
     ValueSource,
 )
 from tractusx_testlab.player.loading import _constants as C
+from tractusx_testlab.scripting._variable_form import VariablesBlock, parse_variables_block
 
 logger = logging.getLogger(__name__)
 
-def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
-    """Parse a variables mapping into VariableDefinition instances."""
-    result: dict[str, VariableDefinition] = {}
-    for name, spec in raw.items():
-        if isinstance(spec, dict):
-            result[name] = VariableDefinition(name=name, **spec)
-        else:
-            result[name] = VariableDefinition(name=name, default=spec)
-    return result
+def parse_variables(raw: VariablesBlock) -> dict[str, VariableDefinition]:
+    """Parse a variables block (legacy mapping or verb-form list) into definitions."""
+    return parse_variables_block(raw)
 
 
 def parse_assertion(raw: dict) -> Assertion:

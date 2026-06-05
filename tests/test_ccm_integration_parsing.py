@@ -31,23 +31,26 @@ import pytest
 import yaml
 
 import tractusx_testlab.steps  # noqa: F401 — trigger @step registrations
+from tractusx_testlab.compiler.validation._expressions import resolve_expression
+from tractusx_testlab.models.authoring.infrastructure import DataspaceContext
 from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
 from tractusx_testlab.scripting import StepRegistry
 from tractusx_testlab.scripting._builders import parse_assertion, parse_service
+from tractusx_testlab.scripting.parser import YamlParser
 
 CCM_DIR = Path(__file__).resolve().parent.parent / "ide" / "public" / "examples" / "certificate-management-v2.0"
 CCM_TESTS_DIR = CCM_DIR / "tests"
 
 _CCM_TEST_FILES = {
     "available_notification.yaml": 4,
-    "catalog_policy_validation.yaml": 1,
+    "catalog_policy_validation.yaml": 3,
     "certificate_asset_validation.yaml": 3,
     "error_handling.yaml": 4,
     "expose_testlab_asset.yaml": 4,
     "push_certificate.yaml": 4,
-    "request_certificate.yaml": 3,
+    "request_certificate.yaml": 19,
     "send_feedback.yaml": 4,
-    "validate_payload.yaml": 2,
+    "validate_payload.yaml": 8,
 }
 
 _CCM_STEP_TYPES = [
@@ -79,11 +82,19 @@ class TestCcmYamlParsing:
         )
         assert data.get("kind", "test") == "test", f"{filename} kind should be 'test'"
         for i, step_raw in enumerate(raw_steps):
-            assert "type" in step_raw, f"Step {i} in {filename} missing 'type'"
-            step_type = step_raw["type"]
-            assert StepRegistry.has(step_type, "saturn"), (
-                f"Step type '{step_type}' in {filename} is not registered"
+            assert "uses" in step_raw or "type" in step_raw, (
+                f"Step {i} in {filename} must declare a 'uses' verb or legacy 'type'"
             )
+
+    @pytest.mark.parametrize("filename,expected_steps", list(_CCM_TEST_FILES.items()))
+    def test_ccm_yaml_parses_into_script_definition(self, filename: str, expected_steps: int) -> None:
+
+        script = YamlParser.parse_script(CCM_TESTS_DIR / filename)
+
+        assert script is not None, f"{filename} did not parse into a ScriptDefinition"
+        assert len(script.steps) == expected_steps, (
+            f"{filename}: parser produced {len(script.steps)} steps, expected {expected_steps}"
+        )
 
 
 class TestCcmIndexParsing:
@@ -102,23 +113,78 @@ class TestCcmIndexParsing:
 
 
 class TestCompactAssertionParsing:
-    def test_ccm_compact_assertions_parse_correctly(self) -> None:
+    """The compact assertion form (``output`` + operator) parses into typed assertions.
 
-        yaml_path = CCM_TESTS_DIR / "request_certificate.yaml"
-        with open(yaml_path, "r", encoding="utf-8") as f:
+    The migrated CCM examples express validations through the ``validate/assert`` verb
+    form, so this focused unit test exercises ``parse_assertion`` with an inline compact
+    fixture rather than the example files.
+    """
+
+    def test_compact_not_null_assertion_sets_type_and_path(self) -> None:
+
+        assertion = parse_assertion({"output": "body.certificateId", "not_null": True})
+
+        assert assertion.type == AssertionType.NOT_NULL
+        assert assertion.path == "body.certificateId"
+
+    def test_compact_equals_assertion_sets_type_value_and_path(self) -> None:
+
+        assertion = parse_assertion({"output": "status", "equals": 200})
+
+        assert assertion.type == AssertionType.EQUALS
+        assert assertion.value == 200
+        assert assertion.path == "status"
+
+
+class TestCcmServiceParsing:
+    """The EDC connector service type parses from its inline service definition.
+
+    The migrated examples carry the system-under-test identity in the ``infrastructure``
+    block instead of a top-level ``services`` list, so this focused unit test exercises
+    ``parse_service`` directly (see ``TestCcmInfrastructure`` for the migrated equivalent).
+    """
+
+    def test_service_type_edc_connector_saturn_accepted(self) -> None:
+
+        service = parse_service(
+            {"name": "provider_edc", "type": "edc_connector_saturn", "base_url": "https://provider:8080"},
+        )
+
+        assert service.name == "provider_edc"
+        assert service.type == ServiceType.EDC_CONNECTOR_SATURN
+
+
+class TestCcmInfrastructure:
+    """The migrated CCM index carries the ADR-0019 dataspace and infrastructure blocks."""
+
+    def test_ccm_index_dataspace_block_parses(self) -> None:
+
+        tck = YamlParser.parse_tck(CCM_DIR / "index.yaml")
+
+        assert tck.dataspace == DataspaceContext(ecosystem="Catena-X", version="saturn")
+
+    def test_ccm_index_infrastructure_declares_engine_and_sut_connector(self) -> None:
+
+        tck = YamlParser.parse_tck(CCM_DIR / "index.yaml")
+
+        assert tck.infrastructure.engine["connector"].required is True
+        assert tck.infrastructure.sut["connector"].required is True
+
+    def test_setup_artifact_reference_resolves_to_canonical_ref(self) -> None:
+
+        result = resolve_expression("${{ setup.ccm_policy.policy }}")
+
+        assert result == {"$ref": "setup.ccm_policy.policy"}
+
+    def test_sut_connector_reference_in_example_resolves_verbatim(self) -> None:
+
+        with open(CCM_TESTS_DIR / "request_certificate.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
+        sut_ref = data["steps"][0]["with"]["counter_party_address"]
 
-        all_assertions = []
-        for step_raw in data.get("steps", []):
-            for expect_raw in step_raw.get("validate", []):
-                all_assertions.append(parse_assertion(expect_raw))
+        result = resolve_expression(sut_ref)
 
-        assert len(all_assertions) > 0, "Expected at least one assertion"
-        assertion_types_found = {a.type for a in all_assertions}
-        assert AssertionType.NOT_NULL in assertion_types_found, "Expected NOT_NULL assertion type"
-        assert AssertionType.EQUALS in assertion_types_found, "Expected EQUALS assertion type"
-        for assertion in all_assertions:
-            assert assertion.path is not None, "Compact assertions must set path from 'output' field"
+        assert result == {"$ref": "infrastructure.sut.connector.counter_party_address"}
 
 
 class TestCcmStepRegistry:
@@ -128,18 +194,3 @@ class TestCcmStepRegistry:
         step_cls = StepRegistry.get(step_type, "saturn")
 
         assert step_cls is not None, f"Step type '{step_type}' is not registered for dataspace 'saturn'"
-
-
-class TestCcmServiceParsing:
-    def test_ccm_service_type_edc_connector_accepted(self) -> None:
-
-        yaml_path = CCM_TESTS_DIR / "request_certificate.yaml"
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        services = [parse_service(s) for s in data.get("services", [])]
-
-        assert len(services) == 1, "Expected exactly one service definition"
-        svc = services[0]
-        assert svc.name == "provider_edc"
-        assert svc.type == ServiceType.EDC_CONNECTOR_SATURN

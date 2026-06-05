@@ -30,23 +30,38 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from tractusx_testlab.models.authoring.infrastructure import (
+    DataspaceContext,
+    InfrastructureConfig,
+)
 from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     FailurePolicy,
     SdkCallMode,
     ValueSource,
+    VariableSource,
 )
 from tractusx_testlab.models.primitives.enums import AssertionType, ScriptKind, ServiceType
 
 
 class VariableDefinition(BaseModel):
-    """Schema for a declared variable in a test script."""
+    """Schema for a declared variable in a test script.
+
+    Carries both the legacy flat fields (``type``/``default``) and the LOCKED
+    GRAMMAR v1 verb-form fields (``source``/``generator``/``format``/
+    ``placeholder``). The addressable name is ``name`` (the entry ``id`` in
+    verb form), so ``${{ env.<name> }}`` resolves unchanged.
+    """
 
     name: str
     type: str = "str"
     default: Optional[Any] = None
     runtime: bool = False
     description: Optional[str] = None
+    source: VariableSource = VariableSource.VALUE
+    generator: Optional[str] = None
+    format: Optional[str] = None
+    placeholder: Optional[str] = None
 
 
 class Assertion(BaseModel):
@@ -107,6 +122,8 @@ class ScriptDefinition(BaseModel):
     name: str
     version: str = "1.0"
     dataspace_version: str = "saturn"
+    dataspace: Optional[DataspaceContext] = None
+    infrastructure: Optional[InfrastructureConfig] = None
     description: Optional[str] = None
     import_from: Optional[str] = None
     allow_sdk_calls: SdkCallMode = SdkCallMode.ALLOWLIST
@@ -134,6 +151,8 @@ class TckDefinition(BaseModel):
     name: str
     version: str = "1.0"
     description: Optional[str] = None
+    dataspace: Optional[DataspaceContext] = None
+    infrastructure: Optional[InfrastructureConfig] = None
     shared_variables: Optional[dict[str, VariableDefinition]] = None
     tests: list[Union[ScriptDefinition, str]] = Field(default_factory=list)
     imports: list[ImportDefinition] = Field(default_factory=list)

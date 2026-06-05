@@ -39,6 +39,7 @@ from tractusx_testlab.models import (
 )
 from tractusx_testlab.models.authoring.definitions import Assertion, ServiceDefinition, StepDefinition
 from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
+from tractusx_testlab.scripting._variable_form import VariablesBlock, parse_variables_block
 
 # Maps compact assertion keys to (AssertionType, has_value).
 _COMPACT_ASSERTION_MAP: dict[str, tuple[AssertionType, bool]] = {
@@ -59,15 +60,9 @@ _COMPACT_ASSERTION_MAP: dict[str, tuple[AssertionType, bool]] = {
 }
 
 
-def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
-    """Parse a variables mapping into VariableDefinition instances."""
-    result = {}
-    for name, spec in raw.items():
-        if isinstance(spec, dict):
-            result[name] = VariableDefinition(name=name, **spec)
-        else:
-            result[name] = VariableDefinition(name=name, default=spec)
-    return result
+def parse_variables(raw: VariablesBlock) -> dict[str, VariableDefinition]:
+    """Parse a variables block (legacy mapping or verb-form list) into definitions."""
+    return parse_variables_block(raw)
 
 
 def parse_step(raw: dict) -> StepDefinition:
