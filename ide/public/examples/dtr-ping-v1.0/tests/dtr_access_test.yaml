@@ -33,14 +33,89 @@ metadata:
   description: >
     Full dataplane access flow to verify DTR responds with shell descriptors.
 
+setup:
+  - id: access_policy
+    uses: precondition/provide
+    name: SUT Connector Access Policy
+    description: >
+      Access policy configured for the SUT connector: only the SUT's own BPN
+      may obtain the DTR catalog offer (Catena-X BusinessPartnerNumber
+      constraint). The value is the full Saturn (Catena-X 2025/9) ODRL
+      PolicyDefinition as sent to the EDC Management API; the 2025/9 context
+      JSON-LD carries the profile, so no separate profile key is required.
+    with:
+      value:
+        "@context":
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        "@type": PolicyDefinition
+        "@id": access_policy
+        policy:
+          "@type": Set
+          permission:
+            - action: access
+              constraint:
+                - leftOperand: BusinessPartnerNumber
+                  operator: eq
+                  rightOperand: "${{ infrastructure.sut.connector.counter_party_id }}"
+          prohibition: []
+          obligation: []
+    returns:
+      policy:
+        type: object
+        class: Policy
+      policy_request:
+        type: object
+        class: PolicyDefinition
+
+  - id: usage_policy
+    uses: precondition/provide
+    name: SUT Connector Usage Policy
+    description: >
+      Usage policy the SUT connector must enforce on its DTR offer: a signed
+      framework agreement and active dataspace membership. The value is the
+      full Saturn (Catena-X 2025/9) ODRL PolicyDefinition as sent to the EDC
+      Management API; the 2025/9 context JSON-LD carries the profile.
+    with:
+      value:
+        "@context":
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        "@type": PolicyDefinition
+        "@id": usage_policy
+        policy:
+          "@type": Set
+          permission:
+            - action: use
+              constraint:
+                - and:
+                    - leftOperand: FrameworkAgreement
+                      operator: eq
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: Membership
+                      operator: eq
+                      rightOperand: "active"
+          prohibition: []
+          obligation: []
+    returns:
+      policy:
+        type: object
+        class: Policy
+      policy_request:
+        type: object
+        class: PolicyDefinition
+
 steps:
   - id: pull_dtr_endpoint
     uses: connector/pull_data_filtered
     name: Discover DTR asset and obtain dataplane credentials
     with:
-      connector_service: "${{ env.services.testlab_connector.connector_service }}"
+      connector_service: "${{ infrastructure.engine.connector }}"
       counter_party_address: "${{ env.counter_party_address }}"
       counter_party_id: "${{ env.counter_party_id }}"
+      policy: "${{ setup.usage_policy.policy }}"
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "like"
@@ -78,3 +153,10 @@ steps:
         with: { input: status_code, operator: equals, value: 200 }
       - uses: validate/assert
         with: { input: response_body, operator: not_null }
+
+  - id: assert_access_policy
+    uses: validate/assert
+    name: SUT access policy must be configured
+    with:
+      input: "${{ setup.access_policy.policy }}"
+      operator: not_null

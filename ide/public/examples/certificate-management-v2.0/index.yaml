@@ -18,7 +18,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 ## It was reviewed and tested by a human committer.
 
 kind: tck
@@ -26,6 +26,19 @@ testlab: v1-alpha
 
 id: certificate-management-tck
 namespace: ccm-v0.0.1
+name: certificate-management
+
+dataspace:
+  ecosystem: Catena-X
+  version: saturn
+
+infrastructure:
+  engine:
+    connector:
+      required: true
+  sut:
+    connector:
+      required: true
 
 metadata:
   name: "Certificate Management TCK"
@@ -51,31 +64,69 @@ metadata:
 
 env:
   variables:
-    provider_url: ""
-    provider_bpn: ""
-    consumer_bpn: ""
-    certificate_type: "iso9001"
-    location_bpns: ""
-    testlab_management_url: ""
-    testlab_dsp_url: ""
-    testlab_mock_base_url: ""
-    sut_response_timeout: 300
-  services:
-    - name: testlab_connector
-      uses: service/connector_service
+    - id: provider_url
+      uses: variable/type/string
       with:
-        base_url: ${{ env.provider_url }}
-        management_path: /management/v3
-        dsp_path: /api/v1/dsp/2025-1
-        dataspace_version: ${{ metadata.dataspace_version }}
-        auth:
-          type: api_key
-          api_key: "test-api-key"
-          api_key_header: "X-Api-Key"
+        source: input
       returns:
-        service:
-          type: class
-          class: ConnectorService
+        value:
+          type: string
+    - id: provider_bpn
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: consumer_bpn
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: certificate_type
+      uses: variable/type/string
+      with:
+        value: iso9001
+      returns:
+        value:
+          type: string
+    - id: location_bpns
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: testlab_management_url
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: testlab_dsp_url
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: testlab_mock_base_url
+      uses: variable/type/string
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+    - id: sut_response_timeout
+      uses: variable/type/integer
+      with:
+        value: 300
+      returns:
+        value:
+          type: integer
   schemas:
     certificate_schema:
       file: business_partner_certificate_schema.json
@@ -99,73 +150,22 @@ env:
     send_feedback_body:
       file: send_feedback_body.json
 
-preconditions:
-  - id: health_testlab_connector
-    uses: connector/health_check
-    name: TestLab Connector health check
-    with:
-      connector_service: ${{ env.services.testlab_connector.connector_service }}
-      dataspace_version: ${{ metadata.dataspace_version }}
-    validate:
-      - uses: validate/assert
-        with:
-          input: status_code
-          operator: equals
-          value: 200
-          
-  - id: testlab_connector
-    uses: precondition/inject/connector
-    name: TestLab Connector Configuration
-    returns:
-      dsp_url:
-        type: string
-        class: Url
-      bpn:
-        type: string
-        class: Bpn
-
-  - id: ccm_policy
-    uses: precondition/provide
-    name: Required CCMAPI Usage Policy
-    with:
-      value:
-        permissions:
-          - action: use
-            constraints:
-              and:
-                - left_operand: UsagePurpose
-                  operator: isAnyOf
-                  right_operand: "cx.ccm.base:1"
-                - left_operand: FrameworkAgreement
-                  operator: eq
-                  right_operand: "DataExchangeGovernance:1.0"
-    returns:
-      policy:
-        type: object
-        class: Policy
-
-  - id: sut_connector
-    uses: precondition/input
-    name: SUT Connector Details
-    returns:
-      counter_party_address:
-        type: string
-        class: Url
-        label: "SUT DSP Endpoint URL"
-        placeholder: "https://my-connector.example.com/api/dsp"
-      counter_party_id:
-        type: string
-        class: Bpn
-        label: "SUT Business Partner Number"
-        placeholder: "BPNL000000000001"
-
 tests:
-  - catalog_policy_validation.yaml
-  - request_certificate.yaml
-  - validate_payload.yaml
-  - push_certificate.yaml
-  - available_notification.yaml
-  - send_feedback.yaml
-  - expose_testlab_asset.yaml
-  - error_handling.yaml
-
+  - test: catalog_policy_validation.yaml
+    description: Validate CX-0135 catalog policy constraints
+  - test: request_certificate.yaml
+    description: Request a certificate via CCMAPI
+  - test: certificate_asset_validation.yaml
+    description: Validate the exposed certificate asset and its usage policy
+  - test: validate_payload.yaml
+    description: Validate certificate payload against the schema
+  - test: push_certificate.yaml
+    description: Push a certificate and verify the feedback callback
+  - test: available_notification.yaml
+    description: Send an available notification and verify acknowledgment
+  - test: send_feedback.yaml
+    description: Send feedback notification and await acknowledgment
+  - test: expose_testlab_asset.yaml
+    description: Expose TestLab as provider and verify SUT consumer behavior
+  - test: error_handling.yaml
+    description: Verify error handling for unknown certificate types

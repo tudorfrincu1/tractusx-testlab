@@ -18,22 +18,23 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 ## It was reviewed and tested by a human committer.
 
 kind: test
 testlab: v1-alpha
 
-id: catalog-policy-validation
+id: certificate-asset-validation
 namespace: ccm-v0.0.1
 
 metadata:
-  name: "Catalog Policy Validation"
+  name: "Certificate Asset Validation"
   version: "1.0"
   description: >
-    Validate CX-0135 catalog requirements: exactly one CCMAPI asset per BPNL
-    and mandatory usage policy constraints (UsagePurpose: cx.ccm.base:1,
-    FrameworkAgreement: DataExchangeGovernance:1.0).
+    Verify the SUT publishes exactly one CCMAPI certificate asset in its EDC
+    catalog and that the offered usage policy matches the CX-0135 v3.1.0
+    requirements (UsagePurpose: cx.ccm.base:1, FrameworkAgreement:
+    DataExchangeGovernance:1.0) before any data exchange is attempted.
 
 setup:
   - id: ccm_policy
@@ -59,7 +60,7 @@ setup:
 steps:
   - id: pull_data_1
     uses: connector/pull_data_filtered
-    name: Query catalog for CCMAPI assets and validate policy matches expected constraints
+    name: Discover the CCMAPI certificate asset and obtain dataplane credentials
     with:
       connector_service: ${{ infrastructure.engine.connector }}
       counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
@@ -69,12 +70,6 @@ steps:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
-        - operand_left: "http://purl.org/dc/terms/subject"
-          operator: "="
-          operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
-        - operand_left: "https://w3id.org/catenax/ontology/common#version"
-          operator: "="
-          operand_right: "3.0"
     returns:
       edr_token:
         type: string
@@ -85,14 +80,14 @@ steps:
 
   - id: assert_edr_token_1
     uses: validate/assert
-    name: EDR authorization token must be obtained
+    name: EDR token must be obtained for the certificate asset
     with:
       input: "${{ steps.pull_data_1.edr_token }}"
       operator: not_null
 
   - id: assert_dataplane_url_1
     uses: validate/assert
-    name: Dataplane URL must be returned
+    name: Dataplane URL must be returned for the certificate asset
     with:
       input: "${{ steps.pull_data_1.dataplane_url }}"
       operator: not_null

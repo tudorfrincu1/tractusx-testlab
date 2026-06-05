@@ -18,19 +18,43 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
+## It was reviewed and tested by a human committer.
 
 kind: tck
 name: connector-ping
 version: "1.0"
 description: Verify that the counter-party connector is reachable and responds to catalog queries.
 
+dataspace:
+  ecosystem: Catena-X
+  version: saturn
+
+infrastructure:
+  engine:
+    connector:
+      required: true
+  sut:
+    connector:
+      required: true
+
 variables:
-  counter_party_address:
-    type: str
+  - id: counter_party_address
+    uses: variable/type/string
     description: DSP endpoint of the counter-party connector
-  counter_party_id:
-    type: str
+    with:
+      source: input
+    returns:
+      value:
+        type: string
+  - id: counter_party_id
+    uses: variable/type/string
     description: BPN of the counter-party
+    with:
+      source: input
+    returns:
+      value:
+        type: string
 
 tests:
   - test: tests/ping_test.yaml

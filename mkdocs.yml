@@ -217,6 +217,8 @@ nav:
       - ADR-0014 Flat Compilation IR: developer/decision-records/ADR-0014-flat-compilation-intermediate-representation.md
       - ADR-0015 Package Asset Resolution: developer/decision-records/ADR-0015-package-asset-resolution.md
       - ADR-0016 Execution Trace Format: developer/decision-records/ADR-0016-execution-trace-format.md
+      - ADR-0018 Unified Variables Model: developer/decision-records/ADR-0018-unified-variables-model.md
+      - ADR-0019 Service Requirements and Engine Bindings: developer/decision-records/ADR-0019-service-requirements-and-engine-bindings.md
   - Contributing:
     - Guidelines: contributing/index.md
 

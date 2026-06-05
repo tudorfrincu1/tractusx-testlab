@@ -50,15 +50,35 @@ setup:
       full_mock_url:
         type: string
 
+  - id: ccm_policy
+    uses: precondition/provide
+    name: Required CCMAPI Usage Policy
+    with:
+      value:
+        permissions:
+          - action: use
+            constraints:
+              and:
+                - left_operand: UsagePurpose
+                  operator: isAnyOf
+                  right_operand: "cx.ccm.base:1"
+                - left_operand: FrameworkAgreement
+                  operator: eq
+                  right_operand: "DataExchangeGovernance:1.0"
+    returns:
+      policy:
+        type: object
+        class: Policy
+
 steps:
   - id: pull_notification_endpoint
     uses: connector/pull_data_filtered
     name: Discover CCMAPI notification endpoint and obtain dataplane credentials
     with:
-      connector_service: ${{ env.services.testlab_connector.connector_service }}
-      counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
-      counter_party_id: ${{ preconditions.sut_connector.counter_party_id }}
-      policy: ${{ preconditions.ccm_policy.policy }}
+      connector_service: ${{ infrastructure.engine.connector }}
+      counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
+      counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
+      policy: ${{ setup.ccm_policy.policy }}
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "="
