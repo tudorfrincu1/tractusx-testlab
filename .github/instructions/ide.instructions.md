@@ -26,6 +26,7 @@ workspace change → `workspaceToModel()` → `modelToYaml()` → Zustand store 
 - TypeScript strict mode enabled
 - Functional components only (no class components)
 - **No file may exceed 300 lines** — split using component/hook/constant extraction
+- **Max 5 files per folder** (excluding the barrel `index.ts` / `_index.scss`) — when a folder would exceed 5, reorganize into responsibility-grouped sub-folders, each with its own barrel that the parent forwards through (`export *` for TS, `@forward` for SCSS). Applies to `.ts`, `.tsx`, and `.scss` folders alike. Keep the public import surface stable.
 - **Write modular code from the start** — extract non-trivial logic into custom hooks (`useXxx`), pure transform functions, sub-components, and typed constant/type modules. Each file has one responsibility and a minimal export surface.
 - **When splitting, create reusable units, not arbitrary fragments** — hooks for behavior, pure functions for data transforms, sub-components for UI sections. Shared logic goes in an importable module; never duplicate it.
 - **No inline `style={{}}`** — use `.scss` files (Sass). Reusable tokens, mixins, and placeholders live in `shared/styles/` (`_variables.scss`, `_mixins.scss`, `_placeholders.scss`) and are consumed via `@use`. Keep runtime theming as `--tx-*` CSS custom properties; never duplicate a color/spacing/mixin across components

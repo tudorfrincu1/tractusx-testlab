@@ -37,12 +37,19 @@
 - **Rationale**: GHA-style is familiar to developers, scoped references enable compile-time ambiguity detection, typed `returns` integrates with the class system (AD-5).
 - **Consequences**: Full migration required across IDE + backend. Migration CLI needed for existing YAML files. See `docs/developer/yaml-v2-variable-migration-plan.md`.
 
-### AD-7: Environment and services managed at TCK level (ADR-0011)
+### AD-7: ~~Environment and services managed at TCK level (ADR-0011)~~
 - **Date**: 2026-05-20
-- **Status**: Active (ADR-0011)
-- **Decision**: All services and env variables are declared in the TCK manifest `env:` block. Tests cannot declare their own. Services have a `role` (internal/external/additional), a type from a registry (edc_connector, mock_server, dtr, discovery_finder), and optional `auth`. Variables have an acquisition `type` (input/manual/function) and optional `secret` flag.
+- **Status**: Partially superseded by AD-9 (§ service config moved to engine bindings)
+- **Decision**: ~~All services and env variables are declared in the TCK manifest `env:` block with full config (URL, auth).~~ Service *configuration* now lives at engine level (AD-9); the TCK declares abstract *requirements*. Env-variable management at TCK level still stands.
 - **Rationale**: One configuration point per TCK avoids duplication, enables compile-time validation of all references, and maps 1:1 to the IDE Environment Editor.
 - **Consequences**: Tests are never self-contained — they always need a parent TCK manifest. Manual variables introduce async complexity (runtime pauses). Service type registry must be maintained.
+
+### AD-9: Service Requirements (TCK) vs Engine Bindings (operator) — ADR-0019
+- **Date**: 2026-06-04
+- **Status**: Proposed (ADR-0019, amends ADR-0011 §1–§4)
+- **Decision**: Two top-level blocks replace `env.services`. (1) `dataspace:` = ecosystem **context** (`ecosystem` e.g. Catena-X, `version` e.g. saturn) — NOT a bindable service; it supplies the default `version` constraints inherit. (2) `infrastructure:` names two bindable **sides**: `engine` (embedding host operates — TestLab as a library, named generically for host-agnosticism) and `sut` (System Under Test must provide). Side keys are plain identifiers (no hyphens) so they stay valid in `${{ }}` dot-paths. Under each side, capabilities are keyed (`connector`, `dtr`); value = object with explicit `required: true|false` (the required/optional marker) plus an optional `standard` constraint — an object with `id` (e.g. CX-0018) and `version` (e.g. 2.1.3), where `standard.version` inherits from `dataspace.version`. The old `metadata.dataspace_version` is REMOVED — `dataspace.version` is the single source, nothing duplicates it. Constraints are the EXCEPTION not the rule — only write them where the TCK genuinely certifies a specific version (usually the SUT under test); common case is bare `required: true`. No `name`/`role` fields, no list. Operator supplies `bindings` mirroring the `infrastructure` shape; secrets live only there. Engine matches keys, validates constraints, fails fast; unbound `sut` capability = unmet precondition (unifies with ADR-0018). Steps reference `${{ infrastructure.<side>.<capability> }}`; IDE class filtering keys off capability. A capability GATES its blocks — a block whose capability is not `required: true` cannot be used; using it fails fast in the IDE and at compile time with a typed error (no silent runtime no-op). Rationale for `required: true|false`: not every certification needs every capability — e.g. Discovery Finder, BPN/EDC discovery, shared services (BPDM) authorize via IAM (OAuth2/OIDC), NOT connector contract authorization, so those TCKs mark `connector: { required: false }` and the engine neither demands a connector binding nor offers connector blocks. Direction (provider/consumer, "inbound/outbound") is NOT modelled — it is per-step; one capability = one instance per side. Two distinct connectors on one side deliberately deferred. Mock server is NOT a bindable capability — it is the engine's own built-in component (never declared/bound). Shared dataspace operator services (discovery finder, identity, BPN/EDC discovery) deliberately NOT modelled as bindable capabilities — over-engineering rejected (human, 2026-06-04): pinning versions on services the operator can't upgrade is a brittle gate.
+- **Rationale**: Separates portable "what a TCK needs" from volatile "how it is deployed" — the Helm/npm peerDependencies & ports-and-adapters pattern. Removes per-TCK config duplication, keeps secrets out of portable test content, and turns the near-universal "SUT must expose a connector" need into a first-class declared requirement instead of repeated config.
+- **Consequences**: TCKs become deployment-portable (swap binding profile). New maintained surfaces: capability registry + binding-profile schema/loader. Migration converts existing `env.services` → `requires`/`sut` keys + default binding profile. Open: binding-profile location (CLI flag / engine config / env injection).
 
 ### AD-4: No source-code file exceeds 300 lines
 - **Date**: 2025 (revised 2026-05-29)
@@ -57,6 +64,13 @@
 - **Decision**: Block outputs declare a `class` (semantic type). Block inputs declare `accepts` (list of compatible classes). The IDE filters dropdowns by class compatibility. A class registry at `ide/public/blocks/classes.json` is the canonical taxonomy. Both fields are optional for backward compatibility.
 - **Rationale**: Unfiltered variable dropdowns cause user errors. Typing makes block contracts explicit and enables auto-link improvements.
 - **Consequences**: One-time migration of all block JSONs. Taxonomy must be maintained. "Show all" override prevents over-constraining.
+
+### AD-8: Unified Variables model — preconditions become complex variables
+- **Date**: 2026-06-04
+- **Status**: Proposed (ADR-0018, PR #16, branch feat/refactor/ide_backend)
+- **Decision**: Unify preconditions and variables into one `Variable` discriminated union (`kind: simple | complex`). Simple is discriminated again on `source: value | input | generated`; complex (= today's preconditions) carries `builder`, canonical `payload` JSON and an optional `formula` authoring lens. Runtime classification rule: `input`→REQUEST, `value`→KNOWN, `generated`→GENERATE. A new resolution phase seeds `StepContext` before steps; the existing `@name` resolver is reused unchanged. Generators live in a backend registry exposed via `GET /generators` (catalog like blocks/index.json); IDE consumes via `useGeneratorCatalog()`. Legacy `preconditions` field + `PreconditionLog` kept; `to_variable()` converter + parser synthesis preserve back-compat.
+- **Rationale**: Two authoring models + two runtime code paths for one user intent ("prepare the run") violate "one way to do things". Reuse-first: precondition editor becomes the complex-variable editor.
+- **Consequences**: Converter/parser-synthesis layer maintained until legacy field deprecated. Two persisted reps (payload canonical + formula lens) need sync rules. New maintained surfaces: generator registry + format catalog.
 
 ---
 

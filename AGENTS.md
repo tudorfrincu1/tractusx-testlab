@@ -98,10 +98,11 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 | Rule | Enforcement |
 |------|-------------|
 | No source-code file exceeds 300 lines (docs exempt) | `find <dir> -name '*.ext' \| xargs wc -l \| awk '$1 > 300'` |
+| Max 5 files per folder, excluding the barrel (`index.ts` / `__init__.py` / `_index.scss`); docs exempt | Reorganize into responsibility-grouped sub-folders, each with a barrel the parent forwards through |
 | Code is modular by design — single-responsibility units, reusable helpers, no duplication | Split along responsibility seams; extract shared logic into importable modules |
 | Apache-2.0 license header on all source files | Required |
 | AI-generated code subtitle after license header | See below |
-| Variable syntax in YAML: `@variable_name` | Never `${var}` |
+| Variable syntax in YAML: `${{ ... }}` (e.g. `${{ env.X }}`, `${{ steps.<id>.<out> }}`) per ADR-0010 | Never `@variable_name` or `${var}` |
 | Block catalog source of truth: `ide/public/blocks/index.json` | Never hardcode blocks |
 
 ### AI-Generated Code Subtitle

@@ -29,7 +29,7 @@ applyTo: "**/*"
 7. **Defaults everywhere.** Blocks work with minimal input. Optional fields behind "▼ More".
 
 ## Variable Syntax
-- Use `@variable_name` for variable references in YAML (never `${var}`)
+- Use `${{ ... }}` for variable references in YAML (e.g. `${{ env.X }}`, `${{ steps.<id>.<out> }}`) per ADR-0010 (never `@variable_name` or `${var}`)
 
 ## Source of Truth
 - Block catalog: `ide/public/blocks/index.json` — manifest listing all block categories and file paths
@@ -37,8 +37,9 @@ applyTo: "**/*"
 
 ## File Size & Modularity
 - No source-code file (Python, TypeScript) should exceed 300 lines — split into modules
-- Documentation files (`docs/**/*.md`, ADRs, specifications) are EXEMPT — prefer sub-pages for readability, but a cohesive reference may exceed 300 lines when splitting would harm comprehension
-- **Write modular code from the start** — the 300-line limit is a symptom, not the goal. Organize code into small, single-responsibility units (functions, hooks, modules) with clear, typed boundaries.
+- **Max 5 source files per folder** — a folder (any language: `.py`, `.ts`, `.tsx`, `.scss`) holds at most 5 files, EXCLUDING its barrel (`index.ts` / `__init__.py` / `_index.scss`). When a folder would exceed 5, reorganize the files into responsibility-grouped sub-folders (and sub-sub-folders), each with its own barrel that the parent forwards through. This keeps the public surface stable while the tree stays shallow and navigable.
+- Documentation folders (`docs/**`) are EXEMPT from the 5-file rule; documentation files are EXEMPT from the 300-line rule — prefer sub-pages for readability, but a cohesive reference may exceed 300 lines when splitting would harm comprehension
+- **Write modular code from the start** — the 300-line and 5-file limits are symptoms, not the goal. Organize code into small, single-responsibility units (functions, hooks, modules) grouped into folders by responsibility, with clear, typed boundaries.
 - **When splitting an oversized file, extract reusable units** — pull shared logic into well-named helpers/modules that other code can import. Never split by arbitrarily cutting a file in half; split along responsibility seams (one concern per module).
 - **Prefer composition and reuse over duplication** — if the same logic appears twice, extract it. A new module must have a single, nameable purpose and a minimal public surface.
 
