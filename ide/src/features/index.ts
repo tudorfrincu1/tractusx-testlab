@@ -31,11 +31,10 @@
  */
 
 export * from "./block-editor";
-export * from "./environment-editor";
+export * from "./environment-config";
 export * from "./execution";
 export * from "./export";
 export * from "./graph-view";
-export * from "./preconditions";
 export * from "./project-explorer";
 export * from "./sequence-view";
 export * from "./tck-dashboard";

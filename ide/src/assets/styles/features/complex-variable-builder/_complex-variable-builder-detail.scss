@@ -1,0 +1,124 @@
+/*******************************************************************************
+ * Eclipse Tractus-X - Tractus-X TestLab
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Catena-X Automotive Network e.V.
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ******************************************************************************/
+// This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
+// It was reviewed and tested by a human committer.
+
+// Base styles for the complex-variable-builder detail header. The configuration
+// view (ConfigHeader.tsx) renders `.precond-detail__header`, `__id-static` and
+// `__badge`, but only the `--config` overrides lived in the production styles —
+// the base layout was stranded in the unported POC, which made the title and
+// class badge collapse together ("Access Policypolicy"). These rules restore the
+// flex layout and reuse the IDE preconditions accent palette for the tones.
+
+// Tone palette — identical to the IDE preconditions panel so the badges read
+// native across both surfaces.
+$_tones: (
+  "generate": #94e2d5,
+  "register": #b39ddb,
+  "input": #89b4fa,
+  "check": #a6e3a1,
+);
+
+.precond-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__id-static {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tx-text-bright, #fff);
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+
+  &__direction {
+    font-size: 12px;
+    color: var(--tx-text-muted, #999);
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--tx-text, #e0e0e0);
+  }
+
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+  }
+
+  &__schema-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--tx-text-muted, #999);
+    background: var(--tx-bg-lighter, #2d2d2d);
+    border: 1px solid var(--tx-border, #404040);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+}
+
+// Apply each tone's accent to its badge and call-to-action in one pass.
+@each $name, $color in $_tones {
+  .precond-detail__badge--#{$name} {
+    background: rgba($color, 0.14);
+    color: $color;
+  }
+
+  .precond-detail__action--#{$name} {
+    background: rgba($color, 0.12);
+    color: $color;
+    border: 1px solid rgba($color, 0.4);
+  }
+}

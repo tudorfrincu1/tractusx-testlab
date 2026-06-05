@@ -23,7 +23,6 @@
 // It was reviewed and tested by a human committer.
 
 import type { ComponentType } from "react";
-import { PreconditionEditorPoc } from "./pocs/preconditions-editor";
 
 /** A single proof-of-concept registered in the gallery. */
 export interface PocEntry {
@@ -36,16 +35,10 @@ export interface PocEntry {
 
 /**
  * Data-driven catalog of POCs. Add an entry here to surface a new POC in the
- * gallery — the router and sidebar are generated from this list.
+ * gallery — the router and sidebar are generated from this list. The catalog is
+ * currently empty: the original POCs were promoted into production features.
  */
-export const POC_REGISTRY: readonly PocEntry[] = [
-  {
-    id: "preconditions-editor",
-    title: "Preconditions Editor",
-    description: "Schema-aware, card-based precondition editor (replaces the raw-JSON input).",
-    Component: PreconditionEditorPoc,
-  },
-] as const;
+export const POC_REGISTRY: readonly PocEntry[] = [] as const;
 
 export function findPoc(id: string | null): PocEntry | undefined {
   return POC_REGISTRY.find((poc) => poc.id === id);

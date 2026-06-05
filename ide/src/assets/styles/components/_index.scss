@@ -1,11 +1,9 @@
 // =============================================================================
-// COMPONENTS — Shared/UI component styles (dialogs, error boundaries, forms).
+// COMPONENTS — Shared/UI component styles (error boundary, forms, dialogs).
 // =============================================================================
 
 @forward "app-error-boundary";
-@forward "confirm-dialog";
-@forward "preconditions-dialog";
 @forward "service-form";
 @forward "tck-variable-table";
 @forward "test-overrides-panel";
-@forward "variable-editor-dialog";
+@forward "dialogs";

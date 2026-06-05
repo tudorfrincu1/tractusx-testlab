@@ -31,3 +31,7 @@
 
 // Placeholder: tokens, mixins, and functions will be extracted here from
 // app/index.scss (global tokens) and component SCSS files in Phase 19b.
+
+// Environment configuration spacing/typography scale + form-control mixins.
+// Shared by the environment-config feature partials (list, detail, layout, run).
+@forward "environment-scale";

@@ -35,7 +35,6 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import TuneIcon from "@mui/icons-material/Tune";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import { ToolbarButton } from "./TopBarButtons";
 import { TopBarExampleMenu } from "./TopBarExampleMenu";
 import { TopBarHamburgerMenu, HamburgerMenuItem } from "./TopBarHamburgerMenu";
@@ -158,7 +157,6 @@ export function TopBar() {
   const hamburgerItems: HamburgerMenuItem[] = [
     { label: "Project Info", icon: <InfoOutlinedIcon sx={{ fontSize: 16 }} />, onClick: handleProjectInfo, active: activeFile?.type === "tck" && activeFile?.name === "index" },
     { label: "Environment", icon: <TuneIcon sx={{ fontSize: 16 }} />, onClick: () => useProjectStore.setState({ activeFile: { type: "environment", name: "config" } }), active: activeFile?.type === "environment" },
-    { label: "Preconditions", icon: <SecurityOutlinedIcon sx={{ fontSize: 16 }} />, onClick: () => useProjectStore.setState({ activeFile: { type: "preconditions", name: "root" } }) },
     { label: "New Project", icon: <NoteAddIcon sx={{ fontSize: 16 }} />, onClick: handleNewProject, dividerBefore: true },
     { label: "Import", icon: <FileUploadIcon sx={{ fontSize: 16 }} />, onClick: handleImport },
     { label: "Export", icon: <FileDownloadIcon sx={{ fontSize: 16 }} />, onClick: () => setShowExportDialog(true) },
@@ -205,11 +203,6 @@ export function TopBar() {
             icon={<TuneIcon sx={{ fontSize: 14 }} />}
             onClick={() => useProjectStore.setState({ activeFile: { type: "environment", name: "config" } })}
             active={activeFile?.type === "environment"}
-          />
-          <ToolbarButton
-            label="Preconditions"
-            icon={<SecurityOutlinedIcon sx={{ fontSize: 14 }} />}
-            onClick={() => useProjectStore.setState({ activeFile: { type: "preconditions", name: "root" } })}
           />
           <div className="execution-divider" />
           <ToolbarButton

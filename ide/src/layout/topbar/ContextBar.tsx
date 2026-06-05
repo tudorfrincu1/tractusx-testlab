@@ -27,13 +27,12 @@ import { useProjectStore } from "@/store";
 import { FolderIcon, FolderOpenIcon, FileTypeIcon, ViewTypeIcon } from "./ContextBarIcons";
 
 /** Types that represent TCK-level views (not files in folders) */
-const TCK_VIEW_TYPES = new Set(["tck", "environment", "preconditions"]);
+const TCK_VIEW_TYPES = new Set(["tck", "environment"]);
 
 /** Human-readable labels for TCK-level views */
 const VIEW_LABELS: Record<string, string> = {
   tck: "Project Info",
   environment: "Environment",
-  preconditions: "Preconditions",
 };
 
 /** Folder labels for actual file types */

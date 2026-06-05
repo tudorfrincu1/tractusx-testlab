@@ -28,8 +28,7 @@ import { TopBar, StatusBar, NotificationBar, EditorPanels, ContextBar, BottomPan
 import { NetworkDetailOverlay } from "@/layout/bottom-panel/NetworkDetailOverlay";
 import { ProjectExplorer } from "@/features/project-explorer/ProjectExplorer";
 import { TckDashboard } from "@/features/tck-dashboard";
-import { PreconditionsPanel } from "@/features/preconditions/PreconditionsPanel";
-import { EnvironmentEditor } from "@/features/environment-editor";
+import { EnvironmentConfigView } from "@/features/environment-config";
 import { WelcomeScreen } from "@/layout/WelcomeScreen/WelcomeScreen";
 import { AppErrorBoundary } from "@/shared/ui/AppErrorBoundary";
 import { useEditorStore } from "@/store/editor/useEditorStore";
@@ -208,17 +207,12 @@ export default function App() {
                 <TckDashboard />
               </div>
             )}
-            {activeFile?.type === "preconditions" && (
-              <div className="app__tck-wrapper">
-                <PreconditionsPanel />
-              </div>
-            )}
             {activeFile?.type === "environment" && (
               <div className="app__tck-wrapper">
-                <EnvironmentEditor />
+                <EnvironmentConfigView />
               </div>
             )}
-            {!isTck && activeFile?.type !== "preconditions" && activeFile?.type !== "environment" && (
+            {!isTck && activeFile?.type !== "environment" && (
               <EditorPanels autoSave={autoSave} onAutoSaveChange={setAutoSave} />
             )}
             <BottomPanel />

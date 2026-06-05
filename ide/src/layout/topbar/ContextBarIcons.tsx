@@ -86,25 +86,6 @@ export function GearIcon() {
   );
 }
 
-/** Shield — used for preconditions files */
-export function ShieldIcon() {
-  return (
-    <svg {...svgProps} aria-hidden="true">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-/** Link/chain — used for preconditions view */
-export function LinkIcon() {
-  return (
-    <svg {...svgProps} aria-hidden="true">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-    </svg>
-  );
-}
-
 /** Horizontal sliders/mixer — used for environment view (matches TopBar TuneIcon) */
 export function TuneIcon() {
   return (
@@ -153,8 +134,6 @@ export function FileTypeIcon({ type }: Readonly<{ type: string }>) {
       return <FileIcon />;
     case "environment":
       return <GearIcon />;
-    case "preconditions":
-      return <ShieldIcon />;
     case "tck":
       return <ClipboardIcon />;
     default:
@@ -169,8 +148,6 @@ export function ViewTypeIcon({ type }: Readonly<{ type: string }>) {
       return <InfoIcon />;
     case "environment":
       return <TuneIcon />;
-    case "preconditions":
-      return <ShieldIcon />;
     default:
       return <FileIcon />;
   }

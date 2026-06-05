@@ -128,7 +128,7 @@ function TestOverrideSection({ testName, tck, varNames, onUpdateWith }: {
         <div className="overrides__body">
           {varNames.map((varName) => (
             <div key={varName} className="overrides__row">
-              <span className="overrides__var-name">@{varName}</span>
+              <span className="overrides__var-name">{varName}</span>
               <input
                 className="overrides__var-input"
                 type="text"
