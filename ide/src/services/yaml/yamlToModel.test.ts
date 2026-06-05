@@ -178,4 +178,35 @@ tests:
     expect(roundTrippedStep.uses).toBe("http_request");
     expect(roundTrippedStep.validate![0].with.value).toBe(200);
   });
+
+  it("round-trips env variables through the variable/type verb grammar", () => {
+    const original: TckDefinition = {
+      kind: ScriptKind.TCK,
+      name: "env-roundtrip-tck",
+      version: "2.0",
+      env: {
+        variables: {
+          base_url: { type: "string", default: "http://localhost" },
+          consumer_bpn: { type: "string", runtime: true },
+        },
+      },
+      tests: ["test-a.yaml"],
+    };
+
+    // Export emits the canonical verb grammar, never the legacy flat mapping.
+    const yaml = modelToYaml(original);
+    expect(yaml).toContain("uses: variable/type/string");
+    expect(yaml).not.toContain("config/generic");
+
+    // Import reconstructs the exact same variable model from that grammar.
+    const result = yamlToModel(yaml);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const imported = result.model as TckDefinition;
+    expect(imported.env?.variables?.base_url).toEqual({ type: "string", default: "http://localhost" });
+    expect(imported.env?.variables?.consumer_bpn).toEqual({ type: "string", runtime: true });
+
+    // serialize → parse → serialize is idempotent (no drift on a second export).
+    expect(modelToYaml(imported)).toBe(yaml);
+  });
 });

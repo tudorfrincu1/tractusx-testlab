@@ -86,10 +86,15 @@ describe("modelToYaml", () => {
 
     const result = modelToYaml(model);
 
-    // Canonical v2 shape: shared variables live UNDER env, not at the root.
+    // Canonical verb grammar: shared variables live UNDER env as a `uses`/`with`/
+    // `returns` list keyed by `id` — never the old flat name/type/value mapping.
     expect(result).toContain("env:");
     expect(result).toContain("variables:");
-    expect(result).toContain("base_url:");
+    expect(result).toContain("id: base_url");
+    expect(result).toContain("uses: variable/type/string");
+    expect(result).toContain("value: http://localhost");
+    expect(result).toContain("type: string");
+    expect(result).not.toMatch(/base_url:/);
   });
 
   it("preserves step params and assertions", () => {

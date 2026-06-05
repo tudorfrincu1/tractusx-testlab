@@ -28,6 +28,10 @@
  */
 
 import type { ServiceDefinition, Step, PreconditionDefinition } from "./phaseSchema";
+import {
+  createInfrastructureModel,
+  type InfrastructureModel,
+} from "@/features/environment-config/infrastructure/model";
 
 export const ScriptKind = {
   TEST: "test",
@@ -123,6 +127,8 @@ export interface TckDefinition {
   env?: TckEnv;
   preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
+  /** ADR-0019 §1 dataspace + infrastructure configuration for this TCK. */
+  infrastructure?: InfrastructureModel;
   tests: (ScriptDefinition | string | TestRef)[];
 }
 
@@ -160,6 +166,7 @@ export function createEmptyTck(): TckDefinition {
     kind: ScriptKind.TCK,
     name: "new-tck",
     version: "1.0",
+    infrastructure: createInfrastructureModel(),
     tests: [],
   };
 }

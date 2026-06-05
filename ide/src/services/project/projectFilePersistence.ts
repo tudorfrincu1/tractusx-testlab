@@ -24,6 +24,10 @@
 
 import type { TckDefinition, ScriptDefinition } from "@/models/schema";
 import { isTck, isTest } from "@/models/schema";
+import {
+  createInfrastructureModel,
+  type InfrastructureModel,
+} from "@/features/environment-config/infrastructure/model";
 import { yamlToModel, modelToYaml } from "@/services/yaml";
 import type { ActiveFile, SchemaFile, TestdataFile } from "@/models/project";
 
@@ -43,6 +47,12 @@ export interface SerializedProject {
   testOrder: string[];
   activeFile: ActiveFile | null;
   workspaceStates?: Record<string, object>;
+  /**
+   * ADR-0019 §1 infrastructure config, persisted structurally because the YAML
+   * serializer does not emit it yet (WP-5). Stored alongside `tckYaml` so the
+   * field survives a reload without round-tripping through YAML.
+   */
+  infrastructure?: InfrastructureModel;
 }
 
 /* ── Deserialized project data ──────────────────────────────────────────── */
@@ -78,6 +88,7 @@ export function serializeProject(options: DeserializedProject): string {
     testOrder,
     activeFile,
     workspaceStates,
+    infrastructure: tck.infrastructure,
   };
   return JSON.stringify(serialized);
 }
@@ -88,6 +99,12 @@ export function deserializeProject(raw: string): DeserializedProject | null {
     const data: SerializedProject = JSON.parse(raw);
     const tcResult = yamlToModel(data.tckYaml);
     if (!tcResult.ok || !isTck(tcResult.model)) return null;
+
+    // Backfill the default for projects saved before infrastructure existed.
+    const tck: TckDefinition = {
+      ...tcResult.model,
+      infrastructure: data.infrastructure ?? createInfrastructureModel(),
+    };
 
     const testsMap = new Map<string, ScriptDefinition>();
     for (const [name, yaml] of Object.entries(data.tests)) {
@@ -109,7 +126,7 @@ export function deserializeProject(raw: string): DeserializedProject | null {
 
     return {
       projectName: data.projectName,
-      tck: tcResult.model,
+      tck,
       tests: testsMap,
       schemas: schemasMap,
       testdata: testdataMap,

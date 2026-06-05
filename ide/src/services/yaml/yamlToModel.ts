@@ -34,6 +34,7 @@ import type {
   ServiceDefinition,
 } from "@/models/schema";
 import { ScriptKind } from "@/models/schema";
+import { parseEnvVariables } from "@/features/environment-config/yaml";
 import type { StepFieldKey, PreconditionFieldKey } from "./yamlFieldMap";
 
 export type ParseResult =
@@ -82,12 +83,12 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
     dataspace_version: resolveStringField(metadata?.dataspace_version, raw.dataspace_version),
     description: resolveStringField(metadata?.description, raw.description),
     env: env ? {
-      variables: env.variables as ScriptDefinition["variables"],
+      variables: parseEnvVariables(env.variables),
       services: parseServices(env.services),
       schemas: env.schemas as Record<string, unknown> | undefined,
       testdata: env.testdata as Record<string, { file: string; type: string }> | undefined,
     } : undefined,
-    variables: env?.variables as ScriptDefinition["variables"] ?? raw.variables as ScriptDefinition["variables"],
+    variables: parseEnvVariables(env?.variables) ?? parseEnvVariables(raw.variables),
     services: parseServices(env?.services ?? raw.services),
     preconditions: parsePreconditions(raw.preconditions),
     setup: parseSteps(raw.setup),
@@ -146,12 +147,12 @@ function parseTck(raw: Record<string, unknown>): TckDefinition {
     standards: parseStandards(metadata?.standards ?? raw.standards),
     tags: Array.isArray(metadata?.tags ?? raw.tags) ? ((metadata?.tags ?? raw.tags) as unknown[]).map(String) : undefined,
     env: env ? {
-      variables: env.variables as TckDefinition["variables"],
+      variables: parseEnvVariables(env.variables),
       services: parseServices(env.services),
       schemas: env.schemas as Record<string, unknown> | undefined,
       testdata: env.testdata as Record<string, { file: string; type: string }> | undefined,
     } : undefined,
-    variables: env?.variables as TckDefinition["variables"] ?? raw.variables as TckDefinition["variables"],
+    variables: parseEnvVariables(env?.variables) ?? parseEnvVariables(raw.variables),
     preconditions: parsePreconditions(raw.preconditions),
     tests,
   };

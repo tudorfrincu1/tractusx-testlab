@@ -41,7 +41,7 @@ export const TEST_ROOT_FIELDS = ["kind", "testlab", "id", "namespace", "metadata
 export type TestRootFieldKey = (typeof TEST_ROOT_FIELDS)[number];
 
 /** TCK root-level fields in canonical YAML output order. */
-export const TCK_ROOT_FIELDS = ["kind", "testlab", "id", "namespace", "metadata", "env", "preconditions", "tests"] as const;
+export const TCK_ROOT_FIELDS = ["kind", "testlab", "id", "namespace", "metadata", "dataspace", "infrastructure", "env", "tests"] as const;
 export type TckRootFieldKey = (typeof TCK_ROOT_FIELDS)[number];
 
 /** Inline validation fields in canonical YAML output order. */

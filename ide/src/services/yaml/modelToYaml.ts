@@ -27,8 +27,9 @@
  */
 
 import yaml from "js-yaml";
-import type { TestLabDocument, ScriptDefinition, TckDefinition, Step, PreconditionDefinition } from "@/models/schema";
+import type { TestLabDocument, ScriptDefinition, TckDefinition, Step, PreconditionDefinition, TckEnv } from "@/models/schema";
 import { isTck, isTestRef, isTemplateStep } from "@/models/schema";
+import { buildInfrastructureObject, envVariablesToYamlList } from "@/features/environment-config/yaml";
 import { STEP_FIELDS, PRECONDITION_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS, buildOrderedRecord } from "./yamlFieldMap";
 
 export function modelToYaml(model: TestLabDocument): string {
@@ -52,7 +53,7 @@ function buildTestObject(model: ScriptDefinition): Record<string, unknown> {
     id: model.id || undefined,
     namespace: model.namespace || undefined,
     metadata: model.metadata || undefined,
-    env: model.env || undefined,
+    env: buildEnv(model.env),
     preconditions: model.preconditions ? model.preconditions.map(buildPrecondition) : undefined,
     setup: model.setup && model.setup.length > 0 ? model.setup.map(buildStep) : undefined,
     steps: model.steps.map(buildStep),
@@ -67,16 +68,37 @@ function buildTckObject(model: TckDefinition): Record<string, unknown> {
     return buildTestObject(t);
   });
 
+  const infrastructure = model.infrastructure ? buildInfrastructureObject(model.infrastructure) : undefined;
+
   return buildOrderedRecord(TCK_ROOT_FIELDS, {
     kind: "tck",
     testlab: model.testlab || undefined,
     id: model.id || undefined,
     namespace: model.namespace || undefined,
     metadata: model.metadata || undefined,
-    env: model.env || undefined,
-    preconditions: model.preconditions ? model.preconditions.map(buildPrecondition) : undefined,
+    dataspace: infrastructure?.dataspace,
+    infrastructure: infrastructure?.infrastructure,
+    env: buildEnv(model.env),
     tests,
   });
+}
+
+/**
+ * Emits the `env` block, rewriting `env.variables` from the flat
+ * `Record<name, {type, default}>` model into the LOCKED verb grammar list
+ * (`- id: … uses: … with: … returns: …`) via the shared serializer, so the
+ * exported variables match the YAML preview exactly.
+ */
+function buildEnv(env: TckEnv | undefined): Record<string, unknown> | undefined {
+  if (!env) return undefined;
+  const result: Record<string, unknown> = { ...env };
+  const variables = env.variables ? envVariablesToYamlList(env.variables) : [];
+  if (variables.length > 0) {
+    result.variables = variables;
+  } else {
+    delete result.variables;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 function buildStep(step: Step): Record<string, unknown> {

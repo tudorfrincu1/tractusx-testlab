@@ -37,6 +37,11 @@ export interface TestdataFile {
 
 /** The active file reference in the project explorer. */
 export interface ActiveFile {
-  type: "tck" | "test" | "schema" | "testdata" | "preconditions" | "environment";
+  type:
+    | "tck"
+    | "test"
+    | "schema"
+    | "testdata"
+    | "environment";
   name: string;
 }
