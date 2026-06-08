@@ -24,6 +24,7 @@
 
 import { AddVariableMenu } from "./AddVariableMenu";
 import { VariableListItem } from "./VariableListItem";
+import { groupVariables } from "../model";
 import type { ComplexBuilderChoice, Variable } from "../model";
 
 export interface VariableListProps {
@@ -42,6 +43,7 @@ export function VariableList({
   onAddSimple,
   onAddComplex,
 }: Readonly<VariableListProps>) {
+  const groups = groupVariables(variables);
   return (
     <aside className="vars-list">
       <div className="vars-list__head">
@@ -51,16 +53,21 @@ export function VariableList({
       {variables.length === 0 ? (
         <p className="vars-list__empty">No variables yet. Add one to get started.</p>
       ) : (
-        <ul className="vars-list__items">
-          {variables.map((variable) => (
-            <VariableListItem
-              key={variable.id}
-              variable={variable}
-              isActive={variable.id === activeId}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
+        groups.map(({ group, variables: groupVars }) => (
+          <section key={group} className="vars-list__group">
+            <span className="vars-list__group-label">{group}</span>
+            <ul className="vars-list__items">
+              {groupVars.map((variable) => (
+                <VariableListItem
+                  key={variable.id}
+                  variable={variable}
+                  isActive={variable.id === activeId}
+                  onSelect={onSelect}
+                />
+              ))}
+            </ul>
+          </section>
+        ))
       )}
     </aside>
   );

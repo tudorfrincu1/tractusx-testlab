@@ -24,7 +24,10 @@
 
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import TextFieldsOutlinedIcon from "@mui/icons-material/TextFieldsOutlined";
-import { COMPLEX_BUILDER_CHOICES, type ComplexBuilderChoice } from "../model";
+import { Fragment } from "react";
+import type { ComponentType } from "react";
+import type { SvgIconProps } from "@mui/material/SvgIcon";
+import { COMPLEX_BUILDER_CHOICES, VARIABLE_GROUP, type ComplexBuilderChoice } from "../model";
 import { AddVariableOption } from "./AddVariableOption";
 import { useAddVariableMenu } from "./useAddVariableMenu";
 
@@ -41,16 +44,27 @@ const SIMPLE_OPTION = {
   Icon: TextFieldsOutlinedIcon,
 } as const;
 
+/** A single, group-labelled, selectable entry of the Add-variable menu. */
+interface MenuOption {
+  key: string;
+  group: string;
+  Icon: ComponentType<SvgIconProps>;
+  label: string;
+  description: string;
+  onSelect: () => void;
+}
+
 /**
  * The "+ Add variable" control. Opens a popup where every entry — the simple
  * variable and each complex builder — is an obviously-clickable row (icon tile
- * + title + description) with hover, focus, and full keyboard navigation, so a
- * first-time user immediately sees what is selectable.
+ * + title + description) grouped under category headers, with hover, focus, and
+ * full keyboard navigation, so a first-time user immediately sees what is
+ * selectable and how the kinds are organized.
  */
 export function AddVariableMenu({ onAddSimple, onAddComplex }: Readonly<AddVariableMenuProps>) {
-  const itemCount = 1 + COMPLEX_BUILDER_CHOICES.length;
   const {
     open,
+    position,
     triggerRef,
     menuRef,
     toggle,
@@ -58,7 +72,7 @@ export function AddVariableMenu({ onAddSimple, onAddComplex }: Readonly<AddVaria
     registerItem,
     makeItemKeyDownHandler,
     handleTriggerKeyDown,
-  } = useAddVariableMenu(itemCount);
+  } = useAddVariableMenu(1 + COMPLEX_BUILDER_CHOICES.length);
 
   const selectSimple = () => {
     close();
@@ -69,6 +83,28 @@ export function AddVariableMenu({ onAddSimple, onAddComplex }: Readonly<AddVaria
     close();
     onAddComplex(choice);
   };
+
+  // One ordered, data-driven list of every entry; the simple variable shares
+  // the same row shape as the complex builders so the menu maps over a single
+  // source. Grouping is derived from each entry's `group` label below.
+  const options: readonly MenuOption[] = [
+    {
+      key: "simple",
+      group: VARIABLE_GROUP.simple,
+      Icon: SIMPLE_OPTION.Icon,
+      label: SIMPLE_OPTION.label,
+      description: SIMPLE_OPTION.description,
+      onSelect: selectSimple,
+    },
+    ...COMPLEX_BUILDER_CHOICES.map((choice) => ({
+      key: `${choice.type}-${choice.subType}`,
+      group: choice.group,
+      Icon: choice.Icon,
+      label: choice.label,
+      description: choice.description,
+      onSelect: () => selectComplex(choice),
+    })),
+  ];
 
   return (
     <div className="vars-add">
@@ -84,29 +120,35 @@ export function AddVariableMenu({ onAddSimple, onAddComplex }: Readonly<AddVaria
         <AddOutlinedIcon fontSize="small" />
         <span>Add variable</span>
       </button>
-      {open && (
-        <div ref={menuRef} className="vars-add__menu" role="menu" aria-label="Add variable">
-          <AddVariableOption
-            ref={registerItem(0)}
-            Icon={SIMPLE_OPTION.Icon}
-            label={SIMPLE_OPTION.label}
-            description={SIMPLE_OPTION.description}
-            onSelect={selectSimple}
-            onKeyDown={makeItemKeyDownHandler(0)}
-          />
-          <hr className="vars-add__divider" />
-          <span className="vars-add__group-label">Complex variable</span>
-          {COMPLEX_BUILDER_CHOICES.map((choice, index) => (
-            <AddVariableOption
-              key={`${choice.type}-${choice.subType}`}
-              ref={registerItem(index + 1)}
-              Icon={choice.Icon}
-              label={choice.label}
-              description={choice.description}
-              onSelect={() => selectComplex(choice)}
-              onKeyDown={makeItemKeyDownHandler(index + 1)}
-            />
-          ))}
+      {open && position && (
+        <div
+          ref={menuRef}
+          className="vars-add__menu"
+          role="menu"
+          aria-label="Add variable"
+          style={{ top: position.top, left: position.left, maxHeight: position.maxHeight }}
+        >
+          {options.map((option, index) => {
+            const isNewGroup = index === 0 || option.group !== options[index - 1].group;
+            return (
+              <Fragment key={option.key}>
+                {isNewGroup && (
+                  <>
+                    {index > 0 && <hr className="vars-add__divider" />}
+                    <span className="vars-add__group-label">{option.group}</span>
+                  </>
+                )}
+                <AddVariableOption
+                  ref={registerItem(index)}
+                  Icon={option.Icon}
+                  label={option.label}
+                  description={option.description}
+                  onSelect={option.onSelect}
+                  onKeyDown={makeItemKeyDownHandler(index)}
+                />
+              </Fragment>
+            );
+          })}
         </div>
       )}
     </div>

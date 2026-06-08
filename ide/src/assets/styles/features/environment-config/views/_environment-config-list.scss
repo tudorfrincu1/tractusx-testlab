@@ -68,6 +68,15 @@ $tones: (
     flex-direction: column;
   }
 
+  // Category heading above each bucket of variables. Reuses the same
+  // `section-title` mixin as the dropdown's group labels so both surfaces read
+  // identically.
+  &__group-label {
+    @include section-title;
+    display: block;
+    padding: 10px 16px 4px;
+  }
+
   &__item {
     display: flex;
     align-items: center;
@@ -187,14 +196,16 @@ $tones: (
   }
 
   &__menu {
-    position: absolute;
-    z-index: 20;
-    top: calc(100% + 6px);
-    left: 0;
+    position: fixed;
+    z-index: 1000;
     min-width: 264px;
     display: flex;
     flex-direction: column;
     padding: 6px;
+    // `max-height` is supplied inline from the trigger's viewport position so
+    // the tall grouped menu caps to the room below it and scrolls internally
+    // instead of spilling past the viewport edge on a short window.
+    overflow-y: auto;
     border: 1px solid var(--tx-border, #404040);
     border-radius: var(--tx-radius-md, 10px);
     background: var(--tx-bg-lighter, #2d2d2d);

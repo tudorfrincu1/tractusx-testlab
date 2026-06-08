@@ -27,6 +27,7 @@ import type { SvgIconProps } from "@mui/material/SvgIcon";
 import { SUBTYPE_META } from "@/features/complex-variable-builder";
 import type { PreconditionSubType } from "@/features/complex-variable-builder";
 import type { ComplexType } from "./types";
+import { COMPLEX_TYPE_GROUP, type VariableGroupLabel } from "./variableGroups";
 
 /**
  * Data-driven catalog of complex-variable builders. Each choice maps a
@@ -37,6 +38,12 @@ import type { ComplexType } from "./types";
 export interface ComplexBuilderChoice {
   type: ComplexType;
   subType: PreconditionSubType;
+  /**
+   * Section heading the choice is grouped under in the "+ Add variable" menu.
+   * Read from {@link COMPLEX_TYPE_GROUP} so the menu and the overview list share
+   * one taxonomy and never branch on the choice's identity.
+   */
+  group: VariableGroupLabel;
   label: string;
   description: string;
   Icon: ComponentType<SvgIconProps>;
@@ -46,6 +53,7 @@ export const COMPLEX_BUILDER_CHOICES: readonly ComplexBuilderChoice[] = [
   {
     type: "connector_policy",
     subType: "access_policy",
+    group: COMPLEX_TYPE_GROUP.connector_policy,
     label: "Access Policy",
     description: "BPN-based access control ODRL policy.",
     Icon: SUBTYPE_META.access_policy.Icon,
@@ -53,6 +61,7 @@ export const COMPLEX_BUILDER_CHOICES: readonly ComplexBuilderChoice[] = [
   {
     type: "connector_policy",
     subType: "usage_policy",
+    group: COMPLEX_TYPE_GROUP.connector_policy,
     label: "Usage Policy",
     description: "Usage purpose / framework agreement ODRL policy.",
     Icon: SUBTYPE_META.usage_policy.Icon,
@@ -60,6 +69,7 @@ export const COMPLEX_BUILDER_CHOICES: readonly ComplexBuilderChoice[] = [
   {
     type: "connector_asset",
     subType: "asset_template",
+    group: COMPLEX_TYPE_GROUP.connector_asset,
     label: "Asset",
     description: "Asset definition registered in the provider connector.",
     Icon: SUBTYPE_META.asset_template.Icon,
@@ -67,6 +77,7 @@ export const COMPLEX_BUILDER_CHOICES: readonly ComplexBuilderChoice[] = [
   {
     type: "digital_twin",
     subType: "aas_descriptor",
+    group: COMPLEX_TYPE_GROUP.digital_twin,
     label: "Digital Twin",
     description: "AAS shell descriptor registered in your DTR.",
     Icon: SUBTYPE_META.aas_descriptor.Icon,

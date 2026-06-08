@@ -23,14 +23,18 @@
 // It was reviewed and tested by a human committer.
 
 import { useState } from "react";
+import type { ComponentType } from "react";
+import type { SvgIconProps } from "@mui/material/SvgIcon";
+import DataObjectOutlinedIcon from "@mui/icons-material/DataObjectOutlined";
+import LanOutlinedIcon from "@mui/icons-material/LanOutlined";
 import { VariablesSection } from "./VariablesSection";
 import { InfrastructureSection } from "./infrastructure";
 
 type Section = "variables" | "infrastructure";
 
-const SECTIONS: readonly { id: Section; label: string }[] = [
-  { id: "variables", label: "Variables" },
-  { id: "infrastructure", label: "Infrastructure" },
+const SECTIONS: readonly { id: Section; label: string; Icon: ComponentType<SvgIconProps> }[] = [
+  { id: "variables", label: "Variables", Icon: DataObjectOutlinedIcon },
+  { id: "infrastructure", label: "Infrastructure", Icon: LanOutlinedIcon },
 ] as const;
 
 /**
@@ -44,21 +48,36 @@ export function EnvironmentConfigView() {
   return (
     <div className="vars-poc">
       <header className="vars-poc__bar">
-        <nav className="vars-poc__tabs">
-          {SECTIONS.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              className={section === entry.id ? "vars-poc__tab vars-poc__tab--active" : "vars-poc__tab"}
-              onClick={() => setSection(entry.id)}
-            >
-              {entry.label}
-            </button>
-          ))}
+        <nav className="vars-poc__tabs" role="tablist" aria-label="Environment configuration sections">
+          {SECTIONS.map((entry) => {
+            const isActive = section === entry.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                role="tab"
+                id={`vars-poc-tab-${entry.id}`}
+                aria-selected={isActive}
+                aria-controls={`vars-poc-panel-${entry.id}`}
+                className={isActive ? "vars-poc__tab vars-poc__tab--active" : "vars-poc__tab"}
+                onClick={() => setSection(entry.id)}
+              >
+                <entry.Icon className="vars-poc__tab-icon" fontSize="small" />
+                <span>{entry.label}</span>
+              </button>
+            );
+          })}
         </nav>
       </header>
 
-      {section === "variables" ? <VariablesSection /> : <InfrastructureSection />}
+      <div
+        role="tabpanel"
+        id={`vars-poc-panel-${section}`}
+        aria-labelledby={`vars-poc-tab-${section}`}
+        className="vars-poc__panel"
+      >
+        {section === "variables" ? <VariablesSection /> : <InfrastructureSection />}
+      </div>
     </div>
   );
 }

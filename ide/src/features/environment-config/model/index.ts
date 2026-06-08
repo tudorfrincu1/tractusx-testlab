@@ -38,6 +38,15 @@ export type {
 } from "./types";
 export { SOURCE_MODE_META, SOURCE_MODE_ORDER, type SourceModeMeta } from "./sourceModes";
 export { COMPLEX_BUILDER_CHOICES, type ComplexBuilderChoice } from "./complexBuilders";
+export {
+  VARIABLE_GROUP,
+  VARIABLE_GROUP_ORDER,
+  COMPLEX_TYPE_GROUP,
+  variableGroupOf,
+  groupVariables,
+  type VariableGroupLabel,
+  type VariableGroup,
+} from "./variableGroups";
 export { createSimpleVariable, createComplexVariable, DEFAULT_COMPLEX_CHOICE } from "./factory";
 export { MOCK_VARIABLES } from "./mockData";
 export { toEnvVariables } from "./toEnvVariables";

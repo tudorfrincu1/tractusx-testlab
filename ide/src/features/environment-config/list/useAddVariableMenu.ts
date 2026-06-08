@@ -25,14 +25,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
+/** Viewport coordinates the fixed-positioned menu anchors to (below the trigger). */
+export interface MenuPosition {
+  top: number;
+  left: number;
+  /**
+   * Vertical space available between the menu's top and the viewport bottom.
+   * The grouped menu is tall, so on a short window it would otherwise spill
+   * past the viewport edge (a fixed element has no scroll of its own). The menu
+   * caps its height to this value and scrolls internally instead of clipping.
+   */
+  maxHeight: number;
+}
+
+/** Gap in pixels between the trigger's bottom edge and the menu. */
+const MENU_OFFSET = 6;
+
+/** Minimum gap kept between the menu's bottom edge and the viewport bottom. */
+const VIEWPORT_MARGIN = 8;
+
 /**
  * Drives the Add-variable popup menu: open/close state, outside-pointer
- * dismissal, and roving-focus keyboard navigation across `itemCount` menu
+ * dismissal, fixed-viewport anchoring (so the menu escapes the variable list's
+ * scroll clip), and roving-focus keyboard navigation across `itemCount` menu
  * items. Keeps the menu component declarative — it only renders rows and wires
  * the handlers this hook returns.
  */
 export function useAddVariableMenu(itemCount: number) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<MenuPosition | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -43,6 +64,21 @@ export function useAddVariableMenu(itemCount: number) {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
+
+  // Anchor the fixed menu below the trigger whenever it opens. Rendering with
+  // `position: fixed` from these viewport coordinates lets the menu sit above
+  // sibling panels instead of being clipped by the list's `overflow` ancestor.
+  useEffect(() => {
+    if (!open) {
+      setPosition(null);
+      return;
+    }
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const top = rect.bottom + MENU_OFFSET;
+      setPosition({ top, left: rect.left, maxHeight: window.innerHeight - top - VIEWPORT_MARGIN });
+    }
+  }, [open]);
 
   // Move focus into the menu when it opens so keyboard users land on an option.
   useEffect(() => {
@@ -104,6 +140,7 @@ export function useAddVariableMenu(itemCount: number) {
 
   return {
     open,
+    position,
     triggerRef,
     menuRef,
     toggle,
