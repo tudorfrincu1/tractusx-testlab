@@ -1,0 +1,27 @@
+{
+  "schemaVersionFrom": {
+    "entry": "saturn/atomic-constraint-schemas.json",
+    "field": "$id",
+    "pattern": "catenax/(\\d+)/(\\d+)",
+    "template": "catenax-$1-$2"
+  },
+  "versions": [
+    {
+      "id": "jupiter",
+      "label": "Jupiter (cx-odrl-profile)",
+      "dir": "jupiter",
+      "entry": "policy-schema.json",
+      "resolution": "selfcontained-defs",
+      "bucketing": "single"
+    },
+    {
+      "id": "saturn",
+      "label": "Saturn (CX-0152)",
+      "dir": "saturn",
+      "entry": "atomic-constraint-schemas.json",
+      "constraintDir": "constraint",
+      "resolution": "catenax-atomic-buckets",
+      "bucketing": "by-rule"
+    }
+  ]
+}

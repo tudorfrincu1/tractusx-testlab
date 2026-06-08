@@ -51,6 +51,22 @@
 - **Rationale**: Separates portable "what a TCK needs" from volatile "how it is deployed" — the Helm/npm peerDependencies & ports-and-adapters pattern. Removes per-TCK config duplication, keeps secrets out of portable test content, and turns the near-universal "SUT must expose a connector" need into a first-class declared requirement instead of repeated config.
 - **Consequences**: TCKs become deployment-portable (swap binding profile). New maintained surfaces: capability registry + binding-profile schema/loader. Migration converts existing `env.services` → `requires`/`sut` keys + default binding profile. Open: binding-profile location (CLI flag / engine config / env injection).
 
+### AD-10: Frontend vendors its own copy of the policy JSON Schemas (Option A)
+- **Date**: 2026-06-08
+- **Status**: Active (ADR-0020)
+- **Decision**: The policy JSON Schemas are duplicated into the frontend at `ide/schemas/policies/{saturn,jupiter}/` (build-time data dir — NOT `public/`, NOT `src/`). The codegen `ide/scripts/generate-constraint-registry/index.ts` reads only from inside `ide/` (`resolve(scriptDir, "../../schemas/policies")`); no path climbs to `../../src`. The backend keeps its own copy at `src/tractusx_testlab/schemas/policies/` as the Python-player runtime contract. The two independent copies are kept byte-identical by a blocking CI diff guard (`diff -r`), with NO shared package.
+- **Rationale**: Frontend and backend must be independent — neither codebase may reach across the boundary. The codegen is build-only (the browser never fetches the schemas), so the schemas belong in a non-served, non-bundled data dir.
+- **Consequences**: Drift risk accepted, mitigated by CI diff. 30 saturn JSONs stay flat (5-file rule is source-code-only). Only the emitted `saturnSource`/`jupiterSource` provenance strings change in the generated registry; constraint data is byte-identical. The un-vendored dspace `contract-schema.json` refs are unaffected (codegen never resolves them).
+- **Refinement (2026-06-08, see AD-11)**: AD-10 established the independent-copies boundary; AD-11 refines *how versions are declared* on top of it (config-driven manifest). AD-10 is NOT superseded — the vendoring + independence decision stands; AD-11 builds on it.
+
+### AD-11: Config-driven manifest model for policy versions (refines AD-10/ADR-0020)
+- **Date**: 2026-06-08
+- **Status**: Active (ADR-0020, refinement of AD-10)
+- **Decision**: Dataspace versions are declared as DATA in `ide/schemas/policies/manifest.json` (per-version `id`, schema folder, ref-resolution `strategy`, optional editorial overlay). The codegen `ide/scripts/generate-constraint-registry/` ITERATES the manifest and never names a version literally. Ref resolution is pluggable via two registered STRATEGIES: `catenax-atomic-buckets` (saturn-style external + per-constraint `$ref`s) and `selfcontained-defs` (jupiter-style internal `$defs`). Generated output is keyed by version: `PolicyVersion` union from manifest ids, `POLICY_VERSIONS`, `VERSION_SCHEMAS`, `VERSION_BUCKETING`, `CONSTRAINTS_BY_VERSION`; `preconditionTypes.ts` re-exports the generated union. Consumers read keyed/manifest-derived data, never hardcoded version lists. Per-version overlay is OPTIONAL with sane defaults. **Zero-code new-version contract**: a version fitting an existing strategy = drop schema folder (both vendored copies) + one manifest entry + `npm run generate:registry` → ZERO code. The single documented exception: a genuinely new ref-resolution shape needs one new strategy function.
+- **Rationale**: Imperatively naming versions in the codegen and hardcoding version lists in consumers made every new version a code change. Making the version set data-driven turns the common case into pure configuration and keeps "one way to do things".
+- **Consequences**: Two CI guards in `.github/workflows/test.yml` job `frontend-checks`: `verify:registry` (regen-clean) and `verify:schemas` (per-version frontend↔backend `diff -r` + manifest↔backend parity). The schema guard iterates the manifest, so it scales to N versions with no workflow edit. Independence/no-cross-boundary is now a guarded invariant. Verified green on landing: tsc 0, build, 27 goldens, regen-clean.
+- **Refinement (2026-06-08) — 1:1 upstream mirror**: Where an upstream folder exists, the vendored copy is a VERBATIM byte-for-byte, folder-for-folder mirror — not just the files codegen reads. SATURN now mirrors upstream CX-0152 `assets/` (catenax-eV/catenax-ev.github.io, pinned SHA `85f1ad8acdb6a835a40a3422119c3ecd2a1ec055`): root atomic/context/policy schemas + `PROVENANCE.txt`; `constraint/` (27); `context/` (`context.jsonld`, `odrl.jsonld`); `samples/` (31). `context/` + `samples/` are carried even though codegen ignores them, so a spec bump is a RE-DOWNLOAD not a reshuffle. Frontend + backend saturn copies are byte-identical (recursive `verify:schemas`, now covering nested dirs). **constraintDir mechanism**: codegen tolerates upstream nesting via a new OPTIONAL manifest field `constraintDir` (`"constraint"` for saturn, ABSENT for jupiter) — nesting versions set it, flat ones omit it; "new version = data only" contract preserved. jupiter (our own schema, no upstream) stays FLAT/self-contained. **sync:schemas**: opt-in script (`ide/scripts/sync-schemas/`) re-downloads the upstream tree at the pinned SHA, prunes files no longer upstream, rewrites `PROVENANCE.txt`; NOT in CI (codegen never needs network) → future bump is one command. **Deliberate divergence-drop**: vendored copy carries NOTHING beyond upstream — local-only constraints `managed-legal-entity-bpnl` + `managed-legal-entity-region` were DROPPED (27 upstream vs our prior 29); saturn `usage_permission` 24→22. Human rationale: "official schema = source of truth, clean, no backward compat." (`cx.sharing.managedLegalEntity:1` survives as an enum VALUE of `confidential-information-sharing` — upstream, unrelated to the dropped left-operands.) **Headers**: vendored upstream JSON carry NO Apache/AI headers (third-party data, even though same-org hosted); provenance lives in `PROVENANCE.txt`. Verified green: tsc 0, vite build, 27 goldens, `verify:schemas` PASS, python 320 passed.
+
 ### AD-4: No source-code file exceeds 300 lines
 - **Date**: 2025 (revised 2026-05-29)
 - **Status**: Active
@@ -95,6 +111,11 @@
 
 ### PAT-6: Agent team split by codebase boundary
 - Frontend work (`ide/`) → `testlab-ide-master`. Backend work (`src/`) → `testlab-master`. Tests (`tests/`) → `testlab-test-master`. Docs (`docs/`) → `testlab-docs-master`. Never mix agents across boundaries in the same work package.
+
+### PAT-7: Vendor shared external data per-codebase + CI diff guard
+- **Date**: 2026-06-08
+- When two independent codebases both need the same external contract data (e.g. official JSON Schemas), give each its own checked-in copy and keep them honest with a blocking CI `diff -r` guard — never a shared package or a cross-boundary path read. Independence at the code level, drift protection at the CI level. Vendored data is build/runtime input, not source code: keep it flat, out of `public/` if build-only, out of `src/`.
+- **Refinement (2026-06-08) — mirror upstream verbatim when it exists**: when the external data has an upstream folder, vendor a 1:1 byte-for-byte / folder-for-folder mirror (incl. files codegen never reads, e.g. `context/`, `samples/`) so a version bump is a re-download not a reshuffle; pin provenance to an upstream commit SHA in `PROVENANCE.txt` + an opt-in `sync:schemas` refresh script (NOT in CI); tolerate upstream nesting in tooling via an OPTIONAL config field (e.g. manifest `constraintDir`) so flat versions stay flat; carry NOTHING beyond upstream (drop local supersets — official schema is the source of truth); vendored upstream JSON carry no Apache/AI headers (third-party data).
 
 ---
 
@@ -143,6 +164,10 @@
 ### RISK-5: Block catalog class taxonomy drift
 - **Date**: 2026-05-19
 - As new blocks are added, contributors may forget to assign `class`/`accepts` fields or use non-registry classes. CI validation should check all outputs reference valid classes from `ide/public/blocks/classes.json`.
+
+### RISK-7: Vendored schema-copy drift (frontend vs backend)
+- **Date**: 2026-06-08
+- The policy schemas now exist twice (`ide/schemas/policies/` + `src/tractusx_testlab/schemas/policies/`). Silent divergence between the IDE's enumerated constraints and the player's validation is a nasty bug class. Mitigation: blocking CI `diff -r` guard. Also watch the generated registry's `saturnSource`/`jupiterSource` provenance strings — they are emitted into the file, so a source-path change produces a (small, expected) diff that must be committed.
 
 ---
 

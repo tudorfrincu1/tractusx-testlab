@@ -9,6 +9,10 @@
     "preview": "vite preview",
     "lint": "eslint src/",
     "lint:imports": "eslint src/ --rule '{\"no-restricted-imports\": \"error\"}'",
+    "sync:schemas": "node scripts/sync-schemas/index.ts",
+    "generate:registry": "node scripts/generate-constraint-registry/index.ts",
+    "verify:registry": "npm run generate:registry && git diff --exit-code -- src/shared/ui/PreconditionsDialog/constraintRegistry.generated.ts",
+    "verify:schemas": "node scripts/verify-schemas/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

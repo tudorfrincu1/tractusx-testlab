@@ -31,6 +31,7 @@
 import { VERSION_SCHEMAS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
 import type { PolicyConstraint } from "@/models/schema";
 import type { PolicyPayload, PolicyType, PolicyVersion } from "../../../model";
+import { getKnownUsagePurposes } from "../../policy/usagePurposes";
 
 /** A single constraint a template contributes to the generated permission. */
 export interface TemplateConstraint {
@@ -52,50 +53,26 @@ export interface TemplateVariable {
   default?: string;
 }
 
-// The standardized Catena-X usage purposes, taken verbatim from the enumerated
-// `const` definitions in the Saturn usage-purpose-constraint schema
-// (src/tractusx_testlab/schemas/policies/saturn/usage-purpose-constraint-schema.json).
-// The schema also allows free-form individual purposes, hence `allowCustom`.
-export const USAGE_PURPOSE_OPTIONS: readonly string[] = [
-  "cx.core.legalRequirementForThirdparty:1",
-  "cx.core.industrycore:1",
-  "cx.core.qualityNotifications:1",
-  "cx.core.digitalTwinRegistry:1",
-  "cx.pcf.base:1",
-  "cx.quality.base:1",
-  "cx.dcm.base:1",
-  "cx.puris.base:1",
-  "cx.circular.dpp:1",
-  "cx.circular.smc:1",
-  "cx.circular.marketplace:1",
-  "cx.circular.materialaccounting:1",
-  "cx.bpdm.gate.upload:1",
-  "cx.bpdm.gate.download:1",
-  "cx.bpdm.pool:1",
-  "cx.bpdm.vas.dataquality.upload:1",
-  "cx.bpdm.vas.dataquality.download:1",
-  "cx.bpdm.vas.countryrisk:1",
-  "cx.bpdm.vas.bdv.upload:1",
-  "cx.bpdm.vas.fpd.upload:1",
-  "cx.bpdm.vas.fpd.download:1",
-  "cx.bpdm.vas.swd.upload:1",
-  "cx.bpdm.vas.swd.download:1",
-  "cx.bpdm.vas.nps.upload:1",
-  "cx.bpdm.vas.nps.download:1",
-  "cx.ccm.base:1",
-  "cx.bpdm.poolAll:1",
-  "cx.logistics.base:1",
-] as const;
+// The usage-purpose default an operator sees pre-selected. This is an
+// EDITORIAL choice (which valid purpose to pre-fill), not part of the purpose
+// enum — the enum itself comes from the generated registry via
+// `getKnownUsagePurposes`. The select `allowCustom`, so a default outside a
+// given version's list is still accepted as a custom value.
+const DEFAULT_USAGE_PURPOSE = "cx.ccm.base:1";
 
-/** The shared usage-purpose dropdown variable used by the default templates. */
-function usagePurposeVariable(): TemplateVariable {
+/**
+ * The shared usage-purpose dropdown variable used by the default templates.
+ * Its option list is derived from the generated constraint registry for the
+ * template's version (single source of truth) instead of a local copy.
+ */
+function usagePurposeVariable(version: PolicyVersion): TemplateVariable {
   return {
     token: "@usage_purpose",
     label: "Usage purpose",
     fieldType: "select",
-    options: USAGE_PURPOSE_OPTIONS,
+    options: getKnownUsagePurposes(version),
     allowCustom: true,
-    default: "cx.ccm.base:1",
+    default: DEFAULT_USAGE_PURPOSE,
   };
 }
 
@@ -139,7 +116,7 @@ export const POLICY_TEMPLATES: readonly PolicyTemplate[] = [
       { leftOperand: "FrameworkAgreement", operator: "eq", rightOperand: "DataExchangeGovernance:1.0" },
       { leftOperand: "UsagePurpose", operator: "eq", rightOperand: "@usage_purpose" },
     ],
-    variables: [usagePurposeVariable()],
+    variables: [usagePurposeVariable("jupiter")],
   },
   {
     id: "saturn_default_usage",
@@ -151,7 +128,7 @@ export const POLICY_TEMPLATES: readonly PolicyTemplate[] = [
       { leftOperand: "FrameworkAgreement", operator: "eq", rightOperand: "DataExchangeGovernance:1.0" },
       { leftOperand: "UsagePurpose", operator: "isAnyOf", rightOperand: "@usage_purpose" },
     ],
-    variables: [usagePurposeVariable()],
+    variables: [usagePurposeVariable("saturn")],
   },
 ] as const;
 

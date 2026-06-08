@@ -22,9 +22,9 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
+import { POLICY_VERSIONS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
 import type { PolicyPayload, PolicyType, PolicyVersion } from "../../model";
 
-const POLICY_VERSIONS: readonly PolicyVersion[] = ["jupiter", "saturn"] as const;
 const POLICY_TYPES: readonly PolicyType[] = ["access", "usage"] as const;
 
 /** Outcome of decoding raw JSON back into a {@link PolicyPayload}. */

@@ -1,0 +1,837 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins jupiter-access-logical-and — jupiter, access modelled as use, multi-constraint LogicalConstraint odrl:and 1`] = `
+"{
+  "version": "jupiter",
+  "policyType": "access",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "Membership",
+          "operator": "eq",
+          "rightOperand": "active"
+        },
+        {
+          "leftOperand": "FrameworkAgreement",
+          "operator": "eq",
+          "rightOperand": "DataExchangeGovernance:1.0"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins jupiter-empty-constraints — jupiter, permission with zero constraints (odrl:constraint omitted) 1`] = `
+"{
+  "version": "jupiter",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": []
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins jupiter-full-permission-prohibition-obligation — jupiter, all three rule sections populated, list operator scalar collapse 1`] = `
+"{
+  "version": "jupiter",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "BusinessPartnerNumber",
+          "operator": "isAnyOf",
+          "rightOperand": [
+            "BPNL000000000001",
+            "BPNL000000000002"
+          ]
+        }
+      ]
+    }
+  ],
+  "prohibitions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "Membership",
+          "operator": "eq",
+          "rightOperand": "active"
+        }
+      ]
+    }
+  ],
+  "obligations": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "FrameworkAgreement",
+          "operator": "eq",
+          "rightOperand": "Traceability:1.0"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins jupiter-usage-bpn-atomic — jupiter, tx: namespace for BPN, single atomic constraint 1`] = `
+"{
+  "version": "jupiter",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "BusinessPartnerNumber",
+          "operator": "eq",
+          "rightOperand": "BPNL000000000001"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins saturn-access-bpn-list — saturn, access token, list operator (isAnyOf -> array right operand) 1`] = `
+"{
+  "version": "saturn",
+  "policyType": "access",
+  "permissions": [
+    {
+      "action": "access",
+      "constraints": [
+        {
+          "leftOperand": "BusinessPartnerNumber",
+          "operator": "isAnyOf",
+          "rightOperand": [
+            "BPNL000000000001",
+            "BPNL000000000002"
+          ]
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins saturn-full-permission-prohibition-obligation — saturn, all three rule sections populated 1`] = `
+"{
+  "version": "saturn",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "Membership",
+          "operator": "eq",
+          "rightOperand": "active"
+        }
+      ]
+    }
+  ],
+  "prohibitions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "BusinessPartnerNumber",
+          "operator": "eq",
+          "rightOperand": "BPNL000000000099"
+        }
+      ]
+    }
+  ],
+  "obligations": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "FrameworkAgreement",
+          "operator": "eq",
+          "rightOperand": "Traceability:1.0"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins saturn-usage-logical-and — saturn, multi-constraint -> \`and\` wrapper (ODRL + YAML and:) 1`] = `
+"{
+  "version": "saturn",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "Membership",
+          "operator": "eq",
+          "rightOperand": "active"
+        },
+        {
+          "leftOperand": "FrameworkAgreement",
+          "operator": "eq",
+          "rightOperand": "DataExchangeGovernance:1.0"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins saturn-usage-membership-atomic — saturn, usage->use action, single atomic constraint (scalar) 1`] = `
+"{
+  "version": "saturn",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "Membership",
+          "operator": "eq",
+          "rightOperand": "active"
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > JSON (policyToJson) > pins saturn-usage-purpose-number-date-optional — saturn, UsagePurpose constraint, numeric right operand, date right operand, optionalUsagePurposes (JSON only) 1`] = `
+"{
+  "version": "saturn",
+  "policyType": "usage",
+  "permissions": [
+    {
+      "action": "use",
+      "constraints": [
+        {
+          "leftOperand": "UsagePurpose",
+          "operator": "eq",
+          "rightOperand": "cx.core.qualityNotifications:1"
+        },
+        {
+          "leftOperand": "ContractReference",
+          "operator": "eq",
+          "rightOperand": "5"
+        },
+        {
+          "leftOperand": "ContractExpiry",
+          "operator": "lteq",
+          "rightOperand": "2026-12-31"
+        }
+      ]
+    }
+  ],
+  "optionalUsagePurposes": [
+    {
+      "id": "purpose-1",
+      "value": "cx.core.qualityNotifications:1",
+      "custom": false
+    },
+    {
+      "id": "purpose-2",
+      "value": "my.custom.purpose",
+      "custom": true
+    }
+  ]
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins jupiter-access-logical-and — jupiter, access modelled as use, multi-constraint LogicalConstraint odrl:and 1`] = `
+"{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "cx-policy": "https://w3id.org/catenax/policy/"
+  },
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0007",
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "profile": "cx-policy:profile2405",
+    "@type": "odrl:Set",
+    "odrl:permission": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        },
+        "odrl:constraint": {
+          "@type": "LogicalConstraint",
+          "odrl:and": [
+            {
+              "@type": "Constraint",
+              "odrl:leftOperand": {
+                "@id": "cx-policy:Membership"
+              },
+              "odrl:operator": {
+                "@id": "odrl:eq"
+              },
+              "odrl:rightOperand": "active"
+            },
+            {
+              "@type": "Constraint",
+              "odrl:leftOperand": {
+                "@id": "cx-policy:FrameworkAgreement"
+              },
+              "odrl:operator": {
+                "@id": "odrl:eq"
+              },
+              "odrl:rightOperand": "DataExchangeGovernance:1.0"
+            }
+          ]
+        }
+      }
+    ],
+    "odrl:prohibition": [],
+    "odrl:obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins jupiter-empty-constraints — jupiter, permission with zero constraints (odrl:constraint omitted) 1`] = `
+"{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "cx-policy": "https://w3id.org/catenax/policy/"
+  },
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0008",
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "profile": "cx-policy:profile2405",
+    "@type": "odrl:Set",
+    "odrl:permission": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        }
+      }
+    ],
+    "odrl:prohibition": [],
+    "odrl:obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins jupiter-full-permission-prohibition-obligation — jupiter, all three rule sections populated, list operator scalar collapse 1`] = `
+"{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "cx-policy": "https://w3id.org/catenax/policy/"
+  },
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0009",
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "profile": "cx-policy:profile2405",
+    "@type": "odrl:Set",
+    "odrl:permission": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        },
+        "odrl:constraint": {
+          "@type": "Constraint",
+          "odrl:leftOperand": {
+            "@id": "tx:BusinessPartnerNumber"
+          },
+          "odrl:operator": {
+            "@id": "odrl:isAnyOf"
+          },
+          "odrl:rightOperand": "BPNL000000000001"
+        }
+      }
+    ],
+    "odrl:prohibition": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        },
+        "odrl:constraint": {
+          "@type": "Constraint",
+          "odrl:leftOperand": {
+            "@id": "cx-policy:Membership"
+          },
+          "odrl:operator": {
+            "@id": "odrl:eq"
+          },
+          "odrl:rightOperand": "active"
+        }
+      }
+    ],
+    "odrl:obligation": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        },
+        "odrl:constraint": {
+          "@type": "Constraint",
+          "odrl:leftOperand": {
+            "@id": "cx-policy:FrameworkAgreement"
+          },
+          "odrl:operator": {
+            "@id": "odrl:eq"
+          },
+          "odrl:rightOperand": "Traceability:1.0"
+        }
+      }
+    ]
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins jupiter-usage-bpn-atomic — jupiter, tx: namespace for BPN, single atomic constraint 1`] = `
+"{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "cx-policy": "https://w3id.org/catenax/policy/"
+  },
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0006",
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "profile": "cx-policy:profile2405",
+    "@type": "odrl:Set",
+    "odrl:permission": [
+      {
+        "odrl:action": {
+          "odrl:type": "http://www.w3.org/ns/odrl/2/use"
+        },
+        "odrl:constraint": {
+          "@type": "Constraint",
+          "odrl:leftOperand": {
+            "@id": "tx:BusinessPartnerNumber"
+          },
+          "odrl:operator": {
+            "@id": "odrl:eq"
+          },
+          "odrl:rightOperand": "BPNL000000000001"
+        }
+      }
+    ],
+    "odrl:prohibition": [],
+    "odrl:obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-access-bpn-list — saturn, access token, list operator (isAnyOf -> array right operand) 1`] = `
+"{
+  "@context": [
+    "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+    "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+    {
+      "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+    }
+  ],
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0002",
+  "policy": {
+    "@type": "Set",
+    "permission": [
+      {
+        "action": "access",
+        "constraint": [
+          {
+            "leftOperand": "BusinessPartnerNumber",
+            "operator": "isAnyOf",
+            "rightOperand": [
+              "BPNL000000000001",
+              "BPNL000000000002"
+            ]
+          }
+        ]
+      }
+    ],
+    "prohibition": [],
+    "obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-full-permission-prohibition-obligation — saturn, all three rule sections populated 1`] = `
+"{
+  "@context": [
+    "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+    "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+    {
+      "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+    }
+  ],
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0005",
+  "policy": {
+    "@type": "Set",
+    "permission": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "leftOperand": "Membership",
+            "operator": "eq",
+            "rightOperand": "active"
+          }
+        ]
+      }
+    ],
+    "prohibition": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "leftOperand": "BusinessPartnerNumber",
+            "operator": "eq",
+            "rightOperand": "BPNL000000000099"
+          }
+        ]
+      }
+    ],
+    "obligation": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "leftOperand": "FrameworkAgreement",
+            "operator": "eq",
+            "rightOperand": "Traceability:1.0"
+          }
+        ]
+      }
+    ]
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-usage-logical-and — saturn, multi-constraint -> \`and\` wrapper (ODRL + YAML and:) 1`] = `
+"{
+  "@context": [
+    "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+    "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+    {
+      "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+    }
+  ],
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0003",
+  "policy": {
+    "@type": "Set",
+    "permission": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "and": [
+              {
+                "leftOperand": "Membership",
+                "operator": "eq",
+                "rightOperand": "active"
+              },
+              {
+                "leftOperand": "FrameworkAgreement",
+                "operator": "eq",
+                "rightOperand": "DataExchangeGovernance:1.0"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "prohibition": [],
+    "obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-usage-membership-atomic — saturn, usage->use action, single atomic constraint (scalar) 1`] = `
+"{
+  "@context": [
+    "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+    "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+    {
+      "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+    }
+  ],
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0001",
+  "policy": {
+    "@type": "Set",
+    "permission": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "leftOperand": "Membership",
+            "operator": "eq",
+            "rightOperand": "active"
+          }
+        ]
+      }
+    ],
+    "prohibition": [],
+    "obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-usage-purpose-number-date-optional — saturn, UsagePurpose constraint, numeric right operand, date right operand, optionalUsagePurposes (JSON only) 1`] = `
+"{
+  "@context": [
+    "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+    "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+    {
+      "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+    }
+  ],
+  "@type": "PolicyDefinition",
+  "@id": "policy-fixture-0004",
+  "policy": {
+    "@type": "Set",
+    "permission": [
+      {
+        "action": "use",
+        "constraint": [
+          {
+            "and": [
+              {
+                "leftOperand": "UsagePurpose",
+                "operator": "eq",
+                "rightOperand": "cx.core.qualityNotifications:1"
+              },
+              {
+                "leftOperand": "ContractReference",
+                "operator": "eq",
+                "rightOperand": "5"
+              },
+              {
+                "leftOperand": "ContractExpiry",
+                "operator": "lteq",
+                "rightOperand": "2026-12-31"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "prohibition": [],
+    "obligation": []
+  }
+}"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-access-logical-and — jupiter, access modelled as use, multi-constraint LogicalConstraint odrl:and 1`] = `
+"- id: policy-fixture-0007
+  uses: precondition/provide
+  name: jupiter-access-logical-and
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            and:
+              - left_operand: Membership
+                operator: eq
+                right_operand: "active"
+              - left_operand: FrameworkAgreement
+                operator: eq
+                right_operand: "DataExchangeGovernance:1.0"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-empty-constraints — jupiter, permission with zero constraints (odrl:constraint omitted) 1`] = `
+"- id: policy-fixture-0008
+  uses: precondition/provide
+  name: jupiter-empty-constraints
+  with:
+    value:
+      permissions:
+        - action: use
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-full-permission-prohibition-obligation — jupiter, all three rule sections populated, list operator scalar collapse 1`] = `
+"- id: policy-fixture-0009
+  uses: precondition/provide
+  name: jupiter-full-permission-prohibition-obligation
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            - left_operand: BusinessPartnerNumber
+              operator: isAnyOf
+              right_operand:
+                - "BPNL000000000001"
+                - "BPNL000000000002"
+      prohibitions:
+        - action: use
+          constraints:
+            - left_operand: Membership
+              operator: eq
+              right_operand: "active"
+      obligations:
+        - action: use
+          constraints:
+            - left_operand: FrameworkAgreement
+              operator: eq
+              right_operand: "Traceability:1.0"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-usage-bpn-atomic — jupiter, tx: namespace for BPN, single atomic constraint 1`] = `
+"- id: policy-fixture-0006
+  uses: precondition/provide
+  name: jupiter-usage-bpn-atomic
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            - left_operand: BusinessPartnerNumber
+              operator: eq
+              right_operand: "BPNL000000000001"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-access-bpn-list — saturn, access token, list operator (isAnyOf -> array right operand) 1`] = `
+"- id: policy-fixture-0002
+  uses: precondition/provide
+  name: saturn-access-bpn-list
+  with:
+    value:
+      permissions:
+        - action: access
+          constraints:
+            - left_operand: BusinessPartnerNumber
+              operator: isAnyOf
+              right_operand:
+                - "BPNL000000000001"
+                - "BPNL000000000002"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-full-permission-prohibition-obligation — saturn, all three rule sections populated 1`] = `
+"- id: policy-fixture-0005
+  uses: precondition/provide
+  name: saturn-full-permission-prohibition-obligation
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            - left_operand: Membership
+              operator: eq
+              right_operand: "active"
+      prohibitions:
+        - action: use
+          constraints:
+            - left_operand: BusinessPartnerNumber
+              operator: eq
+              right_operand: "BPNL000000000099"
+      obligations:
+        - action: use
+          constraints:
+            - left_operand: FrameworkAgreement
+              operator: eq
+              right_operand: "Traceability:1.0"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-logical-and — saturn, multi-constraint -> \`and\` wrapper (ODRL + YAML and:) 1`] = `
+"- id: policy-fixture-0003
+  uses: precondition/provide
+  name: saturn-usage-logical-and
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            and:
+              - left_operand: Membership
+                operator: eq
+                right_operand: "active"
+              - left_operand: FrameworkAgreement
+                operator: eq
+                right_operand: "DataExchangeGovernance:1.0"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-membership-atomic — saturn, usage->use action, single atomic constraint (scalar) 1`] = `
+"- id: policy-fixture-0001
+  uses: precondition/provide
+  name: saturn-usage-membership-atomic
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            - left_operand: Membership
+              operator: eq
+              right_operand: "active"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;
+
+exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-purpose-number-date-optional — saturn, UsagePurpose constraint, numeric right operand, date right operand, optionalUsagePurposes (JSON only) 1`] = `
+"- id: policy-fixture-0004
+  uses: precondition/provide
+  name: saturn-usage-purpose-number-date-optional
+  with:
+    value:
+      permissions:
+        - action: use
+          constraints:
+            and:
+              - left_operand: UsagePurpose
+                operator: eq
+                right_operand: "cx.core.qualityNotifications:1"
+              - left_operand: ContractReference
+                operator: eq
+                right_operand: 5
+              - left_operand: ContractExpiry
+                operator: lteq
+                right_operand: "2026-12-31"
+  returns:
+    policy:
+      type: object
+      class: Policy"
+`;

@@ -52,7 +52,7 @@ export type PreconditionSubType =
   | "operator_input"
   | "readiness_check";
 
-export type PolicyVersion = "jupiter" | "saturn";
+export type { PolicyVersion } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
 export type PolicyType = "access" | "usage";
 
 /**

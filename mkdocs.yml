@@ -219,6 +219,7 @@ nav:
       - ADR-0016 Execution Trace Format: developer/decision-records/ADR-0016-execution-trace-format.md
       - ADR-0018 Unified Variables Model: developer/decision-records/ADR-0018-unified-variables-model.md
       - ADR-0019 Service Requirements and Engine Bindings: developer/decision-records/ADR-0019-service-requirements-and-engine-bindings.md
+      - ADR-0020 Frontend Vendored Policy Schemas: developer/decision-records/ADR-0020-frontend-vendored-policy-schemas.md
   - Contributing:
     - Guidelines: contributing/index.md
 

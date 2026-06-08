@@ -55,6 +55,7 @@ Each ADR follows the [Michael Nygard format](https://cognitect.com/blog/2011/11/
 | [0011](ADR-0011-environment-and-services.md) | Environment Variables and Services Management | Draft |
 | [0018](ADR-0018-unified-variables-model.md) | Unified Variables Model (Preconditions as Complex Variables) | Proposed |
 | [0019](ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
+| [0020](ADR-0020-frontend-vendored-policy-schemas.md) | Frontend Vendors Its Own Copy of the Policy JSON Schemas | Accepted |
 
 ## Creating a New ADR
 

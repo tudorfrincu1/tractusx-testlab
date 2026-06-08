@@ -68,6 +68,12 @@ jobs:
       - name: Install dependencies
         run: cd ide && npm ci
 
+      - name: Verify constraint registry is up to date
+        run: cd ide && npm run verify:registry
+
+      - name: Verify schema copies are in sync
+        run: cd ide && npm run verify:schemas
+
       - name: Type check
         run: cd ide && npx tsc --noEmit
 

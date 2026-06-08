@@ -29,14 +29,12 @@
 import { useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { VERSION_SCHEMAS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import { POLICY_VERSIONS, VERSION_SCHEMAS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
 import type { PolicyRule } from "@/models/schema";
 import type { OptionalUsagePurpose, PolicyPayload, PolicyVersion } from "../../model";
 import { OptionalUsagePurposeSection } from "./OptionalUsagePurposeSection";
 import { RuleSectionEditor } from "./RuleSectionEditor";
 import { SchemaInfoPanel } from "./SchemaInfoPanel";
-
-const VERSIONS: readonly PolicyVersion[] = ["jupiter", "saturn"] as const;
 
 export interface PolicyEditorProps {
   id: string;
@@ -66,7 +64,7 @@ export function PolicyEditor({ id, name, policy, onChange }: Readonly<PolicyEdit
     <div className="precond-editor__group precond-policy">
       <PillRow
         label="Profile version"
-        options={VERSIONS.map((version) => ({
+        options={POLICY_VERSIONS.map((version) => ({
           value: version,
           label: VERSION_SCHEMAS[version].label,
         }))}

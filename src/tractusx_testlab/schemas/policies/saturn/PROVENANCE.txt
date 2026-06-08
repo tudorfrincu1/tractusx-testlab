@@ -1,0 +1,11 @@
+Vendored Catena-X CX-0152 policy schemas — DO NOT HAND-EDIT.
+
+Source repo : catenax-eV/catenax-ev.github.io
+Source path : docs/standards/CX-0152-PolicyConstrainsForDataExchange/assets/
+Pinned SHA  : 85f1ad8acdb6a835a40a3422119c3ecd2a1ec055
+Vendored on : 2026-06-08
+File count  : 63 (mirror of upstream assets/, verbatim)
+
+These files are a byte-for-byte mirror of the upstream CX-0152 assets/ folder.
+Regenerate with `npm run sync:schemas`. To bump the spec, change the pinned SHA
+in ide/scripts/sync-schemas/index.ts and re-run. Never edit these files by hand.
