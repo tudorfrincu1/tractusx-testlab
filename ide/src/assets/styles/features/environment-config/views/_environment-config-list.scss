@@ -23,15 +23,15 @@
 // It was reviewed and tested by a human committer.
 
 // Left list panel and the "add variable" menu, on dark surfaces. The list is a
-// flush column with a right divider (mirroring the IDE preconditions panel's
+// flush column with a right divider (mirroring the IDE config panel's
 // left rail), not a floating card. The source tones reuse the IDE shell's
 // catppuccin accent palette so the icon discs read native.
 @use "../../../abstracts" as *;
 
 $tones: (
-  value: #a6e3a1, // green — same accent as preconditions asset icon
-  input: #89b4fa, // blue  — same accent as preconditions access badge
-  generated: #cba6f7, // mauve — same accent as preconditions policy icon
+  value: #a6e3a1, // green — same accent as config asset icon
+  input: #89b4fa, // blue  — same accent as config access badge
+  generated: #cba6f7, // mauve — same accent as config policy icon
 );
 
 .vars-list {

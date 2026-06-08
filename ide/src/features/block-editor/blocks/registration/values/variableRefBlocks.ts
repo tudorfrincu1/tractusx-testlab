@@ -29,14 +29,13 @@ import { blockIcon, ICON_VARIABLE } from "../../common/fields/icons";
 import {
   collectEnvironmentVariables,
   collectServiceVariables,
-  collectPreconditionVariables,
   collectSetupVariables,
   collectMetadataVariables,
   collectExecutionVariables,
 } from "../../common/catalog/variables/variableCollection";
 import { dynamicDropdown, collectSchemaPaths, collectTestdataPaths } from "../../common/fields/dropdownProviders";
 
-/** Registers variable reference blocks (var_steps, var_preconditions, var_env, etc.). */
+/** Registers variable reference blocks (var_steps, var_env, etc.). */
 export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
   Blockly.Blocks["var_steps"] = {
     init(this: BlocklyType.Block) {
@@ -48,34 +47,6 @@ export function registerVariableRefBlocks(Blockly: typeof BlocklyType) {
       this.setOutput(true, "param_value");
       this.setColour(blockColors.varSteps);
       this.setTooltip("Step output variable \u2014 drag into inputs to use");
-      this.setDeletable(true);
-      this.setMovable(true);
-    },
-  };
-
-  Blockly.Blocks["var_preconditions"] = {
-    init(this: BlocklyType.Block) {
-      this.appendDummyInput()
-        .appendField(blockIcon(Blockly, ICON_VARIABLE))
-        .appendField("Precondition")
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown(
-              (ws) => {
-                const vars = collectPreconditionVariables(ws);
-                return vars.length > 0
-                  ? vars.map((v): [string, string] => [v, v])
-                  : [["(none)", "__NONE__"]];
-              },
-              "(none)",
-            ),
-          ),
-          "VAR_NAME",
-        )
-        .appendField("  ");
-      this.setOutput(true, "param_value");
-      this.setColour(blockColors.varPreconditions);
-      this.setTooltip("Reference a precondition output");
       this.setDeletable(true);
       this.setMovable(true);
     },

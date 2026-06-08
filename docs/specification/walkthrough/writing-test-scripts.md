@@ -39,14 +39,14 @@ my-certificate-tck/
     └── request_body.json                   # Reusable request payload
 ```
 
-- `index.yaml` — declares the TCK: metadata, environment, preconditions, and test list
+- `index.yaml` — declares the TCK: metadata, environment, and test list
 - `tests/` — one YAML file per test case
 - `schemas/` — JSON Schema files referenced by the TCK
 - `testdata/` — static JSON payloads referenced by steps
 
 ## Step 1 — Create the TCK Manifest (index.yaml)
 
-The manifest declares everything tests share: variables, services, schemas, testdata, preconditions, and the ordered test list.
+The manifest declares everything tests share: variables, services, schemas, testdata, and the ordered test list.
 
 ```yaml
 kind: tck
@@ -75,6 +75,8 @@ env:
     consumer_bpn: ""
     certificate_type: "iso9001"
     sut_response_timeout: 300
+    sut_dsp_url: ""
+    sut_bpn: ""
   services:
     - name: testlab_connector
       uses: service/connector_service
@@ -98,32 +100,6 @@ env:
     request_body:
       file: request_body.json
 
-preconditions:
-  - id: health_check
-    uses: connector/health_check
-    name: Verify connector is alive
-    with:
-      connector_service: ${{ env.services.testlab_connector.connector_service }}
-      dataspace_version: ${{ metadata.dataspace_version }}
-    validate:
-      - uses: validate/assert
-        with: { input: status_code, operator: equals, value: 200 }
-
-  - id: sut_connector
-    uses: precondition/input
-    name: SUT Connector Details
-    returns:
-      counter_party_address:
-        type: string
-        class: Url
-        label: "SUT DSP Endpoint URL"
-        placeholder: "https://connector.example.com/api/dsp"
-      counter_party_id:
-        type: string
-        class: Bpn
-        label: "SUT Business Partner Number"
-        placeholder: "BPNL000000000001"
-
 tests:
   - ping_catalog.yaml
   - request_certificate.yaml
@@ -132,14 +108,13 @@ tests:
 Key points:
 
 - `kind: tck` + `testlab: v1-alpha` identify the file type and syntax version
-- `env.variables` are simple `key: value` pairs — no type/default objects
+- `env.variables` are simple `key: value` pairs — runtime inputs (such as `sut_dsp_url`) start empty and are supplied at run time
 - `env.services` use the `uses:`/`with:`/`returns:` pattern
-- `preconditions` run before any test; their outputs are available to all tests
 - `tests` lists relative paths to test files (no `!include`)
 
 ## Step 2 — Write Your First Test
 
-Create `tests/ping_catalog.yaml`. Tests inherit the `env` from the TCK manifest and can reference precondition outputs.
+Create `tests/ping_catalog.yaml`. Tests inherit the `env` from the TCK manifest and can reference its shared variables.
 
 ```yaml
 kind: test
@@ -160,7 +135,7 @@ steps:
     name: Query SUT catalog
     with:
       connector_service: ${{ env.services.testlab_connector.connector_service }}
-      counter_party_address: ${{ preconditions.sut_connector.counter_party_address }}
+      counter_party_address: ${{ env.sut_dsp_url }}
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "like"
@@ -184,7 +159,7 @@ Key points:
 - `kind: test` identifies this as a test file
 - `namespace` must match the TCK's namespace
 - Tests have **no** `env:` block — they inherit from the TCK
-- `${{ preconditions.sut_connector.counter_party_address }}` references a precondition output
+- `${{ env.sut_dsp_url }}` references a shared environment variable
 - Each step declares `returns:` and optional `validate:` blocks
 
 ## Step 3 — Add Setup, Steps, and Teardown
@@ -222,7 +197,7 @@ steps:
     name: Send certificate request to SUT
     with:
       method: POST
-      dataplane_url: ${{ preconditions.sut_connector.counter_party_address }}
+      dataplane_url: ${{ env.sut_dsp_url }}
       path: "/certificate/request"
       headers:
         Content-Type: "application/json"
@@ -264,7 +239,6 @@ All references use the `${{ }}` expression syntax:
 | `${{ env.testdata.name }}` | Testdata file content |
 | `${{ env.schemas.name }}` | Schema file content |
 | `${{ metadata.dataspace_version }}` | TCK metadata field |
-| `${{ preconditions.id.output }}` | Precondition step output |
 | `${{ setup.id.output }}` | Setup step output (within same test) |
 | `${{ steps.id.output }}` | Previous step output (within same test) |
 

@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import { createPrecondition } from "@/features/complex-variable-builder";
+import { createComplexVariableItem } from "@/features/complex-variable-builder";
 import type { Variable } from "./types";
 
 /** Seed variables covering every source mode and a complex builder. */
@@ -64,6 +64,6 @@ export const MOCK_VARIABLES: Variable[] = [
     type: "connector_policy",
     container: "atomic",
     source: "value",
-    value: createPrecondition("access_policy"),
+    value: createComplexVariableItem("access_policy"),
   },
 ];

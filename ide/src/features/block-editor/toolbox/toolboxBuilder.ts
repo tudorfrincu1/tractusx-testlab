@@ -119,7 +119,6 @@ function buildVariablesCategory(blocks: readonly string[], _categorizedVars: Cat
   }
 
   const domainDefs: { name: string; colour: string; blockType: string }[] = [
-    { name: "Precondition", colour: blockColors.varPreconditions, blockType: "var_preconditions" },
     { name: "Service", colour: blockColors.varServices, blockType: "var_services" },
     { name: "Metadata", colour: blockColors.varMetadata, blockType: "var_metadata" },
     { name: "Execution", colour: blockColors.varExecution, blockType: "var_execution" },
@@ -243,7 +242,6 @@ function buildPhaseChildren(
 
 const EMPTY_CATEGORIZED: CategorizedVariables = {
   environment: [],
-  precondition: [],
   service: [],
   metadata: [],
   execution: [],
@@ -262,7 +260,7 @@ export function buildToolbox(catalog: BlockCatalog, _kind?: ScriptKind, variable
 }
 
 function isCategorizedVariables(v: unknown): v is CategorizedVariables {
-  return typeof v === "object" && v !== null && "environment" in v && "precondition" in v;
+  return typeof v === "object" && v !== null && "environment" in v && "service" in v;
 }
 
 function legacyToCategorized(variables?: string[]): CategorizedVariables {

@@ -5,7 +5,7 @@
   "label": "Create Policy",
   "description": "Create an access/usage policy definition in the connector.",
   "params": [
-    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service" },
+    { "name": "service", "type": "service_ref", "required": false, "description": "Provider connector service role (e.g. testlab)" },
     { "name": "policy_id", "type": "string", "required": false, "description": "Policy ID (auto-generated if omitted)" },
     { "name": "permissions", "type": "array", "item_type": "object", "required": true, "description": "ODRL permission rules: array of { action, constraints: [{ leftOperand, operator, rightOperand }] }" },
     { "name": "prohibitions", "type": "array", "item_type": "object", "required": false, "description": "ODRL prohibition rules: array of { action, constraints: [{ leftOperand, operator, rightOperand }] }" },

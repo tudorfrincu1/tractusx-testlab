@@ -27,10 +27,10 @@
  */
 
 import yaml from "js-yaml";
-import type { TestLabDocument, ScriptDefinition, TckDefinition, Step, PreconditionDefinition, TckEnv } from "@/models/schema";
+import type { TestLabDocument, ScriptDefinition, TckDefinition, Step, TckEnv } from "@/models/schema";
 import { isTck, isTestRef, isTemplateStep } from "@/models/schema";
 import { buildInfrastructureObject, envVariablesToYamlList } from "@/features/environment-config/yaml";
-import { STEP_FIELDS, PRECONDITION_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS, buildOrderedRecord } from "./yamlFieldMap";
+import { STEP_FIELDS, TEST_ROOT_FIELDS, TCK_ROOT_FIELDS, buildOrderedRecord } from "./yamlFieldMap";
 
 export function modelToYaml(model: TestLabDocument): string {
   const obj = isTck(model) ? buildTckObject(model) : buildTestObject(model);
@@ -54,7 +54,6 @@ function buildTestObject(model: ScriptDefinition): Record<string, unknown> {
     namespace: model.namespace || undefined,
     metadata: model.metadata || undefined,
     env: buildEnv(model.env),
-    preconditions: model.preconditions ? model.preconditions.map(buildPrecondition) : undefined,
     setup: model.setup && model.setup.length > 0 ? model.setup.map(buildStep) : undefined,
     steps: model.steps.map(buildStep),
     teardown: model.teardown && model.teardown.length > 0 ? model.teardown.map(buildStep) : undefined,
@@ -115,17 +114,6 @@ function buildStep(step: Step): Record<string, unknown> {
     on_failure: step.on_failure || undefined,
     timeout_s: step.timeout_s ?? undefined,
     if: step.if || undefined,
-  });
-}
-
-function buildPrecondition(pre: PreconditionDefinition): Record<string, unknown> {
-  return buildOrderedRecord(PRECONDITION_FIELDS, {
-    id: pre.id,
-    uses: pre.uses,
-    name: pre.name || undefined,
-    with: "with" in pre && pre.with ? pre.with : undefined,
-    returns: pre.returns || undefined,
-    validate: "validate" in pre && pre.validate && pre.validate.length > 0 ? pre.validate : undefined,
   });
 }
 

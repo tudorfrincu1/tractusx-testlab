@@ -30,17 +30,14 @@ from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.pull_data._constants import (
     STEP_PULL_DATA_FILTERED,
     STEP_PULL_DATA_FILTERED_BY_POLICY,
-    STEP_PULL_DATA_FILTERED_FROM_PRECONDITION,
     STEP_TYPES,
 )
 from tractusx_testlab.steps.pull_data._executor import (
     PullDataFiltered,
     PullDataFilteredByPolicy,
-    PullDataFilteredFromPrecondition,
 )
 
 __all__ = ["STEP_TYPES"]
 
 step(STEP_PULL_DATA_FILTERED)(PullDataFiltered)
 step(STEP_PULL_DATA_FILTERED_BY_POLICY)(PullDataFilteredByPolicy)
-step(STEP_PULL_DATA_FILTERED_FROM_PRECONDITION)(PullDataFilteredFromPrecondition)

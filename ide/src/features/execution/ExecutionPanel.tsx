@@ -42,7 +42,6 @@ interface PhaseTab {
 }
 
 const PHASE_TABS: readonly PhaseTab[] = [
-  { phase: "precondition", label: "Precondition" },
   { phase: "setup", label: "Setup" },
   { phase: "main", label: "Steps" },
   { phase: "cleanup", label: "Cleanup" },
@@ -58,7 +57,7 @@ export function ExecutionPanel() {
   const clearResults = useExecutionStore((s) => s.clearResults);
 
   const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedPhase, setSelectedPhase] = useState<ExecutionPhase>("precondition");
+  const [selectedPhase, setSelectedPhase] = useState<ExecutionPhase>("setup");
   const [viewMode, setViewMode] = useState<"list" | "flow">("flow");
   const { height: panelHeight, handleMouseDown } = useResizablePanel({
     minHeight: 80,
@@ -84,7 +83,6 @@ export function ExecutionPanel() {
 
   const stepCountByPhase = useMemo(() => {
     const counts: Record<ExecutionPhase, number> = {
-      precondition: 0,
       setup: 0,
       main: 0,
       cleanup: 0,

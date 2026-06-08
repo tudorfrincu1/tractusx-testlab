@@ -71,7 +71,7 @@ export function registerYamlCompletions(monaco: Monaco): import("monaco-editor")
 
       const topLevelFields = [
         "kind", "name", "version", "dataspace_version", "description",
-        "variables", "services", "steps", "setup", "cleanup", "preconditions", "tests",
+        "variables", "services", "steps", "setup", "cleanup", "tests",
       ];
 
       const stepTypes = [

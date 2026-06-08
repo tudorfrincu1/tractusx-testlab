@@ -26,7 +26,6 @@
 import type { Block } from "blockly";
 import type { Step } from "@/models/schema";
 import { type BlockCatalog } from "../../../blocks";
-import { serializePreconditionPolicyBlock } from "../writer/preconditionSerializers";
 import {
   serializeExportVariable,
   serializeImportVariable,
@@ -56,10 +55,6 @@ function serializeBlock(current: Block, catalog: BlockCatalog, knownOutputs: Set
   }
   if (current.type === "step_operation" || current.type === "step_template") {
     return [serializeOperationOrTemplate(current, knownOutputs)];
-  }
-  if (current.type === "step_precondition_policy_config") {
-    const step = serializePreconditionPolicyBlock(current);
-    return step ? [step] : [];
   }
   return serializeGenericStep(current, catalog, knownOutputs);
 }

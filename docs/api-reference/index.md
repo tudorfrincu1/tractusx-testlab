@@ -40,7 +40,7 @@ graph TB
             M["🔵 Main Blocks<br/>connector/ · dtr/ · mock/"]
             O["🟢 Operator Blocks<br/>util/ · http/ · flow/ · filter_expression"]
         end
-        C["🟠 Preconditions + Environment Configuration<br/>(Infrastructure, Services, Variables, Schemas)"]
+        C["🟠 Environment Configuration<br/>(Infrastructure, Services, Variables, Schemas)"]
     end
 
     M -->|"returns:"| V
@@ -58,7 +58,7 @@ graph TB
 - **Main Blocks** (blue) are domain-specific. They understand Tractus-X protocols (DSP, EDC Management API, AAS). They interact with connectors, registries, and mock services.
 - **Operator Blocks** (green) are generic utilities. They handle HTTP, JSON extraction, flow control, and filtering. They support main blocks without knowing about Tractus-X.
 - **Validation Blocks** (red) check results. They receive return variables from steps and assert conditions. They never execute actions — only verify.
-- **Environment Configuration** (orange) is defined in the TCK manifest. Services, variables, schemas, and preconditions provide the runtime context for all test scripts.
+- **Environment Configuration** (orange) is defined in the TCK manifest. Services, variables, and schemas provide the runtime context for all test scripts.
 
 Data flows: Main blocks `returns:` values → Validation blocks check them. Operator blocks support main blocks (HTTP calls, retries, UUID generation). Environment config provides services and variables to all blocks via `${{ env.x }}` interpolation.
 
@@ -71,7 +71,7 @@ The TestLab YAML syntax draws inspiration from established CI/CD and infrastruct
 | **GitHub Actions** | `uses:` / `with:` pattern, namespaced identifiers, composable steps |
 | **Bruno / Newman** | Variable scoping model: `env.` vs `vars.`, secret masking |
 | **Terraform / OpenTofu** | Services declared once, referenced by name — same test logic across environments |
-| **pytest / JUnit** | Precondition/setup model: setup → test → implicit teardown |
+| **pytest / JUnit** | Setup/teardown model: setup → test → implicit teardown |
 
 | Decision | Rationale |
 |----------|-----------|

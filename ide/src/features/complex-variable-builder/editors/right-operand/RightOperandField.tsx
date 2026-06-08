@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { ChangeEvent } from "react";
-import type { RightOperandDef } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import type { RightOperandDef } from "@/shared/ui/policy-constraints/constraintSchemas";
 import { useEnvVariables } from "../templates/ui/EnvVariableProvider";
 import { isVariableValue } from "../yaml/policyVariables";
 import {

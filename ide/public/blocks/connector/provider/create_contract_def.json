@@ -5,7 +5,7 @@
   "label": "Create Contract Definition",
   "description": "Create a contract definition linking an asset to a policy.",
   "params": [
-    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service" },
+    { "name": "service", "type": "service_ref", "required": false, "description": "Provider connector service role (e.g. testlab)" },
     { "name": "contract_def_id", "type": "string", "required": false, "description": "Contract definition ID (auto-generated if omitted)" },
     { "name": "access_policy_id", "type": "string", "required": true, "description": "ID of the access policy", "accepts": ["policy_id"] },
     { "name": "contract_policy_id", "type": "string", "required": true, "description": "ID of the contract policy", "accepts": ["policy_id"] },

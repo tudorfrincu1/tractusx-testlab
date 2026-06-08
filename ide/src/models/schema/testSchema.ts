@@ -27,7 +27,7 @@
  * TestLabDocument, and document-level type guards and factories.
  */
 
-import type { ServiceDefinition, Step, PreconditionDefinition } from "./phaseSchema";
+import type { ServiceDefinition, Step } from "./phaseSchema";
 import {
   createInfrastructureModel,
   type InfrastructureModel,
@@ -82,7 +82,6 @@ export interface ScriptDefinition {
   description?: string;
   allow_sdk_calls?: SdkCallMode;
   outputs?: Record<string, string>;
-  preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   services?: ServiceDefinition[];
   setup?: Step[];
@@ -125,7 +124,6 @@ export interface TckDefinition {
   standards?: StandardRef[];
   tags?: string[];
   env?: TckEnv;
-  preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   /** ADR-0019 §1 dataspace + infrastructure configuration for this TCK. */
   infrastructure?: InfrastructureModel;

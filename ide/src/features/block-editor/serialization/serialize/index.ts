@@ -28,8 +28,6 @@ export { workspaceToModel } from "./workspaceToModel";
 export { readStepChain } from "./reader";
 export {
   blockToStep,
-  serializePreconditionPolicyBlock,
-  deserializePreconditionPolicyBlock,
   serializeConstraintChain,
   serializePolicyBlock,
   createConstraintItemBlocks,

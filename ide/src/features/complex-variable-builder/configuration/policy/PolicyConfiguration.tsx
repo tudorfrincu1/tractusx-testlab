@@ -27,7 +27,7 @@
 // hand-build form) and is the single editable source of truth. The right JSON
 // column renders the resolved, copy-only EDC ODRL PolicyDefinition — exactly
 // what the operator pastes into their connector — switched by the version pill.
-// A collapsed drawer below shows the step YAML this precondition contributes.
+// A collapsed drawer below shows the variable YAML this policy contributes.
 import { useCallback, useMemo } from "react";
 import { PolicyAuthoring } from "./PolicyAuthoring";
 import { ConfigHeader } from "../header/ConfigHeader";
@@ -42,13 +42,13 @@ import {
   findTemplate,
   matchTemplate,
 } from "../../editors/templates";
-import type { PocPrecondition, PolicyPayload } from "../../model";
+import type { ComplexVariableItem, PolicyPayload } from "../../model";
 
 export interface PolicyConfigurationProps {
-  item: PocPrecondition;
+  item: ComplexVariableItem;
   policy: PolicyPayload;
   onPolicyChange: (next: PolicyPayload) => void;
-  /** Show the collapsed precondition-step YAML drawer. Defaults to `true`. */
+  /** Show the collapsed variable YAML drawer. Defaults to `true`. */
   showYamlPreview?: boolean;
 }
 

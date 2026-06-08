@@ -5,7 +5,6 @@
   "label": "Query Catalog",
   "description": "Send a catalog request to the connector and retrieve available offers.",
   "params": [
-    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service to query" },
     { "name": "counter_party_id", "type": "string", "required": true, "description": "BPN of the counter-party" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
     { "name": "filter", "type": "object", "required": false, "description": "Filter object containing filter_expression array of { operand_left, operator, operand_right }" }

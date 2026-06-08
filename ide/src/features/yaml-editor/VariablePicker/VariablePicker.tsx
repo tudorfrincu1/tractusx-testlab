@@ -26,12 +26,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useVariableScopes } from "./useVariableScopes";
 import type { VariableEntry, StepWithReturns } from "./useVariableScopes";
 
-type Scope = "env" | "metadata" | "preconditions" | "steps" | "setup";
+type Scope = "env" | "metadata" | "steps" | "setup";
 
 const SCOPE_TABS: { id: Scope; label: string }[] = [
   { id: "env", label: "Env" },
   { id: "metadata", label: "Metadata" },
-  { id: "preconditions", label: "Preconditions" },
   { id: "steps", label: "Steps" },
   { id: "setup", label: "Setup" },
 ] as const;
@@ -175,7 +174,6 @@ export function VariablePicker({ onInsert, onClose }: VariablePickerProps) {
     switch (activeScope) {
       case "env": return renderFlatList(scopes.env);
       case "metadata": return renderFlatList(scopes.metadata);
-      case "preconditions": return renderFlatList(scopes.preconditions);
       case "steps": return renderStepScope("steps");
       case "setup": return renderStepScope("setup");
     }

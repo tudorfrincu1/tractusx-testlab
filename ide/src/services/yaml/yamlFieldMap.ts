@@ -32,12 +32,8 @@
 export const STEP_FIELDS = ["id", "uses", "name", "with", "returns", "validate", "on_failure", "timeout_s", "if"] as const;
 export type StepFieldKey = (typeof STEP_FIELDS)[number];
 
-/** Precondition fields in canonical YAML output order. */
-export const PRECONDITION_FIELDS = ["id", "uses", "name", "with", "returns", "validate"] as const;
-export type PreconditionFieldKey = (typeof PRECONDITION_FIELDS)[number];
-
 /** Test (script) root-level fields in canonical YAML output order. */
-export const TEST_ROOT_FIELDS = ["kind", "testlab", "id", "namespace", "metadata", "env", "preconditions", "setup", "steps", "teardown"] as const;
+export const TEST_ROOT_FIELDS = ["kind", "testlab", "id", "namespace", "metadata", "env", "setup", "steps", "teardown"] as const;
 export type TestRootFieldKey = (typeof TEST_ROOT_FIELDS)[number];
 
 /** TCK root-level fields in canonical YAML output order. */

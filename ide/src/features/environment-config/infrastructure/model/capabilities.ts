@@ -57,7 +57,7 @@ export const CAPABILITY_REGISTRY: Readonly<Record<SideKey, readonly CapabilityDe
 /** Side metadata, ordered engine → sut (ADR-0019 §1). */
 export const SIDE_REGISTRY: readonly SideDescriptor[] = [
   { key: "engine", label: "Engine", description: "Infrastructure the embedding host (TestLab) operates." },
-  { key: "sut", label: "System Under Test", description: "Capabilities the operator must provide as preconditions." },
+  { key: "sut", label: "System Under Test", description: "Capabilities the operator must provide." },
 ] as const;
 
 /** The selectable ecosystem contexts for the dataspace fields. */

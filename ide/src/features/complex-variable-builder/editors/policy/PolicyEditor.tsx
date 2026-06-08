@@ -29,7 +29,7 @@
 import { useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { POLICY_VERSIONS, VERSION_SCHEMAS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import { POLICY_VERSIONS, VERSION_SCHEMAS } from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { PolicyRule } from "@/models/schema";
 import type { OptionalUsagePurpose, PolicyPayload, PolicyVersion } from "../../model";
 import { OptionalUsagePurposeSection } from "./OptionalUsagePurposeSection";

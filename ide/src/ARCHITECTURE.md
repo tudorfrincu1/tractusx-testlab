@@ -111,7 +111,6 @@ features/
   environment-editor/            # services/ + variables/ + preview/ + shared/ (FieldWithToggle)
   tck-dashboard/                 # forms/ + pipeline/ + dataflow/{graph, panels, builder}
   yaml-editor/                   # editors/{Monaco, Schema, Testdata} + VariablePicker/
-  preconditions/                 # modal/ + list/ + rules/
   project-explorer/              # tree/ + contextMenu/ + actions/
 
 models/

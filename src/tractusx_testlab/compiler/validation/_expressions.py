@@ -72,8 +72,6 @@ def _normalize_ref(expr: str) -> str:
     expr = expr.strip()
     if expr.startswith("env."):
         return expr
-    if expr.startswith("preconditions."):
-        return f"env.{expr}"
     if expr.startswith("testdata."):
         return f"env.{expr}"
     if expr.startswith("schemas."):

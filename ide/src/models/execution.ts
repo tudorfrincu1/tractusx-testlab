@@ -27,7 +27,7 @@
  * These mirror the backend SSE event payloads from the test runner.
  */
 
-export type ExecutionPhase = "precondition" | "setup" | "main" | "cleanup";
+export type ExecutionPhase = "setup" | "main" | "cleanup";
 export type StepStatus = "pending" | "running" | "passed" | "failed" | "skipped" | "waiting";
 export type JobStatus = "queued" | "running" | "waiting" | "paused" | "completed" | "failed" | "cancelled";
 

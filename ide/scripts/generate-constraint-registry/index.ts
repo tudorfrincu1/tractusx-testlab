@@ -52,7 +52,7 @@ const policiesDir = resolve(scriptDir, "../../schemas/policies");
 const manifestPath = join(policiesDir, "manifest.json");
 const outputPath = resolve(
   scriptDir,
-  "../../src/shared/ui/PreconditionsDialog/constraintRegistry.generated.ts",
+  "../../src/shared/ui/policy-constraints/constraintRegistry.generated.ts",
 );
 
 function withPlaceholder(

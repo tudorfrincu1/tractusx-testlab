@@ -59,9 +59,6 @@ export function normalizeStepParams(stepType: string, params: Params): Params {
   if (stepType === "http_call_dataplane") {
     return normalizeHttpCallDataplaneParams(params);
   }
-  if (stepType === "pull_data_filtered" || stepType === "pull_data_filtered_by_policy" || stepType === "pull_data_filtered_from_precondition") {
-    return normalizePullDataParams(params);
-  }
   return params;
 }
 
@@ -125,16 +122,4 @@ function normalizeHttpCallDataplaneParams(params: Params): Params {
     return normalized;
   }
   return params;
-}
-
-/**
- * YAML uses `connector_service` but pull_data_filtered block expects `service`.
- * Normalize by copying `connector_service` → `service` if needed.
- */
-function normalizePullDataParams(params: Params): Params {
-  const normalized: Params = { ...params };
-  if (normalized.connector_service !== undefined && normalized.service === undefined) {
-    normalized.service = normalized.connector_service;
-  }
-  return normalized;
 }

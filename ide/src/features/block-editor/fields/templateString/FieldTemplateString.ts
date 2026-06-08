@@ -39,7 +39,6 @@ const FONT_SIZE = 11;
 const SCOPE_COLORS: Record<VarScope, string> = {
   steps: "#4a90d9",
   env: "#5ba55b",
-  preconditions: "#d98c4a",
   metadata: "#8e6bbf",
   setup: "#4a90d9",
   services: "#7c3aed",

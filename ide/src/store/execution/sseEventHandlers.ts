@@ -138,7 +138,6 @@ export function handleSseEvent(
 /* ── Phase normalization ─────────────────────────────────────────────────── */
 
 const PHASE_MAP: Record<string, ExecutionPhase> = {
-  precondition: "precondition",
   setup: "setup",
   main: "main",
   cleanup: "cleanup",

@@ -42,13 +42,14 @@ const SECTIONS: ReadonlyArray<{ key: keyof PolicyPayload; label: string; ruleTyp
 
 /**
  * Builds a colour-tokenised preview of the canonical authoring YAML for a
- * policy precondition: a `precondition/provide` step whose `with.value` holds
- * the permissions/prohibitions/obligations and a fixed `returns.policy` block.
+ * policy variable: a `config/connector/policy` complex variable whose
+ * `with.value` holds the permissions/prohibitions/obligations and a fixed
+ * `returns.policy` block referenced elsewhere as `${{ env.<id>.policy }}`.
  */
 export function buildPolicyYaml(id: string, name: string, policy: PolicyPayload): PolicyYamlResult {
   const builder = new YamlBuilder();
   builder.line(key(`- id: ${id}`));
-  builder.line(key("  uses: precondition/provide"));
+  builder.line(key("  uses: config/connector/policy"));
   builder.line(key(`  name: ${name}`));
   builder.line(key("  with:"));
   builder.line(key("    value:"));
@@ -84,7 +85,7 @@ function appendRule(
   }
 }
 
-/** Emits the fixed `returns.policy` object every policy precondition produces. */
+/** Emits the fixed `returns.policy` object every policy variable produces. */
 function appendReturns(builder: YamlBuilder): void {
   builder.line(key("  returns:"));
   builder.line(key("    policy:"));

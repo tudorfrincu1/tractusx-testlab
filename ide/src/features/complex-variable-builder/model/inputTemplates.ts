@@ -27,7 +27,7 @@ import type { SvgIconProps } from "@mui/material/SvgIcon";
 import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import DnsOutlinedIcon from "@mui/icons-material/DnsOutlined";
-import type { InputFieldType, SystemId } from "./preconditionTypes";
+import type { InputFieldType, SystemId } from "./variableTypes";
 
 /** A single field the operator fills in within a predefined form template. */
 export interface InputFieldMeta {

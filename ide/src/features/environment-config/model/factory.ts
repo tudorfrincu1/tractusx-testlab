@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import { createPrecondition } from "@/features/complex-variable-builder";
+import { createComplexVariableItem } from "@/features/complex-variable-builder";
 import { COMPLEX_BUILDER_CHOICES, type ComplexBuilderChoice } from "./complexBuilders";
 import type { ComplexVariable, SimpleVariable } from "./types";
 
@@ -46,11 +46,11 @@ export function createSimpleVariable(): SimpleVariable {
 
 /**
  * Builds a fresh complex variable from a builder choice. The builder state is
- * the reused precondition item, so the existing left-formula / right-JSON
+ * the reused complex-variable item, so the existing left-formula / right-JSON
  * editor mounts unchanged.
  */
 export function createComplexVariable(choice: ComplexBuilderChoice): ComplexVariable {
-  const value = createPrecondition(choice.subType);
+  const value = createComplexVariableItem(choice.subType);
   return {
     kind: "complex",
     id: newId("cvar"),

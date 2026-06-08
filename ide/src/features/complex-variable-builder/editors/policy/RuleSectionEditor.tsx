@@ -22,8 +22,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import { resolveDefaultRight } from "@/shared/ui/PreconditionsDialog/ConstraintRow";
-import { getConstraintsForContext } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import { resolveDefaultRight } from "@/shared/ui/policy-constraints/ConstraintRow";
+import { getConstraintsForContext } from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { PolicyConstraint, PolicyRule } from "@/models/schema";
 import type { PolicyType, PolicyVersion } from "../../model";
 import { ConstraintRow } from "../right-operand/ConstraintRow";

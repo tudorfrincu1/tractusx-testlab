@@ -31,10 +31,10 @@ from typing import Any
 
 from tractusx_testlab.compiler.ir._helpers import (
     build_instructions,
-    build_test_symbols,
     load_test_file,
     resolve_test_path,
 )
+from tractusx_testlab.compiler.ir._symbols import build_test_symbols
 
 
 def build_compiled_tests(

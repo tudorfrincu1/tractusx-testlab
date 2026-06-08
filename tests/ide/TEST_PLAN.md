@@ -38,7 +38,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 1. Welcome Screen
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-WS-001 | Welcome screen renders on fresh load | No project in localStorage | Open IDE | Welcome screen visible with "New Project", "Open File", and example list | P0 |
 | TC-WS-002 | Create new project navigates to editor | Welcome screen visible | Click "New Project" | Project explorer and block editor render, project name is "new-tck" | P0 |
@@ -50,7 +50,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 2. Project Explorer
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-PE-001 | Explorer shows TCK index at root | Project loaded | Inspect explorer | "index" entry visible at top level | P0 |
 | TC-PE-002 | Explorer shows all tests in order | Project with 3+ tests | Inspect explorer | All tests listed in testOrder sequence | P0 |
@@ -68,7 +68,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 3. Block Editor
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-BE-001 | Block editor renders workspace | Test file active | Navigate to block editor tab | Blockly workspace visible with toolbox | P0 |
 | TC-BE-002 | Toolbox shows all categories | Block editor visible | Inspect toolbox | All categories present: Mock, Wait, Function, Flow, EDC, DTR, Discovery, HTTP, Notification, Validation | P0 |
@@ -88,7 +88,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 4. YAML Editor
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-YE-001 | YAML editor shows current test content | Test active with steps | Open YAML editor | Valid YAML displayed matching model | P0 |
 | TC-YE-002 | YAML editor locked by default | Test active | Inspect YAML editor | Editor is read-only, lock icon visible | P0 |
@@ -102,7 +102,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 5. Graph View
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-GV-001 | Graph view renders test flow | Test with 3+ steps active | Switch to graph view | Flow diagram shows nodes for each step | P1 |
 | TC-GV-002 | Graph nodes match step order | Test with ordered steps | Inspect graph | Nodes connected top-to-bottom in step order | P1 |
@@ -113,7 +113,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 6. Status Bar
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-SB-001 | Step count shows current test steps | Test with 5 steps active | Inspect status bar | "5 steps" displayed | P1 |
 | TC-SB-002 | Error count reflects validation errors | Test with validation errors | Inspect status bar | Error count > 0, clickable | P1 |
@@ -124,7 +124,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 7. Breadcrumb / Context Bar
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-BC-001 | Breadcrumb shows project > test path | Test file active | Inspect breadcrumb | Shows "ProjectName > test-name" | P1 |
 | TC-BC-002 | Click breadcrumb segment navigates | Breadcrumb visible | Click project name segment | Navigates to TCK index view | P1 |
@@ -134,7 +134,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 8. Project Info Dashboard (TCK Index)
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-PI-001 | Dashboard shows TCK metadata | TCK index active | Inspect dashboard | Name, version, description visible | P1 |
 | TC-PI-002 | Test pipeline table lists all tests | TCK with tests | Inspect pipeline table | All tests listed with order and status | P1 |
@@ -145,7 +145,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 9. Environment Editor
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-EE-001 | Environment editor shows services | Test/TCK with services | Open environment editor | Service list visible | P1 |
 | TC-EE-002 | Add service creates entry | Environment editor open | Click "Add Service" | New service row appears | P1 |
@@ -157,7 +157,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 10. Import / Export
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-IE-001 | Export produces valid ZIP | Project with tests | Click Export | ZIP downloaded with correct structure | P0 |
 | TC-IE-002 | ZIP contains index.yaml at root | Export completed | Inspect ZIP | `{project}/index.yaml` present | P0 |
@@ -171,7 +171,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 11. Auto-save / Persistence
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-AS-001 | Project auto-saves to localStorage | Project loaded | Make a change, wait for debounce | localStorage contains updated project | P0 |
 | TC-AS-002 | Page refresh restores project | Project in localStorage | Refresh browser | Project restored with all tests and state | P0 |
@@ -182,7 +182,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 12. Error Boundary
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-EB-001 | Error boundary catches render crash | Component throws error | Trigger error | Error boundary UI shown, not white screen | P0 |
 | TC-EB-002 | Recovery action available | Error boundary active | Inspect UI | "Reset" or "Reload" button available | P0 |
@@ -192,7 +192,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 13. Confirm Dialogs
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-CD-001 | Delete action shows confirm dialog | Destructive action triggered | Attempt delete | Modal dialog with warning appears | P0 |
 | TC-CD-002 | Confirm executes action | Dialog visible | Click "Confirm" | Action executed, dialog closes | P0 |
@@ -203,7 +203,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 14. Notifications
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-NF-001 | Error notification renders | Error occurs | Trigger error | Red/error toast appears with message | P0 |
 | TC-NF-002 | Warning notification renders | Warning condition | Trigger warning | Yellow/warning toast appears | P1 |
@@ -214,7 +214,7 @@ All test cases validate end-user visible behavior from a third-person perspectiv
 
 ## 15. Block Features
 
-| ID | Test Name | Preconditions | Steps | Expected Result | Priority |
+| ID | Test Name | Prerequisites | Steps | Expected Result | Priority |
 |----|-----------|---------------|-------|-----------------|----------|
 | TC-BF-001 | Block shows text display | Block in workspace | Inspect block | Block label and step type visible | P0 |
 | TC-BF-002 | Block tooltip shows description | Block in workspace | Hover block | Tooltip with step description appears | P2 |

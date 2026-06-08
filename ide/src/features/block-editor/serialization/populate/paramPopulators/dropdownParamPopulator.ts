@@ -27,8 +27,8 @@ import { setDropdownValue } from "../../serializationParts";
 import type { ParamPopulator } from "./paramPopulator.types";
 
 /**
- * Populates dropdown-style fields (`dropdown`, `endpoint_ref`, `schema_path`,
- * `precondition_ref`) by selecting the value in the block's dropdown field.
+ * Populates dropdown-style fields (`dropdown`, `endpoint_ref`, `schema_path`)
+ * by selecting the value in the block's dropdown field.
  */
 export const dropdownParamPopulator: ParamPopulator = ({ stepBlock, fieldKey, paramValue }) => {
   setDropdownValue(stepBlock, fieldKey, String(paramValue));

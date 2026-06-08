@@ -66,7 +66,7 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
   {
     name: "Setup",
     colour: PHASE_COLOUR,
-    categories: ["Precondition", "Mock"],
+    categories: ["Mock"],
     blockGroups: [
       {
         name: "Import",
@@ -116,7 +116,7 @@ export const PHASE_DEFINITIONS: readonly PhaseDefinition[] = [
       {
         name: "Variables",
         colour: VARIABLE_COLOUR,
-        blocks: ["var_env", "var_services", "var_preconditions", "var_metadata", "var_execution", "var_schema", "var_testdata"],
+        blocks: ["var_env", "var_services", "var_metadata", "var_execution", "var_schema", "var_testdata"],
       },
     ],
   },

@@ -109,21 +109,6 @@ class TestCompilerValidation:
         assert result.valid is False
         assert any("nonexistent_step_type_xyz" in issue.message for issue in result.issues)
 
-    def test_validate_with_preconditions(self, tmp_path: Path) -> None:
-        # Arrange
-        script = _minimal_script()
-        script["preconditions"] = [
-            {"type": "precondition_asset_config", "params": {"dct_type": "cx-taxo:Test"}},
-        ]
-        script_path = _write_yaml(tmp_path, script)
-        compiler = Compiler()
-
-        # Act
-        result = compiler.validate(script_path)
-
-        # Assert
-        assert result.valid is True
-
     def test_validate_returns_issues_for_multiple_bad_steps(self, tmp_path: Path) -> None:
         # Arrange
         script = _minimal_script()

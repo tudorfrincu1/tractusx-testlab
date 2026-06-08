@@ -28,9 +28,9 @@
 // `__badge`, but only the `--config` overrides lived in the production styles —
 // the base layout was stranded in the unported POC, which made the title and
 // class badge collapse together ("Access Policypolicy"). These rules restore the
-// flex layout and reuse the IDE preconditions accent palette for the tones.
+// flex layout and reuse the IDE config accent palette for the tones.
 
-// Tone palette — identical to the IDE preconditions panel so the badges read
+// Tone palette — identical to the IDE config panel so the badges read
 // native across both surfaces.
 $_tones: (
   "generate": #94e2d5,

@@ -58,7 +58,7 @@ _CCM_STEP_TYPES = [
     "delete_asset", "delete_policy",
     "export_variable", "generate_uuid", "http_call_dataplane",
     "import_variable", "load_schema", "mock_endpoint",
-    "pull_data_filtered_from_precondition", "query_catalog_with_filters",
+    "pull_data_filtered", "query_catalog_with_filters",
     "wait_for_call",
 ]
 

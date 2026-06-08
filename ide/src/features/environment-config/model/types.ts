@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import type { PocPrecondition } from "@/features/complex-variable-builder";
+import type { ComplexVariableItem } from "@/features/complex-variable-builder";
 
 /**
  * The frontend mirror of the ADR-0018 `Variable` discriminated union. A
@@ -108,9 +108,9 @@ export type ComplexType =
 export type ComplexContainer = "atomic" | "several";
 
 /**
- * A complex variable: an artifact authored with the existing precondition
+ * A complex variable: an artifact authored with the existing complex-variable
  * builder (left logical formula / right canonical JSON). The builder state is
- * the reused {@link PocPrecondition}; its canonical JSON is the {@link
+ * the reused {@link ComplexVariableItem}; its canonical JSON is the {@link
  * ComplexVariable.value} bound to `@name`.
  */
 export interface ComplexVariable {
@@ -123,8 +123,8 @@ export interface ComplexVariable {
   container: ComplexContainer;
   /** KNOWN (provide now) or REQUEST (ask the operator). */
   source: "value" | "input";
-  /** Reused precondition-editor builder state (the canonical value). */
-  value: PocPrecondition;
+  /** Reused variable-editor builder state (the canonical value). */
+  value: ComplexVariableItem;
 }
 
 /** The unified variable union consumed across the manager and run views. */

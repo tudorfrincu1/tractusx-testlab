@@ -34,7 +34,7 @@ export interface VariableYamlPreviewProps {
 
 /**
  * The single YAML preview for the variables manager. It serializes the selected
- * variable in the ADR-0018 v2 VARIABLE shape (never a `precondition/provide`
+ * variable in the ADR-0018 v2 VARIABLE shape (never a `config/connector/policy`
  * step) and is referenced elsewhere with `@name`. Collapsed on first render.
  */
 export function VariableYamlPreview({ variable }: Readonly<VariableYamlPreviewProps>) {

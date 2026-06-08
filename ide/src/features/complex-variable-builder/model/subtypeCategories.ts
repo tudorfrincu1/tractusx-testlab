@@ -32,7 +32,7 @@ import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import GavelOutlinedIcon from "@mui/icons-material/GavelOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
-import type { PreconditionCategory, PreconditionSubType, SystemId } from "./preconditionTypes";
+import type { VariableCategory, VariableSubType, SystemId } from "./variableTypes";
 
 /** Reused across category and sub-type registries to colour badges/icons. */
 export type Tone = "generate" | "register" | "input" | "check";
@@ -47,7 +47,7 @@ export type RegisterTarget = SystemId;
 /** Shared call-to-action label rendered on every landing tile. */
 export const CATEGORY_CTA_LABEL = "Configure" as const;
 
-/** Static, schema-like metadata for each precondition category (data-driven). */
+/** Static, schema-like metadata for each variable category (data-driven). */
 export interface CategoryMeta {
   /** Compact label used on badges, topbar titles and search placeholders. */
   label: string;
@@ -62,7 +62,7 @@ export interface CategoryMeta {
   Icon: ComponentType<SvgIconProps>;
 }
 
-export const CATEGORY_META: Record<PreconditionCategory, CategoryMeta> = {
+export const CATEGORY_META: Record<VariableCategory, CategoryMeta> = {
   generate: {
     label: "Generate",
     tileLabel: "Generate values",
@@ -109,14 +109,14 @@ export interface SubTypeMeta {
   addLabel: string;
   /** Short class word shown as the per-item badge in a system's flat list. */
   classLabel: string;
-  category: PreconditionCategory;
+  category: VariableCategory;
   /** POC-local target system this artifact registers into (register only). */
   target?: RegisterTarget;
   tone: Tone;
   Icon: ComponentType<SvgIconProps>;
 }
 
-export const SUBTYPE_META: Record<PreconditionSubType, SubTypeMeta> = {
+export const SUBTYPE_META: Record<VariableSubType, SubTypeMeta> = {
   access_policy: {
     label: "Access Policies",
     addLabel: "Access Policy",
@@ -180,7 +180,7 @@ export const SUBTYPE_META: Record<PreconditionSubType, SubTypeMeta> = {
 };
 
 /** Stable display order for sub-type sub-headers within a category view. */
-export const SUBTYPE_ORDER: readonly PreconditionSubType[] = [
+export const SUBTYPE_ORDER: readonly VariableSubType[] = [
   "access_policy",
   "usage_policy",
   "asset_template",

@@ -28,7 +28,6 @@ export {
   collectCategorizedVariables,
   collectEnvironmentVariables,
   collectServiceVariables,
-  collectPreconditionVariables,
   collectMetadataVariables,
   collectSetupVariables,
   collectExecutionVariables,

@@ -52,20 +52,6 @@ export function collectMockEndpointIds(workspace: Workspace): Array<[string, str
   return ids;
 }
 
-/** Collect policy precondition block references from the workspace */
-export function collectPreconditionRefs(workspace: Workspace): Array<[string, string]> {
-  const refs: Array<[string, string]> = [];
-  for (const block of workspace.getAllBlocks(false)) {
-    if (block.type === "step_precondition_policy_config") {
-      const description = block.getFieldValue("PARAM_DESCRIPTION") || block.getFieldValue("DESCRIPTION") || "";
-      const blockId = block.id;
-      const label = description || `Policy Precondition (${blockId.slice(0, 6)})`;
-      refs.push([label, blockId]);
-    }
-  }
-  return refs.length > 0 ? refs : [["(no policy preconditions)", "__NONE__"]];
-}
-
 /** Collect schema variable names from `schema_import` blocks in the workspace */
 export function collectSchemaVariables(workspace: Workspace): Array<[string, string]> {
   const vars: Array<[string, string]> = [];

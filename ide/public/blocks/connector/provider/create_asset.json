@@ -5,7 +5,7 @@
   "label": "Create Asset",
   "description": "Register a new asset in the connector's asset store.",
   "params": [
-    { "name": "connector_service", "type": "class", "class": "ConnectorService", "required": true, "description": "EDC connector service" },
+    { "name": "service", "type": "service_ref", "required": false, "description": "Provider connector service role (e.g. testlab)" },
     { "name": "asset_id", "type": "string", "required": false, "description": "Asset ID (auto-generated if omitted)" },
     { "name": "name", "type": "string", "required": true, "description": "Human-readable asset name" },
     { "name": "description", "type": "string", "required": false, "description": "Asset description" },

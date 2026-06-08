@@ -36,7 +36,7 @@ Currently, ADR-0010 mentions `preconditions:` as a TCK manifest field but does n
 
 ## Status
 
-Proposed
+Superseded by [ADR-0021](ADR-0021-remove-precondition-concept.md)
 
 ## Date
 

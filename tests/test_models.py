@@ -122,12 +122,10 @@ class TestScriptDefinition:
     def test_script_all_phases(self) -> None:
         script = ScriptDefinition(
             name="Full",
-            preconditions=[StepDefinition(type="precondition_asset_config")],
             setup=[StepDefinition(type="create_asset")],
             steps=[StepDefinition(type="http_request")],
             teardown=[StepDefinition(type="delete_asset")],
         )
-        assert len(script.preconditions) == 1
         assert len(script.setup) == 1
         assert len(script.steps) == 1
         assert len(script.teardown) == 1

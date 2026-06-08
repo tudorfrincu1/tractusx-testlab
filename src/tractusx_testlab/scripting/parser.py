@@ -34,8 +34,6 @@ import yaml
 from tractusx_testlab.syntax import defaults, keys
 from tractusx_testlab.syntax.keys import TEST as _TEST_KEY
 
-from tractusx_testlab.syntax.keys import PRECONDITIONS as _PRECONDITIONS_KEY
-
 from tractusx_testlab.models import (
     SdkCallMode,
 )
@@ -178,7 +176,6 @@ class YamlParser:
         base_def = YamlParser._resolve_import(data, base_dir)
 
         variables = parse_variables(data.get(keys.VARIABLES, {}))
-        preconditions = [parse_step(step_data).model_dump() for step_data in data.get(_PRECONDITIONS_KEY, [])]
         setup = [parse_step(step_data).model_dump() for step_data in data.get(keys.SETUP, [])]
         steps = [parse_step(step_data).model_dump() for step_data in data.get(keys.STEPS, [])]
         teardown = [parse_step(step_data).model_dump() for step_data in data.get(keys.TEARDOWN, [])]
@@ -187,7 +184,7 @@ class YamlParser:
         infrastructure = _parse_infrastructure(data)
 
         return YamlParser._merge_with_base(
-            data, base_def, variables, preconditions, setup, steps, teardown, services,
+            data, base_def, variables, setup, steps, teardown, services,
             dataspace, infrastructure,
         )
 
@@ -218,7 +215,6 @@ class YamlParser:
         data: dict,
         base_def: Optional[ScriptDefinition],
         variables: dict,
-        preconditions: list,
         setup: list,
         steps: list,
         teardown: list,
@@ -259,7 +255,6 @@ class YamlParser:
             outputs=get(data, keys.OUTPUTS, base_def, {}),
             variables=variables or get(data, "variables", base_def, {}),
             services=services or get(data, "services", base_def, []),
-            preconditions=preconditions or get(data, "preconditions", base_def, []),
             setup=setup or get(data, "setup", base_def, []),
             steps=steps or get(data, "steps", base_def, []),
             teardown=teardown or get(data, "teardown", base_def, []),

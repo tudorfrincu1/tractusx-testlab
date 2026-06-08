@@ -28,7 +28,7 @@
 // hardcoded UI logic. `applyTemplate` projects a chosen template plus its
 // variable values onto the SAME logical PolicyPayload the form and codec
 // already consume, so picking a template stays a lens over one object.
-import { VERSION_SCHEMAS } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import { VERSION_SCHEMAS } from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { PolicyConstraint } from "@/models/schema";
 import type { PolicyPayload, PolicyType, PolicyVersion } from "../../../model";
 import { getKnownUsagePurposes } from "../../policy/usagePurposes";

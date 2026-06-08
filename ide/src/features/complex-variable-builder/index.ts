@@ -31,7 +31,7 @@ export type { ConfigurationDetailProps } from "./configuration";
 export { CopyButton } from "./configuration/header/CopyButton";
 export { policyToJson, validateJsonText } from "./configuration/json/jsonCodec";
 export { policyToOdrlJson } from "./configuration/odrl";
-export { createPrecondition } from "./model";
+export { createComplexVariableItem } from "./model";
 export { SUBTYPE_META } from "./model";
 export {
   EnvVariableProvider,
@@ -44,8 +44,8 @@ export type {
 export { envReference } from "./editors/templates/ui/envVariables";
 export type { EnvVariable } from "./editors/templates/ui/envVariables";
 export type {
-  PocPrecondition,
+  ComplexVariableItem,
   PolicyPayload,
   ProvidePayload,
-  PreconditionSubType,
+  VariableSubType,
 } from "./model";

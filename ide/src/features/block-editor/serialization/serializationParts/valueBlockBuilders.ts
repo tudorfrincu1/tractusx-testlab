@@ -31,7 +31,6 @@ import { setDropdownValue } from "./blockFieldAccessors";
 
 /** Read a value block's content as a plain string (or variable reference).
  *  - `var_steps` → `${{ steps.id.field }}` (step output)
- *  - `var_preconditions` → `${{ preconditions.id.field }}`
  *  - `var_env` → `${{ env.name }}`
  *  - `var_services` → `${{ env.services.name.field }}`
  *  - `var_metadata` → `${{ metadata.field }}`
@@ -132,7 +131,7 @@ export function readValueBlockAsUnknown(block: Block | null): unknown {
 }
 
 export function createValueBlockFromString(ws: Workspace, strVal: string): Block {
-  // Try v2 scoped refs first (steps, preconditions, services, metadata, setup, env)
+  // Try v2 scoped refs first (steps, services, metadata, setup, env)
   const parsed = parseVarRef(strVal);
   if (parsed) {
     const blockType = SCOPE_TO_BLOCK_TYPE[parsed.scope];

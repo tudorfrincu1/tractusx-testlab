@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 /**
- * Phase-constituent schema types: steps, services, preconditions, and policies
+ * Phase-constituent schema types: steps, services, and policies
  * that make up test phases (setup, steps, teardown).
  */
 
@@ -108,21 +108,4 @@ export interface PolicyConstraint {
 export interface PolicyRule {
   action: string;
   constraints: PolicyConstraint[];
-}
-
-export interface PreconditionReturnField {
-  type: string;
-  class?: string;
-  generator?: string;
-  label?: string;
-  placeholder?: string;
-}
-
-export interface PreconditionDefinition {
-  id: string;
-  uses: string;
-  name: string;
-  with?: Record<string, unknown>;
-  returns?: Record<string, PreconditionReturnField>;
-  validate?: InlineValidation[];
 }

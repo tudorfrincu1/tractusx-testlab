@@ -25,7 +25,7 @@
 import { useMemo } from "react";
 import { useProjectStore } from "@/store";
 import { useEnvironmentStore } from "@/store";
-import type { Step, PreconditionDefinition } from "@/models/schema";
+import type { Step } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 
 export interface VariableEntry {
@@ -48,7 +48,6 @@ export interface TestSteps {
 export interface VariableScopes {
   env: VariableEntry[];
   metadata: VariableEntry[];
-  preconditions: VariableEntry[];
   testSteps: TestSteps[];
 }
 
@@ -60,14 +59,6 @@ function extractReturns(step: Step): StepWithReturns | null {
     stepName: step.name ?? step.id,
     returns: Object.keys(step.returns),
   };
-}
-
-function extractPreconditionReturns(p: PreconditionDefinition): VariableEntry[] {
-  if (!p.returns || Object.keys(p.returns).length === 0) return [];
-  return Object.keys(p.returns).map((key) => ({
-    label: `preconditions.${p.id}.${key}`,
-    expression: `\${{ preconditions.${p.id}.${key} }}`,
-  }));
 }
 
 function collectEnvVariables(envVariables: { enabled: boolean; name: string }[]): VariableEntry[] {
@@ -91,15 +82,6 @@ function collectMetadata(tck: { metadata?: { name?: string; version?: string; de
     metadata.push({ label: "metadata.dataspace_version", expression: "${{ metadata.dataspace_version }}" });
   }
   return metadata;
-}
-
-function collectPreconditions(preconditions?: PreconditionDefinition[]): VariableEntry[] {
-  if (!preconditions) return [];
-  const result: VariableEntry[] = [];
-  for (const p of preconditions) {
-    result.push(...extractPreconditionReturns(p));
-  }
-  return result;
 }
 
 function extractReturnsFromSteps(steps: Step[]): StepWithReturns[] {
@@ -132,7 +114,6 @@ export function useVariableScopes(): VariableScopes {
   return useMemo(() => ({
     env: collectEnvVariables(envVariables),
     metadata: collectMetadata(tck),
-    preconditions: collectPreconditions(tck.preconditions),
     testSteps: collectTestSteps(tests),
   }), [tck, tests, envVariables]);
 }

@@ -50,8 +50,7 @@
             "connector/consumer/negotiate.json",
             "connector/consumer/initiate_transfer.json",
             "connector/shortcuts/pull_data_filtered.json",
-            "connector/shortcuts/pull_data_filtered_by_policy.json",
-            "connector/shortcuts/request_data_filtered_from_precondition.json"
+            "connector/shortcuts/pull_data_filtered_by_policy.json"
           ]
         },
         {

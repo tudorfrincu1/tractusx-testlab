@@ -25,22 +25,22 @@
 import { SUBTYPE_META } from "./subtypeCategories";
 import { findInputTemplate } from "./inputTemplates";
 import type { AddAction } from "./targetSystems";
-import type { PocPrecondition, PreconditionSubType, SystemId } from "./preconditionTypes";
+import type { ComplexVariableItem, VariableSubType, SystemId } from "./variableTypes";
 
 /** Auto-generates a short, unique, sub-type-prefixed id (no operator input). */
-function newId(subType: PreconditionSubType): string {
+function newId(subType: VariableSubType): string {
   return `${subType}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
-/** Builds the payload-specific body for a freshly added precondition. */
-type BodyFactory = (id: string) => PocPrecondition;
+/** Builds the payload-specific body for a freshly added variable. */
+type BodyFactory = (id: string) => ComplexVariableItem;
 
 /**
  * Default payloads per sub-type. Each entry mirrors the smallest valid shape
  * the matching editor expects, so a newly added item opens ready to edit
  * rather than empty. Names default to the singular sub-type label.
  */
-const BODY_FACTORIES: Record<PreconditionSubType, BodyFactory> = {
+const BODY_FACTORIES: Record<VariableSubType, BodyFactory> = {
   access_policy: (id) => ({
     id,
     name: "Access Policy",
@@ -136,11 +136,11 @@ const BODY_FACTORIES: Record<PreconditionSubType, BodyFactory> = {
 };
 
 /**
- * Creates a new precondition of the given sub-type with sensible defaults, an
+ * Creates a new variable of the given sub-type with sensible defaults, an
  * auto-generated id and the system it belongs to stamped on it. The `name`
  * defaults to the singular sub-type label.
  */
-export function createPrecondition(subType: PreconditionSubType): PocPrecondition {
+export function createComplexVariableItem(subType: VariableSubType): ComplexVariableItem {
   const body = BODY_FACTORIES[subType](newId(subType));
   const target: SystemId = SUBTYPE_META[subType].target ?? "sut_other";
   return { ...body, name: SUBTYPE_META[subType].addLabel, target };
@@ -151,7 +151,7 @@ export function createPrecondition(subType: PreconditionSubType): PocPreconditio
  * template id and target system so the detail view can reuse the template form
  * preview.
  */
-function createFromInputTemplate(templateId: string): PocPrecondition {
+function createFromInputTemplate(templateId: string): ComplexVariableItem {
   const template = findInputTemplate(templateId);
   const target: SystemId = template?.target ?? "sut_other";
   const firstField = template?.fields[0];
@@ -176,10 +176,10 @@ function createFromInputTemplate(templateId: string): PocPrecondition {
  * register sub-type or an input template — into a ready-to-edit instance
  * stamped with its target system.
  */
-export function createFromAddAction(action: AddAction): PocPrecondition {
+export function createFromAddAction(action: AddAction): ComplexVariableItem {
   switch (action.kind) {
     case "subtype":
-      return createPrecondition(action.subType);
+      return createComplexVariableItem(action.subType);
     case "input":
       return createFromInputTemplate(action.templateId);
   }

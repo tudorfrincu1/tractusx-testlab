@@ -5,7 +5,6 @@
   "label": "Query Catalog (Filtered)",
   "description": "Send a catalog request with multiple filter expressions to narrow results.",
   "params": [
-    { "name": "service", "type": "service_ref", "required": true, "description": "EDC connector service to query" },
     { "name": "counter_party_address", "type": "string", "required": true, "description": "DSP endpoint of the counter-party connector" },
     { "name": "filters", "type": "filter_expression_list", "required": false, "description": "Filter expressions to narrow catalog results" }
   ],

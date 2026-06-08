@@ -32,18 +32,18 @@ import type { PolicyRule } from "@/models/schema";
 export type SystemId = "connector" | "dtr" | "sut_other";
 
 /**
- * The four user-facing precondition categories. (`PROVIDE` is renamed to
+ * The four user-facing variable categories. (`PROVIDE` is renamed to
  * `REGISTER` at the POC layer; the hidden `inject` plumbing category is not
  * modelled here because it is never shown to the operator.)
  */
-export type PreconditionCategory = "generate" | "register" | "input" | "check";
+export type VariableCategory = "generate" | "register" | "input" | "check";
 
 /**
- * The concrete shape of a precondition within its category. Sub-type is a
+ * The concrete shape of a variable within its category. Sub-type is a
  * first-class, data-driven field so the category view can group items under
  * sub-headers without branching on payload internals.
  */
-export type PreconditionSubType =
+export type VariableSubType =
   | "generated_value"
   | "access_policy"
   | "usage_policy"
@@ -52,7 +52,7 @@ export type PreconditionSubType =
   | "operator_input"
   | "readiness_check";
 
-export type { PolicyVersion } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+export type { PolicyVersion } from "@/shared/ui/policy-constraints/constraintSchemas";
 export type PolicyType = "access" | "usage";
 
 /**
@@ -124,17 +124,17 @@ export interface CheckPayload {
   expression: string;
 }
 
-interface BasePrecondition {
+interface BaseVariableItem {
   id: string;
   name: string;
   description: string;
   /** Explicit sub-type so the list groups items without inspecting payloads. */
-  subType: PreconditionSubType;
+  subType: VariableSubType;
   /** POC-local target system this item preconfigures (the primary axis). */
   target?: SystemId;
 }
 
-export type PocPrecondition = BasePrecondition &
+export type ComplexVariableItem = BaseVariableItem &
   (
     | { category: "register"; policy?: PolicyPayload; provide?: ProvidePayload }
     | { category: "generate"; generate: GeneratePayload }

@@ -25,19 +25,19 @@
 import type { ComponentType } from "react";
 import type { SvgIconProps } from "@mui/material/SvgIcon";
 import { SUBTYPE_META } from "@/features/complex-variable-builder";
-import type { PreconditionSubType } from "@/features/complex-variable-builder";
+import type { VariableSubType } from "@/features/complex-variable-builder";
 import type { ComplexType } from "./types";
 import { COMPLEX_TYPE_GROUP, type VariableGroupLabel } from "./variableGroups";
 
 /**
  * Data-driven catalog of complex-variable builders. Each choice maps a
- * user-facing complex type to the existing precondition sub-type that backs
+ * user-facing complex type to the existing complex-variable sub-type that backs
  * it, so the "+ Add complex variable" menu and the factory both read from one
  * source instead of branching on strings.
  */
 export interface ComplexBuilderChoice {
   type: ComplexType;
-  subType: PreconditionSubType;
+  subType: VariableSubType;
   /**
    * Section heading the choice is grouped under in the "+ Add variable" menu.
    * Read from {@link COMPLEX_TYPE_GROUP} so the menu and the overview list share

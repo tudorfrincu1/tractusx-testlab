@@ -31,7 +31,6 @@ import {
   dynamicDropdown,
   collectMockEndpointIds,
   collectSchemaPaths,
-  collectPreconditionRefs,
 } from "../../common/fields/dropdownProviders";
 import { collectEnvironmentVariables } from "../../common/catalog/variables/variableCollection";
 
@@ -151,16 +150,6 @@ export function registerParamField(
       self.appendStatementInput(fieldKey)
         .appendField(paramLabel)
         .setCheck("filter_expression");
-      break;
-    case "precondition_ref":
-      self.appendDummyInput()
-        .appendField(paramLabel)
-        .appendField(
-          new Blockly.FieldDropdown(
-            dynamicDropdown((ws) => collectPreconditionRefs(ws))
-          ),
-          fieldKey
-        );
       break;
     default:
       self.appendValueInput(fieldKey)

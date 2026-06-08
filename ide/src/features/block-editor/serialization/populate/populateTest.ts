@@ -32,7 +32,6 @@ import { findCatalogEntry, type BlockCatalog } from "../../blocks";
 import { normalizeStepParams } from "../paramNormalizers";
 import { makeBlock, setDropdownValue, attachChain } from "../serializationParts";
 import { populateAssertions, groupStepsWithAssertions, assertionStepToInlineValidation } from "./assertions";
-import { deserializePreconditionPolicyBlock } from "../serialize";
 import { trackStepOutputs, type StepOutputMap } from "./stepOutputTracker";
 import { resolveParamPopulator } from "./paramPopulators";
 
@@ -180,11 +179,6 @@ export function populateTest(ws: Workspace, root: Block, script: ScriptDefinitio
 
         const specialBlock = buildImportVariableBlock(step) || buildExportVariableBlock(step) || buildLoadSchemaBlock(step);
         if (specialBlock) { blocks.push(specialBlock); continue; }
-
-        if (step.uses === "precondition_policy_config") {
-          blocks.push(deserializePreconditionPolicyBlock(ws, step));
-          continue;
-        }
 
         const genericBlock = buildGenericStepBlock(step, assertions);
         if (genericBlock) {

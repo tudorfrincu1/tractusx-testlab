@@ -41,9 +41,10 @@ from tractusx_testlab.compiler._fingerprint import build_fingerprint
 from tractusx_testlab.compiler.ir._assets import build_asset_entries
 from tractusx_testlab.compiler.ir._compilation import build_compiled_tests
 from tractusx_testlab.compiler.ir._helpers import (
-    _infer_type, build_global_symbols, compute_source_hash,
+    _infer_type, compute_source_hash,
     infer_testdata_type as _infer_testdata_type,
 )
+from tractusx_testlab.compiler.ir._symbols import build_global_symbols
 from tractusx_testlab.compiler.validation._rules import validate_tck_manifest
 
 logger = logging.getLogger(__name__)
@@ -73,19 +74,16 @@ def build_ir(
     tests_list = _build_tests_list(manifest_data, base_dir)
     compiled_tests = build_compiled_tests(manifest_data, base_dir)
     env_raw = manifest_data.get("env", {})
-    preconditions_raw = manifest_data.get("preconditions", [])
-    global_symbols = build_global_symbols(env_raw, preconditions_raw)
+    global_symbols = build_global_symbols(env_raw)
     services = _build_services(env_raw)
     schemas = _build_schemas(env_raw)
     testdata = _build_testdata(env_raw)
-    preconditions = _build_preconditions(manifest_data)
 
     execution_dict: dict[str, Any] = {
         "global_symbols": global_symbols,
         "services": services,
         "schemas": schemas,
         "testdata": testdata,
-        "preconditions": preconditions,
         "tests": tests_list,
         "compiled_tests": compiled_tests,
     }
@@ -219,33 +217,11 @@ def _build_testdata(env_raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_preconditions(manifest_data: dict[str, Any]) -> list[dict[str, Any]]:
-    """Build the preconditions list from the manifest."""
-    preconditions_raw = manifest_data.get("preconditions", [])
-    return [_build_precondition_entry(pc) for pc in preconditions_raw]
-
-
 def _build_service_entry(svc: dict[str, Any]) -> dict[str, Any]:
     """Build a single service entry for the IR env block."""
     entry: dict[str, Any] = {"name": svc.get("name", ""), "uses": svc.get("uses", "")}
     if with_block := svc.get("with", {}):
         entry["with"] = resolve_expression(with_block)
-    return entry
-
-
-def _build_precondition_entry(pc: dict[str, Any]) -> dict[str, Any]:
-    """Build a single precondition entry for the IR env block."""
-    _allowed_return_keys = ("label", "description", "example", "type", "class")
-    entry: dict[str, Any] = {"id": pc.get("id", ""), "uses": pc.get("uses", ""), "name": pc.get("name", "")}
-    if with_block := pc.get("with", {}):
-        entry["with"] = resolve_expression(with_block)
-    if returns := pc.get("returns", {}):
-        entry["returns"] = {
-            name: {k: v for k, v in fdef.items() if k in _allowed_return_keys}
-            for name, fdef in returns.items()
-        }
-    if seed := pc.get("seed", {}):
-        entry["seed"] = seed
     return entry
 
 

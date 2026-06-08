@@ -29,7 +29,7 @@ import type { ParamPopulator } from "./paramPopulator.types";
 
 /**
  * Populates a `filter_expression_list` field. Accepts either the direct array
- * format (e.g. `pull_data_filtered_from_precondition`) or the nested
+ * format (e.g. `pull_data_filtered`) or the nested
  * `filter.filter_expression` format (e.g. `query_catalog_with_filters`).
  */
 export const filterExpressionListParamPopulator: ParamPopulator = ({

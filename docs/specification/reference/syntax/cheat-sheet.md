@@ -34,7 +34,7 @@ Quick reference for the TestLab YAML test authoring format (`testlab: v1-alpha`)
 
 ## TCK File Structure (index.yaml)
 
-Only TCKs declare `env:` and `preconditions:`. Tests inherit these via `namespace:` matching.
+Only TCKs declare `env:`. Tests inherit it via `namespace:` matching.
 
 ```yaml
 kind: tck
@@ -76,15 +76,6 @@ env:
   testdata:
     sample_body:
       file: sample_body.json
-preconditions:
-  - id: health_check
-    uses: connector/health_check
-    name: Verify connector is reachable
-    with:
-      connector_service: ${{ env.services.testlab_connector.connector_service }}
-    validate:
-      - uses: validate/assert
-        with: { input: status_code, operator: equals, value: 200 }
 tests:
   - tests/test_one.yaml
   - tests/test_two.yaml
@@ -147,7 +138,7 @@ teardown: []
 | `${{ env.schemas.schema_name }}` | Schema file content |
 | `${{ steps.step_id.output_name }}` | Output from a step in `steps:` |
 | `${{ setup.step_id.output_name }}` | Output from a step in `setup:` |
-| `${{ preconditions.id.output_name }}` | Output from a precondition |
+| `${{ env.var_id.field }}` | Output field of a typed `env.variables` definition (e.g., `.policy`) |
 | `${{ metadata.dataspace_version }}` | Metadata field value |
 | `${{ testdata.data_name }}` | Shorthand for testdata reference |
 
@@ -215,49 +206,56 @@ validate:
 | `between` | Numeric range (inclusive) |
 
 
-## Preconditions (TCK only)
+## Complex Variables (TCK only)
+
+Typed variables in `env.variables` cover everything a test needs before its steps
+run: runtime inputs, generated values, and reusable access policies. Declare each
+one once and reference it via `${{ env.<id>.<field> }}`.
 
 ```yaml
-preconditions:
-  # Executable check
-  - id: health_check
-    uses: connector/health_check
-    name: Verify connector is reachable
-    with:
-      connector_service: ${{ env.services.testlab_connector.connector_service }}
-    validate:
-      - uses: validate/assert
-        with: { input: status_code, operator: equals, value: 200 }
+env:
+  variables:
+    # Runtime input collected from the SUT operator
+    - id: sut_dsp_url
+      uses: variable/type/string
+      name: SUT DSP Endpoint URL
+      with:
+        source: input
+      returns:
+        value:
+          type: string
+          class: Url
+          placeholder: "https://connector.example.com/api/dsp"
 
-  # Generate values for SUT operator
-  - id: testlab_connector
-    uses: precondition/generate
-    name: TestLab connector endpoints
-    returns:
-      dsp_url: { type: string, class: Url, generator: testlab_dsp_endpoint }
-      bpn: { type: string, class: Bpn, generator: testlab_bpn }
+    # Constant value with a default
+    - id: sut_response_timeout
+      uses: variable/type/integer
+      with:
+        value: 300
+      returns:
+        value:
+          type: integer
 
-  # Provide data for SUT operator to configure
-  - id: usage_policy
-    uses: precondition/provide
-    name: Required usage policy
-    with:
-      value: { permissions: [{ action: use, constraints: { and: [{ left_operand: UsagePurpose, operator: isAnyOf, right_operand: "cx.ccm.base:1" }] } }] }
-    returns:
-      policy:
-        type: object
-        class: Policy
-
-  # Collect input from SUT operator
-  - id: sut_connector
-    uses: precondition/input
-    name: SUT Connector Details
-    returns:
-      counter_party_address: { type: string, class: Url, label: "SUT DSP Endpoint URL", placeholder: "https://connector.example.com/api/dsp" }
-      counter_party_id: { type: string, class: Bpn, label: "SUT BPN", placeholder: "BPNL000000000001" }
+    # Reusable access policy, referenced wherever a step needs it
+    - id: usage_policy
+      uses: config/connector/policy
+      name: Required usage policy
+      with:
+        value:
+          permissions:
+            - action: use
+              constraints:
+                and:
+                  - left_operand: UsagePurpose
+                    operator: isAnyOf
+                    right_operand: "cx.ccm.base:1"
+      returns:
+        policy:
+          type: object
+          class: Policy
 ```
 
-**Reference in tests:** `${{ preconditions.sut_connector.counter_party_address }}`
+**Reference in tests:** `${{ env.sut_dsp_url.value }}`, `${{ env.usage_policy.policy }}`.
 
 ---
 
@@ -278,7 +276,8 @@ preconditions:
 | `connector/` | `connector/pull_data_filtered`, `connector/create_asset`, `connector/health_check` |
 | `util/` | `util/generate_uuid`, `util/wait` |
 | `validate/` | `validate/assert`, `validate/schema` |
-| `precondition/` | `precondition/generate`, `precondition/provide`, `precondition/input` |
+| `variable/` | `variable/type/string`, `variable/type/integer`, `variable/type/boolean` |
+| `config/` | `config/connector/policy` |
 | `service/` | `service/connector_service` |
 
 

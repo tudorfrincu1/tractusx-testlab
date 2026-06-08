@@ -24,7 +24,7 @@
 
 // Right detail panel: form fields, the source-mode toggle and the generator
 // picker. The panel is flush (the parent column owns its padding), matching the
-// IDE preconditions detail, with sectioned spacing instead of a floating card.
+// IDE config detail, with sectioned spacing instead of a floating card.
 @use "../../../abstracts" as *;
 
 .vars-detail {

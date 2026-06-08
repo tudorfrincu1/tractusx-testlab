@@ -22,7 +22,7 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import type { RightOperandDef } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import type { RightOperandDef } from "@/shared/ui/policy-constraints/constraintSchemas";
 import { isVariableValue } from "../yaml/policyVariables";
 
 const BPNL_PATTERN = /^BPNL[0-9A-Z]{12}$/;

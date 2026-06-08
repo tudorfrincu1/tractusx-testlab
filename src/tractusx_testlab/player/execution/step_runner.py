@@ -138,38 +138,29 @@ async def run_script(
     monitor: ExecutionMonitor,
     jobs: JobManager,
 ) -> ScriptResult:
-    """Execute all steps in a script sequentially (precondition → setup → main → teardown)."""
+    """Execute all steps in a script sequentially (setup → main → teardown)."""
     seed_script_defaults(script, context)
     register_script_services(script, context)
 
     script_start = datetime.now(timezone.utc)
 
-    from tractusx_testlab.player.execution.preconditions import execute_precondition_steps
-    precondition_results, precondition_status = await execute_precondition_steps(
+    step_results: list[StepResult] = []
+    setup_results, setup_status = await execute_setup_steps(
         script, context, job_id, monitor, jobs,
     )
-
-    setup_results: list[StepResult] = []
-    step_results: list[StepResult] = []
-    if precondition_status == ScriptStatus.FAILED:
+    if setup_status == ScriptStatus.FAILED:
         script_status = ScriptStatus.FAILED
     else:
-        setup_results, setup_status = await execute_setup_steps(
+        step_results, script_status = await execute_main_steps(
             script, context, job_id, monitor, jobs,
         )
-        if setup_status == ScriptStatus.FAILED:
-            script_status = ScriptStatus.FAILED
-        else:
-            step_results, script_status = await execute_main_steps(
-                script, context, job_id, monitor, jobs,
-            )
 
     teardown_results = await execute_teardown_steps(
         script, context, job_id, monitor,
     )
 
     script_end = datetime.now(timezone.utc)
-    all_step_results = precondition_results + setup_results + step_results + teardown_results
+    all_step_results = setup_results + step_results + teardown_results
 
     return ScriptResult(
         script_name=script.name,

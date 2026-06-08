@@ -35,7 +35,6 @@ import {
   registerValueBlocks,
   registerRootBlocks,
   registerPolicyBlocks,
-  registerPreconditionBlocks,
   registerCatalogBlocks,
   registerUtilityBlocks,
   registerAssertionBlocks,
@@ -57,7 +56,6 @@ export function registerBlocks(Blockly: typeof BlocklyType, catalog: BlockCatalo
   registerValueBlocks(Blockly, catalog);
   registerRootBlocks(Blockly);
   registerPolicyBlocks(Blockly);
-  registerPreconditionBlocks(Blockly);
   registerUtilityBlocks(Blockly, catalog);
   registerAuthBlocks(Blockly);
   registerAssertionBlocks(Blockly, catalog);

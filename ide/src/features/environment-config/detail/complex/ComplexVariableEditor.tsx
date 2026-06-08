@@ -38,7 +38,7 @@ const SOURCES: readonly { value: "value" | "input"; label: string }[] = [
 
 /**
  * Detail editor for a complex variable. Identity + source live here; the body
- * mounts the EXISTING precondition builder (left logical formula / right
+ * mounts the EXISTING complex-variable builder (left logical formula / right
  * canonical JSON) unchanged via {@link ConfigurationDetail}.
  */
 export function ComplexVariableEditor({ variable, onChange }: Readonly<ComplexVariableEditorProps>) {

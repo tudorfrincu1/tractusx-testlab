@@ -22,14 +22,14 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-import type { PreconditionSubType } from "../../model";
+import type { VariableSubType } from "../../model";
 
 /**
  * The class-specific call-to-action shown above every Configuration item.
  * Data-driven so the header never branches on payload internals — the sub-type
  * alone decides the verb the operator reads.
  */
-export const HEADER_VERBS: Partial<Record<PreconditionSubType, string>> = {
+export const HEADER_VERBS: Partial<Record<VariableSubType, string>> = {
   access_policy: "Configure this policy in your Connector.",
   usage_policy: "Configure this policy in your Connector.",
   asset_template: "Register this asset in your Connector.",
@@ -37,6 +37,6 @@ export const HEADER_VERBS: Partial<Record<PreconditionSubType, string>> = {
 } as const;
 
 /** Resolve the header verb for a sub-type, falling back to a generic prompt. */
-export function headerVerbFor(subType: PreconditionSubType): string {
+export function headerVerbFor(subType: VariableSubType): string {
   return HEADER_VERBS[subType] ?? "Register this object in your SUT.";
 }

@@ -27,7 +27,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   VERSION_SCHEMAS,
   getConstraintsForContext,
-} from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+} from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { PolicyType, PolicyVersion } from "../../model";
 
 export interface SchemaInfoPanelProps {

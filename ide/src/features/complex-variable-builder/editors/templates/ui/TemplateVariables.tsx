@@ -26,7 +26,7 @@
 // policy editor's right-operand control (mode select text / select / variable +
 // matching value input), so a template constraint can bind to an env variable
 // via `${{ env.NAME }}` exactly like the advanced editor \u2014 no locked chips.
-import type { RightOperandDef } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import type { RightOperandDef } from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { PolicyTemplate, TemplateVariable } from "../catalog";
 import { RightOperandField } from "../../right-operand/RightOperandField";
 

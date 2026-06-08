@@ -27,18 +27,18 @@ import { ConfigHeader } from "./header/ConfigHeader";
 import { JsonTab } from "./json/JsonTab";
 import { PolicyConfiguration } from "./policy/PolicyConfiguration";
 import { validateJsonText } from "./json/jsonCodec";
-import type { PocPrecondition, PolicyPayload, ProvidePayload } from "../model";
+import type { ComplexVariableItem, PolicyPayload, ProvidePayload } from "../model";
 
 export interface ConfigurationDetailProps {
   /** A Configuration (register) item — either a policy or a provide template. */
-  item: PocPrecondition;
+  item: ComplexVariableItem;
   onPolicyChange: (next: PolicyPayload) => void;
   onProvideChange: (next: ProvidePayload) => void;
   /**
-   * Whether to show the collapsed precondition-step YAML drawer beneath the
-   * policy authoring. Defaults to `true` so the standalone preconditions POC is
+   * Whether to show the collapsed variable YAML drawer beneath the
+   * policy authoring. Defaults to `true` so the standalone builder POC is
    * unchanged; the variables manager passes `false` because a complex variable
-   * is serialized as a VARIABLE, not a `precondition/provide` step.
+   * is serialized as a VARIABLE, not a `config/connector/policy` variable.
    */
   showYamlPreview?: boolean;
 }
@@ -72,7 +72,7 @@ export function ConfigurationDetail({
 }
 
 interface ProvideDetailProps {
-  item: PocPrecondition;
+  item: ComplexVariableItem;
   onProvideChange: (next: ProvidePayload) => void;
 }
 

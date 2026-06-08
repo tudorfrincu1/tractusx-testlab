@@ -23,5 +23,5 @@
 // It was reviewed and tested by a human committer.
 
 // Complex-variable editing surface: hosts the complex-variable builder engine.
-// Composed by VariableDetail for variables backed by the precondition model.
+// Composed by VariableDetail for variables backed by the complex-variable model.
 export { ComplexVariableEditor } from "./ComplexVariableEditor";

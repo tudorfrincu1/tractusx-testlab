@@ -127,6 +127,25 @@ env:
       returns:
         value:
           type: integer
+    - id: ccm_usage_policy
+      uses: config/connector/policy
+      name: Required CCMAPI Usage Policy
+      with:
+        value:
+          permissions:
+            - action: use
+              constraints:
+                and:
+                  - left_operand: UsagePurpose
+                    operator: isAnyOf
+                    right_operand: "cx.ccm.base:1"
+                  - left_operand: FrameworkAgreement
+                    operator: eq
+                    right_operand: "DataExchangeGovernance:1.0"
+      returns:
+        policy:
+          type: object
+          class: Policy
   schemas:
     certificate_schema:
       file: business_partner_certificate_schema.json

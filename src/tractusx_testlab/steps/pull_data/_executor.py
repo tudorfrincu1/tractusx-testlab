@@ -37,7 +37,6 @@ from tractusx_testlab.steps.pull_data._constants import (
     DEFAULT_POLL_INTERVAL,
     STEP_PULL_DATA_FILTERED,
     STEP_PULL_DATA_FILTERED_BY_POLICY,
-    STEP_PULL_DATA_FILTERED_FROM_PRECONDITION,
 )
 from tractusx_testlab.syntax.context_vars import DATAPLANE_ENDPOINT, EDR_TOKEN
 
@@ -61,18 +60,6 @@ class PullDataFilteredByPolicy(BaseStep):
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         filter_expression = _build_filter_expression(params)
         policies = params.get("policies") or params.get("policy_constraints")
-        return await _do_dsp_flow(context, params, filter_expression, policies=policies)
-
-
-class PullDataFilteredFromPrecondition(BaseStep):
-    """Pull data with filter expression and policy from a precondition variable."""
-
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        filter_expression = _build_filter_expression(params)
-        precondition_var = params.get("precondition_policy_var", "")
-        policies = context.get_variable(precondition_var) if precondition_var else None
-        if isinstance(policies, dict):
-            policies = [policies]
         return await _do_dsp_flow(context, params, filter_expression, policies=policies)
 
 

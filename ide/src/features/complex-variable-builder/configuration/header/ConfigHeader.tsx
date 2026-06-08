@@ -28,11 +28,11 @@
 // header markup.
 import type { ReactNode } from "react";
 import { CATEGORY_META, SUBTYPE_META } from "../../model";
-import type { PocPrecondition } from "../../model";
+import type { ComplexVariableItem } from "../../model";
 import { headerVerbFor } from "./headerVerbs";
 
 export interface ConfigHeaderProps {
-  item: PocPrecondition;
+  item: ComplexVariableItem;
   trailing?: ReactNode;
 }
 

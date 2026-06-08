@@ -23,9 +23,8 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-// Writer: converts Blockly blocks into model steps, policies, and preconditions.
+// Writer: converts Blockly blocks into model steps and policies.
 export { blockToStep } from "./blockToStepSerializer";
-export { serializePreconditionPolicyBlock, deserializePreconditionPolicyBlock } from "./preconditionSerializers";
 export {
   serializeConstraintChain,
   serializePolicyBlock,

@@ -26,12 +26,6 @@
     "env": {
       "$ref": "#/$defs/env"
     },
-    "preconditions": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/precondition"
-      }
-    },
     "tests": {
       "type": "array",
       "minItems": 1,
@@ -126,45 +120,6 @@
         "uses": { "type": "string" },
         "with": { "type": "object", "additionalProperties": true },
         "returns": { "type": "object", "additionalProperties": true }
-      },
-      "additionalProperties": true
-    },
-    "precondition": {
-      "type": "object",
-      "required": ["id", "uses", "name"],
-      "properties": {
-        "id": { "type": "string" },
-        "uses": { "type": "string" },
-        "name": { "type": "string" },
-        "with": { "type": "object", "additionalProperties": true },
-        "returns": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "required": ["type"],
-            "properties": {
-              "type": { "type": "string" },
-              "class": { "type": "string" }
-            },
-            "additionalProperties": true
-          }
-        },
-        "seed": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "validate": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["uses"],
-            "properties": {
-              "uses": { "type": "string" },
-              "with": { "type": "object", "additionalProperties": true }
-            },
-            "additionalProperties": true
-          }
-        }
       },
       "additionalProperties": true
     }

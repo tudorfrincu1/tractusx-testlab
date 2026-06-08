@@ -25,7 +25,7 @@
 // Reuses the salvaged constraint schema as the single source of truth for the
 // known CX usage purposes, so the optional section stays in sync with the
 // required-constraint dropdown instead of duplicating the catalog.
-import { getConstraintsForContext } from "@/shared/ui/PreconditionsDialog/constraintSchemas";
+import { getConstraintsForContext } from "@/shared/ui/policy-constraints/constraintSchemas";
 import type { OptionalUsagePurpose, PolicyVersion } from "../../model";
 
 const CUSTOM_OPTION = "__custom__" as const;

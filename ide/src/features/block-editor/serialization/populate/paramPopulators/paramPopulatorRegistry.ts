@@ -45,7 +45,6 @@ const paramPopulatorsByType: Record<string, ParamPopulator> = {
   dropdown: dropdownParamPopulator,
   endpoint_ref: dropdownParamPopulator,
   schema_path: dropdownParamPopulator,
-  precondition_ref: dropdownParamPopulator,
   variable: variableParamPopulator,
   text: textParamPopulator,
   number: numberParamPopulator,

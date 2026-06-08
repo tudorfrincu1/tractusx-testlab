@@ -37,7 +37,7 @@ from tractusx_testlab.models.authoring.definitions import (
 )
 from tractusx_testlab.models.authoring.definitions import (  # local overrides
     Assertion,       # adds schema_ref, min, max fields
-    ScriptDefinition,  # adds preconditions field
+    ScriptDefinition,
     StepDefinition,    # no name field
 )
 from tractusx_testlab.models.primitives.enums import (
@@ -55,7 +55,7 @@ from tractusx_testlab.models.primitives.enums import VariableSource  # verb-form
 from tractusx_testlab.models.primitives.enums import AssertionType  # local override — adds typed assertion types
 from tractusx_testlab.models.primitives.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.primitives.enums import ServiceType  # local override — adds EDC connector types
-from tractusx_testlab.models.primitives.enums import StepPhase  # local override — adds PRECONDITION
+from tractusx_testlab.models.primitives.enums import StepPhase
 from tractusx_testlab.models.primitives.exceptions import (
     DuplicateServiceError,
     ServiceInitError,
@@ -69,12 +69,6 @@ from tractusx_testlab.models.runtime.jobs import (
     JobEvent,
     JobMemory,
 )
-from tractusx_testlab.models.runtime.preconditions import (
-    PreconditionLog,
-    PreconditionLogCategory,
-    PreconditionLogType,
-)
-from tractusx_testlab.models.runtime.results import StepResult  # local override — adds precondition_logs
 from tractusx_testlab.models.runtime.results import (
     AssertionResult,
     AssertionSummary,
@@ -82,6 +76,7 @@ from tractusx_testlab.models.runtime.results import (
     HttpRequest,
     HttpResponse,
     ScriptResult,
+    StepResult,
     TckResult
 )
 from tractusx_testlab.models.domain.security import (
@@ -127,10 +122,6 @@ __all__ = [
     # server
     "UploadedPackage",
     "VaultConfig",
-    # preconditions
-    "PreconditionLog",
-    "PreconditionLogCategory",
-    "PreconditionLogType",
     # results
     "AssertionResult",
     "AssertionSummary",

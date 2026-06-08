@@ -25,7 +25,7 @@
 // Page shell, header bar and the manage/run split. Dark surfaces only, reusing
 // the global --tx-* dark tokens so the panels match the reused builder cards.
 // The page rhythm (header bar + padded content) mirrors the production
-// preconditions panel so the view reads native, not POC-grade.
+// config panel so the view reads native, not POC-grade.
 @use "../../../abstracts" as *;
 
 .vars-poc {

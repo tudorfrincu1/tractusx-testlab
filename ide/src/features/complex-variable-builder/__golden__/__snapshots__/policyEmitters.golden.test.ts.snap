@@ -637,7 +637,7 @@ exports[`policy emitter golden output > ODRL (policyToOdrlJson) > pins saturn-us
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-access-logical-and — jupiter, access modelled as use, multi-constraint LogicalConstraint odrl:and 1`] = `
 "- id: policy-fixture-0007
-  uses: precondition/provide
+  uses: config/connector/policy
   name: jupiter-access-logical-and
   with:
     value:
@@ -659,7 +659,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-ac
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-empty-constraints — jupiter, permission with zero constraints (odrl:constraint omitted) 1`] = `
 "- id: policy-fixture-0008
-  uses: precondition/provide
+  uses: config/connector/policy
   name: jupiter-empty-constraints
   with:
     value:
@@ -673,7 +673,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-em
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-full-permission-prohibition-obligation — jupiter, all three rule sections populated, list operator scalar collapse 1`] = `
 "- id: policy-fixture-0009
-  uses: precondition/provide
+  uses: config/connector/policy
   name: jupiter-full-permission-prohibition-obligation
   with:
     value:
@@ -705,7 +705,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-fu
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-usage-bpn-atomic — jupiter, tx: namespace for BPN, single atomic constraint 1`] = `
 "- id: policy-fixture-0006
-  uses: precondition/provide
+  uses: config/connector/policy
   name: jupiter-usage-bpn-atomic
   with:
     value:
@@ -723,7 +723,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins jupiter-us
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-access-bpn-list — saturn, access token, list operator (isAnyOf -> array right operand) 1`] = `
 "- id: policy-fixture-0002
-  uses: precondition/provide
+  uses: config/connector/policy
   name: saturn-access-bpn-list
   with:
     value:
@@ -743,7 +743,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-acc
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-full-permission-prohibition-obligation — saturn, all three rule sections populated 1`] = `
 "- id: policy-fixture-0005
-  uses: precondition/provide
+  uses: config/connector/policy
   name: saturn-full-permission-prohibition-obligation
   with:
     value:
@@ -773,7 +773,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-ful
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-logical-and — saturn, multi-constraint -> \`and\` wrapper (ODRL + YAML and:) 1`] = `
 "- id: policy-fixture-0003
-  uses: precondition/provide
+  uses: config/connector/policy
   name: saturn-usage-logical-and
   with:
     value:
@@ -795,7 +795,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usa
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-membership-atomic — saturn, usage->use action, single atomic constraint (scalar) 1`] = `
 "- id: policy-fixture-0001
-  uses: precondition/provide
+  uses: config/connector/policy
   name: saturn-usage-membership-atomic
   with:
     value:
@@ -813,7 +813,7 @@ exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usa
 
 exports[`policy emitter golden output > YAML (buildPolicyYaml) > pins saturn-usage-purpose-number-date-optional — saturn, UsagePurpose constraint, numeric right operand, date right operand, optionalUsagePurposes (JSON only) 1`] = `
 "- id: policy-fixture-0004
-  uses: precondition/provide
+  uses: config/connector/policy
   name: saturn-usage-purpose-number-date-optional
   with:
     value:

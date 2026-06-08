@@ -35,7 +35,6 @@ export const blockColors = {
   variableDef: "#5B21B6",
   variableGet: "#5B21B6",
   varSteps: "#4F46E5",
-  varPreconditions: "#B45309",
   varEnv: "#059669",
   varServices: "#7C3AED",
   varMetadata: "#6B7280",
@@ -53,7 +52,6 @@ export const blockColors = {
 
   /** Core block types */
   assertion: "#BE123C",
-  precondition: "#B45309",
   authentication: "#7C3AED",
 
   /** Data blocks */
@@ -73,7 +71,6 @@ export const blockColors = {
     HTTP: "#4F46E5",
     Notification: "#E11D48",
     Validation: "#BE123C",
-    Precondition: "#B45309",
     Cleanup: "#0F766E",
   } as Record<string, string>,
 } as const;

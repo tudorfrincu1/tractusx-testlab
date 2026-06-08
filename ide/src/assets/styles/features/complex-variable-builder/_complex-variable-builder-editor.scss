@@ -25,9 +25,9 @@
 // Shared styling for the complex-variable-builder editor primitives. These
 // `precond-editor__*` classes back the advanced PolicyEditor (profile selector,
 // schema hint) and the simple generate/provide/input/check editors. They were
-// never ported when the preconditions POC moved into this feature, which left
+// never ported when the policy editor POC moved into this feature, which left
 // the Jupiter/Saturn profile pills rendering as an unstyled text dump. The pill
-// design mirrors the original preconditions-dialog version selector, expressed
+// design mirrors the original policy-editor version selector, expressed
 // with the global --tx-* tokens so it matches the rest of the IDE shell.
 
 .precond-editor {

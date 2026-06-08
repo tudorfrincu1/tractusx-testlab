@@ -32,14 +32,12 @@ import {
   collectVarsFromEnvBlocks,
   collectVarsFromCatalog,
   gatherAllServices,
-  gatherAllPreconditions,
   collectSetupStepOutputs,
 } from "./variableCollectionHelpers";
 
 /** Variables organized by domain category for the toolbox sidebar. */
 export interface CategorizedVariables {
   readonly environment: readonly string[];
-  readonly precondition: readonly string[];
   readonly service: readonly string[];
   readonly metadata: readonly string[];
   readonly execution: readonly string[];
@@ -49,7 +47,6 @@ export interface CategorizedVariables {
 export function collectCategorizedVariables(workspace: Workspace): CategorizedVariables {
   return {
     environment: collectEnvironmentVariables(workspace),
-    precondition: collectPreconditionVariables(workspace),
     service: collectServiceVariables(workspace),
     metadata: collectMetadataVariables(workspace),
     execution: collectExecutionVariables(workspace),
@@ -159,26 +156,6 @@ export function collectServiceVariables(workspace: Workspace): string[] {
   }
 
   for (const b of workspace.getBlocksByType("var_services", false)) {
-    const ref = b.getFieldValue("VAR_NAME");
-    if (ref && ref !== "__NONE__") vars.add(ref);
-  }
-
-  return sortedUnique(vars);
-}
-
-/** Collects precondition output references: `precondition_id.return_key` */
-export function collectPreconditionVariables(workspace: Workspace): string[] {
-  const vars = new Set<string>();
-  const { tck, tests } = useProjectStore.getState();
-  const allPreconditions = gatherAllPreconditions(tck?.preconditions, tests);
-
-  for (const pre of allPreconditions) {
-    if (pre.returns) {
-      for (const key of Object.keys(pre.returns)) vars.add(`${pre.id}.${key}`);
-    }
-  }
-
-  for (const b of workspace.getBlocksByType("var_preconditions", false)) {
     const ref = b.getFieldValue("VAR_NAME");
     if (ref && ref !== "__NONE__") vars.add(ref);
   }

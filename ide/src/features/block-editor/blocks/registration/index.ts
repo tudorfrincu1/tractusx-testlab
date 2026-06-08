@@ -36,7 +36,6 @@ export {
 export { registerValueBlocks } from "./values/valueBlocks";
 export { registerRootBlocks } from "./structure/rootBlocks";
 export { registerStructuralBlocks } from "./structure/structuralBlocks";
-export { registerPreconditionBlocks } from "./structure/preconditionBlocks";
 export { registerAuthBlocks } from "./structure/authBlocks";
 export { registerFilterExpressionBlock } from "./structure/filterExpressionBlock";
 export { registerUtilityBlocks } from "./utility/utilityBlocks";

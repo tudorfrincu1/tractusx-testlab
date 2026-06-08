@@ -35,36 +35,14 @@ metadata:
     and mandatory usage policy constraints (UsagePurpose: cx.ccm.base:1,
     FrameworkAgreement: DataExchangeGovernance:1.0).
 
-setup:
-  - id: ccm_policy
-    uses: precondition/provide
-    name: Required CCMAPI Usage Policy
-    with:
-      value:
-        permissions:
-          - action: use
-            constraints:
-              and:
-                - left_operand: UsagePurpose
-                  operator: isAnyOf
-                  right_operand: "cx.ccm.base:1"
-                - left_operand: FrameworkAgreement
-                  operator: eq
-                  right_operand: "DataExchangeGovernance:1.0"
-    returns:
-      policy:
-        type: object
-        class: Policy
-
 steps:
   - id: pull_data_1
     uses: connector/pull_data_filtered
     name: Query catalog for CCMAPI assets and validate policy matches expected constraints
     with:
-      connector_service: ${{ infrastructure.engine.connector }}
       counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
       counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
-      policy: ${{ setup.ccm_policy.policy }}
+      policy: ${{ env.ccm_usage_policy.policy }}
       filters:
         - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
           operator: "="

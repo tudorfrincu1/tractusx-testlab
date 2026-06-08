@@ -63,9 +63,6 @@ class TestStepRegistry:
         assert isinstance(types, list)
         assert "export_variable" in types
 
-    def test_precondition_steps_registered(self) -> None:
-        assert StepRegistry.has("precondition_asset_config", "saturn") is True
-
 
 class TestExportVariableStep:
     """Tests for the export_variable step executor."""

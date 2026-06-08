@@ -130,7 +130,6 @@ class ScriptDefinition(BaseModel):
     outputs: dict[str, str] = Field(default_factory=dict)
     variables: dict[str, VariableDefinition] = Field(default_factory=dict)
     services: list[ServiceDefinition] = Field(default_factory=list)
-    preconditions: list[StepDefinition] = Field(default_factory=list)
     setup: list[StepDefinition] = Field(default_factory=list)
     steps: list[StepDefinition] = Field(default_factory=list)
     teardown: list[StepDefinition] = Field(default_factory=list)

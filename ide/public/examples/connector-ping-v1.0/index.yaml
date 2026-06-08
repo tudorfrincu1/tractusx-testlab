@@ -55,6 +55,47 @@ variables:
     returns:
       value:
         type: string
+  - id: access_policy
+    uses: config/connector/policy
+    name: SUT Connector Access Policy
+    description: >
+      Access policy configured for the SUT connector: only the SUT's own BPN
+      may obtain the catalog offer (BusinessPartnerNumber constraint).
+    with:
+      value:
+        permissions:
+          - action: access
+            constraints:
+              and:
+                - left_operand: BusinessPartnerNumber
+                  operator: eq
+                  right_operand: "${{ infrastructure.sut.connector.counter_party_id }}"
+    returns:
+      policy:
+        type: object
+        class: Policy
+  - id: usage_policy
+    uses: config/connector/policy
+    name: SUT Connector Usage Policy
+    description: >
+      Usage policy the SUT connector must enforce on its offers: a signed
+      framework agreement and active dataspace membership.
+    with:
+      value:
+        permissions:
+          - action: use
+            constraints:
+              and:
+                - left_operand: FrameworkAgreement
+                  operator: eq
+                  right_operand: "DataExchangeGovernance:1.0"
+                - left_operand: Membership
+                  operator: eq
+                  right_operand: "active"
+    returns:
+      policy:
+        type: object
+        class: Policy
 
 tests:
   - test: tests/ping_test.yaml

@@ -22,17 +22,12 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 ## It was reviewed and tested by a human committer.
 
-"""Execution-time structures: results, jobs and precondition logs."""
+"""Execution-time structures: results and jobs."""
 
 from tractusx_testlab.models.runtime.jobs import (
     Job,
     JobEvent,
     JobMemory,
-)
-from tractusx_testlab.models.runtime.preconditions import (
-    PreconditionLog,
-    PreconditionLogCategory,
-    PreconditionLogType,
 )
 from tractusx_testlab.models.runtime.results import (
     AssertionResult,
@@ -49,9 +44,6 @@ __all__ = [
     "Job",
     "JobEvent",
     "JobMemory",
-    "PreconditionLog",
-    "PreconditionLogCategory",
-    "PreconditionLogType",
     "AssertionResult",
     "AssertionSummary",
     "CallbackResult",

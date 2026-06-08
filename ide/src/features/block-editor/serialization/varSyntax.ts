@@ -28,14 +28,13 @@
  * Canonical v2 formats:
  * - Step outputs:             `${{ steps.step_id.field }}`
  * - Environment variables:    `${{ env.variable_name }}`
- * - Precondition outputs:     `${{ preconditions.step_id.field }}`
  * - Services:                 `${{ env.services.name.field }}`
  * - Metadata:                 `${{ metadata.field }}`
  * - Setup outputs:            `${{ setup.step_id.field }}`
  */
 
 /** Variable scope — determines which prefix is emitted. */
-export type VarScope = "env" | "steps" | "preconditions" | "metadata" | "setup" | "services" | "execution" | "testdata";
+export type VarScope = "env" | "steps" | "metadata" | "setup" | "services" | "execution" | "testdata";
 
 /* ─── v2 scoped variable parsing ─── */
 
@@ -43,12 +42,11 @@ export type VarScope = "env" | "steps" | "preconditions" | "metadata" | "setup" 
 const SERVICES_RE = /^\$\{\{\s*env\.services\.([^}]+)\}\}$/;
 
 /** Matches `${{ <scope>.<path> }}` for all v2 scopes. */
-const V2_SCOPE_RE = /^\$\{\{\s*(steps|preconditions|metadata|setup|env|execution|testdata)\.([^}]+)\}\}$/;
+const V2_SCOPE_RE = /^\$\{\{\s*(steps|metadata|setup|env|execution|testdata)\.([^}]+)\}\}$/;
 
 /** Block type for each v2 variable scope. */
 export const VAR_BLOCK_TYPES: Record<string, VarScope> = {
   var_steps: "steps",
-  var_preconditions: "preconditions",
   var_env: "env",
   var_services: "services",
   var_metadata: "metadata",
@@ -60,7 +58,6 @@ export const VAR_BLOCK_TYPES: Record<string, VarScope> = {
 /** Scope → block type mapping (inverse of VAR_BLOCK_TYPES). */
 export const SCOPE_TO_BLOCK_TYPE: Record<VarScope, string> = {
   steps: "var_steps",
-  preconditions: "var_preconditions",
   env: "var_env",
   services: "var_services",
   metadata: "var_metadata",

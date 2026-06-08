@@ -32,7 +32,7 @@ import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import { SUBTYPE_META, SUBTYPE_ORDER } from "./subtypeCategories";
 import type { Tone } from "./subtypeCategories";
 import { INPUT_TEMPLATES } from "./inputTemplates";
-import type { PocPrecondition, PreconditionSubType, SystemId } from "./preconditionTypes";
+import type { ComplexVariableItem, VariableSubType, SystemId } from "./variableTypes";
 
 /**
  * The PRIMARY axis of the configurator: the operator first chooses a system,
@@ -73,11 +73,11 @@ export const SYSTEM_ORDER: readonly SystemId[] = ["connector", "dtr", "sut_other
  * that mixes register sub-types and input templates as peers.
  */
 export type AddAction =
-  | { kind: "subtype"; subType: PreconditionSubType; label: string; Icon: ComponentType<SvgIconProps> }
+  | { kind: "subtype"; subType: VariableSubType; label: string; Icon: ComponentType<SvgIconProps> }
   | { kind: "input"; templateId: string; label: string; Icon: ComponentType<SvgIconProps> };
 
 /** The register sub-types that belong to a system, in stable display order. */
-function registerSubTypesForSystem(system: SystemId): PreconditionSubType[] {
+function registerSubTypesForSystem(system: SystemId): VariableSubType[] {
   return SUBTYPE_ORDER.filter((subType) => {
     const meta = SUBTYPE_META[subType];
     return meta.category === "register" && meta.target === system;
@@ -105,12 +105,12 @@ export function addActionsForSystem(system: SystemId): AddAction[] {
 }
 
 /** The system an existing item belongs to (explicit field, sub-type fallback). */
-export function systemForItem(item: PocPrecondition): SystemId {
+export function systemForItem(item: ComplexVariableItem): SystemId {
   return item.target ?? SUBTYPE_META[item.subType].target ?? "sut_other";
 }
 
 /** Items belonging to a system, preserving their insertion order. */
-export function itemsForSystem(items: PocPrecondition[], system: SystemId): PocPrecondition[] {
+export function itemsForSystem(items: ComplexVariableItem[], system: SystemId): ComplexVariableItem[] {
   return items.filter((item) => systemForItem(item) === system);
 }
 
@@ -122,7 +122,7 @@ export type ItemSection = "configuration" | "input";
  * register artifacts are configuration, everything else (inputs/checks) is
  * operator-supplied input.
  */
-export function sectionForItem(item: PocPrecondition): ItemSection {
+export function sectionForItem(item: ComplexVariableItem): ItemSection {
   const { category } = SUBTYPE_META[item.subType];
   if (category === "register") return "configuration";
   return "input";
@@ -172,10 +172,10 @@ export function addActionsForSection(system: SystemId, section: ItemSection): Ad
 
 /** Items of a system belonging to a given type, in insertion order. */
 export function itemsForSection(
-  items: PocPrecondition[],
+  items: ComplexVariableItem[],
   system: SystemId,
   section: ItemSection,
-): PocPrecondition[] {
+): ComplexVariableItem[] {
   return itemsForSystem(items, system).filter((item) => sectionForItem(item) === section);
 }
 
@@ -184,7 +184,7 @@ export function itemsForSection(
  * it has at least one existing item OR at least one add-action mapping to it.
  */
 export function availableSectionsForSystem(
-  items: PocPrecondition[],
+  items: ComplexVariableItem[],
   system: SystemId,
 ): ItemSection[] {
   const fromItems = new Set(itemsForSystem(items, system).map(sectionForItem));

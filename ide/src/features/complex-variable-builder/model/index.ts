@@ -22,11 +22,11 @@
 // This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 // It was reviewed and tested by a human committer.
 
-// Public surface of the complex-variable builder domain model: the precondition
+// Public surface of the complex-variable builder domain model: the variable model
 // type definitions, subtype/category metadata, target-system metadata, the
-// precondition factory and the input templates that seed each subtype.
-export * from "./preconditionTypes";
+// variable factory and the input templates that seed each subtype.
+export * from "./variableTypes";
 export * from "./subtypeCategories";
 export * from "./targetSystems";
-export * from "./preconditionFactory";
+export * from "./variableFactory";
 export * from "./inputTemplates";

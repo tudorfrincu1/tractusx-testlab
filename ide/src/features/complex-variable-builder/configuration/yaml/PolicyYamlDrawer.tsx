@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 // Collapsed-by-default disclosure beneath the side-by-side authoring. It shows
-// the canonical `precondition/provide` STEP YAML this policy contributes to the
+// the canonical `config/connector/policy` variable YAML this policy contributes to the
 // test config — the testlab authoring layer, distinct from the standalone EDC
 // ODRL JSON the operator copies above. Reuses the existing policy YAML builder.
 import { useMemo, useState } from "react";
@@ -59,7 +59,7 @@ export function PolicyYamlDrawer({ id, name, policy }: Readonly<PolicyYamlDrawer
       {open && (
         <div className="precond-yaml-drawer__body">
           <div className="precond-yaml-drawer__bar">
-            <span className="precond-yaml-drawer__hint">precondition/provide step</span>
+            <span className="precond-yaml-drawer__hint">config/connector/policy variable</span>
             <CopyButton text={plainText} />
           </div>
           <pre className="precond-yaml-drawer__code">

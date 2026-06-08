@@ -30,12 +30,12 @@
 import yaml from "js-yaml";
 import type {
   TestLabDocument, ScriptDefinition, TckDefinition, TestRef,
-  StandardRef, StepDefinition, PreconditionDefinition, InlineValidation,
+  StandardRef, StepDefinition, InlineValidation,
   ServiceDefinition,
 } from "@/models/schema";
 import { ScriptKind } from "@/models/schema";
 import { parseEnvVariables } from "@/features/environment-config/yaml";
-import type { StepFieldKey, PreconditionFieldKey } from "./yamlFieldMap";
+import type { StepFieldKey } from "./yamlFieldMap";
 
 export type ParseResult =
   | { ok: true; model: TestLabDocument }
@@ -90,7 +90,6 @@ function parseScript(raw: Record<string, unknown>): ScriptDefinition {
     } : undefined,
     variables: parseEnvVariables(env?.variables) ?? parseEnvVariables(raw.variables),
     services: parseServices(env?.services ?? raw.services),
-    preconditions: parsePreconditions(raw.preconditions),
     setup: parseSteps(raw.setup),
     steps: parseSteps(raw.steps) ?? [],
     teardown: parseSteps(raw.teardown),
@@ -153,7 +152,6 @@ function parseTck(raw: Record<string, unknown>): TckDefinition {
       testdata: env.testdata as Record<string, { file: string; type: string }> | undefined,
     } : undefined,
     variables: parseEnvVariables(env?.variables) ?? parseEnvVariables(raw.variables),
-    preconditions: parsePreconditions(raw.preconditions),
     tests,
   };
 }
@@ -218,21 +216,6 @@ function parseSteps(raw: unknown): StepDefinition[] | undefined {
       timeout_s: obj.timeout_s != null ? Number(obj.timeout_s) : undefined,
       if: obj.if != null ? String(obj.if) : undefined,
     };
-  });
-}
-
-function parsePreconditions(raw: unknown): PreconditionDefinition[] | undefined {
-  if (!Array.isArray(raw)) return undefined;
-  return raw.map((p: unknown): PreconditionDefinition => {
-    const obj = p as Record<PreconditionFieldKey, unknown>;
-    return {
-      id: String(obj.id ?? ""),
-      uses: String(obj.uses ?? ""),
-      name: obj.name != null ? String(obj.name) : undefined,
-      with: obj.with as Record<string, unknown> | undefined,
-      returns: obj.returns as Record<string, unknown> | undefined,
-      validate: parseValidations(obj.validate),
-    } as PreconditionDefinition;
   });
 }
 

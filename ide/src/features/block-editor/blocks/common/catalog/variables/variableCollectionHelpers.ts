@@ -24,7 +24,7 @@
 // It was reviewed and tested by a human committer.
 
 import type { Workspace } from "blockly";
-import type { Step, ServiceDefinition, PreconditionDefinition } from "@/models/schema";
+import type { Step, ServiceDefinition } from "@/models/schema";
 import { isTemplateStep } from "@/models/schema";
 import type { BlockCatalog } from "../catalogLoader";
 import { findCatalogEntry } from "../catalogLoader";
@@ -99,19 +99,6 @@ export function gatherAllServices(
   if (!tests) return all;
   for (const script of tests.values()) {
     if (script.services) all.push(...script.services);
-  }
-  return all;
-}
-
-/** Gathers all preconditions from TCK and test scripts. */
-export function gatherAllPreconditions(
-  tckPreconditions: PreconditionDefinition[] | undefined,
-  tests: Map<string, { preconditions?: PreconditionDefinition[] }> | undefined,
-): PreconditionDefinition[] {
-  const all = [...(tckPreconditions ?? [])];
-  if (!tests) return all;
-  for (const script of tests.values()) {
-    if (script.preconditions) all.push(...script.preconditions);
   }
   return all;
 }

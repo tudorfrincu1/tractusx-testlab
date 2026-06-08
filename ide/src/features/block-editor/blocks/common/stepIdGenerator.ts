@@ -28,7 +28,6 @@ import type { Workspace } from "blockly";
 const TYPE_TO_SHORT_ID: Record<string, string> = {
   "pull_data_filtered": "pull_data",
   "pull_data_filtered_by_policy": "pull_data_policy",
-  "pull_data_filtered_from_precondition": "pull_data_precond",
   "generate_uuid": "gen_uuid",
   "generate_bpn": "gen_bpn",
   "http_call_dataplane": "http_dataplane",

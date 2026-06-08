@@ -23,7 +23,7 @@
 // It was reviewed and tested by a human committer.
 
 // POC policy editor styling. Reuses the global --tx-* design tokens so the
-// schema-aware editor matches the rest of the preconditions POC.
+// schema-aware editor matches the rest of the policy editor POC.
 
 .precond-policy {
   $surface: var(--tx-bg-light);

@@ -63,11 +63,6 @@ class TestScript:
         return self.definition.steps
 
     @property
-    def preconditions(self):
-        """List of precondition step definitions."""
-        return self.definition.preconditions
-
-    @property
     def setup(self):
         """List of setup step definitions."""
         return self.definition.setup

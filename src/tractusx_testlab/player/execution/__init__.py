@@ -35,7 +35,6 @@ from tractusx_testlab.player.execution._phase_runners import (
     execute_main_steps,
     execute_setup_steps,
 )
-from tractusx_testlab.player.execution.preconditions import execute_precondition_steps
 
 __all__ = [
     "StepContext",
@@ -43,7 +42,6 @@ __all__ = [
     "TestlabPlayer",
     "execute_teardown_steps",
     "execute_main_steps",
-    "execute_precondition_steps",
     "execute_setup_steps",
     "run_script",
     "run_step",
