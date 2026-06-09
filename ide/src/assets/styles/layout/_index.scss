@@ -1,9 +1,0 @@
-// =============================================================================
-// LAYOUT — App-shell chrome: topbar, shell, panels, welcome screen.
-// Grouped into responsibility sub-folders, each exposing a barrel.
-// =============================================================================
-
-@forward "topbar";
-@forward "shell";
-@forward "panels";
-@forward "welcome";
