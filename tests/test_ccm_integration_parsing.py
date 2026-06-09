@@ -38,7 +38,7 @@ from tractusx_testlab.scripting import StepRegistry
 from tractusx_testlab.scripting._builders import parse_assertion, parse_service
 from tractusx_testlab.scripting.parser import YamlParser
 
-CCM_DIR = Path(__file__).resolve().parent.parent / "ide" / "public" / "examples" / "certificate-management-v2.0"
+CCM_DIR = Path(__file__).resolve().parent.parent / "docs" / "examples" / "certificate-management-v2" / "raw"
 CCM_TESTS_DIR = CCM_DIR / "tests"
 
 _CCM_TEST_FILES = {
