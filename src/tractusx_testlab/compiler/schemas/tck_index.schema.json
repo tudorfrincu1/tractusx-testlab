@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eclipse-tractusx.github.io/tractusx-testlab/schemas/tck_index.schema.json",
+  "title": "TCK Index Manifest",
+  "description": "Validates the TCK index.yaml manifest file structure.",
+  "type": "object",
+  "required": ["kind", "testlab", "id", "namespace", "metadata", "env", "tests"],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "tck"
+    },
+    "testlab": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "env": {
+      "$ref": "#/$defs/env"
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "additionalProperties": true }
+        ]
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "required": ["name", "version", "description", "authors", "license", "standards", "dataspace_version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "authors": { "type": "array" },
+        "license": { "type": "string" },
+        "standards": { "type": "array" },
+        "dataspace_version": { "type": "string" },
+        "copyright_holders": { "type": "array" },
+        "tags": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "env": {
+      "type": "object",
+      "properties": {
+        "variables": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "boolean" },
+                  { "type": "object" }
+                ]
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "uses"],
+                "additionalProperties": true
+              }
+            }
+          ]
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/service"
+          }
+        },
+        "schemas": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["file"],
+            "properties": {
+              "file": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "testdata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["file"],
+            "properties": {
+              "file": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "service": {
+      "type": "object",
+      "required": ["name", "uses"],
+      "properties": {
+        "name": { "type": "string" },
+        "uses": { "type": "string" },
+        "with": { "type": "object", "additionalProperties": true },
+        "returns": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    }
+  }
+}

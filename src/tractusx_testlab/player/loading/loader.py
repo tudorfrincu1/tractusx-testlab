@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Loader — resolves YAML files and .tckpkg archives into Tck objects."""
+"""Loader — resolves YAML files and .stck archives into Tck objects."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ from tractusx_testlab.models import (
     TckDefinition as TckDefinition,
 )
 from tractusx_testlab.scripting.script import Tck as Tck
-from tractusx_testlab.models.enums import ScriptKind
+from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.player.loading._parser import (
     build_script,
     build_test_case,
@@ -73,7 +73,7 @@ def _detect_kind(data: dict) -> ScriptKind:
 
 
 class Loader:
-    """Loads a TCK from a YAML file or a .tckpkg archive."""
+    """Loads a TCK from a YAML file or a .stck encrypted archive."""
 
     __slots__ = ()
 
@@ -88,7 +88,7 @@ class Loader:
         Uses the local parser to support testlab-extended enum values
         (assertion types, service types) that the SDK parser rejects.
         """
-        if path.suffix == ".tckpkg":
+        if path.suffix == ".stck":
             return self._load_package(path, player_private_key, compiler_public_key)
 
         return self._load_yaml(path)
@@ -99,11 +99,11 @@ class Loader:
         player_private_key: Optional[bytes],
         compiler_public_key: Optional[bytes],
     ) -> Tck:
-        """Load and verify a .tckpkg archive."""
+        """Load and verify a .stck archive."""
         if player_private_key is None or compiler_public_key is None:
             raise ValueError(
                 "player_private_key and compiler_public_key are required "
-                "to load .tckpkg files"
+                "to load .stck files"
             )
         yaml_bytes = Packager.extract_and_verify(
             path, player_private_key, compiler_public_key,
@@ -124,7 +124,7 @@ class Loader:
         if kind == ScriptKind.TCK:
             definition = build_test_case(data, base_dir=base_dir)
         else:
-            script_def = build_script(data, base_dir=base_dir)
+            script_def = build_script(data)
             definition = TckDefinition.model_construct(
                 name=script_def.name,
                 tests=[script_def],

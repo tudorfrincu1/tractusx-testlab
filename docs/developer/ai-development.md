@@ -27,67 +27,55 @@ This project uses a **multi-agent AI architecture** to accelerate development wh
 
 ## Agent Architecture
 
-The project has five specialized AI agents, organized as a team:
+The project has four specialized AI agents, organized as a team. The architect plans and hands approved work packages directly to the owning specialist — there is no orchestrator.
 
 ```mermaid
 graph TD
-    CA[👤 Human Developer] -->|requirements| CHIEF
-    CHIEF[🤖 Chief AI Agent<br/>testlab-ai-master] -->|work packages| IDE[🎨 IDE Developer<br/>testlab-ide-master]
-    CHIEF -->|work packages| PY[🐍 Backend Developer<br/>testlab-master]
-    CHIEF -->|work packages| TEST[🧪 Test Engineer<br/>testlab-test-master]
-    CHIEF -->|work packages| DOCS[📝 Technical Writer<br/>testlab-docs-master]
-    IDE -->|delivery| CHIEF
-    PY -->|delivery| CHIEF
-    TEST -->|delivery| CHIEF
-    DOCS -->|delivery| CHIEF
-    CHIEF -->|verified results| CA
+    CA[👤 Human Developer] -->|requirements| ARCH
+    ARCH[🧭 Architect<br/>testlab-architect] -->|work packages| PY[🐍 Backend Developer<br/>testlab-master]
+    ARCH -->|work packages| TEST[🧪 Test Engineer<br/>testlab-test-master]
+    ARCH -->|work packages| DOCS[📝 Technical Writer<br/>testlab-docs-master]
+    PY -->|delivery| CA
+    TEST -->|delivery| CA
+    DOCS -->|delivery| CA
 ```
 
 | Agent | File | Expertise |
 |-------|------|-----------|
-| **Chief AI Agent** | `.github/agents/testlab-ai-master.agent.md` | Orchestration, planning, delegation, quality review |
-| **IDE Developer** | `.github/agents/testlab-ide-master.agent.md` | React 19, Blockly 12, TypeScript, Vite, CSS, Zustand |
+| **Architect** | `.github/agents/testlab-architect.agent.md` | Planning, impact analysis, work package design — never writes code |
 | **Backend Developer** | `.github/agents/testlab-master.agent.md` | Python 3.12+, Pydantic, async, tractusx-sdk |
 | **Test Engineer** | `.github/agents/testlab-test-master.agent.md` | pytest, fixtures, factories, mocking, coverage |
 | **Technical Writer** | `.github/agents/testlab-docs-master.agent.md` | MkDocs, tutorials, API docs, diagrams, guides |
 
 ## How to Use the Agents
 
-### Option 1: Talk to the Chief (Recommended)
+### Option 1: Plan with the Architect (Recommended)
 
-For any non-trivial task, talk to `testlab-ai-master`. It will:
+For any non-trivial task, talk to `testlab-architect`. It will:
 
 1. Analyze the requirement
 2. Break it into work packages
-3. Delegate to the right developer agent(s)
-4. Review the output
-5. Deliver verified results
+3. Identify the owning specialist for each package
+4. Hand the approved work packages directly to that specialist
+
+The architect never writes code — it plans and advises. The specialist that receives a work package delivers it.
 
 !!! tip "Best for"
-    Features spanning both codebases, complex refactors, multi-file changes, anything requiring coordination.
+    Complex refactors, multi-file changes, anything requiring planning before implementation.
 
 **Example prompt:**
 
 ```
-Add a new "Notification" block category with send and receive blocks.
-The blocks should appear in the IDE toolbox and compile to the correct
-YAML step types in the Python backend.
+Add a new "Notification" capability with send and receive step types.
+Plan the work packages and hand them to the backend and test specialists.
 ```
 
-### Option 2: Talk to a Developer Agent Directly
+### Option 2: Talk to a Specialist Agent Directly
 
-For focused, single-codebase tasks, you can talk directly to the specialized agent.
+For focused, single-concern tasks, you can talk directly to the specialized agent.
 
 !!! tip "Best for"
-    Bug fixes in one file, small UI tweaks, adding a single Python step executor.
-
-**Example — IDE agent:**
-
-```
-@testlab-ide-master Fix the toolbox not refreshing when a new service is added.
-The issue is in useToolboxRefresh.ts — the service store subscription
-isn't detecting changes correctly.
-```
+    Bug fixes in one file, adding a single Python step executor, documenting one command.
 
 **Example — Backend agent:**
 
@@ -201,16 +189,6 @@ This is bad because it's missing context, scope, acceptance criteria, and constr
 
 Every agent has a **Mandatory Self-Review Checklist** that runs before delivering code. These are enforced automatically:
 
-### IDE Quality Gates
-
-| Check | Command | Expected |
-|-------|---------|----------|
-| File size | `find ide/src -name '*.ts' -o -name '*.tsx' \| xargs wc -l \| awk '$1 > 300'` | Empty output |
-| Type safety | `cd ide && npx tsc --noEmit` | Zero errors |
-| Build | `cd ide && npx vite build` | Success |
-| No `any` | Search for `: any` or `as any` | Zero matches |
-| No inline styles | Search for `style={% raw %}{{{% endraw %}` | Zero matches (in new code) |
-
 ### Python Quality Gates
 
 | Check | Command | Expected |
@@ -235,7 +213,6 @@ The agents are configured through instruction files in `.github/instructions/`:
 | File | Scope | Purpose |
 |------|-------|---------|
 | `copilot-instructions.md` | `**/*` | Project-wide conventions and design principles |
-| `ide.instructions.md` | `ide/**` | IDE-specific TypeScript/React/Blockly rules |
 | `python.instructions.md` | `src/**/*.py` | Python-specific coding standards |
 | `ai_generated_code.instructions.md` | `**/*` | AI subtitle requirement for license headers |
 
@@ -244,19 +221,6 @@ These files are automatically loaded by the AI agents when working on matching f
 ## How to Split Oversized Files
 
 When a file exceeds 300 lines, use these extraction patterns:
-
-### TypeScript / React
-
-| What to extract | Where to put it |
-|-----------------|-----------------|
-| Sub-components | `ComponentName/SubComponent.tsx` |
-| Hooks with logic | `ComponentName/useXxxLogic.ts` |
-| Inline styles | `ComponentName/ComponentName.css` |
-| Constants & config | `ComponentName/constants.ts` |
-| Types & interfaces | `ComponentName/types.ts` |
-| Store slices | `store/slices/xxxSlice.ts` |
-| Store selectors | `store/selectors.ts` |
-| Persistence logic | `store/persistence.ts` |
 
 ### Python
 
@@ -277,7 +241,7 @@ To create a new specialized agent:
 3. Define identity, expertise, constraints
 4. Add the **Mandatory Self-Review Checklist** (copy from an existing agent)
 5. Add the **How to Split Oversized Files** patterns relevant to the agent's domain
-6. Register the agent in the Chief's team table
+6. Add the agent to the team table in this guide
 
 !!! warning
     Every agent MUST include a self-review checklist. Agents without one will produce unchecked code.

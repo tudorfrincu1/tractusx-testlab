@@ -1,7 +1,7 @@
-###############################################################
-# Eclipse Tractus-X - Tractus-X TestLab
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
 #
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,107 +11,129 @@
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
 # under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-###############################################################
+#################################################################################
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Tests for the YAML compiler."""
+"""Tests for the Compiler class (validate + compile pipeline)."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+import yaml
 
-from tractusx_testlab.compiler.yaml_compiler import compile_yaml, compile_yaml_string
-from tractusx_testlab.exceptions import CompilationError, ValidationError
-
-
-_MINIMAL_YAML = """
-name: Minimal Test
-steps: []
-"""
-
-_FULL_YAML = """
-name: Full Test
-version: "1.0"
-dataspace: saturn
-description: A complete test
-
-connectors:
-  provider:
-    url: http://localhost:8080
-    api_key: test-key
-
-inputs:
-  part_id:
-    type: string
-    default: MPI-001
-
-mocks:
-  - type: dtr
-    name: mock-dtr
-
-steps:
-  - type: create_asset
-    inputs:
-      name: "@part_id"
-    validate:
-      - type: STATUS_CODE
-        value: 200
-        severity: HARD
-
-auto_cleanup: true
-"""
-
-_INVALID_YAML = "{{{{not yaml at all"
-
-_UNKNOWN_STEP_YAML = """
-name: Bad Step Test
-steps:
-  - type: totally_fake_step
-"""
-
-_BAD_VAR_REF_YAML = """
-name: Bad Var Test
-steps:
-  - type: http_request
-    inputs:
-      url: "@nonexistent_var"
-"""
+from tractusx_testlab.compiler.compiler import Compiler
+from tractusx_testlab.compiler.validation.validator import ValidationResult
 
 
-class TestCompileYaml:
-    def test_compile_minimal(self) -> None:
-        test = compile_yaml_string(_MINIMAL_YAML)
-        assert test.name == "Minimal Test"
-        assert test.steps == []
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-    def test_compile_full(self) -> None:
-        test = compile_yaml_string(_FULL_YAML)
-        assert test.name == "Full Test"
-        assert len(test.connectors) == 1
-        assert len(test.mocks) == 1
-        assert len(test.steps) == 1
-        assert test.steps[0].type == "create_asset"
-        assert test.steps[0].validate[0].type.value == "STATUS_CODE"
 
-    def test_compile_invalid_yaml_raises(self) -> None:
-        with pytest.raises(CompilationError, match="Invalid YAML"):
-            compile_yaml_string(_INVALID_YAML)
+def _write_yaml(tmp_path: Path, content: dict, name: str = "script.yaml") -> Path:
+    """Write a YAML dict to a temp file and return the path."""
+    p = tmp_path / name
+    p.write_text(yaml.dump(content, default_flow_style=False))
+    return p
 
-    def test_compile_unknown_step_raises(self) -> None:
-        with pytest.raises(ValidationError, match="Unknown step type"):
-            compile_yaml_string(_UNKNOWN_STEP_YAML)
 
-    def test_compile_bad_variable_ref_raises(self) -> None:
-        with pytest.raises(ValidationError, match="undefined variable"):
-            compile_yaml_string(_BAD_VAR_REF_YAML)
+def _minimal_script() -> dict:
+    """Return a minimal valid script dict."""
+    return {
+        "kind": "test",
+        "name": "Minimal Test",
+        "version": "1.0",
+        "dataspace_version": "saturn",
+        "steps": [],
+    }
 
-    def test_compile_non_mapping_raises(self) -> None:
-        with pytest.raises(CompilationError, match="Expected a YAML mapping"):
-            compile_yaml_string("- just a list")
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+
+class TestCompilerValidation:
+    """Tests for Compiler.validate()."""
+
+    def test_validate_minimal_valid_script(self, tmp_path: Path) -> None:
+        # Arrange
+        script_path = _write_yaml(tmp_path, _minimal_script())
+        compiler = Compiler()
+
+        # Act
+        result = compiler.validate(script_path)
+
+        # Assert
+        assert isinstance(result, ValidationResult)
+        assert result.valid is True
+
+    def test_validate_script_with_steps(self, tmp_path: Path) -> None:
+        # Arrange
+        script = _minimal_script()
+        script["steps"] = [
+            {"type": "export_variable", "params": {"name": "test_var"}},
+        ]
+        script_path = _write_yaml(tmp_path, script)
+        compiler = Compiler()
+
+        # Act
+        result = compiler.validate(script_path)
+
+        # Assert
+        assert result.valid is True
+
+    def test_validate_rejects_unknown_step_type(self, tmp_path: Path) -> None:
+        # Arrange
+        script = _minimal_script()
+        script["steps"] = [
+            {"type": "nonexistent_step_type_xyz", "params": {}},
+        ]
+        script_path = _write_yaml(tmp_path, script)
+        compiler = Compiler()
+
+        # Act
+        result = compiler.validate(script_path)
+
+        # Assert
+        assert result.valid is False
+        assert any("nonexistent_step_type_xyz" in issue.message for issue in result.issues)
+
+    def test_validate_returns_issues_for_multiple_bad_steps(self, tmp_path: Path) -> None:
+        # Arrange
+        script = _minimal_script()
+        script["steps"] = [
+            {"type": "unknown_a", "params": {}},
+            {"type": "unknown_b", "params": {}},
+        ]
+        script_path = _write_yaml(tmp_path, script)
+        compiler = Compiler()
+
+        # Act
+        result = compiler.validate(script_path)
+
+        # Assert
+        assert len(result.issues) >= 2
+
+    def test_compile_raises_on_invalid_script(self, tmp_path: Path) -> None:
+        # Arrange
+        script = _minimal_script()
+        script["steps"] = [{"type": "totally_bogus_step", "params": {}}]
+        script_path = _write_yaml(tmp_path, script)
+        compiler = Compiler()
+
+        # Act & Assert
+        from unittest.mock import MagicMock
+        identity = MagicMock()
+        with pytest.raises(ValueError, match="validation failed"):
+            compiler.compile(script_path, identity, {})

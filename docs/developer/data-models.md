@@ -46,7 +46,6 @@ interface ScriptDefinition {
   version?: string;
   dataspace_version?: string;
   description?: string;
-  preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   services?: ServiceDefinition[];
   setup?: Step[];                          // Pre-test steps
@@ -69,7 +68,6 @@ interface TckDefinition {
   author?: string;
   standards?: StandardRef[];
   tags?: string[];
-  preconditions?: PreconditionDefinition[];
   variables?: Record<string, VariableDefinition>;
   tests: (ScriptDefinition | TestRef | string)[];  // Mixed entries
 }

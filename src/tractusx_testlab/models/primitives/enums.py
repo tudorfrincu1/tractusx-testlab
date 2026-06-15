@@ -1,0 +1,175 @@
+#################################################################################
+# Eclipse Tractus-X - Software Development KIT
+#
+# Copyright (c) 2026 Catena-X Autonomotive Network e.V.
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## It was reviewed and tested by a human committer.
+
+"""Enumerations used across the Testlab module."""
+
+from __future__ import annotations
+
+import enum
+
+
+class StepStatus(str, enum.Enum):
+    """Execution status of an individual test step."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+class ScriptStatus(str, enum.Enum):
+    """Execution status of a test script."""
+
+    IDLE = "IDLE"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class JobStatus(str, enum.Enum):
+    """Overall status of a test execution job."""
+
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    WAITING = "WAITING"
+    PAUSED = "PAUSED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    TIMED_OUT = "TIMED_OUT"
+
+
+class AssertionType(str, enum.Enum):
+    """Supported assertion comparison operators."""
+
+    EXACT = "EXACT"
+    SCHEMA = "SCHEMA"
+    CONTAINS = "CONTAINS"
+    REGEX = "REGEX"
+    NOT_CONTAINS = "NOT_CONTAINS"
+    STATUS_CODE = "STATUS_CODE"
+    NOT_NULL = "NOT_NULL"
+    NOT_EMPTY = "NOT_EMPTY"
+    EQUALS = "EQUALS"
+    NOT_EQUALS = "NOT_EQUALS"
+    SCHEMA_VALIDATION = "SCHEMA_VALIDATION"
+    GREATER_THAN = "GREATER_THAN"
+    LESS_THAN = "LESS_THAN"
+    GREATER_OR_EQUAL = "GREATER_OR_EQUAL"
+    LESS_OR_EQUAL = "LESS_OR_EQUAL"
+    BETWEEN = "BETWEEN"
+    ASSERT_FIELD = "ASSERT_FIELD"
+    JSON_PATH_EXTRACT = "json_path_extract"
+
+
+class AssertionSeverity(str, enum.Enum):
+    """Whether assertion failure aborts (HARD) or just warns (SOFT)."""
+
+    HARD = "HARD"
+    SOFT = "SOFT"
+
+
+class FailurePolicy(str, enum.Enum):
+    """Determines behavior when a step fails."""
+
+    ABORT = "ABORT"
+    CONTINUE = "CONTINUE"
+    SKIP_REST = "SKIP_REST"
+
+
+class ValueSource(str, enum.Enum):
+    """Origin of a parameter value (inline literal, file, or variable reference)."""
+
+    INLINE = "INLINE"
+    FILE = "FILE"
+    VARIABLE = "VARIABLE"
+
+
+class VariableSource(str, enum.Enum):
+    """How a declared variable obtains its value (LOCKED GRAMMAR v1).
+
+    ``VALUE`` is a literal provided now, ``INPUT`` is asked from the operator at
+    runtime, and ``GENERATED`` is produced by a named generator.
+    """
+
+    VALUE = "value"
+    INPUT = "input"
+    GENERATED = "generated"
+
+
+class SdkCallMode(str, enum.Enum):
+    """Controls which SDK calls are permitted during execution."""
+
+    ALLOWLIST = "ALLOWLIST"
+    OPEN = "OPEN"
+
+
+class ServiceType(str, enum.Enum):
+    """Type of dataspace service a participant can expose."""
+
+    CONNECTOR_CONSUMER = "CONNECTOR_CONSUMER"
+    CONNECTOR_PROVIDER = "CONNECTOR_PROVIDER"
+    DSP_CONSUMER = "DSP_CONSUMER"
+    DSP_PROVIDER = "DSP_PROVIDER"
+    DTR = "DTR"
+    EDC_CONNECTOR = "EDC_CONNECTOR"
+    EDC_CONNECTOR_SATURN = "EDC_CONNECTOR_SATURN"
+    EDC_CONNECTOR_JUPITER = "EDC_CONNECTOR_JUPITER"
+    DIGITAL_TWIN_REGISTRY = "DIGITAL_TWIN_REGISTRY"
+    DISCOVERY_FINDER = "DISCOVERY_FINDER"
+
+
+class PackageFormat(str, enum.Enum):
+    """Format used for compiled test packages."""
+
+    PLAIN = "PLAIN"
+    ENCRYPTED = "ENCRYPTED"
+
+
+class ServiceState(str, enum.Enum):
+    """Lifecycle state of a managed service instance."""
+
+    DECLARED = "DECLARED"
+    INITIALIZING = "INITIALIZING"
+    READY = "READY"
+    ACTIVE = "ACTIVE"
+    STOPPING = "STOPPING"
+    STOPPED = "STOPPED"
+    FAILED = "FAILED"
+
+
+class StepPhase(str, enum.Enum):
+    """Identifies which execution phase a step belongs to."""
+    SETUP = "SETUP"
+    MAIN = "MAIN"
+    CLEANUP = "CLEANUP"
+
+
+class ScriptKind(str, enum.Enum):
+    """Explicit type discriminator for YAML files, following the Kubernetes ``kind:`` convention."""
+    TEST = "test"
+    TCK = "tck"

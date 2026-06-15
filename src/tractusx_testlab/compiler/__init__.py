@@ -22,7 +22,7 @@
 
 """Compiler module — validate, compile, and package test scripts."""
 
-from tractusx_testlab.compiler.validator import ScriptValidator
+from tractusx_testlab.compiler.validation.validator import ScriptValidator
 from tractusx_testlab.compiler.packager import Packager
 from tractusx_testlab.compiler.compiler import Compiler
 

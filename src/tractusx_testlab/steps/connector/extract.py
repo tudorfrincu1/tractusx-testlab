@@ -54,9 +54,11 @@ def _find_datasets_by_type(catalog: dict, dct_type: str) -> list[dict]:
     matched: list[dict] = []
     for ds in datasets:
         ds_type = ds.get(_DCT_TYPE_KEY, {})
-        if isinstance(ds_type, dict) and ds_type.get(_DCT_TYPE_ID_KEY) == dct_type:
-            matched.append(ds)
-        elif isinstance(ds_type, str) and ds_type == dct_type:
+        is_match = (
+            (isinstance(ds_type, dict) and ds_type.get(_DCT_TYPE_ID_KEY) == dct_type)
+            or (isinstance(ds_type, str) and ds_type == dct_type)
+        )
+        if is_match:
             matched.append(ds)
     return matched
 

@@ -33,6 +33,123 @@ The TestLab IDE is a single-page React application that lets users visually auth
 
 All three derive from a shared in-memory model (`TestLabDocument`) managed via Zustand.
 
+## Module organization — deep modularity
+
+Both codebases — the frontend (`ide/src/`) and the backend
+(`src/tractusx_testlab/`) — follow the **same organizing principle: deep
+modularity**. The architecture is not "files split when they exceed 300 lines"; it
+is a tree in which **every concern is a module in its own right**.
+
+A module — a folder in TypeScript, a package in Python — has exactly three
+properties:
+
+1. **A single nameable responsibility.** If you cannot name what it does without
+   the word "and", it is more than one module.
+2. **Its own barrel** as the public surface — `index.ts` for TypeScript,
+   `__init__.py` for Python. The barrel re-exports the module's public API and
+   contains no logic.
+3. **A minimal public surface.** Private helpers (`_*.py`, un-exported `.ts`) stay
+   internal and are never imported across module boundaries.
+
+Modules **nest as deep as real responsibility seams require** — sub-modules within
+sub-modules. Parent barrels re-export through their child barrels, so external
+consumers import the **parent only** and never reach into a deep path. Inside the
+same area, mutually-referencing modules use **direct relative paths** (not the
+sibling barrel) to avoid barrel-evaluation cycles.
+
+### When a module is needed
+
+The 300-line limit is **one trigger among several** — the loudest, but the last to
+rely on. Any one of these signals a missing module:
+
+| Trigger | Meaning |
+|---------|---------|
+| Bundled responsibilities | One file does loading *and* transforming *and* validating — three modules wearing one filename, even under 300 lines. |
+| Flat folder of mixed concerns | A folder is a dump of siblings that cluster into distinct sub-concerns. |
+| Duplication | The same logic appears twice — extract it into one importable module. |
+| Size > 300 lines | The loudest trigger; by the time a file is oversized the seams are already obvious. |
+
+### Guardrail — no over-engineering
+
+Nest **only** where a real, nameable seam exists. Never create a single-function
+"module" just to add depth, never split a cohesive unit, and never invent a folder
+holding one stray file with no sibling concern. The boring, readable structure a
+human can navigate always wins over artificial depth.
+
+This is a **behavior-preserving** discipline: modularization changes structure
+only — never runtime behavior, generated output (YAML / `.stck`), styling, or any
+observable contract.
+
+### Frontend layers (`ide/src/`)
+
+The frontend is feature-based. Each top-level layer exposes a barrel; imports flow
+**one way only** — `app → layout/features → store → services → models`, and any
+layer may import `shared`/`models`. Feature → feature imports are forbidden;
+features mediate through `store`.
+
+```
+ide/src/
+  app/        composition root: bootstrap + <App> only — no feature logic
+  layout/     app chrome (topbar, panels, status, bottom-panel, welcome)
+  features/   self-contained domain features; each owns its UI/hooks/local logic
+  store/      Zustand state slices — the only mutable app state; may import services/, models/
+  services/   pure, framework-free logic (transforms, I/O, validation) — no React, no store
+  models/     TypeScript schema types + factories — leaf layer, imports nothing internal
+  shared/     cross-cutting reusable UI, hooks, theme, ambient types — no domain knowledge
+  assets/     static assets + the single SCSS source tree (assets/styles/)
+```
+
+Features nest the same way down to the seam. The reference pattern is
+`features/block-editor/serialization/`, whose `serialize/` module splits into
+`reader/` (read a block chain into steps), `writer/` (write blocks → steps /
+policies), and `validation/` (flatten validate blocks) — each a nested module with
+its own barrel. For the complete nested end-state tree see
+[refactor-plan/ide-refactor-plan.md](refactor-plan/ide-refactor-plan.md) §2.
+
+### Backend layers (`src/tractusx_testlab/`)
+
+The backend is layered. Inner layers never import outer ones:
+
+```
+syntax  ──▶  (leaf: pure constants, no testlab imports)
+models  ──▶  syntax
+config  ──▶  models, syntax
+security ─▶  models
+services ─▶  models, config, security        (SDK service wiring)
+steps   ──▶  models, services, syntax, config (never imports player/server/cli)
+compiler ─▶  models, syntax, steps (registry only)
+player  ──▶  steps, services, models, config, compiler
+server  ──▶  player, compiler, services, models
+cli     ──▶  compiler, player, server, config   (thinnest layer, top of stack)
+```
+
+`steps/` is the keystone: it depends downward on `models`/`services`/`syntax` and
+is imported upward by `compiler` (for `@step` registry validation) and `player`
+(for execution).
+
+```
+src/tractusx_testlab/
+  cli/        Typer command groups — thin; delegate, never compute
+  compiler/   compile-time: YAML → IR (ir/) → validation (validation/) → package
+  config/     configuration loading & settings (data + I/O only)
+  logging/    structured logging — cross-cutting, depends on nothing
+  models/     Pydantic data only — no behavior, no I/O
+  player/     run-time: load (loading/) → execute (execution/) → track jobs
+  scripting/  script object model + builder DSL (author-facing)
+  security/   crypto (crypto/) + identity & trust (trust/)
+  server/     FastAPI mock server: routes (routes/) + SSE streaming (streaming/)
+  services/   SDK service wiring + lifecycle (no protocol reimplementation)
+  steps/      step executors — one domain per sub-package (connector/, industry/, …)
+  syntax/     leaf: default syntax constants — no testlab imports
+  schemas/    packaged JSON-schema assets (data, no code)
+```
+
+Each layer nests further along its seams — e.g. `steps/connector/` holds the
+EDC/DSP domain steps and nests a `dsp/` sub-package (one protocol verb per file);
+`compiler/` nests `ir/` and `validation/` sub-packages. For the complete nested
+end-state tree see
+[refactor-plan/backend-refactor-plan.md](refactor-plan/backend-refactor-plan.md) §2.
+
 ## System diagram
 
 ```

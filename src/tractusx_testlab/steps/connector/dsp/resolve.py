@@ -48,13 +48,11 @@ class DspResolveDidStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinition,
     ) -> StepOutput:
-        from tractusx_sdk.dataspace.services.dsp import BaseDspConsumerService
+        import httpx
 
         did_url = params["did_url"]
-        resp = BaseDspConsumerService.resolve_did(
-            did_url=did_url,
-            timeout=params.get("timeout", 30.0),
-        )
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(did_url, timeout=params.get("timeout", 30.0))
 
         try:
             body = resp.json()

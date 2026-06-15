@@ -58,21 +58,21 @@ except ImportError:
         import_ref: str; override: dict | None = None  # noqa: E702
 
 try:
-    from tractusx_testlab.models.definitions import (
+    from tractusx_testlab.models.authoring.definitions import (
         ScriptDefinition as SdkScriptDefinition,
     )
 except ImportError:
     from pydantic import BaseModel as _SFB
     class SdkScriptDefinition(_SFB, extra="allow"): pass  # type: ignore[no-redef,call-arg]
 
-from tractusx_testlab.models.definitions import (
+from tractusx_testlab.models.authoring.definitions import (
     Assertion,
     ScriptDefinition,
     ServiceDefinition,
     StepDefinition,
     VariableDefinition,
 )
-from tractusx_testlab.models.enums import (
+from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     AssertionType,
     ScriptKind,
@@ -80,18 +80,13 @@ from tractusx_testlab.models.enums import (
     ValueSource,
 )
 from tractusx_testlab.player.loading import _constants as C
+from tractusx_testlab.scripting._variable_form import VariablesBlock, parse_variables_block
 
 logger = logging.getLogger(__name__)
 
-def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
-    """Parse a variables mapping into VariableDefinition instances."""
-    result: dict[str, VariableDefinition] = {}
-    for name, spec in raw.items():
-        if isinstance(spec, dict):
-            result[name] = VariableDefinition(name=name, **spec)
-        else:
-            result[name] = VariableDefinition(name=name, default=spec)
-    return result
+def parse_variables(raw: VariablesBlock) -> dict[str, VariableDefinition]:
+    """Parse a variables block (legacy mapping or verb-form list) into definitions."""
+    return parse_variables_block(raw)
 
 
 def parse_assertion(raw: dict) -> Assertion:
@@ -169,11 +164,14 @@ def parse_service(raw: dict) -> ServiceDefinition:
     )
 
 
-def build_script(data: dict, base_dir: Optional[Path] = None) -> SdkScriptDefinition:
+def build_script(data: dict) -> SdkScriptDefinition:
     """Build a ScriptDefinition from a YAML dict using local extended models.
 
     Returns an SDK ScriptDefinition created via ``model_construct()`` to
     bypass Pydantic validation of extended enum values.
+
+    Args:
+        data: Parsed YAML dictionary.
     """
     variables = parse_variables(data.get(C.K_VARIABLES, {}))
     services = [parse_service(s) for s in data.get(C.K_SERVICES, [])]
@@ -208,7 +206,7 @@ def parse_script_file(path: Path) -> SdkScriptDefinition:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):
         raise ValueError(f"Expected a YAML dict in {path}, got {type(data).__name__}")
-    return build_script(data, base_dir=path.parent)
+    return build_script(data)
 
 
 def build_test_case(
@@ -225,23 +223,7 @@ def build_test_case(
     tests_raw = data.get(C.K_TESTS, [])
     tests: list[Union[SdkScriptDefinition, str]] = []
     for entry in tests_raw:
-        if isinstance(entry, str):
-            if base_dir:
-                script_path = (base_dir / entry).resolve()
-                if script_path.exists():
-                    tests.append(parse_script_file(script_path))
-                    continue
-            tests.append(entry)
-        elif isinstance(entry, dict) and "test" in entry:
-            # IDE format: {test: "tests/foo.yaml", description: "..."}
-            rel_path = entry["test"]
-            if base_dir:
-                script_path = (base_dir / rel_path).resolve()
-                tests.append(parse_script_file(script_path))
-            else:
-                tests.append(rel_path)
-        elif isinstance(entry, dict):
-            tests.append(build_script(entry, base_dir=base_dir))
+        tests.append(_resolve_test_entry(entry, base_dir))
 
     imports = [
         ImportDefinition(**imp) if isinstance(imp, dict) else ImportDefinition(import_ref=imp)
@@ -261,7 +243,28 @@ def build_test_case(
 def _to_sdk_script_kind(raw: str):
     """Convert a raw kind string to the SDK ScriptKind enum."""
     try:
-        from tractusx_testlab.models.enums import ScriptKind as SdkScriptKind
+        from tractusx_testlab.models.primitives.enums import ScriptKind as SdkScriptKind
         return {"test": SdkScriptKind.TEST, "tck": SdkScriptKind.TCK}.get(raw, SdkScriptKind.TEST)
     except ImportError:
         return raw
+
+
+def _resolve_test_entry(
+    entry: Union[str, dict], base_dir: Optional[Path],
+) -> Union[SdkScriptDefinition, str]:
+    """Resolve a single test entry to a ScriptDefinition or path string."""
+    if isinstance(entry, str):
+        if base_dir:
+            script_path = (base_dir / entry).resolve()
+            if script_path.exists():
+                return parse_script_file(script_path)
+        return entry
+    if isinstance(entry, dict) and "test" in entry:
+        rel_path = entry["test"]
+        if base_dir:
+            script_path = (base_dir / rel_path).resolve()
+            return parse_script_file(script_path)
+        return rel_path
+    if isinstance(entry, dict):
+        return build_script(entry)
+    return str(entry)

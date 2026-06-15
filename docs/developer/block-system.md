@@ -131,10 +131,9 @@ Called once during workspace initialization. Registers all block types with Bloc
 | `value_boolean` | Boolean literal value |
 | `variable_get` | Variable reference (`@var_name`) |
 | `test_root` | Root block for tests (undeletable) — has SETUP, STEPS, TEARDOWN inputs |
-| `tck_root` | Root block for TCKs (undeletable) — has PRECONDITIONS, TESTS inputs |
+| `tck_root` | Root block for TCKs (undeletable) — has TESTS input |
 | `test_ref` | Reference to another test (with optional `with:` overrides) |
 | `variable_def` | Variable declaration (name, type, default, runtime, description) |
-| `precondition` | Test case precondition entry |
 | `export_variable` | Export a variable in teardown |
 | `import_variable` | Import a variable from another test file |
 | `step_template` | Template step with custom outputs |
@@ -231,10 +230,9 @@ The toolbox contains these categories (in order):
 
 A simplified toolbox:
 
-1. **Preconditions** — `precondition` blocks
-2. **Tests** — `test_ref` blocks (one pre-filled per existing test in project)
-3. **Auth** — Authentication blocks
-4. **Service categories** — Same as test mode
+1. **Tests** — `test_ref` blocks (one pre-filled per existing test in project)
+2. **Auth** — Authentication blocks
+3. **Service categories** — Same as test mode
 
 ## Serialization
 
@@ -293,7 +291,6 @@ A utility that sets a dropdown field value while bypassing Blockly's validation.
 | Variables | Purple | `#5B21B6` |
 | Assertions | Red | `#BE123C` |
 | Auth | Violet | `#7C3AED` |
-| Precondition | Brown | `#B45309` |
 | Test ref | Blue | `#1D4ED8` |
 | JSON | Gray | `#374151` |
 | Mock | Slate | `#475569` |

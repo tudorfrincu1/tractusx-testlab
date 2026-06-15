@@ -110,7 +110,8 @@ def create_app(config: Optional[TestlabConfig] = None) -> FastAPI:
         # Resolve the callback listener (so wait_for_call steps unblock)
         matched = callbacks.resolve(full_path, method, headers, body)
         if mock is not None:
-            _logger.info("Mock catch-all matched %s %s -> %d", method, full_path, mock.status_code)
+            _safe_path = full_path[:80].replace("\n", "").replace("\r", "")
+            _logger.debug("Mock catch-all matched %s %s -> %d", method, _safe_path, mock.status_code)
             return JSONResponse(content=mock.body, status_code=mock.status_code)
         if matched:
             return JSONResponse(content={"status": "received"})

@@ -10,7 +10,7 @@
 
 <!-- Format: ### PAT-{n}: {Title} -->
 
-_No entries yet. Append patterns here as they are discovered._
+- **Modularity directive**: The 300-line limit is a symptom check, not the goal. Code must be written modular from the start — small single-responsibility units with typed boundaries. When a file is split, extract **reusable** units along responsibility seams (hooks, pure functions, helper modules, one step/class per file), not arbitrary fragments. Shared logic is extracted into importable helpers; never duplicated.
 
 ---
 

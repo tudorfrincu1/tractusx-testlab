@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Package builder/reader — creates encrypted, signed .tckpkg ZIP archives."""
+"""Package builder/reader — creates encrypted, signed .stck ZIP archives."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ _SIGNATURE = "signature.bin"
 
 
 class Packager:
-    """Create and read encrypted, signed .tckpkg archives."""
+    """Create and read encrypted, signed .stck archives."""
 
     @staticmethod
     def build(
@@ -60,14 +60,14 @@ class Packager:
         name: str = "",
         version: str = "1.0",
     ) -> PackageManifest:
-        """Build a .tckpkg file.
+        """Build a .stck file.
 
         Args:
             script_yaml: Raw YAML content to package.
             compiler_signing_key: Ed25519 private key PEM for signing.
             compiler_id: Fingerprint/ID of the compiler's signing key.
             recipient_public_keys: {player_id: RSA public PEM} for each recipient.
-            output_path: Destination .tckpkg file.
+            output_path: Destination .stck file.
             name: Package name.
             version: Package version.
 
@@ -88,7 +88,7 @@ class Packager:
 
         # We store the last nonce+ciphertext (all recipients encrypt the same plaintext)
         security = SecurityBlock(
-            format="encrypted-v1",
+            format="stck",
             algorithm="AES-256-GCM",
             key_derivation="RSA-OAEP-SHA256",
             compiler_id=compiler_id,
@@ -115,7 +115,7 @@ class Packager:
 
     @staticmethod
     def read_manifest(package_path: Path) -> PackageManifest:
-        """Extract and parse the manifest from a .tckpkg file."""
+        """Extract and parse the manifest from a .stck file."""
         with zipfile.ZipFile(package_path, "r") as zf:
             raw = zf.read(_MANIFEST)
         return PackageManifest.model_validate_json(raw)
@@ -126,7 +126,7 @@ class Packager:
         player_private_key: bytes,
         compiler_public_key: bytes,
     ) -> bytes:
-        """Decrypt and verify a .tckpkg archive.
+        """Decrypt and verify a .stck archive.
 
         Returns:
             The decrypted script YAML bytes.

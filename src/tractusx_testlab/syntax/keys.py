@@ -36,11 +36,20 @@ TYPE = "type"
 IMPORT = "import"
 IMPORTS = "imports"
 VARIABLES = "variables"
-PRECONDITIONS = "preconditions"
 SETUP = "setup"
 STEPS = "steps"
 TEARDOWN = "teardown"
 SERVICES = "services"
+
+# -- ADR-0019 topology blocks -------------------------------------------------
+DATASPACE = "dataspace"
+INFRASTRUCTURE = "infrastructure"
+ECOSYSTEM = "ecosystem"
+ENGINE = "engine"
+SUT = "sut"
+REQUIRED = "required"
+STANDARD = "standard"
+ID = "id"
 
 # -- TCK ----------------------------------------------------------------------
 TEST = "test"
@@ -97,6 +106,17 @@ OUTPUT_DEFINITIONS = "output_definitions"
 
 # -- Variable fields ----------------------------------------------------------
 RUNTIME = "runtime"
+
+# -- Variable verb form (LOCKED GRAMMAR v1) -----------------------------------
+USES = "uses"
+WITH = "with"
+RETURNS = "returns"
+PLACEHOLDER = "placeholder"
+FORMAT = "format"
+# Verb namespaces: simple variables use `variable/type/<type>`; generated
+# variables use `generate/<gen>`.
+VARIABLE = "variable"
+GENERATE = "generate"
 
 # -- Test case entry ----------------------------------------------------------
 TEST = "test"

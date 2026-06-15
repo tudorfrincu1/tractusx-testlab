@@ -114,17 +114,6 @@ nav:
   - Home:
     - Welcome: index.md
     - Overview: home/overview.md
-  - IDE:
-    - User Manual: ide/index.md
-    - Welcome Screen: ide/welcome-screen.md
-    - Project Explorer: ide/project-explorer.md
-    - Block Editor: ide/block-editor.md
-    - YAML Preview: ide/yaml-preview.md
-    - Graph View: ide/graph-view.md
-    - Services: ide/services.md
-    - Export & Import: ide/export-import.md
-    - Live Execution: ide/live-execution.md
-    - TCK Dashboard: ide/tck-dashboard.md
   - Specification:
     - Overview: specification/index.md
     - Installation: specification/installation.md
@@ -152,6 +141,7 @@ nav:
         - Conditions: specification/reference/syntax/conditions.md
         - Dependencies & Outputs: specification/reference/syntax/dependencies-and-outputs.md
         - Advanced Step Types: specification/reference/syntax/advanced-steps.md
+        - Cheat Sheet: specification/reference/syntax/cheat-sheet.md
   - Tutorials:
     - Getting Started: tutorials/index.md
     - Create a Block: tutorials/create-block.md
@@ -175,6 +165,17 @@ nav:
     - Quick Reference: tutorials/quick-reference.md
   - API Reference:
     - Overview: api-reference/index.md
+    - Block & Assertion Reference: api-reference/blocks.md
+    - Blocks:
+      - Mock: api-reference/blocks/mock.md
+      - Wait (Moved): api-reference/blocks/wait.md
+      - Function: api-reference/blocks/function.md
+      - Flow: api-reference/blocks/flow.md
+      - EDC Connector: api-reference/blocks/edc-connector.md
+      - Digital Twin Registry: api-reference/blocks/dtr.md
+      - HTTP: api-reference/blocks/http.md
+      - Validation: api-reference/blocks/validation.md
+      - TCK Manifest: api-reference/blocks/manifest.md
   - Developer:
     - Overview: developer/index.md
     - Product Scope: developer/product-scope.md
@@ -189,14 +190,23 @@ nav:
     - Decision Records:
       - Overview: developer/decision-records/index.md
       - ADR-0000 Template: developer/decision-records/ADR-0000-template.md
-      - ADR-0001 Phase-Based Toolbox Grouping: developer/decision-records/ADR-0001-phase-based-toolbox-grouping.md
-      - ADR-0002 Policy Config Block: developer/decision-records/ADR-0002-single-policy-config-block-with-version-mutator.md
       - ADR-0003 SSE for Live Execution: developer/decision-records/ADR-0003-sse-for-live-ide-execution.md
       - ADR-0004 Precondition Phase: developer/decision-records/ADR-0004-precondition-as-distinct-step-phase.md
       - ADR-0005 Participant Manager: developer/decision-records/ADR-0005-filesystem-participant-manager-with-protocol.md
       - ADR-0006 Service Auto-Declaration: developer/decision-records/ADR-0006-service-auto-declaration-on-block-drop.md
       - ADR-0007 Precondition Logs Model: developer/decision-records/ADR-0007-precondition-execution-logs-model.md
       - ADR-0008 TCK Rename: developer/decision-records/ADR-0008-test-case-to-tck-rename.md
+      - ADR-0009 Typed Variable Class System: developer/decision-records/ADR-0009-typed-variable-class-system.md
+      - ADR-0010 YAML Syntax v2: developer/decision-records/ADR-0010-yaml-syntax-v2.md
+      - ADR-0011 Environment and Services: developer/decision-records/ADR-0011-environment-and-services.md
+      - ADR-0012 Compilation and Packaging: developer/decision-records/ADR-0012-compilation-and-packaging.md
+      - ADR-0013 Preconditions Specification: developer/decision-records/ADR-0013-preconditions-specification.md
+      - ADR-0014 Flat Compilation IR: developer/decision-records/ADR-0014-flat-compilation-intermediate-representation.md
+      - ADR-0015 Package Asset Resolution: developer/decision-records/ADR-0015-package-asset-resolution.md
+      - ADR-0016 Execution Trace Format: developer/decision-records/ADR-0016-execution-trace-format.md
+      - ADR-0018 Unified Variables Model: developer/decision-records/ADR-0018-unified-variables-model.md
+      - ADR-0019 Service Requirements and Engine Bindings: developer/decision-records/ADR-0019-service-requirements-and-engine-bindings.md
+      - ADR-0021 Remove Precondition Concept: developer/decision-records/ADR-0021-remove-precondition-concept.md
   - Contributing:
     - Guidelines: contributing/index.md
 

@@ -39,9 +39,12 @@ EDR_TOKEN = f"edr-token-{uuid.uuid4()}"
 
 router = APIRouter(prefix="/api/v1/dsp/management/v3")
 
+# JSON-LD type key constant
+_AT_TYPE = "@type"
+
 
 def _id_response(oid: str) -> dict:
-    return {"@type": "IdResponse", "@id": oid, "createdAt": int(datetime.now().timestamp() * 1000)}
+    return {_AT_TYPE: "IdResponse", "@id": oid, "createdAt": int(datetime.now().timestamp() * 1000)}
 
 
 @router.post("/catalog/request")
@@ -53,27 +56,27 @@ async def mgmt_catalog(request: Request) -> JSONResponse:
 @router.post("/contractnegotiations")
 async def mgmt_negotiate(request: Request) -> JSONResponse:
     """Accept negotiation via management path."""
-    body = await request.json()
+    await request.body()  # consume body per protocol
     negotiation_id = str(uuid.uuid4())
     return JSONResponse({
         "@context": {"dspace": "https://w3id.org/dspace/2024/1/"},
-        "@type": "dspace:ContractNegotiation",
+        _AT_TYPE: "dspace:ContractNegotiation",
         "@id": negotiation_id,
         "dspace:state": "FINALIZED",
-        "dspace:agreement": {"@id": AGREEMENT_ID, "@type": "dspace:Agreement"},
+        "dspace:agreement": {"@id": AGREEMENT_ID, _AT_TYPE: "dspace:Agreement"},
     })
 
 
 @router.post("/transferprocesses")
 async def mgmt_transfer(request: Request) -> JSONResponse:
     """Initiate transfer via management path."""
-    return JSONResponse({"@type": "TransferProcess", "@id": TRANSFER_ID, "state": "STARTED"})
+    return JSONResponse({_AT_TYPE: "TransferProcess", "@id": TRANSFER_ID, "state": "STARTED"})
 
 
 @router.post("/edrs")
 async def mgmt_edr_negotiate(request: Request) -> JSONResponse:
     """Start EDR negotiation — returns negotiation ID."""
-    body = await request.json()
+    await request.body()  # consume body per protocol
     return JSONResponse(_id_response(str(uuid.uuid4())))
 
 
@@ -100,7 +103,7 @@ async def mgmt_edr_query(request: Request) -> JSONResponse:
 async def mgmt_edr(transfer_id: str) -> JSONResponse:
     """Return EDR data address via management path."""
     return JSONResponse({
-        "@type": "DataAddress",
+        _AT_TYPE: "DataAddress",
         "type": "HttpData",
         "endpoint": STUB_BASE_URL,
         "authType": "bearer",
@@ -128,7 +131,15 @@ async def mgmt_create_contract_def(request: Request) -> JSONResponse:
 
 
 @router.delete("/assets/{asset_id}")
+async def mgmt_delete_asset(asset_id: str) -> JSONResponse:
+    return JSONResponse(status_code=204, content=None)
+
+
 @router.delete("/policydefinitions/{policy_id}")
+async def mgmt_delete_policy(policy_id: str) -> JSONResponse:
+    return JSONResponse(status_code=204, content=None)
+
+
 @router.delete("/contractdefinitions/{contract_id}")
-async def mgmt_delete_resource(request: Request) -> JSONResponse:
+async def mgmt_delete_contract_def(contract_id: str) -> JSONResponse:
     return JSONResponse(status_code=204, content=None)

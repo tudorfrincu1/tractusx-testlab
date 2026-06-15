@@ -57,6 +57,8 @@ def _safe_delete(service: object, method_name: str, **kwargs: object) -> object:
 
 @step("delete_asset")
 class DeleteAssetStep(BaseStep):
+    """Delete an asset from the provider connector."""
+
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
         asset_id = params.get("asset_id") or context.get_variable("asset_id")
@@ -73,6 +75,8 @@ class DeleteAssetStep(BaseStep):
 
 @step("delete_policy")
 class DeletePolicyStep(BaseStep):
+    """Delete a policy definition from the provider connector."""
+
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
         policy_id = params.get("policy_id") or context.get_variable("policy_id")
@@ -87,8 +91,10 @@ class DeletePolicyStep(BaseStep):
         )
 
 
-@step("delete_contract_definition")
+@step("delete_contract_definition", aliases=["delete_contract_def"])
 class DeleteContractDefinitionStep(BaseStep):
+    """Delete a contract definition from the provider connector."""
+
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         provider = context.get_provider_service()
         contract_id = params.get("contract_definition_id") or context.get_variable("contract_definition_id")
@@ -103,4 +109,5 @@ class DeleteContractDefinitionStep(BaseStep):
         )
 
     async def cleanup(self, context: "StepContext") -> None:
-        pass
+        """No-op cleanup — resource already deleted by execute."""
+        # Intentionally empty: the step's execute() already performs the deletion

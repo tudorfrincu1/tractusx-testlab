@@ -29,6 +29,8 @@ applyTo: "src/**/*.py"
 
 ## Hard Rules
 - **No file may exceed 300 lines** — split into focused modules
+- **Write modular code from the start** — organize into small, single-responsibility functions and modules with typed boundaries. Prefer pure functions and protocols/ABCs for extension points.
+- **When splitting, extract reusable units along responsibility seams** — one concern per module (e.g. one step class per file, `_helpers.py` for shared logic, `_constants.py` for literals). Shared logic becomes an importable helper; never copy-paste it.
 - **No bare `except Exception:` or `except:`** — catch the narrowest exception type
 - **No `print()` for output** — use `logging.getLogger(__name__)`
 - **No `: Any` unless unavoidable** — use specific types or generics

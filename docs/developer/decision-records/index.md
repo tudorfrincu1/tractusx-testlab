@@ -45,11 +45,18 @@ Each ADR follows the [Michael Nygard format](https://cognitect.com/blog/2011/11/
 | [0001](ADR-0001-phase-based-toolbox-grouping.md) | Phase-Based Toolbox Grouping | Accepted |
 | [0002](ADR-0002-single-policy-config-block-with-version-mutator.md) | Single Policy Config Block with Version Mutator | Accepted |
 | [0003](ADR-0003-sse-for-live-ide-execution.md) | SSE for Live IDE Execution | Accepted |
-| [0004](ADR-0004-precondition-as-distinct-step-phase.md) | Precondition as Distinct Step Phase | Accepted |
+| [0004](ADR-0004-precondition-as-distinct-step-phase.md) | Precondition as Distinct Step Phase | Superseded by [0021](ADR-0021-remove-precondition-concept.md) |
 | [0005](ADR-0005-filesystem-participant-manager-with-protocol.md) | Filesystem Participant Manager with Protocol | Accepted |
 | [0006](ADR-0006-service-auto-declaration-on-block-drop.md) | Service Auto-Declaration on Block Drop | Accepted |
-| [0007](ADR-0007-precondition-execution-logs-model.md) | Precondition Execution Logs Model | Accepted |
+| [0007](ADR-0007-precondition-execution-logs-model.md) | Precondition Execution Logs Model | Superseded by [0021](ADR-0021-remove-precondition-concept.md) |
 | [0008](ADR-0008-test-case-to-tck-rename.md) | Test-Case to TCK Rename | Accepted |
+| [0009](ADR-0009-typed-variable-class-system.md) | Typed Variable Class System | Proposed |
+| [0010](ADR-0010-yaml-syntax-v2.md) | YAML Syntax v2 (GHA-Inspired) | Accepted |
+| [0011](ADR-0011-environment-and-services.md) | Environment Variables and Services Management | Draft |
+| [0018](ADR-0018-unified-variables-model.md) | Unified Variables Model (Preconditions as Complex Variables) | Proposed |
+| [0019](ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
+| [0020](ADR-0020-frontend-vendored-policy-schemas.md) | Frontend Vendors Its Own Copy of the Policy JSON Schemas | Accepted |
+| [0021](ADR-0021-remove-precondition-concept.md) | Remove the Precondition Concept in Favor of Unified Variables | Accepted |
 
 ## Creating a New ADR
 

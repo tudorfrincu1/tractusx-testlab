@@ -16,487 +16,258 @@ https://creativecommons.org/licenses/by/4.0/legalcode.
 SPDX-License-Identifier: CC-BY-4.0
 
 -->
+<!-- This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). -->
+<!-- It was reviewed and tested by a human committer. -->
 
 # Writing Test Scripts
 
-This section walks through creating YAML tests from scratch, organizing them into a TCK, and bundling supporting assets.
+This walkthrough guides you through creating a TCK project from scratch using the TestLab v1-alpha YAML syntax.
 
 ## Project Structure
 
-Start by creating a project directory with the following layout:
+A TCK project uses this layout:
 
 ```
-my-connector-tests/
+my-certificate-tck/
+├── index.yaml                              # TCK manifest (entry point)
 ├── tests/
-│   ├── provision_and_consume.yaml     # Test 1: E2E data exchange
-│   └── submodel_validation.yaml       # Test 2: Submodel schema check
-├── assets/
-│   └── schemas/
-│       └── serial-part-3.0.json       # JSON Schema for validation
-└── tck.yaml                     # Test case definition (ties tests together)
+│   ├── ping_catalog.yaml                   # Test 1
+│   └── request_certificate.yaml            # Test 2
+├── schemas/
+│   └── certificate_schema.json             # JSON Schema for validation
+└── testdata/
+    └── request_body.json                   # Reusable request payload
 ```
 
-## Step 1 — Write the First Test Script
+- `index.yaml` — declares the TCK: metadata, environment, and test list
+- `tests/` — one YAML file per test case
+- `schemas/` — JSON Schema files referenced by the TCK
+- `testdata/` — static JSON payloads referenced by steps
 
-Create `tests/provision_and_consume.yaml` — an end-to-end test that provisions an asset on a provider connector, negotiates a contract from the consumer side, transfers data, and validates the response via the dataplane.
+## Step 1 — Create the TCK Manifest (index.yaml)
+
+The manifest declares everything tests share: variables, services, schemas, testdata, and the ordered test list.
 
 ```yaml
-# tests/provision_and_consume.yaml
-name: "provision_and_consume"
-version: "1.0"
-dataspace_version: "saturn"
-description: "E2E: Provision asset → Catalog search → Negotiate → Transfer → Dataplane GET"
+kind: tck
+testlab: v1-alpha
 
-# ─── Managed Services ───────────────────────────────────────────────
-# These SDK service instances are initialized once before steps run.
-# Steps reference them by name via params.service (no per-step auth).
-services:
-  - name: provider
-    type: CONNECTOR_PROVIDER
-    base_url: "${provider_url}"
-    auth:
-      token_url: "${token_url}"
-      client_id: "${provider_client_id}"
-      client_secret: "${provider_client_secret}"
+id: my-certificate-tck
+namespace: cert-v1.0
 
-  - name: consumer
-    type: CONNECTOR_CONSUMER
-    base_url: "${consumer_url}"
-    auth:
-      token_url: "${token_url}"
-      client_id: "${consumer_client_id}"
-      client_secret: "${consumer_client_secret}"
+metadata:
+  name: "Certificate Verification TCK"
+  version: "v1.0"
+  description: >
+    Validate certificate management workflow per CX-0135 v3.1.0.
+  authors:
+    - name: Your Team
+  license: Apache-2.0
+  standards:
+    - id: CX-0135
+      version: v3.1.0
+  dataspace_version: saturn
 
-# ─── Variables ──────────────────────────────────────────────────────
-# runtime: true → must be provided at execution time (no default)
-variables:
-  provider_url:
-    type: str
-    runtime: true
-    description: "Provider connector management API URL"
-  consumer_url:
-    type: str
-    runtime: true
-    description: "Consumer connector management API URL"
-  token_url:
-    type: str
-    runtime: true
-    description: "OAuth2 token endpoint"
-  provider_client_id:
-    type: str
-    runtime: true
-  provider_client_secret:
-    type: str
-    runtime: true
-  consumer_client_id:
-    type: str
-    runtime: true
-  consumer_client_secret:
-    type: str
-    runtime: true
-  provider_bpn:
-    type: str
-    default: "BPNL000000001"
-    description: "Provider Business Partner Number"
-  asset_id:
-    type: str
-    default: "test-asset-001"
+env:
+  variables:
+    provider_url: ""
+    provider_bpn: ""
+    consumer_bpn: ""
+    certificate_type: "iso9001"
+    sut_response_timeout: 300
+    sut_dsp_url: ""
+    sut_bpn: ""
+  services:
+    - name: testlab_connector
+      uses: service/connector_service
+      with:
+        base_url: ${{ env.provider_url }}
+        management_path: /management/v3
+        dsp_path: /api/v1/dsp/2025-1
+        dataspace_version: ${{ metadata.dataspace_version }}
+        auth:
+          type: api_key
+          api_key: "test-api-key"
+          api_key_header: "X-Api-Key"
+      returns:
+        connector_service:
+          type: class
+          class: ConnectorService
+  schemas:
+    certificate_schema:
+      file: certificate_schema.json
+  testdata:
+    request_body:
+      file: request_body.json
 
-# ─── Steps ──────────────────────────────────────────────────────────
+tests:
+  - ping_catalog.yaml
+  - request_certificate.yaml
+```
+
+Key points:
+
+- `kind: tck` + `testlab: v1-alpha` identify the file type and syntax version
+- `env.variables` are simple `key: value` pairs — runtime inputs (such as `sut_dsp_url`) start empty and are supplied at run time
+- `env.services` use the `uses:`/`with:`/`returns:` pattern
+- `tests` lists relative paths to test files (no `!include`)
+
+## Step 2 — Write Your First Test
+
+Create `tests/ping_catalog.yaml`. Tests inherit the `env` from the TCK manifest and can reference its shared variables.
+
+```yaml
+kind: test
+testlab: v1-alpha
+
+id: ping-catalog
+namespace: cert-v1.0
+
+metadata:
+  name: "Ping Catalog"
+  version: "1.0"
+  description: >
+    Query the SUT catalog to verify connectivity.
+
 steps:
-  # 1. Provision a test asset on the provider connector
-  - type: provision_asset
-    name: "Provision test asset"
-    params:
-      service: provider                # ← Managed service binding
-      asset_id: "${asset_id}"
-      bpn: "${provider_bpn}"
-      properties:
-        "asset:prop:name": "Walkthrough Test Asset"
-        "asset:prop:contenttype": "application/json"
-    on_failure: abort
+  - id: query_catalog
+    uses: connector/consumer/query_catalog
+    name: Query SUT catalog
+    with:
+      connector_service: ${{ env.services.testlab_connector.connector_service }}
+      counter_party_address: ${{ env.sut_dsp_url }}
+      filters:
+        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+          operator: "like"
+          operand_right: "%"
+    returns:
+      status_code:
+        type: integer
+        class: StatusCode
+      datasets:
+        type: array
+        class: CatalogDatasets
     validate:
-      - type: CONTAINS
-        value:
-          asset_id: "${asset_id}"
-        severity: HARD
-        description: "Asset should be created with the requested ID"
+      - uses: validate/assert
+        with: { input: status_code, operator: equals, value: 200 }
+      - uses: validate/assert
+        with: { input: datasets, operator: not_null }
+```
 
-  # 2. Search the provider's catalog from the consumer
-  - type: catalog_search
-    name: "Search provider catalog"
-    params:
-      service: consumer                # ← Different managed service
-      provider_bpn: "${provider_bpn}"
-    on_failure: abort
-    validate:
-      - type: CONTAINS
-        value:
-          "@type": "dcat:Catalog"
-        severity: HARD
-        description: "Response must be a DCAT Catalog"
-      - type: CONTAINS
-        path: "dcat:dataset"
-        value:
-          "edc:id": "${asset_id}"
-        severity: HARD
-        description: "Catalog must contain our provisioned asset"
+Key points:
 
-  # 3. Negotiate a contract for the asset
-  - type: negotiate_contract
-    name: "Negotiate contract"
-    params:
-      service: consumer
-      offer_id: "${catalog_offer_id}"  # ← Output from previous step
-    on_failure: abort
-    timeout_s: 60
-    validate:
-      - type: REGEX
-        path: "contract_agreement_id"
-        value: "^[a-zA-Z0-9-]+$"
-        severity: HARD
+- `kind: test` identifies this as a test file
+- `namespace` must match the TCK's namespace
+- Tests have **no** `env:` block — they inherit from the TCK
+- `${{ env.sut_dsp_url }}` references a shared environment variable
+- Each step declares `returns:` and optional `validate:` blocks
 
-  # 4. Initiate a data transfer
-  - type: initiate_transfer
-    name: "Start data transfer"
-    params:
-      service: consumer
-      contract_agreement_id: "${contract_agreement_id}"
-    on_failure: abort
-    timeout_s: 120
+## Step 3 — Add Setup, Steps, and Teardown
 
-  # 5. Retrieve the EDR (Endpoint Data Reference)
-  - type: retrieve_edr
-    name: "Get EDR token"
-    params:
-      service: consumer
-      transfer_id: "${transfer_id}"
-    on_failure: abort
+A more complex test can use `setup:` (mock endpoints), `steps:` (test logic), and `teardown:` (cleanup).
 
-  # 6. Call the dataplane to fetch actual data
-  - type: dataplane_call
-    name: "Fetch asset data from dataplane"
-    params:
-      service: consumer
-      method: GET
-      endpoint: "${edr_endpoint}"
-      edr_token: "${edr_token}"
-      path: "/api/v3.0/submodel"
-      query_params:
-        content: value
-        extent: withBlobValue
+```yaml
+kind: test
+testlab: v1-alpha
+
+id: request-certificate
+namespace: cert-v1.0
+
+metadata:
+  name: "Request Certificate"
+  version: "1.0"
+  description: Send a certificate request and verify the SUT responds.
+
+setup:
+  - id: mock_response
+    uses: mock/api
+    name: Expose mock endpoint for SUT callback
+    with:
+      method: POST
+      path: "/api/v1/certificate/callback"
+      response_status: 200
+      response_body: ${{ testdata.request_body }}
+    returns:
+      mock: { type: class, class: MockInstance }
+      full_mock_url: { type: string }
+
+steps:
+  - id: send_request
+    uses: connector/dataplane/http_request
+    name: Send certificate request to SUT
+    with:
+      method: POST
+      dataplane_url: ${{ env.sut_dsp_url }}
+      path: "/certificate/request"
       headers:
-        Accept: "application/json"
-    on_failure: abort
+        Content-Type: "application/json"
+      body: ${{ env.testdata.request_body }}
+    returns:
+      status_code: { type: integer, class: StatusCode }
     validate:
-      - type: STATUS_CODE
-        value: 200
-        severity: HARD
-      - type: SCHEMA
-        source: FILE
-        path: "schemas/serial-part-3.0.json"
-        severity: HARD
-        description: "Response must conform to SerialPart 3.0 schema"
-      - type: CONTAINS
-        value:
-          catenaXId: "*"
-        severity: SOFT
-        description: "Response should contain a catenaXId field"
+      - uses: validate/assert
+        with: { input: status_code, operator: equals, value: 200 }
 
-# ─── Cleanup ────────────────────────────────────────────────────────
-# Always runs, even if steps above fail
-cleanup:
-  - type: cleanup_resources
-    params:
-      service: provider
-      resource_ids:
-        asset_id: "${asset_id}"
-        access_policy_id: "${access_policy_id}"
-        usage_policy_id: "${usage_policy_id}"
-        contract_def_id: "${contract_def_id}"
+  - id: wait_callback
+    uses: mock/wait/http_request
+    name: Wait for SUT to call back
+    with:
+      mock: ${{ setup.mock_response.mock }}
+      timeout_s: ${{ env.sut_response_timeout }}
+    returns:
+      request_body: { type: object, class: ResponseBody }
+    validate:
+      - uses: validate/assert
+        with: { input: request_body, operator: not_null }
+
+teardown:
+  - id: cleanup_mock
+    uses: mock/cleanup
+    name: Remove mock endpoint
+    with:
+      mock: ${{ setup.mock_response.mock }}
 ```
 
-### What's Happening Here
+## Step 4 — Understanding Variable References
 
-1. **Services block** — Two managed SDK services (`provider` and `consumer`) are declared with OAuth2 credentials. They're initialized once before step execution.
-2. **Variables** — Runtime variables (no default) must be supplied when executing. Variables with defaults can be overridden.
-3. **Steps** — Each step references a managed service by name (`service: provider`). Steps produce output variables (e.g., `${catalog_offer_id}`, `${contract_agreement_id}`) that subsequent steps consume.
-4. **Assertions** — Each step has `validate` blocks with `hard` severity (failure = step failure) or `soft` severity (failure = warning only).
-5. **Cleanup** — Deletes provisioned resources regardless of test outcome.
+All references use the `${{ }}` expression syntax:
 
----
+| Pattern | Resolves to |
+|---------|-------------|
+| `${{ env.variables.my_var }}` | TCK-level variable |
+| `${{ env.services.name.output }}` | Service output |
+| `${{ env.testdata.name }}` | Testdata file content |
+| `${{ env.schemas.name }}` | Schema file content |
+| `${{ metadata.dataspace_version }}` | TCK metadata field |
+| `${{ setup.id.output }}` | Setup step output (within same test) |
+| `${{ steps.id.output }}` | Previous step output (within same test) |
 
-## Step 2 — Write the Second Test Script
+## Step 5 — Assertions
 
-Create `tests/submodel_validation.yaml` — a focused test that fetches a submodel via the full connector pipeline and validates it against a JSON schema.
+Every step can include a `validate:` block with one or more assertions:
 
 ```yaml
-# tests/submodel_validation.yaml
-name: "submodel_validation"
-version: "1.0"
-dataspace_version: "saturn"
-description: "Consume a submodel through the full connector pipeline and validate its schema"
-
-services:
-  - name: consumer
-    type: CONNECTOR_CONSUMER
-    base_url: "${consumer_url}"
-    auth:
-      token_url: "${token_url}"
-      client_id: "${consumer_client_id}"
-      client_secret: "${consumer_client_secret}"
-
-variables:
-  consumer_url:
-    type: str
-    runtime: true
-  token_url:
-    type: str
-    runtime: true
-  consumer_client_id:
-    type: str
-    runtime: true
-  consumer_client_secret:
-    type: str
-    runtime: true
-  provider_bpn:
-    type: str
-    default: "BPNL000000001"
-
-steps:
-  # Single high-level step that does catalog → negotiate → transfer → EDR → GET
-  - type: consume_submodel
-    name: "Consume submodel via connector pipeline"
-    params:
-      service: consumer
-      provider_bpn: "${provider_bpn}"
-    on_failure: abort
-    timeout_s: 180
-    validate:
-      - type: STATUS_CODE
-        value: 200
-        severity: HARD
-
-  # Validate the submodel payload against the aspect model schema
-  - type: validate_aspect_model
-    name: "Validate SerialPart 3.0 schema"
-    params:
-      payload: "${submodel_payload}"    # ← Output from consume_submodel
-    on_failure: abort
-    validate:
-      - type: EXACT
-        path: "valid"
-        value: true
-        severity: HARD
-        description: "Payload must conform to the aspect model schema"
-
-  # Field-level assertions on the submodel content
-  - type: validate_aspect_model
-    name: "Check submodel fields"
-    params:
-      payload: "${submodel_payload}"
-    on_failure: continue
-    validate:
-      - type: REGEX
-        path: "catenaXId"
-        value: "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        severity: HARD
-        description: "catenaXId must be a valid URN UUID"
-      - type: CONTAINS
-        path: "partTypeInformation"
-        value:
-          classification: "component"
-        severity: SOFT
-        description: "Part should be classified as 'component'"
+validate:
+  - uses: validate/assert
+    with: { input: status_code, operator: equals, value: 200 }
+  - uses: validate/assert
+    with: { input: response_body, operator: not_null }
+  - uses: validate/assert
+    with: { input: datasets, operator: contains, value: "expected-item" }
 ```
 
----
+Available operators: `equals`, `not_null`, `contains`, `not_equals`, `greater_than`, `less_than`, `matches` (regex).
 
-## Step 3 — Add Supporting Assets
+## Key Differences from v0
 
-Create the JSON Schema file that the assertions reference:
-
-```
-assets/schemas/serial-part-3.0.json
-```
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:samm:io.catenax.serial_part:3.0.0#SerialPart",
-  "type": "object",
-  "required": ["catenaXId", "localIdentifiers", "partTypeInformation"],
-  "properties": {
-    "catenaXId": {
-      "type": "string",
-      "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-    },
-    "localIdentifiers": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["type", "value"],
-        "properties": {
-          "type": { "type": "string" },
-          "value": { "type": "string" }
-        }
-      }
-    },
-    "partTypeInformation": {
-      "type": "object",
-      "required": ["manufacturerPartId", "classification", "nameAtManufacturer"],
-      "properties": {
-        "manufacturerPartId": { "type": "string" },
-        "classification": { "type": "string", "enum": ["product", "raw material", "software", "assembly", "component"] },
-        "nameAtManufacturer": { "type": "string" }
-      }
-    }
-  }
-}
-```
-
-This file will be bundled into the `.tckpkg` under `assets/schemas/` and referenced by assertions via `source: file` + `path: "schemas/serial-part-3.0.json"`.
-
----
-
-## Step 4 — Create the TCK Definition
-
-Create `tck.yaml` at the project root — this ties tests together and defines shared variables that are inherited by all tests.
-
-```yaml
-# tck.yaml
-name: "connector_e2e"
-version: "1.0"
-description: "End-to-end connector TCK: provisioning, consumption, and submodel validation"
-
-# ─── Shared Variables ───────────────────────────────────────────────
-# Available to ALL tests in this TCK.
-# Tests can also declare their own variables (test-local).
-shared_variables:
-  provider_url:
-    type: str
-    runtime: true
-    description: "Provider connector management API URL"
-  consumer_url:
-    type: str
-    runtime: true
-    description: "Consumer connector management API URL"
-  token_url:
-    type: str
-    runtime: true
-    description: "OAuth2 token endpoint"
-  provider_client_id:
-    type: str
-    runtime: true
-  provider_client_secret:
-    type: str
-    runtime: true
-  consumer_client_id:
-    type: str
-    runtime: true
-  consumer_client_secret:
-    type: str
-    runtime: true
-  provider_bpn:
-    type: str
-    default: "BPNL000000001"
-
-# ─── Tests ──────────────────────────────────────────────────────────
-# Executed sequentially, in order. Each gets an isolated context
-# seeded with the shared variables above.
-tests:
-  - "!include tests/provision_and_consume.yaml"
-  - "!include tests/submodel_validation.yaml"
-```
-
-### Importing Predefined Tests
-
-Tests often repeat across TCKs — only some parameters change. Instead of duplicating YAML files, you can **import** predefined tests from a test library and **override** specific values:
-
-```yaml
-# tck.yaml — reusing predefined tests
-name: "connector_staging"
-version: "1.0"
-description: "Staging environment connector tests with custom BPN"
-
-shared_variables:
-  provider_url:
-    type: str
-    runtime: true
-  consumer_url:
-    type: str
-    runtime: true
-  token_url:
-    type: str
-    runtime: true
-  provider_client_id:
-    type: str
-    runtime: true
-  provider_client_secret:
-    type: str
-    runtime: true
-  consumer_client_id:
-    type: str
-    runtime: true
-  consumer_client_secret:
-    type: str
-    runtime: true
-
-tests:
-  # Import a predefined test and override a variable default
-  - import: "tractusx/connector/provision_and_consume@1.0"
-    override:
-      variables:
-        provider_bpn:
-          default: "BPNL000000099"
-
-  # Import another predefined test as-is
-  - import: "tractusx/connector/submodel_validation@1.0"
-
-  # Mix with local tests
-  - "!include tests/my_custom_check.yaml"
-```
-
-| Syntax | Purpose |
-|--------|---------|
-| `import: "<library>/<test>@<version>"` | Import a predefined test from a registered test library |
-| `override.variables` | Override specific variable declarations (defaults, types, descriptions) |
-| `override.steps` | Override individual step parameters by step name |
-| `"!include tests/<file>.yaml"` | Include a local test file (relative to TCK file) |
-
-The Compiler resolves imports at compile-time. Predefined tests are fetched from the test library path (configurable via `--library-path` or the `TESTLAB_LIBRARY_PATH` environment variable).
-
-### What the TCK Does
-
-- **`shared_variables`** — Defined once, available to all tests. Avoids duplicating OAuth2 credentials and URLs across tests.
-- **`"!include"`** — String directive that loads external test files into the TCK. Tests are still validated individually.
-- **`import`** — References a predefined test from a shared library. Supports `override` to customize variables or steps without modifying the original.
-- **Execution order** — Tests run sequentially. Each test gets an isolated `StepContext` seeded with the shared variables (no variable leakage between tests).
-
----
-
-## Final Project Layout
-
-```
-my-connector-tests/
-├── tests/
-│   ├── provision_and_consume.yaml     # 6 steps + cleanup
-│   └── submodel_validation.yaml       # 3 steps
-├── assets/
-│   └── schemas/
-│       └── serial-part-3.0.json       # Assertion schema
-└── tck.yaml                     # Test case definition
-```
-
-You're ready to compile. Continue to [Compiling Packages](compiling-packages.md).
-
----
-
-## NOTICE
-
-This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
-
-- SPDX-License-Identifier: CC-BY-4.0
-- SPDX-FileCopyrightText: 2025, 2026 Contributors to the Eclipse Foundation
-- SPDX-FileCopyrightText: 2025, 2026 Catena-X Automotive Network e.V.
-- Source URL: [https://github.com/eclipse-tractusx/tractusx-sdk](https://github.com/eclipse-tractusx/tractusx-sdk)
+| v0 (obsolete) | v1-alpha (current) |
+|---------------|-------------------|
+| `${variable}` | `${{ env.variables.variable }}` |
+| `type: connector_service` | `uses: service/connector_service` |
+| `params:` | `with:` |
+| `shared_variables:` | `env.variables:` (simple key-value) |
+| `!include file.yaml` | `tests: [file.yaml]` (list of paths) |
+| `CONNECTOR_PROVIDER` | `env.services.name.connector_service` |
+| `cleanup:` | `teardown:` |
+| `type: CONTAINS` (assertion) | `operator: contains` |
+| No manifest kind | `kind: tck` / `kind: test` |

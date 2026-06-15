@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -66,7 +67,8 @@ class SendNotificationStep(BaseStep):
         provider_dsp = params["provider_dsp_url"]
         endpoint_path = params.get("endpoint_path", "")
 
-        result = notif_service.send_notification(
+        result = await asyncio.to_thread(
+            notif_service.send_notification,
             provider_bpn=provider_bpn,
             provider_dsp_url=provider_dsp,
             notification=notification,

@@ -122,6 +122,10 @@ class CallbackManager:
                 future.set_result(result)
             return True
 
+        if future is not None and future.done():
+            # Listener already resolved/cancelled — cannot deliver
+            return False
+
         # No listener yet — buffer for later registration
         self._buffered[key] = result
         return True

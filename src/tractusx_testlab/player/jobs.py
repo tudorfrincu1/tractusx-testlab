@@ -33,7 +33,7 @@ from typing import Optional
 
 from tractusx_testlab.models import Job, JobEvent, JobMemory
 
-from tractusx_testlab.models.enums import JobStatus
+from tractusx_testlab.models.primitives.enums import JobStatus
 
 
 class JobManager:
@@ -62,6 +62,7 @@ class JobManager:
         return job
 
     def get(self, job_id: str) -> Optional[Job]:
+        """Return a job by ID, or None if not found."""
         return self._jobs.get(job_id)
 
     def list_jobs(
@@ -70,6 +71,7 @@ class JobManager:
         limit: int = 50,
         offset: int = 0,
     ) -> list[Job]:
+        """Return jobs optionally filtered by status with pagination."""
         jobs = list(self._jobs.values())
         if status:
             jobs = [job for job in jobs if job.status == status]
@@ -80,18 +82,21 @@ class JobManager:
     # ------------------------------------------------------------------
 
     def start(self, job_id: str) -> None:
+        """Transition a job to RUNNING state."""
         job = self._require(job_id)
         job.status = JobStatus.RUNNING
         job.started_at = datetime.now(timezone.utc)
         self._event(job, "lifecycle", "Job started")
 
     def complete(self, job_id: str) -> None:
+        """Mark a job as successfully completed."""
         job = self._require(job_id)
         job.status = JobStatus.COMPLETED
         job.finished_at = datetime.now(timezone.utc)
         self._event(job, "lifecycle", "Job completed")
 
     def fail(self, job_id: str, reason: str = "") -> None:
+        """Mark a job as failed with an optional reason."""
         job = self._require(job_id)
         job.status = JobStatus.FAILED
         job.finished_at = datetime.now(timezone.utc)
@@ -99,6 +104,7 @@ class JobManager:
         self._event(job, "lifecycle", f"Job failed: {reason}" if reason else "Job failed")
 
     def wait(self, job_id: str, step_name: str, listener_url: str) -> None:
+        """Transition a job to WAITING state pending an external callback."""
         job = self._require(job_id)
         job.status = JobStatus.WAITING
         job.waiting_for = listener_url
@@ -138,6 +144,7 @@ class JobManager:
         return job
 
     def cancel(self, job_id: str) -> None:
+        """Cancel a job if it has not already reached a terminal state."""
         job = self._require(job_id)
         if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             return
@@ -148,6 +155,7 @@ class JobManager:
         self._event(job, "lifecycle", "Job cancelled")
 
     def set_current_step(self, job_id: str, step_name: str) -> None:
+        """Update the current step name for progress tracking."""
         job = self._require(job_id)
         job.current_step = step_name
 

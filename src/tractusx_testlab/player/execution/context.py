@@ -29,7 +29,7 @@ Provides access to services, variables, job memory, and configuration.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from tractusx_testlab.config.settings import TestlabConfig
 from tractusx_testlab.models import Job, ServiceDefinition, ServiceNotFoundError, ServiceType
@@ -51,7 +51,7 @@ class StepContext:
         self._services = services
         self._job = job
         self._config = config
-        self._variables: dict[str, Any] = {}
+        self._variables: dict[str, object] = {}
 
     # ------------------------------------------------------------------
     # Configuration
@@ -77,61 +77,61 @@ class StepContext:
     # Variables (script-scoped, resolved from step params with ${...})
     # ------------------------------------------------------------------
 
-    def set_variable(self, name: str, value: Any) -> None:
+    def set_variable(self, name: str, value: object) -> None:
         self._variables[name] = value
 
-    def get_variable(self, name: str, default: Any = None) -> Any:
+    def get_variable(self, name: str, default: object = None) -> object:
         return self._variables.get(name, default)
 
     def has_variable(self, name: str) -> bool:
         return name in self._variables
 
     @property
-    def variables(self) -> dict[str, Any]:
+    def variables(self) -> dict[str, object]:
         return dict(self._variables)
 
     # ------------------------------------------------------------------
     # Service accessors (delegates to ServiceManager)
     # ------------------------------------------------------------------
 
-    def get_provider_service(self, name: Optional[str] = None) -> Any:
+    def get_provider_service(self, name: Optional[str] = None) -> object:
         """Return the first (or named) CONNECTOR_PROVIDER service."""
         if name:
             return self._services.get_provider(name)
         return self._first_service_of_type(ServiceType.CONNECTOR_PROVIDER)
 
-    def get_consumer_service(self, name: Optional[str] = None) -> Any:
+    def get_consumer_service(self, name: Optional[str] = None) -> object:
         """Return the first (or named) CONNECTOR_CONSUMER service."""
         if name:
             return self._services.get_consumer(name)
         return self._first_service_of_type(ServiceType.CONNECTOR_CONSUMER)
 
-    def get_aas_service(self, name: Optional[str] = None) -> Any:
+    def get_aas_service(self, name: Optional[str] = None) -> object:
         """Return the first (or named) DTR / AAS service."""
         if name:
             return self._services.get_dtr(name)
         return self._first_service_of_type(ServiceType.DTR)
 
-    def get_dsp_consumer_service(self, name: Optional[str] = None) -> Any:
+    def get_dsp_consumer_service(self, name: Optional[str] = None) -> object:
         """Return the first (or named) DSP_CONSUMER service."""
         if name:
             return self._services.get_dsp_consumer(name)
         return self._first_service_of_type(ServiceType.DSP_CONSUMER)
 
-    def get_dsp_provider_service(self, name: Optional[str] = None) -> Any:
+    def get_dsp_provider_service(self, name: Optional[str] = None) -> object:
         """Return the first (or named) DSP_PROVIDER service."""
         if name:
             return self._services.get_dsp_provider(name)
         return self._first_service_of_type(ServiceType.DSP_PROVIDER)
 
-    def get_notification_service(self, name: Optional[str] = None) -> Any:
+    def get_notification_service(self, name: Optional[str] = None) -> object:
         """Return a notification consumer service by name."""
         if name:
             return self._services.get(name)
         # Notification service is built on top of a connector consumer
         return self._first_service_of_type(ServiceType.CONNECTOR_CONSUMER)
 
-    def _first_service_of_type(self, stype: ServiceType) -> Any:
+    def _first_service_of_type(self, stype: ServiceType) -> object:
         """Return the first registered service matching *stype*."""
         for svc_name in self._services.service_names:
             try:

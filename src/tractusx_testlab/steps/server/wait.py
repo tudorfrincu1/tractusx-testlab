@@ -85,11 +85,11 @@ class WaitForCallStep(BaseStep):
         # string ID referencing a mock registered via MockEndpointStep.  When it
         # looks like a URL we parse the path directly; otherwise we look up the
         # context variable that MockEndpointStep stored under that ID.
-        if raw_endpoint_id.startswith(("http://", "https://")):
+        if raw_endpoint_id.startswith(("http://", "https://")):  # NOSONAR — detecting URL scheme in user input, not constructing an insecure connection
             full_path = _extract_path_from_endpoint_url(raw_endpoint_id)
         else:
             stored_url = context.get_variable(raw_endpoint_id)
-            if stored_url and isinstance(stored_url, str) and stored_url.startswith(("http://", "https://")):
+            if stored_url and isinstance(stored_url, str) and stored_url.startswith(("http://", "https://")):  # NOSONAR — detecting URL scheme in stored variable, not constructing an insecure connection
                 full_path = _extract_path_from_endpoint_url(stored_url)
             else:
                 # Treat the raw value as a path fragment

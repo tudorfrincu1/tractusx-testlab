@@ -8,11 +8,10 @@
 
 ## Project Overview
 
-**tractusx-testlab** is a visual test authoring tool for Eclipse Tractus-X dataspaces. Two codebases:
+**tractusx-testlab** is the Python backend library for authoring and running Eclipse Tractus-X dataspace tests, plus the shared authoring contract (YAML format, variable syntax, block/step catalog).
 
 | Codebase | Stack | Location |
 |----------|-------|----------|
-| IDE (frontend) | React 19, Blockly 12, TypeScript strict, Vite 6, Zustand, Monaco | `ide/` |
 | Python library | Python 3.12+, Pydantic v2, async, pytest, tractusx-sdk | `src/tractusx_testlab/` |
 
 Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdocs.yml`.
@@ -29,29 +28,7 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 - Identifies which agent should handle each package and why
 - Evaluates trade-offs, risks, and dependencies before code is written
 - Read-only — **NEVER writes code** — plans and advises only
-- Colleague of `testlab-ai-master`: Architect plans → AI Master orchestrates → specialists execute
-
-### `testlab-ai-master` — Chief AI Agent (Orchestrator)
-
-**Scope**: Delegation, quality review, coordination across all codebases. **NEVER solves technical problems directly.**
-
-- Receives work packages from the Architect or directly from the human
-- Routes problems to the right domain specialist — does NOT investigate, diagnose, or think about solutions
-- Has ZERO domain expertise (no React, no Python, no CSS knowledge) — specialists own all technical thinking
-- Delegates to specialized agents, reviews output by checklist, enforces quality gates
-- May edit `.github/agents/` and `.github/instructions/` directly
-- **NEVER edits source code directly** — always delegates
-- **NEVER explores codebases to understand bugs** — sends the bug description to the domain expert
-
-### `testlab-ide-master` — Frontend Developer
-
-**Scope**: Everything in `ide/` — React components, Blockly blocks, TypeScript, CSS, Zustand stores.
-
-- Expert in React 19, Blockly 12, TypeScript strict, Vite 6, Zustand, Monaco Editor
-- Block definitions live in `public/blocks/` as JSON — never hardcode in TypeScript
-- Toolbox is built dynamically from the block catalog
-- Sync flow: workspace change → `workspaceToModel()` → `modelToYaml()` → Zustand → YAML preview
-- No MUI or heavy UI libraries — plain CSS only
+- Hands approved work packages directly to the specialist agents
 
 ### `testlab-master` — Backend Developer
 
@@ -84,24 +61,23 @@ Tests: `tests/` at repo root. Docs: `docs/` with MkDocs Material. Config: `mkdoc
 ## Design Principles
 
 1. **One way to do things.** Never offer two approaches to the same result.
-2. **Steps are functions.** Every block has typed inputs and typed outputs.
-3. **Auto-link.** Dropping a block auto-fills inputs from the nearest compatible output above.
-4. **Auto-generate IDs.** asset_id, policy_id, contract_id = auto-generated UUIDs. Never ask the user.
-5. **Hide plumbing.** Connector addresses come from test_root config, not per-step fields.
-6. **Labels, not code.** "Create an Asset" not `create_asset`.
-7. **Defaults everywhere.** Blocks work with minimal input. Optional fields behind "▼ More".
+2. **Steps are functions.** Every step has typed inputs and typed outputs.
+3. **Auto-generate IDs.** asset_id, policy_id, contract_id = auto-generated UUIDs. Never ask the user.
+4. **Hide plumbing.** Connector addresses come from test_root config, not per-step fields.
+5. **Defaults everywhere.** Steps work with minimal input.
 
 ---
 
-## Hard Rules (All Codebases)
+## Hard Rules
 
 | Rule | Enforcement |
 |------|-------------|
-| No file exceeds 300 lines | `find <dir> -name '*.ext' \| xargs wc -l \| awk '$1 > 300'` |
+| No source-code file exceeds 300 lines (docs exempt) | `find <dir> -name '*.py' \| xargs wc -l \| awk '$1 > 300'` |
+| Max 5 files per folder, excluding the barrel (`__init__.py`); docs exempt | Reorganize into responsibility-grouped sub-folders, each with a barrel the parent forwards through |
+| Code is modular by design — single-responsibility units, reusable helpers, no duplication | Split along responsibility seams; extract shared logic into importable modules |
 | Apache-2.0 license header on all source files | Required |
 | AI-generated code subtitle after license header | See below |
-| Variable syntax in YAML: `@variable_name` | Never `${var}` |
-| Block catalog source of truth: `ide/public/blocks/index.json` | Never hardcode blocks |
+| Variable syntax in YAML: `${{ ... }}` (e.g. `${{ env.X }}`, `${{ steps.<id>.<out> }}`) per ADR-0010 | Never `@variable_name` or `${var}` |
 
 ### AI-Generated Code Subtitle
 
@@ -113,12 +89,6 @@ All AI-generated or AI-modified files must include this subtitle immediately aft
 ## It was reviewed and tested by a human committer.
 ```
 
-**TypeScript / JavaScript** (`//`):
-```typescript
-// This code was partially generated using artificial intelligence (AI) (Tool: Codex, Model: o3).
-// It was reviewed and tested by a human committer.
-```
-
 **HTML / XML** (`<!-- -->`):
 ```html
 <!-- This code was partially generated using artificial intelligence (AI) (Tool: Codex, Model: o3). -->
@@ -126,45 +96,6 @@ All AI-generated or AI-modified files must include this subtitle immediately aft
 ```
 
 Replace `Codex` and `o3` with the actual tool and model name being used.
-
----
-
-## TypeScript / React / Blockly Conventions (`ide/`)
-
-### Stack
-- Vite 6 + React 19 + TypeScript strict + Blockly 12 + Zustand + Monaco Editor
-- No MUI or heavy UI libraries — plain CSS + Blockly built-in styling
-
-### Block System
-- Block definitions: `public/blocks/{category}/{block}.json` — one JSON per block
-- Manifest: `public/blocks/index.json` lists all categories and file paths
-- `blockDefinitions.ts` fetches index at runtime, loads blocks in parallel — never hardcode
-- Category order: Mock → Wait → Function → Flow → EDC Connector → Digital Twin Registry → Discovery Finder → HTTP → Notification → Validation
-- `variable_ref` blocks are auto-generated from step outputs — never manually defined
-
-### Code Quality
-- Functional components only — no class components
-- `unknown` + narrowing instead of `any` — no `: any` or `as any`
-- No `console.log` — use structured error handling
-- No inline `style={% raw %}{{}}{% endraw %}` — use CSS files or CSS modules
-- Custom hooks extract all non-trivial logic out of components
-- Props interfaces co-located with components, exported for testing
-- `as const` assertions on literal objects
-- Event handlers: `onXxx` (props) / `handleXxx` (internal)
-- Discriminated unions over stringly-typed enums
-- Pure functions for data transforms — no side effects in mappers
-
-### Quality Gates
-```bash
-find ide/src -name '*.ts' -o -name '*.tsx' | xargs wc -l | awk '$1 > 300 && !/total/'  # Must be empty
-cd ide && npx tsc --noEmit   # Must succeed
-cd ide && npx vite build     # Must succeed
-```
-
-### Splitting Oversized Files
-- **Components**: extract sub-components, hooks (`useXxxLogic.ts`), styles (`.css`), constants, types
-- **Stores**: extract slices, selectors, persistence, helpers
-- **Sync modules**: one transform per file, split by entity if needed
 
 ---
 
@@ -217,8 +148,10 @@ grep -rn "except Exception:" src/ --include="*.py"                   # Must be e
 grep -rn "print(" src/ --include="*.py" | grep -v "_fingerprint"     # Must be empty
 python -m pytest tests/ -x -q                                        # Must pass
 ```
+- **SonarQube**: Run `mcp_sonarqube_analyze_file_list` on all created/modified files. Fix CRITICAL/BLOCKER findings before delivering.
 
 ### Splitting Oversized Files
+Modularity is the goal; the line limit is just the trigger. Extract **reusable** units along responsibility seams — never cut a file arbitrarily. Shared logic becomes an importable helper; never duplicate it.
 - **Steps**: one step class per file, extract `_helpers.py` and `_constants.py`
 - **CLI**: one command group per file, main app wires with `app.add_typer()`
 - **Models**: one concern per file, `__init__.py` as barrel re-export only
@@ -271,6 +204,7 @@ python -m pytest tests/ -x -q                                              # Mus
 find tests -name '*.py' | xargs wc -l | awk '$1 > 300 && !/total/'        # Must be empty
 grep -rn "time.sleep\|asyncio.sleep" tests/ --include="*.py"               # Should be empty
 ```
+- **SonarQube**: Run `mcp_sonarqube_analyze_file_list` on all created/modified files. Fix CRITICAL/BLOCKER findings before delivering.
 
 ---
 
@@ -282,7 +216,6 @@ grep -rn "time.sleep\|asyncio.sleep" tests/ --include="*.py"               # Sho
 
 ### Structure
 - `docs/home/` — Landing pages
-- `docs/ide/` — IDE user manual
 - `docs/specification/` — YAML format specification
 - `docs/tutorials/` — Step-by-step guides
 - `docs/developer/` — Architecture and internals
@@ -294,14 +227,14 @@ grep -rn "time.sleep\|asyncio.sleep" tests/ --include="*.py"               # Sho
 - Use Mermaid for all diagrams (max 10-12 nodes)
 - Active voice, second person, present tense, short sentences (max 25 words)
 - No placeholders (`TODO`, `TBD`, `Coming soon`)
-- No files over 300 lines — split into sub-pages
+- Documentation is exempt from the 300-line source rule — split long pages into sub-pages for readability, but a cohesive reference (ADR, spec, API page) may exceed 300 lines when splitting would harm comprehension
 
 ---
 
 ## Review Checklist (Applied to All Deliveries)
 
 ```
-□ File under 300 lines?
+□ File under 300 lines? (source code only — docs exempt)
 □ Functions under 30 lines?
 □ Single responsibility per module?
 □ No magic strings or hardcoded values?

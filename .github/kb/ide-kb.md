@@ -16,6 +16,8 @@ When `executionApi.ts` grew past 300 lines after adding reconnection, the SSE st
 ### PAT-2: Fire-and-forget API calls for immediate UI feedback
 `cancel()` aborts the local stream immediately for instant UX, then POSTs to the backend endpoint as fire-and-forget. Pause/resume use `await` because the user needs feedback if the API call fails.
 
+- **Modularity directive**: The 300-line limit is a symptom check, not the goal. Code must be written modular from the start — small single-responsibility units with typed boundaries. When a file is split, extract **reusable** units along responsibility seams (hooks, pure functions, helper modules, one step/class per file), not arbitrary fragments. Shared logic is extracted into importable helpers; never duplicated.
+
 ---
 
 ## Gotchas

@@ -32,7 +32,7 @@ from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import BACKEND_URL
-import requests
+import httpx
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
@@ -64,7 +64,9 @@ class UploadBackendDataStep(BaseStep):
         timeout = params.get("timeout", context.config.default_timeout_s)
 
         req = HttpRequest(method="POST", url=unique_url, headers=headers, body=data)
-        resp = requests.post(unique_url, json=data, headers=headers, timeout=timeout)
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(unique_url, json=data, headers=headers, timeout=timeout)
 
         # Store the unique URL so subsequent steps can reference it
         context.set_variable(BACKEND_URL, unique_url)

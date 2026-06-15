@@ -34,11 +34,9 @@ from tractusx_testlab.config.loader import ConfigLoader
 from tractusx_testlab.config.settings import TestlabConfig
 from tractusx_testlab.logging.structured import StructuredLogger
 from tractusx_testlab.models import (
-    AssertionSummary,
     JobStatus,
     ScriptResult,
     ScriptStatus,
-    StepResult,
     TckResult as TckResult,  # SDK alias
 )
 from tractusx_testlab.player.execution.context import StepContext
@@ -49,6 +47,11 @@ from tractusx_testlab.player.execution.step_runner import (
     execute_main_steps,
     execute_setup_steps,
     run_script,
+)
+from tractusx_testlab.player.execution._trace_formatter import (
+    build_tck_result,
+    finalize_job,
+    make_skipped_result,
 )
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.player.loading.loader import Loader
@@ -146,10 +149,10 @@ class TestlabPlayer:
             self._mock_server.stop()
             self._mock_server = None
 
-        result = self._build_tck_result(
+        result = build_tck_result(
             tck.name, script_results, tck_started_at, tck_finished_at,
         )
-        self._finalize_job(job, result, monitor, job_logger)
+        finalize_job(self._jobs, job, result, monitor, job_logger)
         return result
 
     # ------------------------------------------------------------------
@@ -217,7 +220,7 @@ class TestlabPlayer:
             unmet_deps = [dep for dep in script.depends_on if dep not in completed_tests]
 
             if unmet_deps:
-                skipped_result = self._make_skipped_result(script, unmet_deps)
+                skipped_result = make_skipped_result(script, unmet_deps)
                 script_results.append(skipped_result)
                 monitor.on_script_started(job.job_id, script.name, idx)
                 monitor.on_script_completed(job.job_id, skipped_result)
@@ -236,21 +239,7 @@ class TestlabPlayer:
 
         return script_results
 
-    @staticmethod
-    def _make_skipped_result(script: TestScript, unmet_deps: list[str]) -> ScriptResult:
-        """Build a FAILED result for a script whose dependencies were not met."""
-        now = datetime.now(timezone.utc)
-        return ScriptResult(
-            script_name=script.name,
-            dataspace_version=script.definition.dataspace_version,
-            status=ScriptStatus.FAILED,
-            steps=[],
-            started_at=now,
-            finished_at=now,
-            total_duration_s=0.0,
-            assertion_summary=AssertionSummary(total=0, passed=0, failed_hard=0, failed_soft=0),
-            error=f"Skipped — unmet dependencies: {', '.join(unmet_deps)}",
-        )
+
 
     @staticmethod
     def _propagate_script_outputs(script: TestScript, context: StepContext) -> None:
@@ -261,38 +250,6 @@ class TestlabPlayer:
                 context.set_variable(export_name, value)
                 context.set_variable(f"!{script.name}:{export_name}", value)
 
-    @staticmethod
-    def _build_tck_result(
-        tck_name: str,
-        script_results: list[ScriptResult],
-        started_at: datetime,
-        finished_at: datetime,
-    ) -> TckResult:
-        """Aggregate script results into a single TckResult."""
-        all_passed = all(script.status == ScriptStatus.COMPLETED for script in script_results)
-        return TckResult(
-            tck_id=tck_name,
-            status=ScriptStatus.COMPLETED if all_passed else ScriptStatus.FAILED,
-            scripts=script_results,
-            started_at=started_at,
-            finished_at=finished_at,
-        )
 
-    def _finalize_job(
-        self,
-        job: Any,
-        result: TckResult,
-        monitor: ExecutionMonitor,
-        job_logger: StructuredLogger,
-    ) -> None:
-        """Update job status and close the logger after execution completes."""
-        job.result = result
-        if result.passed:
-            self._jobs.complete(job.job_id)
-            monitor.on_job_completed(job.job_id, JobStatus.COMPLETED)
-        else:
-            self._jobs.fail(job.job_id, "One or more scripts failed")
-            monitor.on_job_completed(job.job_id, JobStatus.FAILED)
-        job_logger.close()
 
 

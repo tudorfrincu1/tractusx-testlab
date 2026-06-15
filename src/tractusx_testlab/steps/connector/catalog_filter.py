@@ -29,11 +29,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_sdk.dataspace.services.dsp import DspServiceFactory
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
-from tractusx_testlab.syntax import defaults
+from tractusx_testlab.steps.connector.consume import _create_dsp_consumer
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
@@ -52,10 +51,7 @@ class QueryCatalogWithFiltersStep(BaseStep):
         # Build composite filter expression from filter list
         filter_expression = self._build_filter_expression(filters)
 
-        dsp_consumer = DspServiceFactory.get_dsp_consumer_service(
-            dataspace_version=defaults.DATASPACE_VERSION,
-            base_url=counter_party_address,
-        )
+        dsp_consumer = _create_dsp_consumer(counter_party_address)
         response = dsp_consumer.request_catalog(filter_expression=filter_expression)
 
         url = f"{counter_party_address}/catalog/request"

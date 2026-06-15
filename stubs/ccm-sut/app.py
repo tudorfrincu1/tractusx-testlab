@@ -44,11 +44,17 @@ from management import router as management_router
 app = FastAPI(title="CCM SUT Stub", version="0.1.0")
 app.include_router(management_router)
 
+# Background task references — prevents garbage collection
+_background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
+
 TESTLAB_CALLBACK_URL = os.environ.get("TESTLAB_CALLBACK_URL", "http://localhost:8100")
 CALLBACK_DELAY_SECONDS = int(os.environ.get("CALLBACK_DELAY_SECONDS", "10"))
 STUB_PORT = int(os.environ.get("STUB_PORT", "8090"))
 
 STUB_BASE_URL = os.environ.get("STUB_BASE_URL", "http://localhost:8090")
+
+# JSON-LD type key constant
+_AT_TYPE = "@type"
 
 OFFER_ID = "ccm-offer-001"
 AGREEMENT_ID = f"agreement-{uuid.uuid4()}"
@@ -74,16 +80,16 @@ async def catalog_request(request: Request) -> JSONResponse:
 @app.post("/api/v1/dsp/negotiations/request")
 async def negotiation_request(request: Request) -> JSONResponse:
     """Accept a negotiation request and return an immediate agreement."""
-    body = await request.json()
+    await request.body()  # consume body per protocol
     negotiation_id = str(uuid.uuid4())
     return JSONResponse({
         "@context": {"dspace": "https://w3id.org/dspace/2024/1/"},
-        "@type": "dspace:ContractNegotiation",
+        _AT_TYPE: "dspace:ContractNegotiation",
         "@id": negotiation_id,
         "dspace:state": "FINALIZED",
         "dspace:agreement": {
             "@id": AGREEMENT_ID,
-            "@type": "dspace:Agreement",
+            _AT_TYPE: "dspace:Agreement",
         },
     })
 
@@ -93,7 +99,7 @@ async def negotiation_status(negotiation_id: str) -> JSONResponse:
     """Return FINALIZED status for any negotiation ID."""
     return JSONResponse({
         "@context": {"dspace": "https://w3id.org/dspace/2024/1/"},
-        "@type": "dspace:ContractNegotiation",
+        _AT_TYPE: "dspace:ContractNegotiation",
         "@id": negotiation_id,
         "dspace:state": "FINALIZED",
         "dspace:agreement": {"@id": AGREEMENT_ID},
@@ -108,7 +114,7 @@ async def negotiation_status(negotiation_id: str) -> JSONResponse:
 async def transfer_process(request: Request) -> JSONResponse:
     """Initiate a transfer and return the transfer ID."""
     return JSONResponse({
-        "@type": "TransferProcess",
+        _AT_TYPE: "TransferProcess",
         "@id": TRANSFER_ID,
         "state": "STARTED",
     })
@@ -118,7 +124,7 @@ async def transfer_process(request: Request) -> JSONResponse:
 async def edr_data_address(transfer_id: str) -> JSONResponse:
     """Return a data address with an EDR auth token."""
     return JSONResponse({
-        "@type": "DataAddress",
+        _AT_TYPE: "DataAddress",
         "type": "HttpData",
         "endpoint": STUB_BASE_URL,
         "authType": "bearer",
@@ -134,8 +140,10 @@ async def edr_data_address(transfer_id: str) -> JSONResponse:
 @app.post("/")
 async def dataplane_root(request: Request) -> JSONResponse:
     """Accept a dataplane POST (used for notification sends via EDR)."""
-    body = await request.json()
-    asyncio.create_task(_send_notification_ack(body))
+    notification_body = await request.json()
+    task = asyncio.create_task(_send_notification_ack(notification_body))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return JSONResponse({"status": "OK"})
 
 
@@ -178,7 +186,9 @@ async def certificate_request(request: Request) -> JSONResponse:
     is_reject = request.query_params.get("reject", "false").lower() == "true"
     if is_reject:
         return JSONResponse(build_certificate_rejected_response(body, document_id))
-    asyncio.create_task(_send_callback(request_id))
+    task = asyncio.create_task(_send_callback(request_id))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return JSONResponse(build_certificate_request_response(body, document_id))
 
 
@@ -190,7 +200,9 @@ async def certificate_request(request: Request) -> JSONResponse:
 async def notification_receive(request: Request) -> JSONResponse:
     """Accept a notification and send acknowledgment callback to TestLab."""
     body = await request.json()
-    asyncio.create_task(_send_notification_ack(body))
+    task = asyncio.create_task(_send_notification_ack(body))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return JSONResponse({"status": "OK"})
 
 
@@ -208,7 +220,9 @@ async def _consume_testlab_asset() -> None:
 @app.on_event("startup")
 async def _start_sut_consumer() -> None:
     """Start background task to simulate SUT consuming TestLab assets."""
-    asyncio.create_task(_consume_testlab_asset())
+    task = asyncio.create_task(_consume_testlab_asset())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
 
 async def _send_notification_ack(notification_body: dict) -> None:
@@ -242,14 +256,16 @@ async def _send_push_feedback(body: dict) -> None:
 async def certificate_push(request: Request) -> JSONResponse:
     """Accept a certificate push and schedule a feedback callback."""
     body = await request.json()
-    asyncio.create_task(_send_push_feedback(body))
+    task = asyncio.create_task(_send_push_feedback(body))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
     return JSONResponse({"status": "OK"})
 
 
 @app.post("/companycertificate/available")
 async def certificate_available(request: Request) -> JSONResponse:
     """Accept a certificate availability notification."""
-    body = await request.json()
+    await request.body()  # consume body per protocol
     return JSONResponse({"status": "OK"})
 
 
@@ -268,4 +284,4 @@ async def health() -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=STUB_PORT)
+    uvicorn.run(app, host=os.environ.get("STUB_HOST", "127.0.0.1"), port=STUB_PORT)

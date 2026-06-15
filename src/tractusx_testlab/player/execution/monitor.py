@@ -44,13 +44,16 @@ CallbackFn = Callable[[str, dict[str, Any]], Any]
 class ExecutionMonitor:
     """Observes execution progress, logs structured events, and fires callbacks."""
 
-    __slots__ = ("_logger", "_callbacks")
+    __slots__ = ("_logger", "_callbacks", "_background_tasks")
 
     def __init__(self, logger: StructuredLogger) -> None:
+        """Initialize with a structured logger for event recording."""
         self._logger = logger
         self._callbacks: list[CallbackFn] = []
+        self._background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
 
     def add_callback(self, fn: CallbackFn) -> None:
+        """Register a callback function to be invoked on every event."""
         self._callbacks.append(fn)
 
     # ------------------------------------------------------------------
@@ -58,12 +61,15 @@ class ExecutionMonitor:
     # ------------------------------------------------------------------
 
     def on_job_started(self, job_id: str, tck: str) -> None:
+        """Emit event when a job execution begins."""
         self._emit("job.started", job_id=job_id, tck=tck)
 
     def on_script_started(self, job_id: str, script_name: str, index: int) -> None:
+        """Emit event when a script within a job starts executing."""
         self._emit("script.started", job_id=job_id, script=script_name, index=index)
 
     def on_step_started(self, job_id: str, step_index: int, step_type: str, step_name: str = "", phase: str = "main") -> None:
+        """Emit event when an individual step begins execution."""
         self._emit(
             "step.started",
             job_id=job_id,
@@ -75,6 +81,7 @@ class ExecutionMonitor:
         )
 
     def on_step_completed(self, job_id: str, result: StepResult) -> None:
+        """Emit event when a step finishes with its result details."""
         payload: dict[str, Any] = {
             "job_id": job_id,
             "step_name": result.step_name,
@@ -92,9 +99,11 @@ class ExecutionMonitor:
         self._emit("step.completed", **payload)
 
     def on_step_waiting(self, job_id: str, step_index: int, listener_url: str) -> None:
+        """Emit event when a step is waiting for an async callback."""
         self._emit("step.waiting", job_id=job_id, step_index=step_index, listener_url=listener_url)
 
     def on_script_completed(self, job_id: str, result: ScriptResult) -> None:
+        """Emit event when a script finishes execution."""
         self._emit(
             "script.completed",
             job_id=job_id,
@@ -103,12 +112,15 @@ class ExecutionMonitor:
         )
 
     def on_job_completed(self, job_id: str, status: JobStatus) -> None:
+        """Emit event when a job finishes with final status."""
         self._emit("job.completed", job_id=job_id, status=status.value)
 
     def on_job_paused(self, job_id: str) -> None:
+        """Emit event when a job is paused."""
         self._emit("job.paused", job_id=job_id)
 
     def on_job_resumed(self, job_id: str) -> None:
+        """Emit event when a paused job resumes."""
         self._emit("job.resumed", job_id=job_id)
 
     # ------------------------------------------------------------------
@@ -121,6 +133,8 @@ class ExecutionMonitor:
             try:
                 result = callback(event, payload)
                 if asyncio.iscoroutine(result):
-                    asyncio.ensure_future(result)
+                    task = asyncio.ensure_future(result)
+                    self._background_tasks.add(task)
+                    task.add_done_callback(self._background_tasks.discard)
             except (RuntimeError, TypeError, ValueError) as exc:
                 self._logger.warning("Callback failed for event '%s': %s", event, exc)

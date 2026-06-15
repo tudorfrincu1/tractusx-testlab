@@ -22,7 +22,7 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Compiler — orchestrates validation + compilation into encrypted packages."""
+"""Compiler — orchestrates validation + compilation into encrypted .stck packages."""
 
 from __future__ import annotations
 
@@ -32,14 +32,14 @@ from typing import Optional
 import yaml
 
 from tractusx_testlab.compiler.packager import Packager
-from tractusx_testlab.compiler.validator import ScriptValidator, ValidationResult
+from tractusx_testlab.compiler.validation.validator import ScriptValidator, ValidationResult
 from tractusx_testlab.models import PackageManifest
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.security.trust.identity import PlayerIdentity
 
 
 class Compiler:
-    """High-level API: parse YAML → validate → encrypt + sign → .tckpkg."""
+    """High-level API: parse YAML → validate → encrypt + sign → .stck."""
     __slots__ = ("_validator", "_parser")
 
     def __init__(self) -> None:
@@ -59,13 +59,13 @@ class Compiler:
         output_path: Optional[Path] = None,
         version: Optional[str] = None,
     ) -> tuple[PackageManifest, ValidationResult]:
-        """Validate and compile a script into a .tckpkg archive.
+        """Validate and compile a script into a .tck archive.
 
         Args:
             script_path: Path to the YAML test script.
             compiler_identity: The compiler's identity (for signing).
             recipient_keys: {fingerprint: RSA public PEM} for each player.
-            output_path: Destination file. Defaults to ``<script_name>.tckpkg``.
+            output_path: Destination file. Defaults to ``<script_name>.tck``.
             version: Optional connector version for version-specific validation.
 
         Returns:
@@ -85,7 +85,7 @@ class Compiler:
 
         script_yaml = script_path.read_bytes()
         if output_path is None:
-            output_path = script_path.with_suffix(".tckpkg")
+            output_path = script_path.with_suffix(".stck")
 
         manifest = Packager.build(
             script_yaml=script_yaml,
@@ -99,6 +99,33 @@ class Compiler:
 
         return manifest, validation_result
 
+    def compile_plain(
+        self,
+        manifest_path: Path,
+        output_path: Optional[Path] = None,
+        version: Optional[str] = None,
+    ) -> tuple[dict, dict]:
+        """Compile a TCK manifest into manifest.yaml + tck-execution.json.
+
+        Args:
+            manifest_path: Path to the TCK manifest YAML.
+            output_path: Destination directory for output files.
+            version: Optional compiler version string.
+
+        Returns:
+            Tuple of (manifest_dict, execution_dict).
+        """
+        from tractusx_testlab.compiler.ir.builder import build_ir
+
+        if output_path is None:
+            output_path = manifest_path.parent / "plain"
+
+        return build_ir(
+            manifest_path=manifest_path,
+            output_path=output_path,
+            version=version,
+        )
+
     def compile_tck(
         self,
         manifest_path: Path,
@@ -107,7 +134,7 @@ class Compiler:
         output_path: Optional[Path] = None,
         version: Optional[str] = None,
     ) -> tuple[PackageManifest, ValidationResult]:
-        """Compile a TCK manifest into a self-contained .tckpkg.
+        """Compile a TCK manifest into a self-contained .tck.
 
         Referenced script files are inlined so the resulting package
         carries everything needed to run — no external files required.
@@ -116,7 +143,7 @@ class Compiler:
             manifest_path: Path to the TCK manifest YAML.
             compiler_identity: The compiler's identity (for signing).
             recipient_keys: {fingerprint: RSA public PEM} for each player.
-            output_path: Destination .tckpkg file.
+            output_path: Destination .tck file.
             version: Optional connector version for validation.
 
         Returns:
@@ -142,7 +169,7 @@ class Compiler:
         bundled_yaml = yaml.dump(tck_data, default_flow_style=False, sort_keys=False).encode("utf-8")
 
         if output_path is None:
-            output_path = manifest_path.with_suffix(".tckpkg")
+            output_path = manifest_path.with_suffix(".stck")
 
         name = tck_data.get("name", manifest_path.stem)
         ver = tck_data.get("version", "1.0")

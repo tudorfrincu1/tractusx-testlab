@@ -37,8 +37,9 @@ from tractusx_testlab.models import (
     ValueSource,
     VariableDefinition,
 )
-from tractusx_testlab.models.definitions import Assertion, ServiceDefinition, StepDefinition
-from tractusx_testlab.models.enums import AssertionType, ServiceType
+from tractusx_testlab.models.authoring.definitions import Assertion, ServiceDefinition, StepDefinition
+from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
+from tractusx_testlab.scripting._variable_form import VariablesBlock, parse_variables_block
 
 # Maps compact assertion keys to (AssertionType, has_value).
 _COMPACT_ASSERTION_MAP: dict[str, tuple[AssertionType, bool]] = {
@@ -59,15 +60,9 @@ _COMPACT_ASSERTION_MAP: dict[str, tuple[AssertionType, bool]] = {
 }
 
 
-def parse_variables(raw: dict) -> dict[str, VariableDefinition]:
-    """Parse a variables mapping into VariableDefinition instances."""
-    result = {}
-    for name, spec in raw.items():
-        if isinstance(spec, dict):
-            result[name] = VariableDefinition(name=name, **spec)
-        else:
-            result[name] = VariableDefinition(name=name, default=spec)
-    return result
+def parse_variables(raw: VariablesBlock) -> dict[str, VariableDefinition]:
+    """Parse a variables block (legacy mapping or verb-form list) into definitions."""
+    return parse_variables_block(raw)
 
 
 def parse_step(raw: dict) -> StepDefinition:
@@ -154,24 +149,7 @@ def _parse_typed_assertion(raw: dict) -> Assertion:
 def _parse_compact_assertion(raw: dict) -> Assertion:
     """Parse an assertion written in the compact ``output:`` format (legacy)."""
     output_field = raw[keys.OUTPUT]
-    assertion_type: AssertionType | None = None
-    assertion_value = None
-    schema_ref = None
-    min_val = None
-    max_val = None
-
-    for compact_key, (a_type, has_value) in _COMPACT_ASSERTION_MAP.items():
-        if compact_key in raw:
-            assertion_type = a_type
-            raw_value = raw[compact_key]
-            if a_type == AssertionType.BETWEEN and isinstance(raw_value, list):
-                min_val = raw_value[0] if len(raw_value) > 0 else None
-                max_val = raw_value[1] if len(raw_value) > 1 else None
-            elif a_type == AssertionType.SCHEMA_VALIDATION:
-                schema_ref = raw_value
-            elif has_value:
-                assertion_value = raw_value
-            break
+    assertion_type, assertion_value, schema_ref, min_val, max_val = _extract_compact_assertion_fields(raw)
 
     if assertion_type is None:
         assertion_type = AssertionType(defaults.ASSERTION_TYPE)
@@ -187,6 +165,30 @@ def _parse_compact_assertion(raw: dict) -> Assertion:
         min=min_val,
         max=max_val,
     )
+
+
+def _extract_compact_assertion_fields(
+    raw: dict,
+) -> tuple[AssertionType | None, object, object, object, object]:
+    """Extract assertion type and values from compact assertion keys."""
+    for compact_key, (a_type, has_value) in _COMPACT_ASSERTION_MAP.items():
+        if compact_key not in raw:
+            continue
+        return _map_compact_value(a_type, has_value, raw[compact_key])
+    return None, None, None, None, None
+
+
+def _map_compact_value(
+    a_type: AssertionType, has_value: bool, raw_value: object,
+) -> tuple[AssertionType, object, object, object, object]:
+    """Map a matched compact assertion key to its typed field values."""
+    if a_type == AssertionType.BETWEEN and isinstance(raw_value, list):
+        min_val = raw_value[0] if len(raw_value) > 0 else None
+        max_val = raw_value[1] if len(raw_value) > 1 else None
+        return a_type, None, None, min_val, max_val
+    if a_type == AssertionType.SCHEMA_VALIDATION:
+        return a_type, None, raw_value, None, None
+    return a_type, (raw_value if has_value else None), None, None, None
 
 
 def parse_service(raw: dict) -> ServiceDefinition:
