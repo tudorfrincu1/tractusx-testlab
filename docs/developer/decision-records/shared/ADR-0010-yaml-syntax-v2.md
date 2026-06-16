@@ -1673,4 +1673,4 @@ teardown:
 
 - [ADR-0009: Typed Variable Class System](ADR-0009-typed-variable-class-system.md) — defines `class` taxonomy used in `returns:`
 - [GitHub Actions Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions) — inspiration source
-- [Product Scope](../product-scope.md) — lifecycle: IDE → YAML → compile → execute → feedback
+- [Product Scope](../../product-scope.md) — lifecycle: IDE → YAML → compile → execute → feedback

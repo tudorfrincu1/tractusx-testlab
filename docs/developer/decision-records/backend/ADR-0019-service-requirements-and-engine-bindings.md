@@ -52,8 +52,9 @@ that *schedules* them, Terraform `required_providers` vs provider config, and po
 dependency injection (required interface vs bound implementation).
 
 A second case is the System Under Test. Almost every TCK needs the SUT to expose a connector to
-TestLab. That is not TestLab configuration — it is a precondition the operator must satisfy
-before the run, and it should be declared as a requirement, not configured as a service.
+TestLab. That is not TestLab configuration — it is a requirement the operator must satisfy
+before the run, declared as a requirement and surfaced to steps as a variable (ADR-0018), not
+configured as a service.
 
 A third case is the **dataspace** itself — which ecosystem and version the run targets (e.g.
 Catena-X, saturn). This is not a service to bind; it is the *context* the engine and SUT are
@@ -93,7 +94,7 @@ infrastructure:
         id: CX-0018
         version: 2.1.3
 
-  sut:                      # what the operator must provide → preconditions
+  sut:                      # what the operator must provide → request variables
     connector:
       required: true
       standard:
@@ -154,14 +155,37 @@ bindings:
 
 Before a run the engine resolves every required `infrastructure.<side>.<capability>` against the
 matching `bindings.<side>.<capability>`, checks each constraint, and aborts with a typed error on
-any unbound or violated requirement. Unbound `sut` capabilities are reported as unmet
-preconditions, not configuration errors.
+any unbound or violated requirement. Unbound `sut` capabilities surface as unresolved `request`
+variables for the operator to fill (ADR-0021), not configuration errors.
 
-### 4. Steps reference capabilities, not configuration
+At boot the engine announces this resolved topology once via `tck.boot.requirements` (ADR-0016) \u2014
+each side's capabilities with their `required` flag (`true` = enabled, `false` = declared but not
+exercised) \u2014 so the operator and IDE know up front what each side, especially the SUT, must
+provide. Engine-operated components it then starts (the connector service client, the built-in mock
+server) are logged via `tck.boot.service.*`, distinct from the endpoint validation of
+`tck.boot.binding.*`.
 
-Steps consume the capability handle: `${{ infrastructure.engine.connector }}` for the engine-side
-connector, `${{ infrastructure.sut.connector }}` for the SUT target. The concrete service is
-resolved from the binding at runtime. Class-based IDE filtering (ADR-0009) keys off the capability.
+### 4. Steps reference variables, never infrastructure or bindings
+
+A step's only reference surface is a **variable** (ADR-0018) — `${{ env.<name>.<field> }}` or
+another step's output. Steps never name `infrastructure.*` or `bindings.*`; that topology is
+engine-internal. The two sides surface to authoring differently:
+
+- **Engine side is hidden plumbing, injected by capability.** The player resolves the engine
+  binding from the operator profile and **injects** it into a step by the step's capability — a
+  `connector/*` step drives `engine.connector`, a `dtr/*` step drives `engine.dtr` — with no handle
+  in the step. The injection happens once at boot and is recorded there (`tck.boot.binding.*`,
+  ADR-0016): non-secret config (urls, paths, bpn, version) in the event `outputs`, secret fields
+  (`auth`, credentials) JWE-encrypted. This honours "hide plumbing" — authors never wire the
+  engine's own connector or DTR into a block, and the concrete EDC/DTR config enters the run in
+  exactly one place.
+- **SUT side surfaces as a variable.** Each required `infrastructure.sut.<capability>` resolves to a
+  variable: `known` when the operator pre-supplied a binding, `request` when unbound (the operator
+  fills it at run start). A step targets the SUT by referencing that variable's fields, e.g.
+  `${{ env.sut_connector.counter_party_address }}`.
+
+Class-based IDE filtering (ADR-0009) still keys off the capability to decide *which* blocks are
+offered; what a block *references* is always a variable, never the capability handle.
 
 A capability gates its own blocks. A block may only be used when its capability is declared
 `required: true` on the relevant side. If a TCK references a block whose capability is missing or
@@ -180,8 +204,12 @@ no implicit enablement: using a block is the contract that its capability must b
   a capability certifies a specific standard.
 - `dataspace.version` is the single source of the ecosystem version; the old
   `metadata.dataspace_version` is removed — nothing duplicates it.
-- SUT requirements unify with the precondition model (ADR-0018) — an unbound `infrastructure.sut`
-  capability is exactly an unmet precondition shown to the operator at run start.
+- SUT requirements unify with the variables model (ADR-0018, ADR-0021) — an unbound
+  `infrastructure.sut` capability surfaces as a `request` variable the operator fills at run start,
+  and steps reference that variable, never the capability handle.
+- Engine EDC/DTR configuration enters the run in exactly one place — injected by capability at boot
+  and recorded in `tck.boot.binding.*` (ADR-0016), with secret fields JWE-encrypted — so the
+  concrete config never appears in authored YAML or per-step inputs.
 - ADR-0011 §1–§4 (full config in `env.services`) is superseded; a migration converts existing
   `env.services` into the `infrastructure` block plus a default binding profile.
 - One capability = one instance per side. A TCK that genuinely needs two distinct connectors on

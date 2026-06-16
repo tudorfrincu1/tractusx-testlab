@@ -40,6 +40,15 @@ Traces are delivered to the IDE frontend over Server-Sent Events (SSE) and persi
 
 The previous v2 format (flat JSONL with a header line) coupled trace identity to file-level context, making it unsuitable for single-stream TCK runs where multiple tests and lifecycle phases interleave. A CloudEvents-based envelope provides per-event identity, standard typing, and ecosystem compatibility.
 
+!!! note "Prerequisites are Variables, not Preconditions"
+    Everything a test needs before its steps run is a **Variable** (see
+    [ADR-0018](../shared/ADR-0018-unified-variables-model.md) and
+    [ADR-0021](../shared/ADR-0021-remove-precondition-concept.md)). The separate precondition
+    concept was removed. The trace therefore emits `tck.variable.*` resolution events
+    (not `tck.precondition.*`), and infrastructure that the engine or SUT must provide is
+    validated as a **binding** at boot (`tck.boot.binding.*`, see
+    [ADR-0019](ADR-0019-service-requirements-and-engine-bindings.md)).
+
 ## Decision
 
 Every trace line is a **CloudEvents v1.0** JSON object with domain-specific extensions (`sequence`, nested `data`). The format is a hybrid: CloudEvents envelope for interoperability, domain `data` for TestLab semantics.
@@ -63,7 +72,9 @@ Event IDs encode structural context as path segments:
 | Scope | Format | Example |
 |-------|--------|---------|
 | TCK lifecycle | `<tckid>/<type>/<hash>` | `cert-mgmt-tck/tck.start/a3f8c1d27e4b` |
-| Precondition | `<tckid>/<stepid>/<type>/<hash>` | `cert-mgmt-tck/sut_connector/tck.precondition.passed/6f3ad5c128e4` |
+| Boot binding | `<tckid>/infrastructure/<side>.<capability>/<type>/<hash>` | `cert-mgmt-tck/infrastructure/engine.connector/tck.boot.binding.passed/c5f0b3d42e8a` |
+| Boot service | `<tckid>/infrastructure/<side>.<capability>/<type>/<hash>` | `cert-mgmt-tck/infrastructure/engine.connector/tck.boot.service.ready/d6a1c4e53f9b` |
+| Variable | `<tckid>/env/variables/<varname>/<type>/<hash>` | `cert-mgmt-tck/env/variables/sut_connector/tck.variable.resolved/6f3ad5c128e4` |
 | Test lifecycle | `<tckid>/<testid>/<type>/<hash>` | `cert-mgmt-tck/catalog-policy-validation/tck.test.passed/c59034276e4a` |
 | Test step | `<tckid>/<testid>/<stepid>/<type>/<hash>` | `cert-mgmt-tck/catalog-policy-validation/pull_data_1/tck.test.step.passed/b48f2a165d39` |
 
@@ -74,9 +85,9 @@ The trailing `<hash>` is a 12-character hex string (blake2b of `data`) that disa
 | Context | Source value | Example |
 |---------|-------------|---------|
 | Step execution | Step's `uses` value | `connector/pull_data_filtered`, `validate/assert` |
-| Precondition | Precondition's `uses` value | `precondition/input`, `precondition/provide` |
+| Variable resolution | Variable's `uses` value, or `testlab/player/variables` | `config/connector/policy`, `testlab/player/variables` |
 | TCK lifecycle | `testlab/player/lifecycle` | — |
-| Boot phase | `testlab/player/boot` | — |
+| Boot / binding | `testlab/player/boot` | — |
 
 ### Type Taxonomy
 
@@ -86,22 +97,125 @@ The trailing `<hash>` is a 12-character hex string (blake2b of `data`) that disa
 |--------|-------------|-------------|
 | `tck.start` | `{tck_id, namespace, metadata, environment, service, run_id}` | TCK run begins |
 | `tck.boot.start` | `{manifest, compiler_version}` | Boot phase begins |
-| `tck.boot.passed` | `{duration_ms, assets_resolved, services}` | Boot succeeded |
+| `tck.boot.requirements` | `{dataspace, infrastructure}` | Declares the required/optional capabilities per side |
+| `tck.boot.binding.start` | `{side, capability}` | Binding validation begins (`side` ∈ `engine` \| `sut`) |
+| `tck.boot.binding.passed` | `{side, capability, outputs, duration_ms}` | Binding reachable and valid |
+| `tck.boot.binding.failed` | `{side, capability, errors, duration_ms}` | Binding missing or unreachable |
+| `tck.boot.service.start` | `{side, capability}` | Engine starts the service backing a capability |
+| `tck.boot.service.ready` | `{side, capability, outputs?, duration_ms}` | Service started and ready |
+| `tck.boot.service.failed` | `{side, capability, errors, duration_ms}` | Service failed to start |
+| `tck.boot.passed` | `{duration_ms, assets_resolved, bindings, services}` | Boot succeeded |
 | `tck.boot.failed` | `{duration_ms, errors}` | Boot failed |
 | `tck.tests.planned` | `{tests: [<test_id>, ...]}` | Ordered test execution plan |
 | `tck.end` | `{status, total, passed, failed, skipped, duration_ms, labels}` | TCK run complete |
 
-#### Precondition Lifecycle Events
+#### Boot Requirements Event
+
+`tck.boot.requirements` is emitted once, right after `tck.boot.start`, before any binding or
+service. It publishes the resolved topology (ADR-0019) so the operator and the IDE know up front
+what each side must provide — e.g. that the SUT must expose **both** a connector and a DTR. Each
+capability carries its `required` flag: `true` is **enabled** (the run needs it), `false` is
+**disabled** (declared but not exercised this run). The shape mirrors the manifest `infrastructure:`
+block exactly:
+
+```json
+{
+  "dataspace": { "ecosystem": "Catena-X", "version": "saturn" },
+  "infrastructure": {
+    "engine": { "connector": { "required": true }, "dtr": { "required": false } },
+    "sut":    { "connector": { "required": true }, "dtr": { "required": true } }
+  }
+}
+```
+
+A capability with `required: true` is then either validated as a binding (engine side) or resolved
+as a variable (SUT side); a `required: false` capability emits no further boot events.
+
+#### Boot Binding Events
+
+Every required `infrastructure.<side>.<capability>` (ADR-0019) is validated and **injected** at
+boot, one `tck.boot.binding.*` triple per capability. Engine-side bindings (the EDC connector and
+the DTR) are resolved from the operator binding profile and injected into the player here — this is
+the single place the concrete EDC/DTR configuration enters the run. Steps never carry it (ADR-0019
+§4); they reference only variables, and the player drives the injected engine service implicitly.
+
+`tck.boot.binding.passed.outputs` records the **resolved, non-secret** configuration so the run is
+reproducible from the trace alone:
+
+| Engine capability | Typical `outputs` (clear) | Encrypted (`$jwe`) |
+|-------------------|---------------------------|--------------------|
+| `connector` | `status`, `version`, `dsp_url`, `management_url`, `bpn` | `auth` (api key / client secret / token) |
+| `dtr` | `status`, `version`, `base_url` | `auth` (api key / OAuth2 client secret) |
+
+Secret binding fields (`auth`, `api_key`, `client_secret`, credentials) are **never** emitted in
+clear — they are JWE-encrypted under a `$jwe` key per [Secret Protection](#secret-protection),
+exactly like sensitive step outputs. A `tck.boot.binding.failed` carries `errors` only, no config.
+
+#### Boot Service Events
+
+A **binding** validates and injects an *external* endpoint; a **service** is the engine-operated
+component the player *starts* per run to drive that capability — for example the engine's connector
+client that uses the injected EDC config. A service is addressed by the **same**
+`infrastructure.<side>.<capability>` path as its binding (ADR-0019), exactly as written in the
+manifest YAML: `{side, capability}` in `data`, `infrastructure/<side>.<capability>` in the `id`. The
+same capability therefore appears once under `bindings` (its endpoint was validated) and once under
+`services` (its client was started). A service `start` follows the binding it depends on (the client
+needs its injected config first).
+
+The **mock server is part of the testlab backend**, not a per-run service: it is already running
+before any run begins, so it emits **no** `tck.boot.service.*` events and never appears in
+`tck.boot.passed.services`. Its endpoints surface where they are used, not as a boot service.
+
+| Capability | `start` data | `ready` data |
+|------------|-------------|--------------|
+| `engine.connector` | `{side: "engine", capability: "connector"}` | `{side, capability, outputs: {status}, duration_ms}` |
+
+Any secret in service `outputs` follows the same `$jwe` rule. `tck.boot.passed` then lists
+`bindings` (validated endpoints) and `services` (started components) separately, both addressed as
+`infrastructure.<side>.<capability>`.
+
+#### Variable Resolution Events
+
+Prerequisites resolve in a single phase before tests, after boot. Each variable resolves to
+exactly one **disposition** (`known` \| `request` \| `generate`, see
+[ADR-0018](../shared/ADR-0018-unified-variables-model.md)). The `input.*` events fire only for the
+`request` disposition.
 
 | `type` | `data` shape | Description |
 |--------|-------------|-------------|
-| `tck.precondition.start` | `{name, uses}` | Precondition begins |
-| `tck.precondition.update` | `{name, state, ...context}` | Progress (long-running) |
-| `tck.precondition.passed` | `{outputs, duration_ms}` | Precondition succeeded |
-| `tck.precondition.failed` | `{errors, duration_ms}` | Precondition failed |
-| `tck.precondition.skipped` | `{name, reason}` | Precondition not needed |
-| `tck.precondition.input.required` | `{name, schema, prompt, correlation_id, input_prompts}` | Blocked on user input |
-| `tck.precondition.input.received` | `{name, correlation_id, outputs}` | User input received |
+| `tck.variable.resolve.start` | `{name, uses?, disposition, schema?}` | Variable resolution begins |
+| `tck.variable.resolve.update` | `{name, state, ...context}` | Progress (long-running) |
+| `tck.variable.resolved` | `{name, disposition, outputs, duration_ms}` | Variable resolved |
+| `tck.variable.resolve.failed` | `{name, errors, duration_ms}` | Resolution failed |
+| `tck.variable.resolve.skipped` | `{name, reason}` | Variable not needed |
+| `tck.variable.input.required` | `{name, schema, prompt, correlation_id, input_prompts}` | Blocked on operator input |
+| `tck.variable.input.received` | `{name, correlation_id, outputs}` | Operator input received |
+
+#### Config Variable Schema
+
+A variable bound to a **config capability** that publishes a config schema carries a `schema`
+reference in its resolution events. Today this is `config/connector/policy`: the policy a test
+must configure (e.g. the SUT access/usage policy) is a complex variable
+([ADR-0018](../shared/ADR-0018-unified-variables-model.md)) whose value validates against the Catena-X policy
+JSON Schema shipped in `ide/schemas/policies/`, selected by the run's `dataspace_version`:
+
+| `dataspace_version` | Config schema `$id` |
+|---------------------|---------------------|
+| `saturn` | `https://w3id.org/catenax/2025/9/policy/schema/atomic-constraint-schemas.json` |
+| `jupiter` | `urn:tractusx:testlab:policy:jupiter` |
+
+The `schema` field is always a JSON-Schema **reference** — `{"$ref": "<config schema $id>"}` — never
+an inline ad-hoc copy. Author, operator, and trace therefore validate the policy against one source
+of truth (the same variables config schema the IDE authoring uses). It maps by disposition:
+
+- `known` / `generate` — `tck.variable.resolve.start` carries `schema`, declaring the config schema
+  the provided or generated `value` validates against.
+- `request` — `tck.variable.input.required` carries that same config-schema `$ref` as its `schema`,
+  so the operator UI renders the policy editor from the specified schema, not a hand-written one.
+
+Variables with no published config schema (plain primitives, infrastructure-derived values) omit
+`schema` entirely.
+
 
 #### Test Lifecycle Events
 
@@ -235,17 +349,17 @@ validation:equals:
     message: "Compare outputs.actual against inputs.expected in the trace"
 ```
 
-### Precondition Input Flow
+### Variable Input Flow
 
-When a precondition requires user input:
+When a `request`-disposition variable needs operator input:
 
-1. Player emits `tck.precondition.input.required` with `correlation_id`, `schema`, `prompt`, and `input_prompts`
+1. Player emits `tck.variable.input.required` with `correlation_id`, `schema`, `prompt`, and `input_prompts`
 2. SSE stream **pauses server-side** — no further events until input arrives
 3. IDE renders a form from `input_prompts`; user submits via REST endpoint (out of scope — see ADR-0017)
-4. Player emits `tck.precondition.input.received` echoing `correlation_id` + `outputs`
-5. Player emits `tck.precondition.passed` and streaming resumes
+4. Player emits `tck.variable.input.received` echoing `correlation_id` + `outputs`
+5. Player emits `tck.variable.resolved` and streaming resumes
 
-The `correlation_id` links the request to the response, enabling the backend to match submissions to pending preconditions.
+The `correlation_id` links the request to the response, enabling the backend to match submissions to pending variables.
 
 ### SSE Transport Mapping
 
@@ -261,7 +375,7 @@ Each JSONL line maps to one SSE frame:
 
 ## Concrete Example
 
-See [`docs/examples/certificate-management-v2/plain/execution-trace.jsonl`](../../examples/certificate-management-v2/plain/execution-trace.jsonl) for a full 36-event TCK trace.
+See [`docs/examples/certificate-management-v2/plain/execution-trace.jsonl`](../../../examples/certificate-management-v2/plain/execution-trace.jsonl) for a full 34-event TCK trace.
 
 **TCK start** (sequence 1):
 ```json
@@ -275,27 +389,27 @@ See [`docs/examples/certificate-management-v2/plain/execution-trace.jsonl`](../.
   "run_id":"a3f8c1d2-7e4b-4a9f-b5c6-2d1e8f9a0b3c"}}
 ```
 
-**Input-required pause** (sequences 11–12, ~45s gap):
+**Input-required pause** (sequences 9–10, ~45s gap):
 ```json
-{"specversion":"1.0","id":"...tck.precondition.input.required/4d18b3af06c2",
- "source":"precondition/input","type":"tck.precondition.input.required",
- "time":"2026-05-28T18:30:00.530Z","sequence":11,
+{"specversion":"1.0","id":"...tck.variable.input.required/4d18b3af06c2",
+ "source":"testlab/player/variables","type":"tck.variable.input.required",
+ "time":"2026-05-28T18:30:00.530Z","sequence":9,
  "data":{"name":"sut_connector","correlation_id":"inp-sut-conn-01",
   "prompt":"Provide SUT connector details","input_prompts":[...]}}
 
-{"specversion":"1.0","id":"...tck.precondition.input.received/5e29c4b017d3",
- "source":"precondition/input","type":"tck.precondition.input.received",
- "time":"2026-05-28T18:30:45.090Z","sequence":12,
+{"specversion":"1.0","id":"...tck.variable.input.received/5e29c4b017d3",
+ "source":"testlab/player/variables","type":"tck.variable.input.received",
+ "time":"2026-05-28T18:30:45.090Z","sequence":10,
  "data":{"name":"sut_connector","correlation_id":"inp-sut-conn-01",
   "outputs":{"counter_party_address":"https://sut-connector.example.com/api/v1/dsp",
    "counter_party_id":"BPNL000000000SUT"}}}
 ```
 
-**Step passed with nested validations** (sequence 18):
+**Step passed with nested validations** (sequence 16):
 ```json
 {"specversion":"1.0","id":"...pull_data_1/tck.test.step.passed/b48f2a165d39",
  "source":"connector/pull_data_filtered","type":"tck.test.step.passed",
- "time":"2026-05-28T18:30:47.738Z","sequence":18,
+ "time":"2026-05-28T18:30:47.738Z","sequence":16,
  "data":{"attempt":1,"duration_ms":2538,
   "outputs":{"asset_id":"urn:asset:ccm-api-3.0",
    "edr_token":{"$jwe":"eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoibG9jYWwtMjAyNi0wNS0yOCJ9..<iv>.<ct>.<tag>"}},
@@ -306,11 +420,11 @@ See [`docs/examples/certificate-management-v2/plain/execution-trace.jsonl`](../.
     "inputs":{"assertion":"not_null"},"outputs":{"passed":true}}]}}
 ```
 
-**Failed step with recommendations** (sequence 22):
+**Failed step with recommendations** (sequence 20):
 ```json
 {"specversion":"1.0","id":"...send_request_1/tck.test.step.failed/f8c367508a7d",
  "source":"connector/pull_data_filtered","type":"tck.test.step.failed",
- "time":"2026-05-28T18:31:17.801Z","sequence":22,
+ "time":"2026-05-28T18:31:17.801Z","sequence":20,
  "data":{"attempt":1,"duration_ms":30000,
   "validations":[{"source":"validate/assert","field":"status_code",
    "inputs":{"assertion":"equals","expected":200},

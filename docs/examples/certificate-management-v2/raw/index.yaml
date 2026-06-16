@@ -36,8 +36,12 @@ infrastructure:
   engine:
     connector:
       required: true
+    dtr:
+      required: false
   sut:
     connector:
+      required: true
+    dtr:
       required: true
 
 metadata:

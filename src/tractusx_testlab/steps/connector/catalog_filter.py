@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 class QueryCatalogWithFiltersStep(BaseStep):
     """Query a provider's catalog with multiple filter expressions."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def xeecute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
         filters = params.get("filters", [])
 

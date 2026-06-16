@@ -29,10 +29,10 @@ Accepted
 
 ## Based On
 
-- [ADR-0010 — YAML Syntax v2](ADR-0010-yaml-syntax-v2.md)
-- [ADR-0011 — Environment and Services](ADR-0011-environment-and-services.md)
+- [ADR-0010 — YAML Syntax v2](../shared/ADR-0010-yaml-syntax-v2.md)
+- [ADR-0011 — Environment and Services](../shared/ADR-0011-environment-and-services.md)
 - [ADR-0012 — Compilation and Packaging](ADR-0012-compilation-and-packaging.md)
-- [ADR-0013 — Preconditions Specification](ADR-0013-preconditions-specification.md)
+- ADR-0013 — Preconditions Specification (superseded, not published)
 
 ## Context
 

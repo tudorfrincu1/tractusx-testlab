@@ -21,7 +21,7 @@
 
 ## Status
 
-Proposed
+Accepted (finalized by [ADR-0021](ADR-0021-remove-precondition-concept.md))
 
 ## Date
 
@@ -31,13 +31,13 @@ Proposed
 
 - Branch: `feat/refactor/ide_backend`
 - Pull Request: #16
-- Builds on: [ADR-0004 — Precondition as Distinct Step Phase](ADR-0004-precondition-as-distinct-step-phase.md),
-  [ADR-0007 — Precondition Execution Logs Model](ADR-0007-precondition-execution-logs-model.md),
+- Builds on: ADR-0004 — Precondition as Distinct Step Phase (superseded, not published),
+  ADR-0007 — Precondition Execution Logs Model (superseded, not published),
   [ADR-0009 — Typed Variable Class System](ADR-0009-typed-variable-class-system.md),
   [ADR-0010 — YAML Syntax v2](ADR-0010-yaml-syntax-v2.md),
   [ADR-0011 — Environment and Services](ADR-0011-environment-and-services.md),
-  [ADR-0013 — Preconditions Specification](ADR-0013-preconditions-specification.md),
-  [ADR-0017 — Input Callback Endpoint](ADR-0017-input-callback-endpoint.md)
+  ADR-0013 — Preconditions Specification (superseded, not published),
+  [ADR-0017 — Input Callback Endpoint](../backend/ADR-0017-input-callback-endpoint.md)
 
 ---
 

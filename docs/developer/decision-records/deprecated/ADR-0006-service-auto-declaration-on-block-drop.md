@@ -25,7 +25,7 @@
 
 ## Status
 
-Discontinued
+Deprecated
 
 ## Date
 

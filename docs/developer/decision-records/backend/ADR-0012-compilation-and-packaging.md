@@ -28,8 +28,8 @@ Because TCK packages may embed secrets (OAuth2 credentials, service URLs, BPNs),
 This ADR defines the folder structure, compilation phases, package format (`.tckpkg`), encryption model, and integrity guarantees.
 
 **Based on:**
-- [ADR-0010 — YAML Syntax v2](ADR-0010-yaml-syntax-v2.md)
-- [Package Format Specification](../../specification/reference/package-format.md)
+- [ADR-0010 — YAML Syntax v2](../shared/ADR-0010-yaml-syntax-v2.md)
+- [Package Format Specification](../../../specification/reference/package-format.md)
 
 ## Status
 
@@ -107,7 +107,7 @@ tests:
 
 ### 1.1 Testdata Compilation
 
-Testdata entries declared in `env.testdata` are resolved and inlined at compile time. The full testdata syntax specification is defined in [ADR-0010](ADR-0010-yaml-test-syntax-v2.md).
+Testdata entries declared in `env.testdata` are resolved and inlined at compile time. The full testdata syntax specification is defined in [ADR-0010](../shared/ADR-0010-yaml-syntax-v2.md).
 
 **Entry specification:**
 

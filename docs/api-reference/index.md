@@ -81,7 +81,7 @@ The TestLab YAML syntax draws inspiration from established CI/CD and infrastruct
 | `returns:` not `outputs:` | Functions "return" values. "Output" is overloaded. |
 | Separate Main / Operators / Validators | Three distinct concerns: DO things, CONFIGURE behavior, CHECK results |
 
-For detailed rationale: [ADR-0010: YAML Syntax v2](../developer/decision-records/ADR-0010-yaml-syntax-v2.md)
+For detailed rationale: [ADR-0010: YAML Syntax v2](../developer/decision-records/shared/ADR-0010-yaml-syntax-v2.md)
 
 ---
 

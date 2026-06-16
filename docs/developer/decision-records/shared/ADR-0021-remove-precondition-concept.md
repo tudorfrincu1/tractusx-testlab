@@ -137,9 +137,9 @@ and referenced wherever a step needs it:
 
 This ADR supersedes the precondition-related decisions:
 
-- [ADR-0004 — Precondition as Distinct Step Phase](ADR-0004-precondition-as-distinct-step-phase.md)
-- [ADR-0007 — Precondition Execution Logs Model](ADR-0007-precondition-execution-logs-model.md)
-- [ADR-0013 — Preconditions Specification](ADR-0013-preconditions-specification.md)
+- ADR-0004 — Precondition as Distinct Step Phase (not published)
+- ADR-0007 — Precondition Execution Logs Model (not published)
+- ADR-0013 — Preconditions Specification (not published)
 
 It affirms and finalizes [ADR-0018 — Unified Variables Model](ADR-0018-unified-variables-model.md):
 the unified-variables model remains the way to declare prerequisites, and this

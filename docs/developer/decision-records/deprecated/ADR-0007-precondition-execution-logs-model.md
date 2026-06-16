@@ -25,7 +25,7 @@
 
 ## Status
 
-Superseded by [ADR-0021](ADR-0021-remove-precondition-concept.md)
+Superseded by [ADR-0021](../ADR-0021-remove-precondition-concept.md)
 
 ## Date
 
