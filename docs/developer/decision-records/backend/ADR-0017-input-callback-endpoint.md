@@ -29,7 +29,7 @@ Proposed
 
 ## Context
 
-ADR-0016 defines `tck.precondition.input.required` and `tck.precondition.input.received` CloudEvents for interactive precondition inputs. The SSE stream is unidirectional (server→client); a client→server channel is needed for the IDE to submit values back.
+ADR-0016 defines `tck.variable.input.required` and `tck.variable.input.received` CloudEvents for interactive variable inputs (the `request`-disposition path of the [Unified Variables Model](../shared/ADR-0018-unified-variables-model.md); the precondition concept was removed in [ADR-0021](../shared/ADR-0021-remove-precondition-concept.md)). The SSE stream is unidirectional (server→client); a client→server channel is needed for the IDE to submit values back.
 
 Requirements: no external infrastructure, in-process signaling via `asyncio.Future`, field validation, anti-replay protection, and support for partial submissions. The previous correlation_id approach is replaced by a JWT-based callback token that bundles correlation, authorization, and integrity into a single artifact.
 
@@ -102,11 +102,11 @@ The nonce is only delivered inside the `input.required` SSE event on an authenti
 
 16 random bytes → blake2b digest → 32 hex characters. Backend stores `_pending[(run_id, nonce)]` → `PendingInput`. Nonce is popped only when **all** fields are submitted (not on first partial).
 
-### One Input Per Precondition
+### One Input Per Variable
 
-- 1 precondition = 1 `input.required` event = 1 nonce = 1 JWT
-- All fields that precondition needs are bundled in one event
-- Multiple preconditions emit their own events sequentially
+- 1 variable = 1 `input.required` event = 1 nonce = 1 JWT
+- All fields that variable needs are bundled in one event
+- Multiple variables emit their own events sequentially
 
 ### Field Schema
 
@@ -158,10 +158,10 @@ Same JWT can be POSTed multiple times until all fields are filled. Each POST mer
 
 | Event | Payload |
 |-------|---------|
-| `tck.precondition.input.required` | `fields{} (typed map), callback_url, callback_token, warn_after_s, fail_after_s` |
-| `tck.precondition.input.received` | `received[], pending[], values` |
-| `tck.precondition.input.warning` | `pending[], timeout_remaining_s` |
-| `tck.precondition.input.timeout` | `missing[]` |
+| `tck.variable.input.required` | `fields{} (typed map), callback_url, callback_token, warn_after_s, fail_after_s` |
+| `tck.variable.input.received` | `received[], pending[], values` |
+| `tck.variable.input.warning` | `pending[], timeout_remaining_s` |
+| `tck.variable.input.timeout` | `missing[]` |
 
 ### Internal Mechanism — InputManager
 
@@ -188,11 +188,11 @@ class InputManager:
 
 ### Player Integration
 
-1. Precondition executor generates nonce, creates JWT, calls `input_manager.request()`
+1. Variable resolver generates nonce, creates JWT, calls `input_manager.request()`
 2. Emits `input.required` with `callback_url` + `callback_token`
 3. Awaits Future; starts warn timer and fail timer concurrently
 4. On warn timeout → emits `input.warning`, continues waiting
-5. On fail timeout → emits `input.timeout`, raises `PreconditionError`
+5. On fail timeout → emits `input.timeout`, raises `VariableInputError`
 
 ### REST Handler Validation Flow
 
@@ -237,19 +237,19 @@ How the input callback flow appears in the CloudEvents JSONL execution trace:
 
 **1. Input required — player blocks, emits field schema:**
 ```json
-{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.precondition.input.required/a1b2c3d4e5f6","source":"testlab/player/precondition","type":"tck.precondition.input.required","time":"2026-05-29T10:00:00.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","fields":{"counter_party_id":{"type":"string","class":"bpn","label":"Counter Party ID"},"counter_party_address":{"type":"string","class":"url","label":"Counter Party Address"}},"callback_url":"/api/v1/runs/run-abc-123/inputs","callback_token":"eyJ...","warn_after_s":120,"fail_after_s":300}}
+{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.variable.input.required/a1b2c3d4e5f6","source":"testlab/player/variables","type":"tck.variable.input.required","time":"2026-05-29T10:00:00.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","fields":{"counter_party_id":{"type":"string","class":"bpn","label":"Counter Party ID"},"counter_party_address":{"type":"string","class":"url","label":"Counter Party Address"}},"callback_url":"/api/v1/runs/run-abc-123/inputs","callback_token":"eyJ...","warn_after_s":120,"fail_after_s":300}}
 ```
 **2. Partial submission received:**
 ```json
-{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.precondition.input.received/b2c3d4e5f6a1","source":"testlab/player/precondition","type":"tck.precondition.input.received","time":"2026-05-29T10:01:12.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","received":["counter_party_id"],"pending":["counter_party_address"],"values":{"counter_party_id":"BPNL000000000SUT"}}}
+{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.variable.input.received/b2c3d4e5f6a1","source":"testlab/player/variables","type":"tck.variable.input.received","time":"2026-05-29T10:01:12.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","received":["counter_party_id"],"pending":["counter_party_address"],"values":{"counter_party_id":"BPNL000000000SUT"}}}
 ```
 **3. Warning timer fired — user hasn't completed submission:**
 ```json
-{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.precondition.input.warning/c3d4e5f6a1b2","source":"testlab/player/precondition","type":"tck.precondition.input.warning","time":"2026-05-29T10:02:00.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","pending":["counter_party_address"],"timeout_remaining_s":180}}
+{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.variable.input.warning/c3d4e5f6a1b2","source":"testlab/player/variables","type":"tck.variable.input.warning","time":"2026-05-29T10:02:00.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","pending":["counter_party_address"],"timeout_remaining_s":180}}
 ```
-**4. Final submission — all fields received, precondition unblocks:**
+**4. Final submission — all fields received, variable unblocks:**
 ```json
-{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.precondition.input.received/d4e5f6a1b2c3","source":"testlab/player/precondition","type":"tck.precondition.input.received","time":"2026-05-29T10:02:30.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","received":["counter_party_id","counter_party_address"],"pending":[],"values":{"counter_party_id":"BPNL000000000SUT","counter_party_address":"https://sut-connector.example.com/api/v1/dsp"}}}
+{"specversion":"1.0","id":"ccm-v2/sut_connection_details/request_input/tck.variable.input.received/d4e5f6a1b2c3","source":"testlab/player/variables","type":"tck.variable.input.received","time":"2026-05-29T10:02:30.000Z","data":{"run_id":"run-abc-123","name":"sut_connection_details","received":["counter_party_id","counter_party_address"],"pending":[],"values":{"counter_party_id":"BPNL000000000SUT","counter_party_address":"https://sut-connector.example.com/api/v1/dsp"}}}
 ```
 
 > **Note:** Fields with `class: "secret"` are **encrypted using JWE** (see [ADR-0016](ADR-0016-execution-trace-format.md) Secret Protection) before being written to the trace — never stored in plaintext. The decrypted value is held only in memory during execution.
@@ -262,9 +262,9 @@ How the input callback flow appears in the CloudEvents JSONL execution trace:
 | Double-submit after completion | 409 (nonce consumed) |
 | Invalid values | 422; player stays blocked; user retries with same token |
 | Run cancelled while waiting | `cancel_all()` cancels Futures |
-| Partial then timeout | Warning emitted → timeout emitted → precondition fails |
+| Partial then timeout | Warning emitted → timeout emitted → variable resolution fails |
 | Re-submit same field | Overwrites previous value (allowed before completion) |
-| JWT expired, fields incomplete | 403; precondition will eventually timeout |
+| JWT expired, fields incomplete | 403; variable resolution will eventually timeout |
 
 ### Alternatives Considered
 

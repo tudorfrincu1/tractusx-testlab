@@ -91,6 +91,6 @@ testlab run plain/ --override-assets ./my-overrides/
 
 ## Related ADRs
 
-- [ADR-0012 — Compilation and Packaging](../../developer/decision-records/ADR-0012-compilation-and-packaging.md)
-- [ADR-0014 — Flat Compilation IR](../../developer/decision-records/ADR-0014-flat-compilation-intermediate-representation.md)
-- [ADR-0015 — Package Asset Resolution](../../developer/decision-records/ADR-0015-package-asset-resolution.md)
+- [ADR-0012 — Compilation and Packaging](../../developer/decision-records/backend/ADR-0012-compilation-and-packaging.md)
+- [ADR-0014 — Flat Compilation IR](../../developer/decision-records/backend/ADR-0014-flat-compilation-intermediate-representation.md)
+- [ADR-0015 — Package Asset Resolution](../../developer/decision-records/backend/ADR-0015-package-asset-resolution.md)

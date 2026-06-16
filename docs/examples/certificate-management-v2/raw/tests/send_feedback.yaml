@@ -40,7 +40,7 @@ setup:
       method: POST
       path: "/companycertificate/notification/receive"
       response_status: 200
-      response_body: {}
+      response_body: "${{ env.testdata.receive_ack_response_body }}"
     returns:
       mock:
         type: class
@@ -49,26 +49,6 @@ setup:
         type: string
       full_mock_url:
         type: string
-
-  - id: ccm_policy
-    uses: precondition/provide
-    name: Required CCMAPI Usage Policy
-    with:
-      value:
-        permissions:
-          - action: use
-            constraints:
-              and:
-                - left_operand: UsagePurpose
-                  operator: isAnyOf
-                  right_operand: "cx.ccm.base:1"
-                - left_operand: FrameworkAgreement
-                  operator: eq
-                  right_operand: "DataExchangeGovernance:1.0"
-    returns:
-      policy:
-        type: object
-        class: Policy
 
 steps:
   - id: pull_notification_endpoint

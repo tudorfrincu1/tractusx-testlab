@@ -289,7 +289,7 @@ Parse `results.json` for pass/fail status in your CI pipeline.
 
 | Decision | Rationale | Reference |
 |----------|-----------|-----------|
-| SSE over WebSocket | Simpler server push, no bidirectional channel needed | [ADR-0003](../developer/decision-records/ADR-0003-sse-for-live-ide-execution.md) |
+| SSE over WebSocket | Simpler server push, no bidirectional channel needed | [ADR-0003](../developer/decision-records/shared/ADR-0003-sse-for-live-ide-execution.md) |
 | YAML over JSON for tests | Human-readable, supports comments, familiar to DevOps | Project convention |
 | Topological sort over linear | Enables parallel-safe independent tests, enforces dependencies | Player design |
 | `asyncio.Future` for callbacks | Native async/await integration, no polling, timeout support | Mock server design |

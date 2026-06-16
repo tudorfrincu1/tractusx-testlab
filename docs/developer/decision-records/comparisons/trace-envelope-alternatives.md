@@ -19,7 +19,7 @@
 
 # Trace Envelope Alternatives — Side-by-Side Comparison
 
-> Companion analysis to [ADR-0016](../ADR-0016-execution-trace-format.md). Compares five (plus one bonus) envelope formats for the TestLab execution trace stream, using the same failed CCM validation event (`tck.test.completed` / `validate/assert` on `ccm-present-vc`, expected `status_code=200`, got `403`).
+> Companion analysis to [ADR-0016](../backend/ADR-0016-execution-trace-format.md). Compares five (plus one bonus) envelope formats for the TestLab execution trace stream, using the same failed CCM validation event (`tck.test.completed` / `validate/assert` on `ccm-present-vc`, expected `status_code=200`, got `403`).
 
 ## The Reference Event
 
@@ -371,4 +371,4 @@ The reference event makes the verdict clear: every standardised envelope (CloudE
 ---
 
 **File**: `docs/developer/decision-records/comparisons/trace-envelope-alternatives.md`
-**Companion to**: [ADR-0016](../ADR-0016-execution-trace-format.md)
+**Companion to**: [ADR-0016](../backend/ADR-0016-execution-trace-format.md)

@@ -39,28 +39,49 @@ Each ADR follows the [Michael Nygard format](https://cognitect.com/blog/2011/11/
 
 ## Records
 
+ADRs are grouped by the part of the system they primarily affect: the **backend** Python
+library (`src/tractusx_testlab/`) or **shared** concerns that span the system. The
+[template](ADR-0000-template.md) lives at the root of this folder.
+
+### Backend
+
 | ADR | Title | Status |
 |-----|-------|--------|
-| [0000](ADR-0000-template.md) | Template | — |
-| [0001](ADR-0001-phase-based-toolbox-grouping.md) | Phase-Based Toolbox Grouping | Accepted |
-| [0002](ADR-0002-single-policy-config-block-with-version-mutator.md) | Single Policy Config Block with Version Mutator | Accepted |
-| [0003](ADR-0003-sse-for-live-ide-execution.md) | SSE for Live IDE Execution | Accepted |
-| [0004](ADR-0004-precondition-as-distinct-step-phase.md) | Precondition as Distinct Step Phase | Superseded by [0021](ADR-0021-remove-precondition-concept.md) |
-| [0005](ADR-0005-filesystem-participant-manager-with-protocol.md) | Filesystem Participant Manager with Protocol | Accepted |
-| [0006](ADR-0006-service-auto-declaration-on-block-drop.md) | Service Auto-Declaration on Block Drop | Accepted |
-| [0007](ADR-0007-precondition-execution-logs-model.md) | Precondition Execution Logs Model | Superseded by [0021](ADR-0021-remove-precondition-concept.md) |
-| [0008](ADR-0008-test-case-to-tck-rename.md) | Test-Case to TCK Rename | Accepted |
-| [0009](ADR-0009-typed-variable-class-system.md) | Typed Variable Class System | Proposed |
-| [0010](ADR-0010-yaml-syntax-v2.md) | YAML Syntax v2 (GHA-Inspired) | Accepted |
-| [0011](ADR-0011-environment-and-services.md) | Environment Variables and Services Management | Draft |
-| [0018](ADR-0018-unified-variables-model.md) | Unified Variables Model (Preconditions as Complex Variables) | Proposed |
-| [0019](ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
-| [0020](ADR-0020-frontend-vendored-policy-schemas.md) | Frontend Vendors Its Own Copy of the Policy JSON Schemas | Accepted |
-| [0021](ADR-0021-remove-precondition-concept.md) | Remove the Precondition Concept in Favor of Unified Variables | Accepted |
+| [0005](backend/ADR-0005-filesystem-participant-manager-with-protocol.md) | Filesystem Participant Manager with Protocol | Accepted |
+| [0012](backend/ADR-0012-compilation-and-packaging.md) | Compilation and Packaging | Proposed |
+| [0014](backend/ADR-0014-flat-compilation-intermediate-representation.md) | Flat Compilation Intermediate Representation | Accepted |
+| [0015](backend/ADR-0015-package-asset-resolution.md) | Package Asset Resolution | Accepted |
+| [0016](backend/ADR-0016-execution-trace-format.md) | Execution Trace Format | Proposed |
+| [0017](backend/ADR-0017-input-callback-endpoint.md) | Input Callback Endpoint | Proposed |
+| [0019](backend/ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
+
+### Shared
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [0003](shared/ADR-0003-sse-for-live-ide-execution.md) | SSE for Live IDE Execution | Accepted |
+| [0008](shared/ADR-0008-test-case-to-tck-rename.md) | Test-Case to TCK Rename | Accepted |
+| [0009](shared/ADR-0009-typed-variable-class-system.md) | Typed Variable Class System | Accepted |
+| [0010](shared/ADR-0010-yaml-syntax-v2.md) | YAML Syntax v2 (GHA-Inspired) | Accepted |
+| [0011](shared/ADR-0011-environment-and-services.md) | Environment Variables and Services Management | Proposed |
+| [0018](shared/ADR-0018-unified-variables-model.md) | Unified Variables Model (Preconditions as Complex Variables) | Accepted (finalized by [0021](shared/ADR-0021-remove-precondition-concept.md)) |
+| [0021](shared/ADR-0021-remove-precondition-concept.md) | Remove the Precondition Concept in Favor of Unified Variables | Accepted |
+
+### Deprecated / Superseded
+
+These ADRs are not published and remain as plain-text history only.
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| 0004 | Precondition as Distinct Step Phase | Superseded by [0021](shared/ADR-0021-remove-precondition-concept.md) (not published) |
+| 0006 | Service Auto-Declaration on Block Drop | Deprecated (not published) |
+| 0007 | Precondition Execution Logs Model | Superseded by [0021](shared/ADR-0021-remove-precondition-concept.md) (not published) |
+| 0013 | Preconditions Specification | Superseded by [0021](shared/ADR-0021-remove-precondition-concept.md) (not published) |
 
 ## Creating a New ADR
 
 1. Copy `ADR-0000-template.md` to `ADR-NNNN-short-title.md` (next available number).
 2. Fill in all sections.
-3. Add the entry to this index table.
-4. Add the file to `mkdocs.yml` under the Decision Records nav section.
+3. Place the file in the correct subfolder — `frontend/`, `backend/`, or `shared/` — based on which part of the system the decision primarily affects.
+4. Add the entry to the matching subsection in this index table, using the subfolder path (for example `[NNNN](backend/ADR-NNNN-short-title.md)`).
+5. Add the file to `mkdocs.yml` under the Decision Records nav section, in the matching `Frontend:` / `Backend:` / `Shared:` group.

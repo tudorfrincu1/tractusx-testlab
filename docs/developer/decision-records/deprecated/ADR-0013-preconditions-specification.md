@@ -31,12 +31,12 @@ Currently, ADR-0010 mentions `preconditions:` as a TCK manifest field but does n
 
 **Based on:**
 
-- [ADR-0010 — YAML Syntax v2](ADR-0010-yaml-syntax-v2.md)
-- [ADR-0012 — Compilation and Packaging](ADR-0012-compilation-and-packaging.md)
+- [ADR-0010 — YAML Syntax v2](../ADR-0010-yaml-syntax-v2.md)
+- [ADR-0012 — Compilation and Packaging](../ADR-0012-compilation-and-packaging.md)
 
 ## Status
 
-Superseded by [ADR-0021](ADR-0021-remove-precondition-concept.md)
+Superseded by [ADR-0021](../ADR-0021-remove-precondition-concept.md)
 
 ## Date
 

@@ -25,6 +25,12 @@ repo_url: https://github.com/eclipse-tractusx/tractusx-testlab
 repo_name: eclipse-tractusx/tractusx-testlab
 edit_uri: edit/main/docs/
 
+# Files kept in the repository for history but excluded from the published site.
+# Deprecated/superseded ADRs live under decision-records/deprecated/; backup.md
+# is a declined draft. They are not built, so links to them are de-linked.
+exclude_docs: |
+  developer/decision-records/deprecated/
+
 theme:
   name: material
   language: en
@@ -190,23 +196,22 @@ nav:
     - Decision Records:
       - Overview: developer/decision-records/index.md
       - ADR-0000 Template: developer/decision-records/ADR-0000-template.md
-      - ADR-0003 SSE for Live Execution: developer/decision-records/ADR-0003-sse-for-live-ide-execution.md
-      - ADR-0004 Precondition Phase: developer/decision-records/ADR-0004-precondition-as-distinct-step-phase.md
-      - ADR-0005 Participant Manager: developer/decision-records/ADR-0005-filesystem-participant-manager-with-protocol.md
-      - ADR-0006 Service Auto-Declaration: developer/decision-records/ADR-0006-service-auto-declaration-on-block-drop.md
-      - ADR-0007 Precondition Logs Model: developer/decision-records/ADR-0007-precondition-execution-logs-model.md
-      - ADR-0008 TCK Rename: developer/decision-records/ADR-0008-test-case-to-tck-rename.md
-      - ADR-0009 Typed Variable Class System: developer/decision-records/ADR-0009-typed-variable-class-system.md
-      - ADR-0010 YAML Syntax v2: developer/decision-records/ADR-0010-yaml-syntax-v2.md
-      - ADR-0011 Environment and Services: developer/decision-records/ADR-0011-environment-and-services.md
-      - ADR-0012 Compilation and Packaging: developer/decision-records/ADR-0012-compilation-and-packaging.md
-      - ADR-0013 Preconditions Specification: developer/decision-records/ADR-0013-preconditions-specification.md
-      - ADR-0014 Flat Compilation IR: developer/decision-records/ADR-0014-flat-compilation-intermediate-representation.md
-      - ADR-0015 Package Asset Resolution: developer/decision-records/ADR-0015-package-asset-resolution.md
-      - ADR-0016 Execution Trace Format: developer/decision-records/ADR-0016-execution-trace-format.md
-      - ADR-0018 Unified Variables Model: developer/decision-records/ADR-0018-unified-variables-model.md
-      - ADR-0019 Service Requirements and Engine Bindings: developer/decision-records/ADR-0019-service-requirements-and-engine-bindings.md
-      - ADR-0021 Remove Precondition Concept: developer/decision-records/ADR-0021-remove-precondition-concept.md
+      - Backend:
+        - ADR-0005 Participant Manager: developer/decision-records/backend/ADR-0005-filesystem-participant-manager-with-protocol.md
+        - ADR-0012 Compilation and Packaging: developer/decision-records/backend/ADR-0012-compilation-and-packaging.md
+        - ADR-0014 Flat Compilation IR: developer/decision-records/backend/ADR-0014-flat-compilation-intermediate-representation.md
+        - ADR-0015 Package Asset Resolution: developer/decision-records/backend/ADR-0015-package-asset-resolution.md
+        - ADR-0016 Execution Trace Format: developer/decision-records/backend/ADR-0016-execution-trace-format.md
+        - ADR-0017 Input Callback Endpoint: developer/decision-records/backend/ADR-0017-input-callback-endpoint.md
+        - ADR-0019 Service Requirements and Engine Bindings: developer/decision-records/backend/ADR-0019-service-requirements-and-engine-bindings.md
+      - Shared:
+        - ADR-0003 SSE for Live Execution: developer/decision-records/shared/ADR-0003-sse-for-live-ide-execution.md
+        - ADR-0008 TCK Rename: developer/decision-records/shared/ADR-0008-test-case-to-tck-rename.md
+        - ADR-0009 Typed Variable Class System: developer/decision-records/shared/ADR-0009-typed-variable-class-system.md
+        - ADR-0010 YAML Syntax v2: developer/decision-records/shared/ADR-0010-yaml-syntax-v2.md
+        - ADR-0011 Environment and Services: developer/decision-records/shared/ADR-0011-environment-and-services.md
+        - ADR-0018 Unified Variables Model: developer/decision-records/shared/ADR-0018-unified-variables-model.md
+        - ADR-0021 Remove Precondition Concept: developer/decision-records/shared/ADR-0021-remove-precondition-concept.md
   - Contributing:
     - Guidelines: contributing/index.md
 
