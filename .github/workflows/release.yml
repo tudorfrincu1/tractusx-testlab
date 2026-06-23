@@ -23,8 +23,9 @@ name: PyPi Publish
 on:
   workflow_dispatch:
   push:
-   tags:
-     - "v*.*.*"
+    tags:
+      - "v*.*.*"
+
 jobs:
   build:
     name: Build distribution 📦
