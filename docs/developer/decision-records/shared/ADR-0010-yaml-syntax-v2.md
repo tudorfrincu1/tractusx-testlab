@@ -994,7 +994,7 @@ setup:
 
 steps:
   - id: create_asset_1
-    uses: connector/create_asset
+    uses: connector/provider/create_asset
     name: Create the test asset
     with:
       asset_id: ${{ setup.gen_id.generated_id }}
@@ -1017,7 +1017,7 @@ steps:
           value: ${{ setup.gen_id.generated_id }}
 
   - id: get_asset_1
-    uses: connector/get_asset
+    uses: connector/provider/get_asset
     name: Retrieve the created asset
     with:
       asset_id: ${{ steps.create_asset_1.asset_id }}
@@ -1265,8 +1265,8 @@ Step types follow a hierarchical namespace pattern: `namespace/[sub-namespace/]a
 ```yaml
 uses: connector/provider/create_asset
 uses: connector/consumer/negotiate
-uses: connector/http/call_via_dataplane
-uses: http/call
+uses: connector/dataplane/http_request
+uses: http/request
 uses: mock/api
 uses: mock/wait/http_request
 uses: util/generate_uuid
@@ -1279,9 +1279,6 @@ uses: validate/schema
 uses: validate/query_param
 uses: notification/send
 uses: flow/if
-uses: service/connector_service
-uses: service/mock_server
-uses: service/discovery_service
 ```
 
 #### 9.3 Extensibility
@@ -1462,37 +1459,7 @@ env:
     provider_bpn: "BPNL000000000001"
     consumer_bpn: "BPNL000000000002"
     callback_url: "https://testlab.local/callback"
-  services:
-    - name: provider
-      uses: service/connector_service
-      with:
-        base_url: ${{ env.provider_url }}
-        management_path: /management/v3
-        dsp_path: /api/v1/dsp/2025-1
-        dataspace_version: ${{ metadata.dataspace_version }}
-        auth:
-          type: api_key
-          api_key: "test-api-key"
-          api_key_header: "X-Api-Key"
-      returns:
-        service:
-          type: class
-          class: ConnectorService
-    - name: consumer
-      uses: service/connector_service
-      with:
-        base_url: ${{ env.consumer_url }}
-        management_path: /management/v3
-        dsp_path: /api/v1/dsp/2025-1
-        dataspace_version: ${{ metadata.dataspace_version }}
-        auth:
-          type: api_key
-          api_key: "test-api-key"
-          api_key_header: "X-Api-Key"
-      returns:
-        service:
-          type: class
-          class: ConnectorService
+  
   schemas:
     certificate_schema:
       file: business_partner_certificate_schema.json
