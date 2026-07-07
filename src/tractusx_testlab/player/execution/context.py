@@ -112,18 +112,6 @@ class StepContext:
             return self._services.get_dtr(name)
         return self._first_service_of_type(ServiceType.DTR)
 
-    def get_dsp_consumer_service(self, name: Optional[str] = None) -> object:
-        """Return the first (or named) DSP_CONSUMER service."""
-        if name:
-            return self._services.get_dsp_consumer(name)
-        return self._first_service_of_type(ServiceType.DSP_CONSUMER)
-
-    def get_dsp_provider_service(self, name: Optional[str] = None) -> object:
-        """Return the first (or named) DSP_PROVIDER service."""
-        if name:
-            return self._services.get_dsp_provider(name)
-        return self._first_service_of_type(ServiceType.DSP_PROVIDER)
-
     def get_notification_service(self, name: Optional[str] = None) -> object:
         """Return a notification consumer service by name."""
         if name:

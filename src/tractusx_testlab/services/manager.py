@@ -115,14 +115,6 @@ class ServiceManager:
         """Return a Digital Twin Registry (AAS) service instance by name."""
         return self.get(name, expected_type=ServiceType.DTR)
 
-    def get_dsp_consumer(self, name: str) -> object:
-        """Return a DSP consumer service instance by name."""
-        return self.get(name, expected_type=ServiceType.DSP_CONSUMER)
-
-    def get_dsp_provider(self, name: str) -> object:
-        """Return a DSP provider service instance by name."""
-        return self.get(name, expected_type=ServiceType.DSP_PROVIDER)
-
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------

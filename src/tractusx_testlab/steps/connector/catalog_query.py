@@ -33,7 +33,6 @@ from tractusx_sdk.dataspace.tools.dsp_tools import DspTools
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
-from tractusx_testlab.steps.connector._dsp_consumer import _create_dsp_consumer
 from tractusx_testlab.syntax.context_vars import CATALOG_POLICY, CATALOG_TARGET
 
 if TYPE_CHECKING:
@@ -42,44 +41,50 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _resolve_filter_expression(params: dict) -> list[dict]:
+    """Return the SDK filter expression from explicit or nested ``filter`` params."""
+    filter_expression = params.get("filter_expression")
+    if not filter_expression:
+        filter_dict = params.get("filter", {})
+        if isinstance(filter_dict, dict):
+            filter_expression = filter_dict.get("filter_expression")
+    return filter_expression or []
+
+
 @step("query_catalog")
 class QueryCatalogStep(BaseStep):
-    """Query a provider's catalog via DSP protocol."""
+    """Query a provider's catalog via the SDK connector consumer service."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+        consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
-        filter_expression = params.get("filter_expression")
-        if not filter_expression:
-            filter_dict = params.get("filter", {})
-            if isinstance(filter_dict, dict):
-                filter_expression = filter_dict.get("filter_expression")
+        counter_party_id = params.get("counter_party_id") or params.get("bpnl", "")
+        filter_expression = _resolve_filter_expression(params)
 
-        dsp_consumer = _create_dsp_consumer(counter_party_address)
-        response = dsp_consumer.request_catalog(filter_expression=filter_expression)
+        catalog = consumer.get_catalog_with_filter(
+            counter_party_id=counter_party_id,
+            counter_party_address=counter_party_address,
+            filter_expression=filter_expression,
+        )
 
         url = f"{counter_party_address}/catalog/request"
-        if response.status_code != 200:
-            logger.error(
-                "Catalog request failed: status=%d, url=%s",
-                response.status_code, url,
-            )
+        if not catalog:
+            logger.error("Catalog request returned no result: url=%s", url)
             return StepOutput(
                 value=None,
                 request=HttpRequest(method="POST", url=url, body=params),
-                response=HttpResponse(status_code=response.status_code, body=None),
+                response=HttpResponse(status_code=500, body=None),
             )
 
-        result = response.json()
-
-        datasets = result.get("dcat:dataset", [])
+        datasets = catalog.get("dcat:dataset", [])
         if isinstance(datasets, dict):
             datasets = [datasets]
         context.set_variable("datasets", datasets)
 
         return StepOutput(
-            value={"catalog": result, "datasets": datasets},
+            value=catalog,
             request=HttpRequest(method="POST", url=url, body=params),
-            response=HttpResponse(status_code=200, body=result),
+            response=HttpResponse(status_code=200, body=catalog),
         )
 
 

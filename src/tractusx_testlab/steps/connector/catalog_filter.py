@@ -32,7 +32,6 @@ from typing import TYPE_CHECKING
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
-from tractusx_testlab.steps.connector.consume import _create_dsp_consumer
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
@@ -42,55 +41,49 @@ logger = logging.getLogger(__name__)
 
 @step("query_catalog_with_filters")
 class QueryCatalogWithFiltersStep(BaseStep):
-    """Query a provider's catalog with multiple filter expressions."""
+    """Query a provider's catalog with multiple filter expressions via the SDK."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+        consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
-        filters = params.get("filters", [])
+        counter_party_id = params.get("counter_party_id") or params.get("bpnl", "")
+        filter_expression = self._build_filter_expression(consumer, params.get("filters", []))
 
-        # Build composite filter expression from filter list
-        filter_expression = self._build_filter_expression(filters)
-
-        dsp_consumer = _create_dsp_consumer(counter_party_address)
-        response = dsp_consumer.request_catalog(filter_expression=filter_expression)
+        catalog = consumer.get_catalog_with_filter(
+            counter_party_id=counter_party_id,
+            counter_party_address=counter_party_address,
+            filter_expression=filter_expression,
+        )
 
         url = f"{counter_party_address}/catalog/request"
-        if response.status_code != 200:
-            logger.error(
-                "Filtered catalog request failed: status=%d, url=%s",
-                response.status_code, url,
-            )
+        if not catalog:
+            logger.error("Filtered catalog request returned no result: url=%s", url)
             return StepOutput(
                 value=None,
                 request=HttpRequest(method="POST", url=url, body=params),
-                response=HttpResponse(status_code=response.status_code, body=None),
+                response=HttpResponse(status_code=500, body=None),
             )
 
-        result = response.json()
-
-        datasets = result.get("dcat:dataset", [])
+        datasets = catalog.get("dcat:dataset", [])
         if isinstance(datasets, dict):
             datasets = [datasets]
         context.set_variable("datasets", datasets)
 
         return StepOutput(
-            value={"catalog": result, "datasets": datasets},
+            value={"catalog": catalog, "datasets": datasets},
             request=HttpRequest(method="POST", url=url, body=params),
-            response=HttpResponse(status_code=200, body=result),
+            response=HttpResponse(status_code=200, body=catalog),
         )
 
     @staticmethod
-    def _build_filter_expression(filters: list) -> list | None:
-        """Convert block-style filter list to SDK filter expression format."""
-        if not filters:
-            return None
-
-        expressions = []
-        for f in filters:
-            if isinstance(f, dict):
-                expressions.append({
-                    "operandLeft": f.get("operand_left", f.get("operandLeft", "")),
-                    "operator": f.get("operator", "="),
-                    "operandRight": f.get("operand_right", f.get("operandRight", "")),
-                })
-        return expressions if expressions else None
+    def _build_filter_expression(consumer: object, filters: list) -> list[dict]:
+        """Convert block-style filters to SDK filter dicts via ``get_filter_expression``."""
+        expressions: list[dict] = []
+        for entry in filters:
+            if not isinstance(entry, dict):
+                continue
+            key = entry.get("operand_left", entry.get("operandLeft", ""))
+            value = entry.get("operand_right", entry.get("operandRight", ""))
+            operator = entry.get("operator", "=")
+            expressions.append(consumer.get_filter_expression(key=key, value=value, operator=operator))
+        return expressions
