@@ -88,10 +88,6 @@ def create_instance(
         return _create_connector_service(service_definition, expected_type)
     if stype_val in _DTR_COMPATIBLE_TYPES:
         return _create_aas_service(service_definition)
-    if stype_val == "DSP_CONSUMER":
-        return _create_dsp_consumer_service(service_definition)
-    if stype_val == "DSP_PROVIDER":
-        return _create_dsp_consumer_service(service_definition)
 
     from tractusx_testlab.models import ServiceNotFoundError
     raise ServiceNotFoundError(service_definition.name)
@@ -141,9 +137,3 @@ def _create_aas_service(service_definition: ServiceDefinition) -> object:
         base_lookup_url=params.get("base_lookup_url", service_definition.base_url),
         api_path=params.get("api_path", defaults.AAS_API_PATH),
     )
-
-
-def _create_dsp_consumer_service(service_definition: ServiceDefinition) -> object:
-    from tractusx_testlab.steps.connector.consume import _DspConsumer
-
-    return _DspConsumer(base_url=service_definition.base_url)

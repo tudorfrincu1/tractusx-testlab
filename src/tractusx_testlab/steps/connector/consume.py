@@ -25,30 +25,30 @@
 """Catalog, negotiation, and transfer steps — barrel re-export of the split modules.
 
 The implementations live in dedicated modules along their responsibility seam:
-``_dsp_consumer`` (DSP client), ``catalog_query`` (catalog steps),
-``negotiate`` (contract negotiation step) and ``transfer`` (data transfer step).
+``catalog_query`` (catalog steps), ``negotiate`` (contract negotiation step),
+``transfer`` (data transfer step) and ``do_dsp`` (full SDK DSP flow steps).
 Importing this module triggers all related ``@step`` registrations.
 """
 
 from __future__ import annotations
 
-from tractusx_testlab.steps.connector._dsp_consumer import _DspConsumer, _create_dsp_consumer
 from tractusx_testlab.steps.connector.catalog_query import (
     QueryCatalogByAssetIdStep,
     QueryCatalogByBpnlStep,
     QueryCatalogStep,
 )
+from tractusx_testlab.steps.connector.do_dsp import DoDspStep, DoDspWithBpnlStep
 from tractusx_testlab.steps.connector.negotiate import NegotiateContractStep
 from tractusx_testlab.steps.connector.transfer import TransferDataStep
 
 __all__ = [
-    "_DspConsumer",
-    "_create_dsp_consumer",
     "QueryCatalogStep",
     "QueryCatalogByAssetIdStep",
     "QueryCatalogByBpnlStep",
     "NegotiateContractStep",
     "TransferDataStep",
+    "DoDspStep",
+    "DoDspWithBpnlStep",
 ]
 
 

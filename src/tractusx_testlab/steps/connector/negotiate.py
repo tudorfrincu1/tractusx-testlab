@@ -31,8 +31,7 @@ from typing import TYPE_CHECKING
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
-from tractusx_testlab.steps.connector._dsp_consumer import _create_dsp_consumer
-from tractusx_testlab.syntax.context_vars import CATALOG_POLICY, NEGOTIATION_ID
+from tractusx_testlab.syntax.context_vars import CATALOG_POLICY, CATALOG_TARGET, NEGOTIATION_ID
 
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
@@ -40,47 +39,29 @@ if TYPE_CHECKING:
 
 @step("negotiate_contract", aliases=["negotiate"])
 class NegotiateContractStep(BaseStep):
-    """Start a DSP contract negotiation directly with the provider."""
+    """Start an EDR contract negotiation with the provider via the SDK."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        import uuid as _uuid
-
+        consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or context.get_variable("provider_address", "")
-        offer = params.get("policy") or params.get("offer_id") or context.get_variable(CATALOG_POLICY)
-        consumer_pid = params.get("consumer_pid", f"urn:uuid:{_uuid.uuid4()}")
+        counter_party_id = params.get("counter_party_id") or context.get_variable("provider_bpnl", "")
+        target = params.get("target") or context.get_variable(CATALOG_TARGET)
+        policy = params.get("policy") or context.get_variable(CATALOG_POLICY)
 
-        # Use DSP protocol directly (same as catalog step) to avoid management API mismatch.
-        dsp_consumer = _create_dsp_consumer(counter_party_address)
-        resp = dsp_consumer.initiate_negotiation(
-            offer=offer,
-            consumer_pid=consumer_pid,
-            callback_address=params.get("callback_address"),
+        negotiation_id = consumer.start_edr_negotiation(
+            counter_party_id=counter_party_id,
+            counter_party_address=counter_party_address,
+            target=target,
+            policy=policy,
         )
-
-        url = f"{counter_party_address}/negotiations/request"
-        try:
-            body = resp.json()
-        except (ValueError, TypeError):
-            body = resp.text
-
-        agreement_id = None
-        negotiation_id = None
-        if isinstance(body, dict):
-            negotiation_id = body.get("@id")
-            agreement = body.get("dspace:agreement", {})
-            if isinstance(agreement, dict):
-                agreement_id = agreement.get("@id")
 
         if negotiation_id:
             context.set_variable(NEGOTIATION_ID, negotiation_id)
-        if agreement_id:
-            context.set_variable("agreement_id", agreement_id)
 
+        url = f"{counter_party_address}/v3/edrs"
+        value = {"negotiation_id": negotiation_id}
         return StepOutput(
-            value={"negotiation_id": negotiation_id, "agreement_id": agreement_id},
+            value=value,
             request=HttpRequest(method="POST", url=url, body=params),
-            response=HttpResponse(
-                status_code=resp.status_code,
-                body=body,
-            ),
+            response=HttpResponse(status_code=200 if negotiation_id else 500, body=value),
         )

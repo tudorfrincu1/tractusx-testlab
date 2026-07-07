@@ -39,22 +39,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _safe_delete(service: object, method_name: str, **kwargs: object) -> object:
-    """Attempt to call a delete method on the service, returning None on failure."""
-    method = getattr(service, method_name, None)
-    if method is None:
-        logger.warning(
-            "Service %s has no '%s' method — skipping cleanup",
-            type(service).__name__, method_name,
-        )
-        return None
-    try:
-        return method(**kwargs)
-    except AttributeError as exc:
-        logger.warning("Cleanup method %s failed: %s", method_name, exc)
-        return None
-
-
 @step("delete_asset")
 class DeleteAssetStep(BaseStep):
     """Delete an asset from the provider connector."""
@@ -64,12 +48,13 @@ class DeleteAssetStep(BaseStep):
         asset_id = params.get("asset_id") or context.get_variable("asset_id")
         url = f"{context.get_provider_base_url()}/v3/assets/{asset_id}"
 
-        result = _safe_delete(provider, "delete_asset", asset_id=asset_id)
+        result = provider.assets.delete(oid=asset_id)
+        status = result.status_code if result is not None else 204
 
         return StepOutput(
-            value=result,
+            value=None,
             request=HttpRequest(method="DELETE", url=url),
-            response=HttpResponse(status_code=204 if result is None else 200, body=result),
+            response=HttpResponse(status_code=status, body=None),
         )
 
 
@@ -82,12 +67,13 @@ class DeletePolicyStep(BaseStep):
         policy_id = params.get("policy_id") or context.get_variable("policy_id")
         url = f"{context.get_provider_base_url()}/v3/policydefinitions/{policy_id}"
 
-        result = _safe_delete(provider, "delete_policy", policy_id=policy_id)
+        result = provider.policies.delete(oid=policy_id)
+        status = result.status_code if result is not None else 204
 
         return StepOutput(
-            value=result,
+            value=None,
             request=HttpRequest(method="DELETE", url=url),
-            response=HttpResponse(status_code=204 if result is None else 200, body=result),
+            response=HttpResponse(status_code=status, body=None),
         )
 
 
@@ -100,12 +86,13 @@ class DeleteContractDefinitionStep(BaseStep):
         contract_id = params.get("contract_definition_id") or context.get_variable("contract_definition_id")
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions/{contract_id}"
 
-        result = _safe_delete(provider, "delete_contract", contract_id=contract_id)
+        result = provider.contract_definitions.delete(oid=contract_id)
+        status = result.status_code if result is not None else 204
 
         return StepOutput(
-            value=result,
+            value=None,
             request=HttpRequest(method="DELETE", url=url),
-            response=HttpResponse(status_code=204 if result is None else 200, body=result),
+            response=HttpResponse(status_code=status, body=None),
         )
 
     async def cleanup(self, context: "StepContext") -> None:

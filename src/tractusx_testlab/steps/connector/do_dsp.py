@@ -19,10 +19,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
 ## It was reviewed and tested by a human committer.
 
-"""Full DSP flow steps — single-call catalog→negotiate→transfer→EDR."""
+"""Full DSP flow steps — thin wrappers over the SDK ``do_dsp`` helpers."""
 
 from __future__ import annotations
 
@@ -39,53 +39,47 @@ if TYPE_CHECKING:
 
 @step("do_dsp")
 class DoDspStep(BaseStep):
-    """Full DSP flow: catalog → negotiate → transfer → EDR in one step."""
+    """Run the full DSP flow (catalog → negotiation → transfer) via the SDK."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         consumer = context.get_consumer_service()
-        url = f"{context.get_consumer_base_url()}"
-
         endpoint, token = consumer.do_dsp(
             counter_party_id=params["counter_party_id"],
             counter_party_address=params["counter_party_address"],
             filter_expression=params.get("filter_expression", []),
-            policies=params.get("policies"),
-            max_wait=params.get("max_wait", 60),
-            poll_interval=params.get("poll_interval", 1),
+            policies=params.get("policies", []),
         )
-
-        context.set_variable(DATAPLANE_ENDPOINT, endpoint)
-        context.set_variable(EDR_TOKEN, token)
-
-        return StepOutput(
-            value={"endpoint": endpoint, "token_prefix": token[:10] + "..." if token else None},
-            request=HttpRequest(method="POST", url=url),
-            response=HttpResponse(status_code=200, body={"endpoint": endpoint}),
-        )
+        return _build_output(context, params, endpoint, token)
 
 
 @step("do_dsp_with_bpnl")
 class DoDspWithBpnlStep(BaseStep):
-    """Full DSP flow via BPNL: discover → catalog → negotiate → transfer → EDR."""
+    """Run the full DSP flow using BPNL-based connector discovery via the SDK."""
 
     async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
         consumer = context.get_consumer_service()
-        url = f"{context.get_consumer_base_url()}"
-
         endpoint, token = consumer.do_dsp_with_bpnl(
-            bpnl=params.get("bpnl") or params.get("counter_party_id"),
+            bpnl=params["bpnl"],
             counter_party_address=params.get("counter_party_address"),
-            filter_expression=params.get("filter_expression", []),
+            filter_expression=params.get("filter_expression"),
             policies=params.get("policies"),
-            max_wait=params.get("max_wait", 60),
-            poll_interval=params.get("poll_interval", 1),
         )
+        return _build_output(context, params, endpoint, token)
 
+
+def _build_output(
+    context: "StepContext", params: dict, endpoint: str | None, token: str | None,
+) -> StepOutput:
+    """Store the dataplane endpoint and EDR token in context and return a uniform output."""
+    if endpoint:
         context.set_variable(DATAPLANE_ENDPOINT, endpoint)
+    if token:
         context.set_variable(EDR_TOKEN, token)
 
-        return StepOutput(
-            value={"endpoint": endpoint, "token_prefix": token[:10] + "..." if token else None},
-            request=HttpRequest(method="POST", url=url),
-            response=HttpResponse(status_code=200, body={"endpoint": endpoint}),
-        )
+    value = {"endpoint": endpoint, "token": token}
+    url = f"{context.get_consumer_base_url()}/v3/edrs"
+    return StepOutput(
+        value=value,
+        request=HttpRequest(method="POST", url=url, body=params),
+        response=HttpResponse(status_code=200 if endpoint else 500, body=value),
+    )

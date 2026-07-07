@@ -62,9 +62,7 @@ _CCM_STEP_TYPES = [
     "wait_for_call",
 ]
 
-_CCM_STEP_TYPES_UNREGISTERED = [
-    "delete_contract_def",
-]
+_CCM_STEP_TYPES_UNREGISTERED: list[str] = []
 
 
 class TestCcmYamlParsing:
