@@ -74,7 +74,7 @@ class TestDoDspStep:
         ctx.get_consumer_service.return_value = consumer
 
         # Act
-        output = await DoDspStep().execute(
+        await DoDspStep().execute(
             params={
                 "counter_party_id": "BPNL000000000001",
                 "counter_party_address": "https://provider.example.com/dsp",
