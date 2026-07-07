@@ -174,16 +174,13 @@ class TestQueryCatalogWithFiltersStep:
     """Tests for query_catalog_with_filters step."""
 
     @pytest.mark.asyncio
-    @patch("tractusx_testlab.steps.connector.catalog_filter._create_dsp_consumer")
     async def test_successful_catalog_query(
-        self, mock_create: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_context: MagicMock, definition: StepDefinition
     ) -> None:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"dcat:dataset": [{"@id": "asset-1"}]}
-        mock_consumer = MagicMock()
-        mock_consumer.request_catalog.return_value = mock_response
-        mock_create.return_value = mock_consumer
+        catalog = {"dcat:dataset": [{"@id": "asset-1"}]}
+        consumer = MagicMock()
+        consumer.get_catalog_with_filter.return_value = catalog
+        mock_context.get_consumer_service.return_value = consumer
 
         step = QueryCatalogWithFiltersStep()
         result = await step.execute(
@@ -194,30 +191,32 @@ class TestQueryCatalogWithFiltersStep:
         assert mock_context.variables["datasets"] == [{"@id": "asset-1"}]
 
     @pytest.mark.asyncio
-    @patch("tractusx_testlab.steps.connector.catalog_filter._create_dsp_consumer")
     async def test_catalog_error_returns_none_value(
-        self, mock_create: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_context: MagicMock, definition: StepDefinition
     ) -> None:
-        mock_response = MagicMock()
-        mock_response.status_code = 403
-        mock_consumer = MagicMock()
-        mock_consumer.request_catalog.return_value = mock_response
-        mock_create.return_value = mock_consumer
+        consumer = MagicMock()
+        consumer.get_catalog_with_filter.return_value = None
+        mock_context.get_consumer_service.return_value = consumer
 
         step = QueryCatalogWithFiltersStep()
         result = await step.execute(
             {"provider_url": "http://provider:8080"}, mock_context, definition,
         )
         assert result.value is None
-        assert result.response.status_code == 403
+        assert result.response.status_code == 500
 
     def test_build_filter_expression_from_list(self) -> None:
+        consumer = MagicMock()
+        consumer.get_filter_expression.side_effect = lambda key, value, operator: {
+            "operandLeft": key, "operator": operator, "operandRight": value,
+        }
         filters = [{"operand_left": "type", "operator": "=", "operand_right": "cert"}]
-        result = QueryCatalogWithFiltersStep._build_filter_expression(filters)
+        result = QueryCatalogWithFiltersStep._build_filter_expression(consumer, filters)
         assert result == [{"operandLeft": "type", "operator": "=", "operandRight": "cert"}]
 
-    def test_build_filter_expression_empty_returns_none(self) -> None:
-        assert QueryCatalogWithFiltersStep._build_filter_expression([]) is None
+    def test_build_filter_expression_empty_returns_empty_list(self) -> None:
+        consumer = MagicMock()
+        assert QueryCatalogWithFiltersStep._build_filter_expression(consumer, []) == []
 
 
 # ---------------------------------------------------------------------------
