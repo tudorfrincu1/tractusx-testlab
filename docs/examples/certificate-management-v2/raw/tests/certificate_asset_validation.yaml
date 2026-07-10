@@ -22,7 +22,7 @@
 ## It was reviewed and tested by a human committer.
 
 kind: test
-testlab: v1-alpha
+syntax: v2
 
 id: certificate-asset-validation
 namespace: ccm-v0.0.1
@@ -46,6 +46,9 @@ setup:
           - action: use
             constraints:
               and:
+                - left_operand: Membership
+                  operator: eq
+                  right_operand: "active"
                 - left_operand: UsagePurpose
                   operator: isAnyOf
                   right_operand: "cx.ccm.base:1"
@@ -57,7 +60,7 @@ setup:
         type: object
         class: Policy
 
-steps:
+execution:
   - id: pull_data_1
     uses: connector/pull_data_filtered
     name: Discover the CCMAPI certificate asset and obtain dataplane credentials
@@ -67,7 +70,7 @@ steps:
       counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
       policy: ${{ setup.ccm_policy.policy }}
       filters:
-        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+        - operand_left: "'http://purl.org/dc/terms/type'.'@id'"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
     returns:

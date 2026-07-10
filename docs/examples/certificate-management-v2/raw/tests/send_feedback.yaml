@@ -20,7 +20,7 @@
 ## It was reviewed and tested by a human committer.
 
 kind: test
-testlab: v1-alpha
+syntax: v2
 
 id: send-feedback-notification
 namespace: ccm-v0.0.1
@@ -50,7 +50,30 @@ setup:
       full_mock_url:
         type: string
 
-steps:
+  - id: ccm_policy
+    uses: precondition/provide
+    name: Required CCMAPI Usage Policy
+    with:
+      value:
+        permissions:
+          - action: use
+            constraints:
+              and:
+                - left_operand: Membership
+                  operator: eq
+                  right_operand: "active"
+                - left_operand: UsagePurpose
+                  operator: isAnyOf
+                  right_operand: "cx.ccm.base:1"
+                - left_operand: FrameworkAgreement
+                  operator: eq
+                  right_operand: "DataExchangeGovernance:1.0"
+    returns:
+      policy:
+        type: object
+        class: Policy
+
+execution:
   - id: pull_notification_endpoint
     uses: connector/pull_data_filtered
     name: Find CCMAPI endpoint and obtain dataplane credentials
@@ -60,10 +83,10 @@ steps:
       counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
       policy: ${{ setup.ccm_policy.policy }}
       filters:
-        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+        - operand_left: "'http://purl.org/dc/terms/type'.'@id'"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
-        - operand_left: "http://purl.org/dc/terms/subject"
+        - operand_left: "'http://purl.org/dc/terms/subject'.'@id'"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
         - operand_left: "https://w3id.org/catenax/ontology/common#version"
