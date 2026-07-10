@@ -31,7 +31,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.dataspace.models.connector.model_factory import ModelFactory
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -69,39 +69,48 @@ def _normalize_asset_params(params: dict) -> dict:
     return normalized
 
 
-@step("create_asset")
+@step("create_asset", aliases=["connector/provider/create_asset"])
 class CreateAssetStep(BaseStep):
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        service_name = params.get("service")
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
+        service_name = params.get("service") or params.get("connector_service") or None
         provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/assets"
         resolved = _normalize_asset_params(params)
-        result = provider.create_asset(
-            asset_id=resolved["asset_id"],
-            base_url=resolved.get("base_url", ""),
-            dct_type=resolved.get("dct_type"),
-            version=resolved.get("version", "3.0"),
-            semantic_id=resolved.get("semantic_id"),
-            proxy_params=resolved.get("proxy_params"),
-            headers=resolved.get("headers"),
-            private_properties=resolved.get("private_properties"),
-            context=resolved.get("context"),
-        )
         asset_id = resolved["asset_id"]
+        already_exists = False
+        try:
+            result = provider.create_asset(
+                asset_id=asset_id,
+                base_url=resolved.get("base_url", ""),
+                dct_type=resolved.get("dct_type"),
+                version=resolved.get("version", "3.0"),
+                semantic_id=resolved.get("semantic_id"),
+                proxy_params=resolved.get("proxy_params"),
+                headers=resolved.get("headers"),
+                private_properties=resolved.get("private_properties"),
+                context=resolved.get("context"),
+            )
+        except ValueError as exc:
+            if "409" in str(exc):
+                already_exists = True
+                result = None
+            else:
+                raise
+        http_status = 409 if already_exists else (200 if result else 500)
         return StepOutput(
-            value=asset_id,
+            value={"asset_id": asset_id},
             request=HttpRequest(method="POST", url=url, body=resolved),
             response=HttpResponse(
-                status_code=200 if result else 500,
+                status_code=http_status,
                 body={"asset_id": asset_id, **(result if isinstance(result, dict) else {})},
             ),
         )
 
 
-@step("create_policy")
+@step("create_policy", aliases=["connector/provider/create_policy"])
 class CreatePolicyStep(BaseStep):
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        service_name = params.get("service")
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
+        service_name = params.get("service") or params.get("connector_service") or None
         provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/policydefinitions"
 
@@ -119,27 +128,36 @@ class CreatePolicyStep(BaseStep):
         )
         request_body = json.loads(policy_model.to_data())
 
-        result = provider.create_policy(
-            policy_id=policy_id,
-            context=params.get("context"),
-            permissions=params.get("permissions", []),
-            prohibitions=params.get("prohibitions", []),
-            obligations=params.get("obligations", []),
-        )
+        already_exists = False
+        try:
+            result = provider.create_policy(
+                policy_id=policy_id,
+                context=params.get("context"),
+                permissions=params.get("permissions", []),
+                prohibitions=params.get("prohibitions", []),
+                obligations=params.get("obligations", []),
+            )
+        except ValueError as exc:
+            if "409" in str(exc):
+                already_exists = True
+                result = None
+            else:
+                raise
+        http_status = 409 if already_exists else (200 if result else 500)
         return StepOutput(
-            value=policy_id,
+            value={"policy_id": policy_id},
             request=HttpRequest(method="POST", url=url, body=request_body),
             response=HttpResponse(
-                status_code=200 if result else 500,
+                status_code=http_status,
                 body={"policy_id": policy_id, **(result if isinstance(result, dict) else {})},
             ),
         )
 
 
-@step("create_contract_definition", aliases=["create_contract_definition"])
+@step("create_contract_definition", aliases=["create_contract_definition", "connector/provider/create_contract_definition"])
 class CreateContractDefinitionStep(BaseStep):
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
-        service_name = params.get("service")
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
+        service_name = params.get("service") or params.get("connector_service") or None
         provider = context.get_provider_service(service_name)
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions"
 
@@ -162,17 +180,26 @@ class CreateContractDefinitionStep(BaseStep):
         if isinstance(asset_id, dict):
             asset_id = asset_id.get("asset_id") or asset_id.get("@id", "")
 
-        result = provider.create_contract(
-            contract_id=contract_id,
-            usage_policy_id=usage_policy_id,
-            access_policy_id=access_policy_id,
-            asset_id=asset_id,
-        )
+        already_exists = False
+        try:
+            result = provider.create_contract(
+                contract_id=contract_id,
+                usage_policy_id=usage_policy_id,
+                access_policy_id=access_policy_id,
+                asset_id=asset_id,
+            )
+        except ValueError as exc:
+            if "409" in str(exc):
+                already_exists = True
+                result = None
+            else:
+                raise
+        http_status = 409 if already_exists else (200 if result else 500)
         return StepOutput(
-            value=contract_id,
+            value={"contract_def_id": contract_id},
             request=HttpRequest(method="POST", url=url, body=params),
             response=HttpResponse(
-                status_code=200 if result else 500,
+                status_code=http_status,
                 body={"contract_def_id": contract_id, **(result if isinstance(result, dict) else {})},
             ),
         )

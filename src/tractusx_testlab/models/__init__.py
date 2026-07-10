@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """
@@ -30,15 +30,19 @@ continues to work unchanged.
 """
 
 from tractusx_testlab.models.authoring.definitions import (
+    AssertionV2,
+    EnvDefinition,
     ImportDefinition,
-    ServiceDefinition,
-    TckDefinition,
-    VariableDefinition,
-)
-from tractusx_testlab.models.authoring.definitions import (  # local overrides
-    Assertion,       # adds schema_ref, min, max fields
+    MetadataDefinition,
+    ReturnFieldDefinition,
     ScriptDefinition,
-    StepDefinition,    # no name field
+    ScriptDefinitionV2,
+    ServiceDefinition,
+    StepDefinitionV2,
+    TckDefinition,
+    TckDefinitionV2,
+    TckMetadataDefinition,
+    VariableDefinition,
 )
 from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
@@ -105,13 +109,19 @@ __all__ = [
     "StepPhase",
     "StepStatus",
     "ValueSource",
-    # definitions
-    "Assertion",
+    # definitions (v2)
+    "AssertionV2",
+    "EnvDefinition",
     "ImportDefinition",
+    "MetadataDefinition",
+    "ReturnFieldDefinition",
     "ScriptDefinition",
+    "ScriptDefinitionV2",
     "ServiceDefinition",
-    "StepDefinition",
+    "StepDefinitionV2",
     "TckDefinition",
+    "TckDefinitionV2",
+    "TckMetadataDefinition",
     "VariableDefinition",
     "VariableSource",
     # security

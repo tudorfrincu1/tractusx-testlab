@@ -1,5 +1,5 @@
 ###############################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Tests for ADR-0019 dataspace/infrastructure parsing and reference resolution."""
@@ -19,8 +19,11 @@ from tractusx_testlab.scripting.parser import YamlParser
 
 def _doc() -> dict:
     return {
-        "name": "infra-doc",
-        "version": "1.0",
+        "syntax": "v2",
+        "kind": "test",
+        "id": "infra-doc",
+        "namespace": "testlab.test",
+        "metadata": {"name": "infra-doc", "version": "1.0"},
         "dataspace": {"ecosystem": "Catena-X", "version": "saturn"},
         "infrastructure": {
             "engine": {"connector": {"required": True}},
@@ -29,7 +32,7 @@ def _doc() -> dict:
                 "dtr": {"required": True},
             },
         },
-        "steps": [],
+        "execution": [],
     }
 
 
@@ -47,13 +50,16 @@ class TestDataspaceParsing:
 
         script = YamlParser.parse_script_from_dict(doc)
 
-        assert script.dataspace_version == "jupiter"
+        assert script.dataspace.version == "jupiter"
 
-    def test_legacy_string_dataspace_is_ignored(self) -> None:
-        script = YamlParser.parse_script_from_dict({"name": "legacy", "dataspace": "saturn", "steps": []})
+    def test_legacy_string_dataspace_is_rejected(self) -> None:
+        from pydantic import ValidationError
 
-        assert script.dataspace is None
-        assert script.dataspace_version == "saturn"
+        doc = _doc()
+        doc["dataspace"] = "saturn"  # legacy string form — must be a dict in v2
+
+        with pytest.raises(ValidationError):
+            YamlParser.parse_script_from_dict(doc)
 
 
 class TestInfrastructureParsing:
@@ -80,7 +86,7 @@ class TestInfrastructureParsing:
         standard = script.infrastructure.sut["connector"].standard
 
         assert standard.version is None
-        assert standard.effective_version(script.dataspace_version) == "saturn"
+        assert standard.effective_version(script.dataspace.version) == "saturn"
 
     def test_unknown_capability_key_is_rejected(self) -> None:
         doc = _doc()

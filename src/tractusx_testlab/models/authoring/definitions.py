@@ -19,39 +19,34 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Definition models — authoring / compile-time structures for scripts and TCKs."""
+"""Syntax v2 authoring models — compile-time structures for scripts and TCKs.
+
+All models follow the GitHub Actions-like verb-form YAML schema using ``uses``
+and ``with`` keys.  The discriminator field ``syntax`` routes to the correct versioned model via Pydantic Discriminated Unions.
+"""
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from tractusx_testlab.models.authoring.infrastructure import (
     DataspaceContext,
     InfrastructureConfig,
 )
-from tractusx_testlab.models.primitives.enums import (
-    AssertionSeverity,
-    FailurePolicy,
-    SdkCallMode,
-    ValueSource,
-    VariableSource,
-)
-from tractusx_testlab.models.primitives.enums import AssertionType, ScriptKind, ServiceType
+from tractusx_testlab.models.primitives.enums import FailurePolicy, ServiceType, VariableSource
 
+
+# ---------------------------------------------------------------------------
+# Shared primitive models (kept across syntax versions)
+# ---------------------------------------------------------------------------
 
 class VariableDefinition(BaseModel):
-    """Schema for a declared variable in a test script.
-
-    Carries both the legacy flat fields (``type``/``default``) and the LOCKED
-    GRAMMAR v1 verb-form fields (``source``/``generator``/``format``/
-    ``placeholder``). The addressable name is ``name`` (the entry ``id`` in
-    verb form), so ``${{ env.<name> }}`` resolves unchanged.
-    """
+    """Schema for a declared variable."""
 
     name: str
     type: str = "str"
@@ -64,76 +59,14 @@ class VariableDefinition(BaseModel):
     placeholder: Optional[str] = None
 
 
-class Assertion(BaseModel):
-    """Validation rule applied to a step output."""
-
-    type: AssertionType
-    severity: AssertionSeverity = AssertionSeverity.HARD
-    source: ValueSource = ValueSource.INLINE
-    value: Optional[Any] = None
-    path: Optional[str] = Field(default=None, alias="output")
-    description: Optional[str] = None
-    schema_ref: Optional[str] = Field(default=None, alias="schema")
-    min: Optional[Any] = None
-    max: Optional[Any] = None
-    operator: Optional[str] = None
-    expected: Optional[Any] = None
-    json_path: Optional[str] = None
-    store_in_variable: Optional[str] = None
-    nested_validate: Optional[list["Assertion"]] = Field(
-        default=None, alias="validate"
-    )
-
-    model_config = {"populate_by_name": True}
-
-
-class StepDefinition(BaseModel):
-    """Compile-time definition of a single test step."""
-
-    type: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    params: dict = Field(default_factory=dict)
-    on_failure: FailurePolicy = FailurePolicy.ABORT
-    timeout_s: Optional[float] = None
-    validate: list[Assertion] = Field(default_factory=list)
-    store_in_memory: Optional[dict[str, str]] = None
-    store_in_variable: Optional[str] = None
-    if_condition: Optional[str] = Field(default=None, alias="if")
-    output_definitions: list[dict[str, str]] = Field(default_factory=list)
-
-    model_config = {"populate_by_name": True}
-
-
 class ServiceDefinition(BaseModel):
-    """Declaration of an external service used by a test script."""
+    """Declaration of an external service used by tests."""
 
     name: str
     type: ServiceType
     base_url: str
     auth: dict = Field(default_factory=dict)
     params: Optional[dict] = None
-
-
-class ScriptDefinition(BaseModel):
-    """Top-level definition of a test script with phases and services."""
-
-    kind: ScriptKind = ScriptKind.TEST
-    name: str
-    version: str = "1.0"
-    dataspace_version: str = "saturn"
-    dataspace: Optional[DataspaceContext] = None
-    infrastructure: Optional[InfrastructureConfig] = None
-    description: Optional[str] = None
-    import_from: Optional[str] = None
-    allow_sdk_calls: SdkCallMode = SdkCallMode.ALLOWLIST
-    outputs: dict[str, str] = Field(default_factory=dict)
-    variables: dict[str, VariableDefinition] = Field(default_factory=dict)
-    services: list[ServiceDefinition] = Field(default_factory=list)
-    setup: list[StepDefinition] = Field(default_factory=list)
-    steps: list[StepDefinition] = Field(default_factory=list)
-    teardown: list[StepDefinition] = Field(default_factory=list)
-    depends_on: list[str] = Field(default_factory=list)
 
 
 class ImportDefinition(BaseModel):
@@ -143,15 +76,148 @@ class ImportDefinition(BaseModel):
     override: Optional[dict] = None
 
 
-class TckDefinition(BaseModel):
-    """Top-level definition of a TCK package containing multiple tests."""
+# ---------------------------------------------------------------------------
+# Syntax v2 models
+# ---------------------------------------------------------------------------
 
-    kind: ScriptKind = ScriptKind.TCK
+class MetadataDefinition(BaseModel):
+    """Metadata block common to scripts and TCK manifests."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
     name: str
     version: str = "1.0"
     description: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
+
+
+class ReturnFieldDefinition(BaseModel):
+    """Single output field declared in a step ``returns`` block."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    type: str
+    cls: Optional[str] = Field(default=None, alias="class")
+
+
+class AssertionV2(BaseModel):
+    """Syntax v2 assertion using ``uses`` / ``with`` verb-form keys."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    uses: str
+    with_: Optional[dict[str, Any]] = Field(default=None, alias="with")
+
+
+class StepDefinitionV2(BaseModel):
+    """Syntax v2 step definition using ``uses`` and ``with`` verb-form keys."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]{0,49}$")
+    uses: str
+    name: Optional[str] = None
+    with_: Optional[dict[str, Any]] = Field(default=None, alias="with")
+    returns: Optional[dict[str, ReturnFieldDefinition]] = None
+    validate: Optional[list[AssertionV2]] = None
+    # Runtime control fields kept for execution-engine compatibility.
+    on_failure: FailurePolicy = FailurePolicy.ABORT
+    timeout_s: Optional[float] = None
+    if_condition: Optional[str] = Field(default=None, alias="if")
+
+
+class ScriptDefinitionV2(BaseModel):
+    """Syntax v2 top-level test script definition."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: Literal["test"] = "test"
+    syntax: Literal["v2"]
+    id: str = Field(pattern=r"^[a-z][a-z0-9_-]{0,99}$")
+    namespace: str
+    metadata: MetadataDefinition
+    setup: list[StepDefinitionV2] = Field(default_factory=list)
+    execution: list[StepDefinitionV2] = Field(default_factory=list)
+    teardown: list[StepDefinitionV2] = Field(default_factory=list)
+    dataspace_version: Literal["saturn", "jupiter"] = "saturn"
+    # Transition fields: allow dataspace/infrastructure on per-script level for
+    # backward-compatible test suites that embed them inline.
+    dataspace: Optional["DataspaceContext"] = None
+    infrastructure: Optional["InfrastructureConfig"] = None
+
+
+class TckMetadataDefinition(MetadataDefinition):
+    """Metadata block for TCK manifests — extends base with certification fields."""
+
+    authors: list[dict[str, Any]] = Field(default_factory=list)
+    copyright_holders: list[str] = Field(default_factory=list)
+    license: str = "Apache-2.0"
+    standards: list[dict[str, Any]] = Field(default_factory=list)
+    dataspace_version: Literal["saturn", "jupiter"] = "saturn"
+
+
+class SchemaDefinition(BaseModel):
+    """A single schema entry in the TCK env block."""
+
+    id: str
+    source: str
+
+
+class TestDataDefinition(BaseModel):
+    """A single test data entry in the TCK env block."""
+
+    id: str
+    source: str
+    type: str = "application/json"
+
+
+class EnvDefinition(BaseModel):
+    """Environment block in a TCK manifest — shared variables, services, and test data."""
+
+    variables: Optional[Any] = None
+    services: Optional[list[dict[str, Any]]] = None
+    schemas: Optional[list[SchemaDefinition]] = None
+    testdata: Optional[list[TestDataDefinition]] = None
+
+
+class TckTestEntry(BaseModel):
+    """A single entry in the TCK ``tests:`` list.
+
+    ``id`` is the test filename, relative to the ``tests/`` sub-folder of the
+    TCK package.  ``name`` is an optional human-readable label used in reports
+    and log output.
+    """
+
+    id: str = Field(pattern=r"^[a-zA-Z0-9_\-\.]+\.yaml$")
+    name: Optional[str] = None
+
+
+class TckDefinitionV2(BaseModel):
+    """Syntax v2 top-level TCK manifest definition."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: Literal["tck"] = "tck"
+    syntax: Literal["v2"]
+    id: str = Field(pattern=r"^[a-z][a-z0-9_-]{0,99}$")
+    metadata: TckMetadataDefinition
+    env: Optional[EnvDefinition] = None
+    tests: list[TckTestEntry] = Field(default_factory=list)
+    # Transition fields — kept for compatibility with existing CCM examples.
     dataspace: Optional[DataspaceContext] = None
     infrastructure: Optional[InfrastructureConfig] = None
-    shared_variables: Optional[dict[str, VariableDefinition]] = None
-    tests: list[Union[ScriptDefinition, str]] = Field(default_factory=list)
-    imports: list[ImportDefinition] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Discriminated union routing — single public type aliases, fail-fast on unknown syntax
+# ---------------------------------------------------------------------------
+
+ScriptDefinition = Annotated[
+    Union[ScriptDefinitionV2],
+    Field(discriminator="syntax"),
+]
+
+TckDefinition = Annotated[
+    Union[TckDefinitionV2],
+    Field(discriminator="syntax"),
+]

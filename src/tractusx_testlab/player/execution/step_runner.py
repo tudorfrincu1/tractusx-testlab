@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Step-level execution helpers — run individual steps, evaluate assertions, store outputs."""
@@ -50,7 +50,7 @@ async def run_step(
 ) -> StepResult:
     """Execute a single step and evaluate its assertions."""
     step_instance = step_cls()
-    params = resolve_params(step_def.params, context)
+    params = resolve_params(step_def.with_ or {}, context)
     started_at = datetime.now(timezone.utc)
 
     try:
@@ -68,7 +68,7 @@ async def run_step(
 
         return StepResult(
             step_name=step_name,
-            step_type=step_def.type,
+            step_type=step_def.uses,
             status=StepStatus.FAILED if failed else StepStatus.PASSED,
             started_at=started_at,
             finished_at=finished_at,
@@ -82,7 +82,7 @@ async def run_step(
         finished_at = datetime.now(timezone.utc)
         return StepResult(
             step_name=step_name,
-            step_type=step_def.type,
+            step_type=step_def.uses,
             status=StepStatus.FAILED,
             started_at=started_at,
             finished_at=finished_at,
@@ -93,42 +93,30 @@ async def run_step(
 
 def store_step_outputs(
     step_def: Any, step_result: StepResult, context: StepContext,
+    *, step_namespace: str | None = None,
 ) -> None:
-    """Persist step outputs into context variables when store_in_memory is configured."""
+    """Persist step outputs into context variables when returns is configured.
+
+    Stores each return field both flat (``field``) and, when *step_namespace* and
+    ``step_def.id`` are set, as a V2 namespaced key (``{ns}.{id}.{field}``).
+    """
     if step_result.output is None:
         return
 
-    store_in_var = getattr(step_def, "store_in_variable", None)
-    if store_in_var and not step_def.store_in_memory:
-        # Unwrap StepOutput: store the .value so downstream @var refs get usable data
-        from tractusx_testlab.steps.base import StepOutput
-        output = step_result.output
-        if isinstance(output, StepOutput):
-            output = output.value
-        context.set_variable(store_in_var, output)
+    returns = getattr(step_def, "returns", None) or {}
+    if not returns:
         return
 
-    if not step_def.store_in_memory:
-        return
-
-    # Reconstruct StepOutput for path resolution with aliases like response_body
     from tractusx_testlab.steps.base import StepOutput
     raw = step_result.output
-    if isinstance(raw, StepOutput):
-        full_output = raw
-    else:
-        full_output = StepOutput(
-            value=raw,
-            request=step_result.request,
-            response=step_result.response,
-        )
+    full_output: Any = StepOutput(value=raw, request=step_result.request, response=step_result.response) if not isinstance(raw, StepOutput) else raw
 
-    for var_name, output_path in step_def.store_in_memory.items():
-        if output_path == ".":
-            value = full_output.value
-        else:
-            value = AssertionEngine.extract_path(full_output, output_path)
+    step_id = getattr(step_def, "id", None)
+    for var_name in returns:
+        value = AssertionEngine.extract_path(full_output, var_name)
         context.set_variable(var_name, value)
+        if step_id and step_namespace:
+            context.set_variable(f"{step_namespace}.{step_id}.{var_name}", value)
 
 
 async def run_script(
@@ -164,7 +152,7 @@ async def run_script(
 
     return ScriptResult(
         script_name=script.name,
-        dataspace_version=script.definition.dataspace_version,
+        dataspace_version=script.dataspace_version,
         status=script_status,
         steps=all_step_results,
         started_at=script_start,

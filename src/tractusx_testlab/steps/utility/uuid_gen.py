@@ -29,7 +29,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
 
 
-@step("generate_uuid")
+@step("generate_uuid", aliases=["util/generate_uuid"])
 class GenerateUuidStep(BaseStep):
     """Generate a random UUID v4.
 
@@ -49,7 +49,7 @@ class GenerateUuidStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         generated = str(uuid.uuid4())
         prefix = params.get("prefix", "")

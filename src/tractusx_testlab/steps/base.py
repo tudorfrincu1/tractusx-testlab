@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from tractusx_testlab.models import (
     HttpRequest,
     HttpResponse,
-    StepDefinition,
+    StepDefinitionV2,
 )
 
 if TYPE_CHECKING:
@@ -67,7 +67,7 @@ class BaseStep(ABC):
         self,
         params: dict,
         context: "StepContext",
-        definition: StepDefinition,
+        definition: StepDefinitionV2,
     ) -> StepOutput:
         """Run the step logic.
 

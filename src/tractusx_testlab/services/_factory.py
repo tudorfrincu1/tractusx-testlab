@@ -104,9 +104,12 @@ def _create_connector_service(
     version = params.get("version") or _VERSION_FROM_TYPE.get(stype_val, defaults.DATASPACE_VERSION)
     dma_path = params.get("dma_path", defaults.DMA_PATH)
 
-    headers: dict[str, str] = {}
+    # Always include Content-Type because the SDK sends POST bodies via
+    # data= (not json=), so requests does not set it automatically.
+    headers: dict[str, str] = {"Content-Type": "application/json"}
     if auth.get("api_key"):
-        headers["x-api-key"] = auth["api_key"]
+        key_header = auth.get("api_key_header", "x-api-key").lower()
+        headers[key_header] = auth["api_key"]
 
     is_provider = (
         stype_val == "CONNECTOR_PROVIDER"

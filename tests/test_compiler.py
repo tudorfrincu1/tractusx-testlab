@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Tests for the Compiler class (validate + compile pipeline)."""
@@ -48,13 +48,14 @@ def _write_yaml(tmp_path: Path, content: dict, name: str = "script.yaml") -> Pat
 
 
 def _minimal_script() -> dict:
-    """Return a minimal valid script dict."""
+    """Return a minimal valid v2 script dict."""
     return {
+        "syntax": "v2",
         "kind": "test",
-        "name": "Minimal Test",
-        "version": "1.0",
-        "dataspace_version": "saturn",
-        "steps": [],
+        "id": "minimal-test",
+        "namespace": "testlab.test",
+        "metadata": {"name": "Minimal Test", "version": "1.0"},
+        "execution": [],
     }
 
 
@@ -81,8 +82,8 @@ class TestCompilerValidation:
     def test_validate_script_with_steps(self, tmp_path: Path) -> None:
         # Arrange
         script = _minimal_script()
-        script["steps"] = [
-            {"type": "export_variable", "params": {"name": "test_var"}},
+        script["execution"] = [
+            {"uses": "export_variable", "with": {"name": "test_var"}},
         ]
         script_path = _write_yaml(tmp_path, script)
         compiler = Compiler()
@@ -96,8 +97,8 @@ class TestCompilerValidation:
     def test_validate_rejects_unknown_step_type(self, tmp_path: Path) -> None:
         # Arrange
         script = _minimal_script()
-        script["steps"] = [
-            {"type": "nonexistent_step_type_xyz", "params": {}},
+        script["execution"] = [
+            {"uses": "nonexistent_step_type_xyz"},
         ]
         script_path = _write_yaml(tmp_path, script)
         compiler = Compiler()
@@ -112,9 +113,9 @@ class TestCompilerValidation:
     def test_validate_returns_issues_for_multiple_bad_steps(self, tmp_path: Path) -> None:
         # Arrange
         script = _minimal_script()
-        script["steps"] = [
-            {"type": "unknown_a", "params": {}},
-            {"type": "unknown_b", "params": {}},
+        script["execution"] = [
+            {"uses": "unknown_a"},
+            {"uses": "unknown_b"},
         ]
         script_path = _write_yaml(tmp_path, script)
         compiler = Compiler()
@@ -128,7 +129,7 @@ class TestCompilerValidation:
     def test_compile_raises_on_invalid_script(self, tmp_path: Path) -> None:
         # Arrange
         script = _minimal_script()
-        script["steps"] = [{"type": "totally_bogus_step", "params": {}}]
+        script["execution"] = [{"uses": "totally_bogus_step"}]
         script_path = _write_yaml(tmp_path, script)
         compiler = Compiler()
 

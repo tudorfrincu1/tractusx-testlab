@@ -37,21 +37,29 @@ runner = CliRunner()
 
 
 _VALID_YAML = """\
-name: CLI Test
-version: "1.0"
-dataspace: saturn
-steps: []
+syntax: v2
+kind: test
+id: cli-test
+namespace: testlab.cli
+metadata:
+  name: CLI Test
+  version: "1.0"
+execution: []
 """
 
 _INVALID_YAML = "{{not valid yaml"
 
 _BAD_STEP_YAML = """\
-name: Bad Step
-steps:
-  - type: totally_unknown_step
+syntax: v2
+kind: test
+id: bad-step
+namespace: testlab.cli
+metadata:
+  name: Bad Step
+execution:
+  - uses: totally_unknown_step
     name: Nope
 """
-
 
 @pytest.fixture()
 def valid_yaml_file(tmp_path: Path) -> Path:
@@ -138,7 +146,7 @@ class TestPrintReport:
         """Test report with a step that has an error."""
         yaml_content = """\
 name: Error Test
-steps:
+execution:
   - type: http_request
     name: Bad Request
     inputs:
@@ -157,7 +165,7 @@ steps:
         """Test report printing with step that uses noop executor and assertions."""
         yaml_content = """\
 name: Noop Test
-steps:
+execution:
   - type: register_twin
     name: Register
     validate:

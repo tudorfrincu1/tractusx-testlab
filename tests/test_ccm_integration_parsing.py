@@ -18,7 +18,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Integration tests: CCM YAML parsing, index, assertions, registry, and services."""
@@ -32,10 +32,10 @@ import yaml
 
 import tractusx_testlab.steps  # noqa: F401 — trigger @step registrations
 from tractusx_testlab.compiler.validation._expressions import resolve_expression
+from tractusx_testlab.models.authoring.definitions import AssertionV2, ServiceDefinition
 from tractusx_testlab.models.authoring.infrastructure import DataspaceContext
-from tractusx_testlab.models.primitives.enums import AssertionType, ServiceType
+from tractusx_testlab.models.primitives.enums import ServiceType
 from tractusx_testlab.scripting import StepRegistry
-from tractusx_testlab.scripting._builders import parse_assertion, parse_service
 from tractusx_testlab.scripting.parser import YamlParser
 
 CCM_DIR = Path(__file__).resolve().parent.parent / "docs" / "examples" / "certificate-management-v2" / "raw"
@@ -73,7 +73,7 @@ class TestCcmYamlParsing:
         with open(yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        raw_steps = data.get("steps", [])
+        raw_steps = data.get("execution", [])
 
         assert len(raw_steps) == expected_steps, (
             f"{filename}: expected {expected_steps} steps, got {len(raw_steps)}"
@@ -90,8 +90,8 @@ class TestCcmYamlParsing:
         script = YamlParser.parse_script(CCM_TESTS_DIR / filename)
 
         assert script is not None, f"{filename} did not parse into a ScriptDefinition"
-        assert len(script.steps) == expected_steps, (
-            f"{filename}: parser produced {len(script.steps)} steps, expected {expected_steps}"
+        assert len(script.execution) == expected_steps, (
+            f"{filename}: parser produced {len(script.execution)} steps, expected {expected_steps}"
         )
 
 
@@ -103,49 +103,41 @@ class TestCcmIndexParsing:
             data = yaml.safe_load(f)
 
         assert data["kind"] == "tck"
-        assert data["name"] == "certificate-management"
+        assert data["id"] == "certificate-management-tck"
         tests = data.get("tests", [])
         assert len(tests) == 9, f"Expected 9 tests, got {len(tests)}"
         for entry in tests:
-            assert "test" in entry, f"Each test entry must have a 'test' key, got {entry}"
+            assert "id" in entry, f"Each test entry must have an 'id' key, got {entry}"
 
 
 class TestCompactAssertionParsing:
-    """The compact assertion form (``output`` + operator) parses into typed assertions.
+    """V2 AssertionV2 model construction with uses + with parameters."""
 
-    The migrated CCM examples express validations through the ``validate/assert`` verb
-    form, so this focused unit test exercises ``parse_assertion`` with an inline compact
-    fixture rather than the example files.
-    """
+    def test_not_null_assertion_sets_uses_and_output(self) -> None:
 
-    def test_compact_not_null_assertion_sets_type_and_path(self) -> None:
+        assertion = AssertionV2(uses="assert/not_null", **{"with": {"output": "body.certificateId"}})
 
-        assertion = parse_assertion({"output": "body.certificateId", "not_null": True})
+        assert assertion.uses == "assert/not_null"
+        assert (assertion.with_ or {}).get("output") == "body.certificateId"
 
-        assert assertion.type == AssertionType.NOT_NULL
-        assert assertion.path == "body.certificateId"
+    def test_equals_assertion_sets_uses_value_and_output(self) -> None:
 
-    def test_compact_equals_assertion_sets_type_value_and_path(self) -> None:
+        assertion = AssertionV2(uses="assert/equals", **{"with": {"output": "status", "value": 200}})
 
-        assertion = parse_assertion({"output": "status", "equals": 200})
-
-        assert assertion.type == AssertionType.EQUALS
-        assert assertion.value == 200
-        assert assertion.path == "status"
+        assert assertion.uses == "assert/equals"
+        assert (assertion.with_ or {}).get("value") == 200
+        assert (assertion.with_ or {}).get("output") == "status"
 
 
 class TestCcmServiceParsing:
-    """The EDC connector service type parses from its inline service definition.
-
-    The migrated examples carry the system-under-test identity in the ``infrastructure``
-    block instead of a top-level ``services`` list, so this focused unit test exercises
-    ``parse_service`` directly (see ``TestCcmInfrastructure`` for the migrated equivalent).
-    """
+    """ServiceDefinition model construction from inline service data."""
 
     def test_service_type_edc_connector_saturn_accepted(self) -> None:
 
-        service = parse_service(
-            {"name": "provider_edc", "type": "edc_connector_saturn", "base_url": "https://provider:8080"},
+        service = ServiceDefinition(
+            name="provider_edc",
+            type=ServiceType.EDC_CONNECTOR_SATURN,
+            base_url="https://provider:8080",
         )
 
         assert service.name == "provider_edc"
@@ -178,7 +170,7 @@ class TestCcmInfrastructure:
 
         with open(CCM_TESTS_DIR / "request_certificate.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        sut_ref = data["steps"][0]["with"]["counter_party_address"]
+        sut_ref = data["execution"][0]["with"]["counter_party_address"]
 
         result = resolve_expression(sut_ref)
 

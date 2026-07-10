@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Loader — resolves YAML files and .stck archives into Tck objects."""
@@ -33,17 +33,32 @@ from typing import Optional
 import yaml
 
 from tractusx_testlab.compiler.packager import Packager
-from tractusx_testlab.models import (
-    TckDefinition as TckDefinition,
-)
-from tractusx_testlab.scripting.script import Tck as Tck
+from tractusx_testlab.scripting.script import Tck as Tck, TestScript
 from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.player.loading._parser import (
-    build_script,
-    build_test_case,
+    parse_script_file,
+    parse_tck_file,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _load_test_scripts(tests: list, base_dir: Path) -> list[TestScript]:
+    """Resolve TCK ``tests:`` entries into TestScript objects.
+
+    Each entry is a ``TckTestEntry`` with an ``id`` filename relative to
+    ``<base_dir>/tests/``.
+    """
+    scripts: list[TestScript] = []
+    tests_dir = base_dir / "tests"
+    for entry in tests:
+        test_path = tests_dir / entry.id
+        if not test_path.exists():
+            logger.warning("Test file not found, skipping: %s", test_path)
+            continue
+        script_def = parse_script_file(test_path)
+        scripts.append(TestScript(script_def))
+    return scripts
 
 
 def _detect_kind(data: dict) -> ScriptKind:
@@ -109,26 +124,23 @@ class Loader:
             path, player_private_key, compiler_public_key,
         )
         data = yaml.safe_load(yaml_bytes)
-        return self._parse_data(data, base_dir=path.parent)
+        return self._parse_data(data, source_path=path, base_dir=path.parent)
 
     def _load_yaml(self, path: Path) -> Tck:
         """Load a plain YAML file."""
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        return self._parse_data(data, base_dir=path.parent)
+        return self._parse_data(data, source_path=path, base_dir=path.parent)
 
-    def _parse_data(self, data: object, base_dir: Path) -> Tck:
+    def _parse_data(self, data: object, source_path: Path, base_dir: Path) -> Tck:
         """Parse raw YAML data into a Tck runtime object."""
         kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
 
         if kind == ScriptKind.TCK:
-            definition = build_test_case(data, base_dir=base_dir)
+            tck_def = parse_tck_file(source_path)
+            tck = Tck(tck_def, base_dir=base_dir)
+            tck._scripts = _load_test_scripts(tck_def.tests, base_dir)
+            return tck
         else:
-            script_def = build_script(data)
-            definition = TckDefinition.model_construct(
-                name=script_def.name,
-                tests=[script_def],
-                imports=[],
-            )
-
-        return Tck(definition, base_dir=base_dir)
+            script_def = parse_script_file(source_path)
+            return Tck.from_single_script(script_def, base_dir=base_dir)

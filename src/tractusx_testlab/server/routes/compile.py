@@ -139,11 +139,15 @@ def _run_semantic_validation(parsed: object, kind: ScriptKind) -> list[dict[str,
     """Run semantic validation and return list of error dicts (empty if OK)."""
     errors: list[dict[str, str]] = []
 
-    if not parsed.name or not parsed.name.strip():
+    name = getattr(parsed, "name", None) or (
+        parsed.metadata.name if hasattr(parsed, "metadata") else None
+    )
+    if not name or not name.strip():
         errors.append(_error("name", "Script name is required and must not be empty"))
 
     if kind == ScriptKind.TEST:
-        result = _validator.validate(parsed, version=parsed.dataspace_version)
+        dataspace_version = getattr(parsed, "dataspace_version", None) or "saturn"
+        result = _validator.validate(parsed, version=dataspace_version)
         for issue in result.issues:
             path = _build_issue_path(issue)
             errors.append(_error(path, issue.message))

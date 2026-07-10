@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 _EXPORT_NAMESPACE = "!"
 
 
-@step("export_variable")
+@step("export_variable", aliases=["util/export_env"])
 class ExportVariableStep(BaseStep):
     """Mark a context variable for export to downstream scripts.
 
@@ -53,7 +53,7 @@ class ExportVariableStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         var_name: str = params["name"]
         value = context.get_variable(var_name)
@@ -81,7 +81,7 @@ class ImportVariableStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         source_test: str = params["test"]
         select: str = params["select"]

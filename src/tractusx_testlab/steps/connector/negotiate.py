@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import CATALOG_POLICY, CATALOG_TARGET, NEGOTIATION_ID
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 class NegotiateContractStep(BaseStep):
     """Start an EDR contract negotiation with the provider via the SDK."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or context.get_variable("provider_address", "")
         counter_party_id = params.get("counter_party_id") or context.get_variable("provider_bpnl", "")

@@ -30,7 +30,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.steps.pull_data._constants import (
     DEFAULT_MAX_WAIT,
@@ -49,15 +49,47 @@ logger = logging.getLogger(__name__)
 class PullDataFiltered(BaseStep):
     """Pull data with filter expression — SDK picks first matching policy."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         filter_expression = _build_filter_expression(params)
         return await _do_dsp_flow(context, params, filter_expression, policies=None)
+
+
+# -- Policy format helpers ---------------------------------------------------
+
+_SIMPLIFIED_KEY_MAP: dict[str, str] = {
+    "permissions": "permission",
+    "prohibitions": "prohibition",
+    "obligations": "obligation",
+    "constraints": "constraint",
+    "left_operand": "leftOperand",
+    "right_operand": "rightOperand",
+}
+
+
+def _to_odrl_policy(value: object) -> object:
+    """Recursively convert a simplified testlab policy dict to ODRL camelCase format.
+
+    Maps snake_case keys and plural rule keys to the canonical ODRL names the
+    SDK's ``DspTools.filter_assets_and_policies`` and ``_policies_match`` expect:
+    - ``permissions``  → ``permission``
+    - ``constraints``  → ``constraint``
+    - ``left_operand`` → ``leftOperand``
+    - ``right_operand``→ ``rightOperand``
+    """
+    if isinstance(value, dict):
+        return {
+            _SIMPLIFIED_KEY_MAP.get(k, k): _to_odrl_policy(v)
+            for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [_to_odrl_policy(item) for item in value]
+    return value
 
 
 class PullDataFilteredByPolicy(BaseStep):
     """Pull data with filter expression and explicit policy constraints."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         filter_expression = _build_filter_expression(params)
         policies = params.get("policies") or params.get("policy_constraints")
         return await _do_dsp_flow(context, params, filter_expression, policies=policies)
@@ -89,28 +121,91 @@ async def _do_dsp_flow(
     policies: list[dict] | dict | None,
 ) -> StepOutput:
     """Execute the full DSP flow via the SDK's do_dsp()."""
-    consumer = context.get_consumer_service()
+    if isinstance(policies, dict):
+        policies = [policies]
+    service_name: str | None = params.get("connector_service") or None
+    consumer = context.get_consumer_service(service_name)
     counter_party_address = params.get("counter_party_address", "")
+    counter_party_id = params.get("counter_party_id", "")
     max_wait = params.get("max_wait", DEFAULT_MAX_WAIT)
     poll_interval = params.get("poll_interval", DEFAULT_POLL_INTERVAL)
 
     # Yield to event loop before blocking SDK call
     await asyncio.sleep(0)
 
-    endpoint, token = consumer.do_dsp(
-        counter_party_id=params.get("counter_party_id", ""),
+    # Pre-fetch catalog to extract dataset metadata that tests may assert on.
+    catalog: dict = {}
+    datasets: list = []
+    asset_id: str = ""
+    try:
+        catalog = consumer.get_catalog_with_filter(
+            counter_party_id=counter_party_id,
+            counter_party_address=counter_party_address,
+            filter_expression=filter_expression,
+        ) or {}
+        raw_datasets = catalog.get("dataset", [])
+        if isinstance(raw_datasets, dict):
+            raw_datasets = [raw_datasets]
+        datasets = raw_datasets or []
+        asset_id = datasets[0].get("@id", "") if datasets else ""
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Pre-catalog fetch failed (will retry in do_dsp): %s", exc)
+
+    # Full DSP flow: use get_transfer_id + get_endpoint_with_token to expose
+    # transfer_process_id as a distinct return value.
+    transfer_process_id = consumer.get_transfer_id(
+        counter_party_id=counter_party_id,
         counter_party_address=counter_party_address,
         filter_expression=filter_expression,
         policies=policies,
         max_wait=max_wait,
         poll_interval=poll_interval,
     )
+    endpoint, token = consumer.get_endpoint_with_token(transfer_id=transfer_process_id)
 
     context.set_variable(DATAPLANE_ENDPOINT, endpoint)
     context.set_variable(EDR_TOKEN, token)
 
     return StepOutput(
-        value={"endpoint": endpoint, "token_prefix": token[:10] + "..." if token else None},
+        value={
+            "endpoint": endpoint,
+            "edr_token": token or "",
+            "dataplane_url": endpoint or "",
+            "token_prefix": token[:10] + "..." if token else None,
+            "catalog": catalog,
+            "datasets": datasets,
+            "asset_id": asset_id,
+            "negotiation_id": transfer_process_id,
+            "transfer_process_id": transfer_process_id,
+        },
         request=HttpRequest(method="POST", url=counter_party_address),
         response=HttpResponse(status_code=200, body={"endpoint": endpoint}),
     )
+
+
+class ConnectorPullDataFiltered(BaseStep):
+    """``connector/pull_data_filtered`` — full DSP flow with optional policy filter.
+
+    The optional ``policy:`` param accepts the testlab simplified format
+    (``permissions``/``constraints``/snake_case keys).  It is automatically
+    converted to ODRL camelCase so the SDK's policy-comparison logic can use it
+    as an allow-list when filtering catalog assets.
+
+    When no policy is provided, ``policies=None`` is forwarded to ``do_dsp()``
+    so the SDK auto-discovers the first available catalog policy.
+    """
+
+    async def execute(
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2,
+    ) -> StepOutput:
+        normalized = dict(params)
+        raw_policy = normalized.pop("policy", None)
+        normalized.pop("policies", None)
+        filter_expression = _build_filter_expression(normalized)
+
+        policies: list[dict] | None = None
+        if raw_policy is not None:
+            odrl_policy = _to_odrl_policy(raw_policy)
+            policies = [odrl_policy] if isinstance(odrl_policy, dict) else odrl_policy
+
+        return await _do_dsp_flow(context, normalized, filter_expression, policies=policies)

@@ -26,13 +26,18 @@
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+logger = logging.getLogger(__name__)
+
 from tractusx_testlab.config.loader import ConfigLoader
 from tractusx_testlab.config.settings import TestlabConfig
 from tractusx_testlab.logging.structured import StructuredLogger
+from tractusx_testlab.player.execution.infrastructure_seeder import seed_infrastructure_services
 from tractusx_testlab.models import (
     JobStatus,
     ScriptResult,
@@ -135,6 +140,7 @@ class TestlabPlayer:
         self._ensure_callback_manager()
 
         self._seed_context_variables(context, tck, runtime_vars)
+        seed_infrastructure_services(svc_mgr, context)
 
         tck_started_at = datetime.now(timezone.utc)
         ordered_scripts = topological_sort(tck.scripts)
@@ -195,9 +201,11 @@ class TestlabPlayer:
         """Seed context with shared variables (medium priority) and runtime vars (highest)."""
         if tck.base_dir is not None:
             context.set_variable("_tck_root", str(tck.base_dir))
+            _load_testdata(context, tck)
 
-        if tck.definition.shared_variables:
-            for var_name, var_def in tck.definition.shared_variables.items():
+        shared_vars = getattr(tck.definition, "shared_variables", None) or {}
+        if shared_vars:
+            for var_name, var_def in shared_vars.items():
                 if var_def.default is not None:
                     context.set_variable(var_name, var_def.default)
 
@@ -244,11 +252,36 @@ class TestlabPlayer:
     @staticmethod
     def _propagate_script_outputs(script: TestScript, context: StepContext) -> None:
         """Promote script output variables to the shared namespace for downstream tests."""
-        for export_name, var_ref in script.definition.outputs.items():
+        outputs = getattr(script.definition, "outputs", None) or {}
+        for export_name, var_ref in outputs.items():
             value = context.get_variable(var_ref)
             if value is not None:
                 context.set_variable(export_name, value)
                 context.set_variable(f"!{script.name}:{export_name}", value)
+
+
+def _load_testdata(context: StepContext, tck: Any) -> None:
+    """Seed context with testdata files declared in the TCK env block.
+
+    Each entry in ``env.testdata`` is loaded from ``<base_dir>/testdata/<source>``
+    and stored under both ``testdata.<id>`` and ``env.testdata.<id>`` to support
+    both reference styles used in test YAMLs.
+    """
+    env_def = getattr(tck.definition, "env", None)
+    testdata_entries = getattr(env_def, "testdata", None) or []
+    for td in testdata_entries:
+        td_path = tck.base_dir / "testdata" / td.source
+        if not td_path.exists():
+            logger.warning("Testdata file not found, skipping: %s", td_path)
+            continue
+        try:
+            content = json.loads(td_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Failed to load testdata file %s: %s", td_path, exc)
+            continue
+        context.set_variable(f"testdata.{td.id}", content)
+        context.set_variable(f"env.testdata.{td.id}", content)
+        logger.debug("Loaded testdata '%s' from %s", td.id, td_path.name)
 
 
 

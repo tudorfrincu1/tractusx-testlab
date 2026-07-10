@@ -33,13 +33,15 @@ from tractusx_testlab.scripting.script import TestScript
 
 def seed_script_defaults(script: TestScript, context: StepContext) -> None:
     """Seed script-level variable defaults (lowest priority)."""
-    for var_name, var_def in script.definition.variables.items():
+    variables = getattr(script.definition, "variables", None) or {}
+    for var_name, var_def in variables.items():
         if var_def.default is not None and not context.has_variable(var_name):
             context.set_variable(var_name, var_def.default)
 
 
 def register_script_services(script: TestScript, context: StepContext) -> None:
     """Register services declared in the script, resolving ${var} references."""
-    for svc_def in script.definition.services:
+    services = getattr(script.definition, "services", None) or []
+    for svc_def in services:
         resolved = resolve_service_def(svc_def, context)
         context.services.register(resolved)

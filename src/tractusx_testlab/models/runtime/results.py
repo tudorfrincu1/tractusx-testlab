@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Result models — execution-time structures for steps, scripts, and TCKs."""
@@ -31,7 +31,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models.authoring.definitions import AssertionV2
 from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     ScriptStatus,
@@ -61,7 +61,7 @@ class HttpResponse(BaseModel):
 class AssertionResult(BaseModel):
     """Result of evaluating a single assertion against step output."""
 
-    assertion: Assertion
+    assertion: AssertionV2
     passed: bool
     expected: Optional[Any] = None
     actual: Optional[Any] = None

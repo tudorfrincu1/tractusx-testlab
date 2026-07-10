@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class QueryCatalogWithFiltersStep(BaseStep):
     """Query a provider's catalog with multiple filter expressions via the SDK."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
         counter_party_id = params.get("counter_party_id") or params.get("bpnl", "")

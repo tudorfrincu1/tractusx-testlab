@@ -35,6 +35,7 @@ from tractusx_testlab.player.execution._phase_runners import (
     execute_main_steps,
     execute_setup_steps,
 )
+from tractusx_testlab.player.execution.infrastructure_seeder import seed_infrastructure_services
 
 __all__ = [
     "StepContext",
@@ -46,4 +47,5 @@ __all__ = [
     "run_script",
     "run_step",
     "store_step_outputs",
+    "seed_infrastructure_services",
 ]

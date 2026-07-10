@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Static validation of test scripts before compilation."""
@@ -30,7 +30,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from tractusx_testlab.models import ScriptDefinition, StepDefinition
+from tractusx_testlab.models import ScriptDefinitionV2, StepDefinitionV2
 from tractusx_testlab.scripting.registry import StepRegistry
 from tractusx_testlab.syntax import defaults
 
@@ -67,26 +67,26 @@ _VAR_REF = re.compile(r"\$\{(\w+)}")
 class ScriptValidator:
     """Validates a ScriptDefinition for correctness before execution."""
 
-    def validate(self, script: ScriptDefinition, version: Optional[str] = None) -> ValidationResult:
+    def validate(self, script: ScriptDefinitionV2, version: Optional[str] = None) -> ValidationResult:
         result = ValidationResult()
         declared_vars: set[str] = set()
 
-        # Collect variables declared in the script header
-        declared_vars.update(script.variables)
+        # Collect variables declared in the script header (v2: in TCK env)
+        declared_vars.update(getattr(script, "variables", {}))
 
         # Validate setup steps
         for idx, step_def in enumerate(script.setup):
             self._validate_step(step_def, idx, declared_vars, version, result, phase="setup")
 
         # Validate each step
-        for idx, step_def in enumerate(script.steps):
+        for idx, step_def in enumerate(script.execution):
             self._validate_step(step_def, idx, declared_vars, version, result)
 
         return result
 
     def _validate_step(
         self,
-        step_def: StepDefinition,
+        step_def: StepDefinitionV2,
         idx: int,
         declared_vars: set[str],
         version: Optional[str],
@@ -96,29 +96,28 @@ class ScriptValidator:
         effective_version = version or defaults.DATASPACE_VERSION
 
         # Check step type is registered
-        step_cls = StepRegistry.get(step_def.type, effective_version)
+        step_cls = StepRegistry.get(step_def.uses, effective_version)
         if step_cls is None:
-            # Maybe it's in the global registry
-            if step_def.type not in StepRegistry.list_step_types():
+            if step_def.uses not in StepRegistry.list_step_types():
                 result.add_error(
-                    f"Unknown step type '{step_def.type}'",
+                    f"Unknown step type '{step_def.uses}'",
                     step_index=idx,
-                    field="type",
+                    field="uses",
                     phase=phase,
                 )
             elif version:
                 result.add_warning(
-                    f"Step '{step_def.type}' has no version-specific implementation for '{version}'",
+                    f"Step '{step_def.uses}' has no version-specific implementation for '{version}'",
                     step_index=idx,
                     phase=phase,
                 )
 
-        # Check variable references in params resolve
-        self._check_var_refs(step_def.params, idx, declared_vars, result)
+        # Check variable references in with_ params resolve
+        self._check_var_refs(step_def.with_ or {}, idx, declared_vars, result)
 
-        # If store_in_memory is set, auto-declare the variables
-        if step_def.store_in_memory:
-            declared_vars.update(step_def.store_in_memory)
+        # If returns is set, auto-declare the output variables
+        for key in (step_def.returns or {}):
+            declared_vars.add(key)
 
     def _check_var_refs(
         self, params: dict, step_idx: int, declared: set[str], result: ValidationResult

@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -86,7 +86,7 @@ class ExtractDatasetStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         source_name = params["source"]
         dct_type = params["dct_type"]
