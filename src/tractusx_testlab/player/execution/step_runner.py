@@ -154,7 +154,7 @@ async def run_script(
         script_name=script.name,
         dataspace_version=script.dataspace_version,
         status=script_status,
-        steps=all_step_results,
+        execution=all_step_results,
         started_at=script_start,
         finished_at=script_end,
         total_duration_s=(script_end - script_start).total_seconds(),

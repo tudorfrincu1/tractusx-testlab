@@ -49,7 +49,7 @@ def make_skipped_result(script: TestScript, unmet_deps: list[str]) -> ScriptResu
         script_name=script.name,
         dataspace_version=script.definition.dataspace_version,
         status=ScriptStatus.FAILED,
-        steps=[],
+        execution=[],
         started_at=now,
         finished_at=now,
         total_duration_s=0.0,

@@ -115,7 +115,7 @@ class ScriptResult(BaseModel):
     script_name: str = ""
     dataspace_version: str = ""
     status: ScriptStatus = ScriptStatus.IDLE
-    steps: list[StepResult] = Field(default_factory=list)
+    execution: list[StepResult] = Field(default_factory=list)
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     total_duration_s: Optional[float] = None
@@ -147,13 +147,13 @@ class TckResult(BaseModel):
         """Count of steps with PASSED status across all scripts."""
         return sum(
             1 for script in self.scripts
-            for step in script.steps if step.status == StepStatus.PASSED
+            for step in script.execution if step.status == StepStatus.PASSED
         )
 
     @property
     def total(self) -> int:
         """Total number of steps across all scripts."""
-        return sum(len(script.steps) for script in self.scripts)
+        return sum(len(script.execution) for script in self.scripts)
 
     @property
     def tck_name(self) -> str:

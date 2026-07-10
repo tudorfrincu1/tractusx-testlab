@@ -252,7 +252,7 @@ def _print_script_result(script, step_status_cls) -> None:
         typer.echo(f"  Duration: {script.total_duration_s:.1f}s")
     typer.echo()
 
-    for step in script.steps:
+    for step in script.execution:
         icon = "PASS" if step.status == step_status_cls.PASSED else "FAIL"
         duration = f"{step.duration_s:.2f}s" if step.duration_s else "---"
         typer.echo(f"    [{icon}] {step.step_name:<50} {duration}")
