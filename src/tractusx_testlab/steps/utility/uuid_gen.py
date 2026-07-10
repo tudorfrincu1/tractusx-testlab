@@ -54,4 +54,4 @@ class GenerateUuidStep(BaseStep):
         generated = str(uuid.uuid4())
         prefix = params.get("prefix", "")
         value = f"{prefix}{generated}" if prefix else generated
-        return StepOutput(value=value)
+        return StepOutput(value={"generated_id": value, "uuid": value})

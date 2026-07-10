@@ -146,7 +146,7 @@ execution:
     uses: util/generate_uuid
     name: Generate request message ID
     returns:
-      request_uuid:
+      generated_id:
         type: string
         class: Uuid
 
@@ -228,7 +228,7 @@ execution:
       input: "${{ steps.http_call_1.response_body }}"
       path: "header.relatedMessageId"
       operator: equals
-      value: "urn:uuid:${{ steps.gen_uuid_1.request_uuid }}"
+      value: "urn:uuid:${{ steps.gen_uuid_1.generated_id }}"
 
   - id: assert_version
     uses: validate/field

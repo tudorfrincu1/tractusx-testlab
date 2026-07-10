@@ -65,8 +65,8 @@ class TestGenerateUuidStep:
         output = await step_instance.execute({}, ctx, definition)
 
         assert output.value is not None, "StepOutput must have a value"
-        parsed = uuid.UUID(output.value, version=4)
-        assert str(parsed) == output.value, "Output must be a valid UUID v4 string"
+        parsed = uuid.UUID(output.value["generated_id"], version=4)
+        assert str(parsed) == output.value["generated_id"], "Output must be a valid UUID v4 string"
 
     @pytest.mark.asyncio
     async def test_generate_uuid_with_prefix(self) -> None:
@@ -77,8 +77,8 @@ class TestGenerateUuidStep:
 
         output = await step_instance.execute({"prefix": "urn:uuid:"}, ctx, definition)
 
-        assert output.value.startswith("urn:uuid:"), "UUID should be prefixed"
-        uuid_part = output.value[len("urn:uuid:"):]
+        assert output.value["generated_id"].startswith("urn:uuid:"), "UUID should be prefixed"
+        uuid_part = output.value["generated_id"][len("urn:uuid:"):]
         uuid.UUID(uuid_part, version=4)  # must not raise
 
 

@@ -57,15 +57,15 @@ class TestGenerateUuidStep:
     async def test_generates_valid_uuid(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = GenerateUuidStep()
         result = await step.execute({}, mock_context, definition)
-        parsed = uuid.UUID(result.value)
+        parsed = uuid.UUID(result.value["generated_id"])
         assert parsed.version == 4
 
     @pytest.mark.asyncio
     async def test_prepends_prefix(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = GenerateUuidStep()
         result = await step.execute({"prefix": "urn:uuid:"}, mock_context, definition)
-        assert result.value.startswith("urn:uuid:")
-        uuid.UUID(result.value.removeprefix("urn:uuid:"))
+        assert result.value["generated_id"].startswith("urn:uuid:")
+        uuid.UUID(result.value["generated_id"].removeprefix("urn:uuid:"))
 
 
 # ---------------------------------------------------------------------------
