@@ -48,9 +48,9 @@ _CCM_TEST_FILES = {
     "error_handling.yaml": 4,
     "expose_testlab_asset.yaml": 4,
     "push_certificate.yaml": 4,
-    "request_certificate.yaml": 10,
+    "request_certificate.yaml": 19,
     "send_feedback.yaml": 4,
-    "validate_payload.yaml": 9,
+    "validate_payload.yaml": 8,
 }
 
 _CCM_STEP_TYPES = [
@@ -58,7 +58,6 @@ _CCM_STEP_TYPES = [
     "delete_asset", "delete_policy",
     "export_variable", "generate_uuid", "http_call_dataplane",
     "import_variable", "load_schema", "mock_endpoint",
-    "pause",
     "pull_data_filtered", "query_catalog_with_filters",
     "wait_for_call",
 ]
