@@ -150,6 +150,8 @@ def _resolve_first_segment(output: Any, first: str, rest: Optional[str], full_pa
     # Map well-known aliases
     if first == "response_body":
         resolved = _resolve_response_body(output)
+    elif first == "response_headers":
+        resolved = _resolve_response_headers(output)
     elif isinstance(output.value, dict):
         resolved = _resolve_from_value_dict(output, first, rest, full_path)
     else:
@@ -168,6 +170,9 @@ def _resolve_response_body(output: Any) -> Any:
         return output.value
     return output.response.body if output.response else None
 
+def _resolve_response_headers(output: Any) -> Any:
+    """Resolve the 'response_headers' alias to the response's headers dict."""
+    return output.response.headers if output.response else None
 
 def _fallback_resolution(output: Any, first: str) -> Any:
     """Try response attrs, response body dict, and StepOutput slots in order."""
