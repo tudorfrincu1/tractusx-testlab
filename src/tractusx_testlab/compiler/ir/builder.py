@@ -199,6 +199,14 @@ def _build_services(env_raw: dict[str, Any]) -> list[dict[str, Any]]:
 def _build_schemas(env_raw: dict[str, Any]) -> dict[str, Any]:
     """Build the root-level schemas dict (asset references)."""
     schemas_raw = env_raw.get("schemas", {})
+    if isinstance(schemas_raw, list):
+        return {
+            entry.get("id", ""): {
+                "asset_key": entry.get("source", ""),
+                "type": "application/json",
+            }
+            for entry in schemas_raw
+        }
     return {
         name: {"asset_key": schema.get("file", ""), "type": "application/json"}
         for name, schema in schemas_raw.items()
@@ -208,6 +216,14 @@ def _build_schemas(env_raw: dict[str, Any]) -> dict[str, Any]:
 def _build_testdata(env_raw: dict[str, Any]) -> dict[str, Any]:
     """Build the root-level testdata dict (asset references)."""
     testdata_raw = env_raw.get("testdata", {})
+    if isinstance(testdata_raw, list):
+        return {
+            entry.get("id", ""): {
+                "asset_key": entry.get("source", ""),
+                "type": entry.get("type", _infer_testdata_type(entry.get("source", ""))),
+            }
+            for entry in testdata_raw
+        }
     return {
         name: {
             "asset_key": td.get("file", ""),
@@ -239,7 +255,9 @@ def _build_tests_list(
     tests_list: list[dict[str, Any]] = []
 
     for entry in tests_raw:
-        file_ref = entry if isinstance(entry, str) else entry.get("test", entry.get("file", ""))
+        file_ref = entry if isinstance(entry, str) else entry.get(
+            "test", entry.get("file", entry.get("id", ""))
+        )
         test_path = resolve_test_path(file_ref, base_dir)
         test_data = load_test_file(test_path)
         source_hash = compute_source_hash(test_path)

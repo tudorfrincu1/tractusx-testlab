@@ -4,11 +4,14 @@
   "title": "TCK Index Manifest",
   "description": "Validates the TCK index.yaml manifest file structure.",
   "type": "object",
-  "required": ["kind", "testlab", "id", "namespace", "metadata", "env", "tests"],
+  "required": ["kind", "id", "metadata", "env", "tests"],
   "properties": {
     "kind": {
       "type": "string",
       "const": "tck"
+    },
+    "syntax": {
+      "type": "string"
     },
     "testlab": {
       "type": "string"
@@ -41,7 +44,7 @@
   "$defs": {
     "metadata": {
       "type": "object",
-      "required": ["name", "version", "description", "authors", "license", "standards", "dataspace_version"],
+      "required": ["name", "version", "description", "authors", "license", "standards"],
       "properties": {
         "name": { "type": "string" },
         "version": { "type": "string" },
@@ -88,26 +91,50 @@
           }
         },
         "schemas": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "required": ["file"],
-            "properties": {
-              "file": { "type": "string" }
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string" }
+                },
+                "additionalProperties": true
+              }
             },
-            "additionalProperties": true
-          }
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "source"],
+                "additionalProperties": true
+              }
+            }
+          ]
         },
         "testdata": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "required": ["file"],
-            "properties": {
-              "file": { "type": "string" }
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string" }
+                },
+                "additionalProperties": true
+              }
             },
-            "additionalProperties": true
-          }
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "source"],
+                "additionalProperties": true
+              }
+            }
+          ]
         }
       },
       "additionalProperties": true
