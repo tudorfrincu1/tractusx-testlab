@@ -73,7 +73,7 @@ async def compile_yaml(request: Request) -> JSONResponse:
     if isinstance(parsed, JSONResponse):
         return parsed
 
-    errors = _run_semantic_validation(parsed, kind)
+    errors = _run_semantic_validation(parsed, kind, raw_data=data)
     if errors:
         return JSONResponse(content={"status": "error", "errors": errors})
 
@@ -135,7 +135,9 @@ def _parse_script(data: dict, kind: ScriptKind) -> JSONResponse | object:
         })
 
 
-def _run_semantic_validation(parsed: object, kind: ScriptKind) -> list[dict[str, str]]:
+def _run_semantic_validation(
+    parsed: object, kind: ScriptKind, raw_data: dict | None = None,
+) -> list[dict[str, str]]:
     """Run semantic validation and return list of error dicts (empty if OK)."""
     errors: list[dict[str, str]] = []
 
@@ -146,19 +148,27 @@ def _run_semantic_validation(parsed: object, kind: ScriptKind) -> list[dict[str,
         errors.append(_error("name", "Script name is required and must not be empty"))
 
     if kind == ScriptKind.TEST:
-        ds_block = getattr(parsed, "dataspace", None)
-        if ds_block is not None and hasattr(ds_block, "version") and ds_block.version:
-            dataspace_version = ds_block.version
-        else:
-            dataspace_version = getattr(parsed, "dataspace_version", None)
+        raw = raw_data or {}
+        ds_block = raw.get("dataspace")
+        has_explicit_version = (
+            (isinstance(ds_block, dict) and "version" in ds_block)
+            or "dataspace_version" in raw
+        )
 
-        if not dataspace_version:
+        if not has_explicit_version:
             errors.append(_error(
                 "dataspace_version",
                 "Dataspace version must be explicitly declared "
                 "(via 'dataspace.version' block or 'dataspace_version' field)",
             ))
             return errors
+
+        # Resolve effective version from the parsed model (safe — we confirmed explicit presence above).
+        ds_parsed = getattr(parsed, "dataspace", None)
+        if ds_parsed is not None and hasattr(ds_parsed, "version") and ds_parsed.version:
+            dataspace_version = ds_parsed.version
+        else:
+            dataspace_version = getattr(parsed, "dataspace_version", "saturn")
 
         result = _validator.validate(parsed, version=dataspace_version)
         for issue in result.issues:

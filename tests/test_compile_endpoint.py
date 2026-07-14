@@ -106,6 +106,7 @@ syntax: v2
 kind: test
 id: smoke-check
 namespace: testlab.smoke
+dataspace_version: saturn
 metadata:
   name: smoke-check
   version: "1.0"

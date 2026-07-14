@@ -181,7 +181,10 @@ async def _do_dsp_flow(
             "transfer_process_id": transfer_process_id,
         },
         request=HttpRequest(method="POST", url=counter_party_address),
-        response=HttpResponse(status_code=200, body={"endpoint": endpoint}),
+        response=HttpResponse(
+            status_code=200 if endpoint else 500,
+            body={"endpoint": endpoint},
+        ),
     )
 
 

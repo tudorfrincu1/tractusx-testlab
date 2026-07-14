@@ -37,6 +37,7 @@ from tractusx_testlab.models.authoring.definitions import (
 class TestScript:
     """Runtime wrapper for a single script definition."""
 
+    __test__ = False  # Prevent pytest from collecting this class
     __slots__ = ("definition",)
 
     def __init__(self, definition: ScriptDefinitionV2):

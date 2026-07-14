@@ -201,7 +201,7 @@ class TestlabPlayer:
         """Seed context with shared variables (medium priority) and runtime vars (highest)."""
         if tck.base_dir is not None:
             context.set_variable("_tck_root", str(tck.base_dir))
-            _load_testdata(context, tck)
+            TestlabPlayer._load_testdata(context, tck)
 
         shared_vars = getattr(tck.definition, "shared_variables", None) or {}
         if shared_vars:
@@ -259,30 +259,26 @@ class TestlabPlayer:
                 context.set_variable(export_name, value)
                 context.set_variable(f"!{script.name}:{export_name}", value)
 
+    @staticmethod
+    def _load_testdata(context: StepContext, tck: Any) -> None:
+        """Seed context with testdata files declared in the TCK env block.
 
-def _load_testdata(context: StepContext, tck: Any) -> None:
-    """Seed context with testdata files declared in the TCK env block.
-
-    Each entry in ``env.testdata`` is loaded from ``<base_dir>/testdata/<source>``
-    and stored under both ``testdata.<id>`` and ``env.testdata.<id>`` to support
-    both reference styles used in test YAMLs.
-    """
-    env_def = getattr(tck.definition, "env", None)
-    testdata_entries = getattr(env_def, "testdata", None) or []
-    for td in testdata_entries:
-        td_path = tck.base_dir / "testdata" / td.source
-        if not td_path.exists():
-            logger.warning("Testdata file not found, skipping: %s", td_path)
-            continue
-        try:
-            content = json.loads(td_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            logger.warning("Failed to load testdata file %s: %s", td_path, exc)
-            continue
-        context.set_variable(f"testdata.{td.id}", content)
-        context.set_variable(f"env.testdata.{td.id}", content)
-        logger.debug("Loaded testdata '%s' from %s", td.id, td_path.name)
-
-
-
-
+        Each entry in ``env.testdata`` is loaded from ``<base_dir>/testdata/<source>``
+        and stored under both ``testdata.<id>`` and ``env.testdata.<id>`` to support
+        both reference styles used in test YAMLs.
+        """
+        env_def = getattr(tck.definition, "env", None)
+        testdata_entries = getattr(env_def, "testdata", None) or []
+        for td in testdata_entries:
+            td_path = tck.base_dir / "testdata" / td.source
+            if not td_path.exists():
+                logger.warning("Testdata file not found, skipping: %s", td_path)
+                continue
+            try:
+                content = json.loads(td_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning("Failed to load testdata file %s: %s", td_path, exc)
+                continue
+            context.set_variable(f"testdata.{td.id}", content)
+            context.set_variable(f"env.testdata.{td.id}", content)
+            logger.debug("Loaded testdata '%s' from %s", td.id, td_path.name)
