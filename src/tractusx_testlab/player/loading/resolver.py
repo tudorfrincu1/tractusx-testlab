@@ -57,7 +57,7 @@ def _resolve_v2_expr(expr: str, context: "StepContext") -> object:
     return context.get_variable(expr)
 
 
-def resolve_str(value: str, context: "StepContext") -> str:
+def resolve_str(value: str, context: "StepContext") -> object:
     """Replace ``${{ }}``, ``${var}``, and ``@var`` references in a single string.
 
     Priority order:

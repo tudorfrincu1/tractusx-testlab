@@ -36,6 +36,9 @@ from tractusx_testlab.compiler.packager import Packager
 from tractusx_testlab.scripting.script import Tck as Tck, TestScript
 from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.player.loading._parser import (
+    _normalize_discriminator,
+    _SCRIPT_ADAPTER,
+    _TCK_ADAPTER,
     parse_script_file,
     parse_tck_file,
 )
@@ -133,14 +136,20 @@ class Loader:
         return self._parse_data(data, source_path=path, base_dir=path.parent)
 
     def _parse_data(self, data: object, source_path: Path, base_dir: Path) -> Tck:
-        """Parse raw YAML data into a Tck runtime object."""
-        kind = _detect_kind(data) if isinstance(data, dict) else ScriptKind.TEST
+        """Parse raw YAML data into a Tck runtime object.
+        """
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"Expected a YAML mapping from {source_path}, got {type(data).__name__}"
+            )
+        kind = _detect_kind(data)
+        normalized = _normalize_discriminator(data, source_path)
 
         if kind == ScriptKind.TCK:
-            tck_def = parse_tck_file(source_path)
+            tck_def = _TCK_ADAPTER.validate_python(normalized)
             tck = Tck(tck_def, base_dir=base_dir)
             tck._scripts = _load_test_scripts(tck_def.tests, base_dir)
             return tck
         else:
-            script_def = parse_script_file(source_path)
+            script_def = _SCRIPT_ADAPTER.validate_python(normalized)
             return Tck.from_single_script(script_def, base_dir=base_dir)

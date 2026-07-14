@@ -97,10 +97,6 @@ class TestScript:
         """Test suite version from metadata."""
         return self.definition.metadata.version
 
-    def step_count(self) -> int:
-        """Return the number of main execution steps."""
-        return len(self.definition.execution)
-
 
 class Tck:
     """Runtime wrapper for a TCK definition."""

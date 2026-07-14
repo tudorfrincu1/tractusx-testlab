@@ -146,7 +146,20 @@ def _run_semantic_validation(parsed: object, kind: ScriptKind) -> list[dict[str,
         errors.append(_error("name", "Script name is required and must not be empty"))
 
     if kind == ScriptKind.TEST:
-        dataspace_version = getattr(parsed, "dataspace_version", None) or "saturn"
+        ds_block = getattr(parsed, "dataspace", None)
+        if ds_block is not None and hasattr(ds_block, "version") and ds_block.version:
+            dataspace_version = ds_block.version
+        else:
+            dataspace_version = getattr(parsed, "dataspace_version", None)
+
+        if not dataspace_version:
+            errors.append(_error(
+                "dataspace_version",
+                "Dataspace version must be explicitly declared "
+                "(via 'dataspace.version' block or 'dataspace_version' field)",
+            ))
+            return errors
+
         result = _validator.validate(parsed, version=dataspace_version)
         for issue in result.issues:
             path = _build_issue_path(issue)

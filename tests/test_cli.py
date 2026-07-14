@@ -145,15 +145,18 @@ class TestPrintReport:
     def test_print_report_with_error(self, tmp_path: Path) -> None:
         """Test report with a step that has an error."""
         yaml_content = """\
-name: Error Test
+syntax: v2
+kind: test
+id: error-test
+namespace: testlab.cli
+metadata:
+  name: Error Test
+  version: "1.0"
 execution:
-  - type: http_request
+  - uses: http_request
     name: Bad Request
-    inputs:
+    with:
       url: "http://127.0.0.1:1/nonexistent"
-    validate:
-      - type: STATUS_CODE
-        value: 200
 """
         f = tmp_path / "error.yaml"
         f.write_text(yaml_content)
@@ -164,14 +167,16 @@ execution:
     def test_print_report_with_assertions(self, tmp_path: Path) -> None:
         """Test report printing with step that uses noop executor and assertions."""
         yaml_content = """\
-name: Noop Test
+syntax: v2
+kind: test
+id: noop-test
+namespace: testlab.cli
+metadata:
+  name: Noop Test
+  version: "1.0"
 execution:
-  - type: register_twin
+  - uses: register_twin
     name: Register
-    validate:
-      - type: STATUS_CODE
-        value: 200
-        severity: HARD
 """
         f = tmp_path / "noop.yaml"
         f.write_text(yaml_content)

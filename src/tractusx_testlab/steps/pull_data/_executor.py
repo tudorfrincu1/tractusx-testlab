@@ -30,6 +30,8 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
+import requests
+
 from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.steps.pull_data._constants import (
@@ -148,7 +150,7 @@ async def _do_dsp_flow(
             raw_datasets = [raw_datasets]
         datasets = raw_datasets or []
         asset_id = datasets[0].get("@id", "") if datasets else ""
-    except Exception as exc:  # noqa: BLE001
+    except (requests.RequestException, ConnectionError, TimeoutError) as exc:
         logger.debug("Pre-catalog fetch failed (will retry in do_dsp): %s", exc)
 
     # Full DSP flow: use get_transfer_id + get_endpoint_with_token to expose
