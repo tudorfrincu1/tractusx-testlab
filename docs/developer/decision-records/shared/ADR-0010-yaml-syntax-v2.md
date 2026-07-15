@@ -1636,8 +1636,86 @@ teardown:
 
 ---
 
+## Appendix A: V2 Syntax Revisions (2026-07)
+
+The following changes were applied to the V2 syntax after the original acceptance. Each is
+traceable to a specific ADR or PR.
+
+### A.1 Keyword Renames
+
+| Original (§1) | Current V2 | Reason |
+|----------------|------------|--------|
+| `testlab:` (syntax version marker) | `syntax: v2` | Decouples the product name from the format identifier. Files declare `syntax: v2` at root. |
+| `steps:` (main execution phase) | `execution:` | Avoids collision with the `${{ steps.x }}` variable scope — `steps` is a variable namespace, `execution` is the phase keyword. |
+| `namespace:` (required) | `namespace:` (optional in V2) | V2 TCK manifests infer namespace from the `id` field. When present it is honoured; when absent the compiler uses `""`. |
+| `preconditions:` (TCK-level) | **Removed** | See ADR-0021. Replaced by complex variables in `env.variables`. |
+
+The compiler accepts both `steps:` (V1 compat) and `execution:` (V2) in test files.
+The JSON schema (`tck_test.schema.json`) uses a `oneOf` requiring exactly one of them.
+
+### A.2 `env.schemas` and `env.testdata` — List Format
+
+V1 used a dict keyed by name:
+
+```yaml
+env:
+  schemas:
+    certificate_schema:
+      file: business_partner_certificate_schema.json
+```
+
+V2 accepts a **list of `{id, source}` objects**:
+
+```yaml
+env:
+  schemas:
+    - id: certificate_schema
+      source: business_partner_certificate_schema.json
+```
+
+The compiler and runner accept both formats (dict and list). The list format is canonical for
+new V2 manifests.
+
+### A.3 Variable Lifecycle (amends §3.3)
+
+The `preconditions (TCK-level)` row in the Variable Lifecycle table is removed. The revised
+visibility model:
+
+| Phase | Visibility |
+|-------|-----------|
+| `setup` steps | Visible to `execution` and `teardown` |
+| `execution` steps | Visible to subsequent `execution` steps and `teardown` |
+| `teardown` | Can reference all preceding variables |
+| `env` variables (TCK-global) | Visible everywhere — includes complex variables (`uses:`/`with:`/`returns:`) |
+
+Complex variables defined in `env.variables` with a `uses:` verb (e.g. `config/connector/policy`)
+are resolved at TCK load time and their `returns:` fields are accessible as
+`${{ env.<variable_id>.<field> }}`. See ADR-0021 §3.
+
+### A.4 `infrastructure.*` Variable References
+
+Steps MAY reference infrastructure variables directly using `${{ infrastructure.<side>.<capability>.<field> }}`.
+This is a convenience shorthand documented by ADR-0019 §4 amendment: the player seeds these from
+the operator's binding profile before execution begins. Example:
+
+```yaml
+with:
+  connector_service: ${{ infrastructure.engine.connector }}
+  counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
+```
+
+### A.5 Deprecated Verb Rejection (Compiler)
+
+The compiler rejects any step using a verb prefix listed in the deprecated verbs registry.
+As of ADR-0021, `precondition/*` is the only deprecated prefix. The error message includes
+the ADR reference and a migration path.
+
+---
+
 ## References
 
 - [ADR-0009: Typed Variable Class System](ADR-0009-typed-variable-class-system.md) — defines `class` taxonomy used in `returns:`
+- [ADR-0021: Remove Precondition Concept](ADR-0021-remove-precondition-concept.md) — removes `preconditions:` and `precondition/*` verbs
+- [ADR-0019: Service Requirements and Engine Bindings](../backend/ADR-0019-service-requirements-and-engine-bindings.md) — infrastructure topology
 - [GitHub Actions Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions) — inspiration source
 - [Product Scope](../../product-scope.md) — lifecycle: IDE → YAML → compile → execute → feedback

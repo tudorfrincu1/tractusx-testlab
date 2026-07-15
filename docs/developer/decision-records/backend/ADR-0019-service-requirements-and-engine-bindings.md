@@ -167,6 +167,13 @@ server) are logged via `tck.boot.service.*`, distinct from the endpoint validati
 
 ### 4. Steps reference variables, never infrastructure or bindings
 
+> **Amendment (2026-07):** The strict separation below is the *recommended* architecture for
+> production TCKs. In practice, V2 test files MAY reference `${{ infrastructure.<side>.<capability>.<field> }}`
+> directly as a convenience — the player seeds these from the operator's binding profile into
+> the variable context at boot time. This shorthand avoids requiring authors to redeclare every
+> infrastructure field as an explicit `env` variable. The compiler and player resolve these
+> identically to `env.*` references. See ADR-0010 Appendix A.4.
+
 A step's only reference surface is a **variable** (ADR-0018) — `${{ env.<name>.<field> }}` or
 another step's output. Steps never name `infrastructure.*` or `bindings.*`; that topology is
 engine-internal. The two sides surface to authoring differently:
