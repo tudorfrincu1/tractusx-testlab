@@ -31,8 +31,9 @@ from pathlib import Path
 from tractusx_testlab.models.authoring.definitions import (
     ScriptDefinitionV2,
     TckDefinitionV2,
+    VariableDefinition,
 )
-
+from tractusx_testlab.scripting._variable_form import parse_variables_block
 
 class TestScript:
     """Runtime wrapper for a single script definition."""
@@ -132,6 +133,28 @@ class Tck:
     def total_steps(self) -> int:
         """Return the total step count across all scripts."""
         return sum(script.step_count() for script in self._scripts)
+
+    def all_variables(self) -> dict[str, VariableDefinition]:
+        """Return all variables declared in the TCK env block.
+
+        Variables with ``runtime=True`` must be supplied by the caller at
+        execution time.  Variables with a ``default`` value are optional.
+        """
+        raw = self.definition.env.variables if self.definition.env else None
+        return parse_variables_block(raw)
+
+    def required_variables(self) -> dict[str, VariableDefinition]:
+        """Return only the variables that must be provided at runtime.
+
+        A variable is required when it has ``source=input`` (i.e. ``runtime=True``)
+        and no default value.  Use this to validate an incoming request before
+        calling :py:meth:`~tractusx_testlab.player.execution.player.TestlabPlayer.run_tck`.
+        """
+        return {
+            name: var
+            for name, var in self.all_variables().items()
+            if var.runtime and var.default is None
+        }
 
     @classmethod
     def from_single_script(

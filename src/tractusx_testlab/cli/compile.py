@@ -37,6 +37,10 @@ import typer
 from tractusx_testlab.cli import app
 
 
+# Archive entry name for the bundled authoring YAML
+TCK_BUNDLE_ENTRY = "tck-bundle.yaml"
+
+
 def _create_tck_archive(source_dir: Path, archive_path: Path) -> None:
     """Create a .tck ZIP archive from the compiled output directory."""
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -44,6 +48,38 @@ def _create_tck_archive(source_dir: Path, archive_path: Path) -> None:
             if file_path.is_file():
                 arcname = file_path.relative_to(source_dir).as_posix()
                 zf.write(file_path, arcname)
+
+
+def _embed_bundle_yaml(manifest_path: Path, output_dir: Path) -> None:
+    """Embed manifest + test files in the output dir for runtime loading."""
+    import shutil
+
+    import yaml as _yaml
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        tck_data = _yaml.safe_load(f)
+
+    bundled = _yaml.dump(tck_data, default_flow_style=False, sort_keys=False)
+    (output_dir / TCK_BUNDLE_ENTRY).write_text(bundled, encoding="utf-8")
+
+    # Copy referenced test files into tests/ subdirectory
+    tests_raw = tck_data.get("tests", [])
+    if not tests_raw:
+        return
+
+    tests_dir = output_dir / "tests"
+    tests_dir.mkdir(exist_ok=True)
+    base_dir = manifest_path.parent
+
+    for entry in tests_raw:
+        file_ref = entry if isinstance(entry, str) else entry.get("id", "")
+        if not file_ref:
+            continue
+        source_file = base_dir / "tests" / file_ref
+        if not source_file.exists():
+            source_file = base_dir / file_ref
+        if source_file.exists():
+            shutil.copy2(source_file, tests_dir / Path(file_ref).name)
 
 
 @app.command()
@@ -115,13 +151,17 @@ def compile(
             typer.echo(f"Compilation failed: {exc}", err=True)
             raise typer.Exit(1)
 
+        _embed_bundle_yaml(script, tmp_path)
+
         tck_id = manifest_dict["tck"]["id"]
-        if output and output.is_dir():
-            tck_path = output / f"{tck_id}.tck"
+        if output:
+            if output.suffix == "" or output.is_dir():
+                output.mkdir(parents=True, exist_ok=True)
+                tck_path = output / f"{tck_id}.tck"
+            else:
+                tck_path = output if output.suffix == ".tck" else output.with_suffix(".tck")
         else:
-            tck_path = output or (script.parent / f"{tck_id}.tck")
-        if tck_path.suffix != ".tck":
-            tck_path = tck_path.with_suffix(".tck")
+            tck_path = script.parent / f"{tck_id}.tck"
         tck_path.parent.mkdir(parents=True, exist_ok=True)
         _create_tck_archive(tmp_path, tck_path)
 

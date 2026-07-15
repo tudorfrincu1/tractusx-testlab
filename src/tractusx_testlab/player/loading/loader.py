@@ -22,11 +22,13 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
-"""Loader — resolves YAML files and .stck archives into Tck objects."""
+"""Loader — resolves YAML files, .tck archives, and .stck archives into Tck objects."""
 
 from __future__ import annotations
 
 import logging
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Optional
 
@@ -42,6 +44,9 @@ from tractusx_testlab.player.loading._parser import (
     parse_script_file,
     parse_tck_file,
 )
+
+# Entry name for the bundled authoring YAML inside .tck ZIP archives
+_TCK_BUNDLE_ENTRY = "tck-bundle.yaml"
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +96,7 @@ def _detect_kind(data: dict) -> ScriptKind:
 
 
 class Loader:
-    """Loads a TCK from a YAML file or a .stck encrypted archive."""
+    """Loads a TCK from a YAML file, .tck archive, or .stck encrypted archive."""
 
     __slots__ = ()
 
@@ -109,7 +114,36 @@ class Loader:
         if path.suffix == ".stck":
             return self._load_package(path, player_private_key, compiler_public_key)
 
+        if path.suffix == ".tck":
+            return self._load_tck_package(path)
+
         return self._load_yaml(path)
+
+    def _load_tck_package(self, path: Path) -> Tck:
+        """Load an unencrypted .tck ZIP archive.
+
+        Extracts ``tck-bundle.yaml`` from the archive and parses it
+        using the standard YAML pipeline.  The archive is extracted to
+        a temporary directory so that relative asset paths resolve.
+        """
+        if not zipfile.is_zipfile(path):
+            raise ValueError(
+                f"File has .tck extension but is not a valid ZIP archive: {path}"
+            )
+        extract_dir = Path(tempfile.mkdtemp(prefix="tck_"))
+        with zipfile.ZipFile(path, "r") as zf:
+            if _TCK_BUNDLE_ENTRY not in zf.namelist():
+                raise ValueError(
+                    f"Package is missing the bundled test definition "
+                    f"({_TCK_BUNDLE_ENTRY}). Re-compile the package with "
+                    f"the latest testlab compiler."
+                )
+            zf.extractall(extract_dir)
+
+        bundle_path = extract_dir / _TCK_BUNDLE_ENTRY
+        with open(bundle_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return self._parse_data(data, source_path=path, base_dir=extract_dir)
 
     def _load_package(
         self,
