@@ -22,10 +22,11 @@
 ## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
 ## It was reviewed and tested by a human committer.
 
-"""Variable and service definition resolution for ${var} references."""
+"""Variable and service definition resolution for ${var} and ${{ }} references."""
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any
 
 from tractusx_testlab.syntax import patterns
@@ -35,13 +36,53 @@ from tractusx_testlab.models.authoring.definitions import ServiceDefinition
 if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
 
+# V2 ${{ expr }} pattern — matches the full double-curly wrapper
+_V2_EXPR_RE = re.compile(r"\$\{\{\s*([^}]+?)\s*\}\}")
+_V2_EXPR_FULL_RE = re.compile(r"^\$\{\{\s*([^}]+?)\s*\}\}$")
 
-def resolve_str(value: str, context: "StepContext") -> str:
-    """Replace ``${var}`` and ``@var`` references in a single string.
 
-    If the entire string is a single ``@var`` reference, returns the raw variable
-    value (preserving dicts, lists, etc.). Otherwise performs string interpolation.
+def _resolve_v2_expr(expr: str, context: "StepContext") -> object:
+    """Resolve a single normalized V2 expression against the context.
+
+    Resolution rules:
+    - ``env.X`` → context variable ``X``
+    - ``steps.ID.FIELD``, ``setup.ID.FIELD``, ``infrastructure.X.Y…`` → flat
+      context lookup of the full dotted path (set by store_step_outputs or
+      seeded by the player).
+    - Anything else → flat context lookup as-is.
     """
+    expr = expr.strip()
+    if expr.startswith("env."):
+        return context.get_variable(expr[4:])
+    return context.get_variable(expr)
+
+
+def resolve_str(value: str, context: "StepContext") -> object:
+    """Replace ``${{ }}``, ``${var}``, and ``@var`` references in a single string.
+
+    Priority order:
+    1. ``${{ expr }}`` (V2 double-curly) — whole-string returns raw type.
+    2. ``@var`` — whole-string returns raw type.
+    3. Inline ``@var`` and ``${var}`` — string interpolation.
+    """
+    # V2 whole-string expression → return raw value (preserving type)
+    if "${{" in value:
+        full = _V2_EXPR_FULL_RE.match(value)
+        if full:
+            resolved = _resolve_v2_expr(full.group(1), context)
+            if resolved is not None:
+                # If the resolved value is itself a composite (dict/list) containing
+                # further ${{ }} expressions (e.g. testdata files), process them now.
+                return _resolve_value(resolved, context)
+            return value
+        # Inline V2 interpolation (mixed with literal text)
+        value = _V2_EXPR_RE.sub(
+            lambda m: str(
+                r if (r := _resolve_v2_expr(m.group(1), context)) is not None else m.group(0)
+            ),
+            value,
+        )
+
     # Whole-string @var → return raw value (preserving type)
     if value.startswith("@") and patterns.AT_VAR_REF.fullmatch(value):
         var_name = value[1:]

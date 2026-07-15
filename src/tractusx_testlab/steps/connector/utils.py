@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -54,7 +54,7 @@ class HttpRequestStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         method = params.get("method", "GET").upper()
         url = params["url"]

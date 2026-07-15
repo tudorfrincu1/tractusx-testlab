@@ -19,18 +19,26 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.8).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Authoring-time structures: script, step, service and TCK definitions."""
 
 from tractusx_testlab.models.authoring.definitions import (
-    Assertion,
+    AssertionV2,
+    EnvDefinition,
     ImportDefinition,
+    MetadataDefinition,
+    ReturnFieldDefinition,
+    SchemaDefinition,
     ScriptDefinition,
+    ScriptDefinitionV2,
     ServiceDefinition,
-    StepDefinition,
+    StepDefinitionV2,
     TckDefinition,
+    TckDefinitionV2,
+    TckMetadataDefinition,
+    TestDataDefinition,
     VariableDefinition,
 )
 from tractusx_testlab.models.authoring.infrastructure import (
@@ -41,15 +49,23 @@ from tractusx_testlab.models.authoring.infrastructure import (
 )
 
 __all__ = [
-    "Assertion",
+    "AssertionV2",
     "CapabilityRequirement",
     "DataspaceContext",
+    "EnvDefinition",
     "ImportDefinition",
     "InfrastructureConfig",
+    "MetadataDefinition",
+    "ReturnFieldDefinition",
+    "SchemaDefinition",
     "ScriptDefinition",
+    "ScriptDefinitionV2",
     "ServiceDefinition",
     "Standard",
-    "StepDefinition",
+    "StepDefinitionV2",
     "TckDefinition",
+    "TckDefinitionV2",
+    "TckMetadataDefinition",
+    "TestDataDefinition",
     "VariableDefinition",
 ]

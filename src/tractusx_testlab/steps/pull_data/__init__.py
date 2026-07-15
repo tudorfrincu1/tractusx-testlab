@@ -33,6 +33,7 @@ from tractusx_testlab.steps.pull_data._constants import (
     STEP_TYPES,
 )
 from tractusx_testlab.steps.pull_data._executor import (
+    ConnectorPullDataFiltered,
     PullDataFiltered,
     PullDataFilteredByPolicy,
 )
@@ -41,3 +42,4 @@ __all__ = ["STEP_TYPES"]
 
 step(STEP_PULL_DATA_FILTERED)(PullDataFiltered)
 step(STEP_PULL_DATA_FILTERED_BY_POLICY)(PullDataFilteredByPolicy)
+step("connector/pull_data_filtered")(ConnectorPullDataFiltered)

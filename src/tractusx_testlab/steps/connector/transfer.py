@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import (
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 @step("transfer_data", aliases=["initiate_transfer"])
 class TransferDataStep(BaseStep):
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         url = f"{context.get_consumer_base_url()}/v3/transferprocesses"
 

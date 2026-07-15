@@ -22,7 +22,7 @@
 ## It was reviewed and tested by a human committer.
 
 kind: test
-testlab: v1-alpha
+syntax: v2
 
 id: request-certificate
 namespace: ccm-v0.0.1
@@ -34,28 +34,7 @@ metadata:
     Request certificate via CCMAPI endpoint per CX-0135 v3.1.0.
     Validates full 7-field header envelope on response and requestStatus enum.
 
-setup:
-  - id: ccm_policy
-    uses: precondition/provide
-    name: Required CCMAPI Usage Policy
-    with:
-      value:
-        permissions:
-          - action: use
-            constraints:
-              and:
-                - left_operand: UsagePurpose
-                  operator: isAnyOf
-                  right_operand: "cx.ccm.base:1"
-                - left_operand: FrameworkAgreement
-                  operator: eq
-                  right_operand: "DataExchangeGovernance:1.0"
-    returns:
-      policy:
-        type: object
-        class: Policy
-
-steps:
+execution:
   - id: pull_data_1
     uses: connector/pull_data_filtered
     name: Discover CCMAPI offers, negotiate with expected policy, and obtain EDR
@@ -63,12 +42,12 @@ steps:
       connector_service: ${{ infrastructure.engine.connector }}
       counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
       counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
-      policy: ${{ setup.ccm_policy.policy }}
+      policy: ${{ env.ccm_usage_policy.policy }}
       filters:
-        - operand_left: "https://w3id.org/edc/v0.0.1/ns/type"
+        - operand_left: "'http://purl.org/dc/terms/type'.'@id'"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CCMAPI"
-        - operand_left: "http://purl.org/dc/terms/subject"
+        - operand_left: "'http://purl.org/dc/terms/subject'.'@id'"
           operator: "="
           operand_right: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
         - operand_left: "https://w3id.org/catenax/ontology/common#version"
@@ -143,7 +122,7 @@ steps:
     uses: util/generate_uuid
     name: Generate request message ID
     returns:
-      request_uuid:
+      generated_id:
         type: string
         class: Uuid
 
@@ -225,7 +204,7 @@ steps:
       input: "${{ steps.http_call_1.response_body }}"
       path: "header.relatedMessageId"
       operator: equals
-      value: "urn:uuid:${{ steps.gen_uuid_1.request_uuid }}"
+      value: "urn:uuid:${{ steps.gen_uuid_1.generated_id }}"
 
   - id: assert_version
     uses: validate/field

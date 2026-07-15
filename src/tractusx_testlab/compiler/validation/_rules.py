@@ -86,7 +86,9 @@ def validate_tck_manifest(
     test_validator = Draft202012Validator(test_schema)
 
     for test_entry in tests:
-        test_file = test_entry if isinstance(test_entry, str) else test_entry.get("file", "")
+        test_file = test_entry if isinstance(test_entry, str) else test_entry.get(
+            "file", test_entry.get("id", "")
+        )
         if not test_file:
             continue
         test_path = base_dir / "tests" / test_file
@@ -99,6 +101,9 @@ def validate_tck_manifest(
             continue
         all_errors.extend(
             _collect_errors(test_validator, test_data, f"tests/{test_file}")
+        )
+        all_errors.extend(
+            _reject_deprecated_verbs(test_data, f"tests/{test_file}")
         )
 
     if all_errors:
@@ -119,23 +124,74 @@ def _validate_file_refs(
     env = manifest_data.get("env", {})
 
     schemas = env.get("schemas", {})
-    for name, entry in schemas.items():
-        if isinstance(entry, dict) and "file" in entry:
-            path = base_dir / "schemas" / entry["file"]
-            if not path.is_file():
-                errors.append(
-                    f"Referenced schema file not found: schemas/{entry['file']} "
-                    f"(env.schemas.{name})"
-                )
+    if isinstance(schemas, list):
+        for entry in schemas:
+            source = entry.get("source") if isinstance(entry, dict) else None
+            if source:
+                path = base_dir / "schemas" / source
+                if not path.is_file():
+                    errors.append(
+                        f"Referenced schema file not found: schemas/{source} "
+                        f"(env.schemas[{entry.get('id', '?')}])"
+                    )
+    elif isinstance(schemas, dict):
+        for name, entry in schemas.items():
+            if isinstance(entry, dict) and "file" in entry:
+                path = base_dir / "schemas" / entry["file"]
+                if not path.is_file():
+                    errors.append(
+                        f"Referenced schema file not found: schemas/{entry['file']} "
+                        f"(env.schemas.{name})"
+                    )
 
     testdata = env.get("testdata", {})
-    for name, entry in testdata.items():
-        if isinstance(entry, dict) and "file" in entry:
-            path = base_dir / "testdata" / entry["file"]
-            if not path.is_file():
-                errors.append(
-                    f"Referenced testdata file not found: testdata/{entry['file']} "
-                    f"(env.testdata.{name})"
-                )
+    if isinstance(testdata, list):
+        for entry in testdata:
+            source = entry.get("source") if isinstance(entry, dict) else None
+            if source:
+                path = base_dir / "testdata" / source
+                if not path.is_file():
+                    errors.append(
+                        f"Referenced testdata file not found: testdata/{source} "
+                        f"(env.testdata[{entry.get('id', '?')}])"
+                    )
+    elif isinstance(testdata, dict):
+        for name, entry in testdata.items():
+            if isinstance(entry, dict) and "file" in entry:
+                path = base_dir / "testdata" / entry["file"]
+                if not path.is_file():
+                    errors.append(
+                        f"Referenced testdata file not found: testdata/{entry['file']} "
+                        f"(env.testdata.{name})"
+                    )
 
+    return errors
+
+
+_DEPRECATED_VERB_PREFIXES = ("precondition/",)
+
+
+def _reject_deprecated_verbs(
+    test_data: dict[str, Any],
+    source_label: str,
+) -> list[str]:
+    """Reject steps that use deprecated verb prefixes (ADR-0021)."""
+    errors: list[str] = []
+    for phase in ("setup", "execution", "teardown"):
+        steps = test_data.get(phase, [])
+        if not isinstance(steps, list):
+            continue
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+            uses = step.get("uses", "")
+            for prefix in _DEPRECATED_VERB_PREFIXES:
+                if uses.startswith(prefix):
+                    step_id = step.get("id", "?")
+                    errors.append(
+                        f"Rejected step '{step_id}' in {source_label}: "
+                        f"'{uses}' is no longer accepted (removed by ADR-0021). "
+                        f"Migrate to a complex variable in env.variables with "
+                        f"'uses: config/connector/policy'."
+                    )
     return errors

@@ -56,7 +56,7 @@ class TestCcmCompileAll:
     def test_has_steps(self, yaml_path: Path) -> None:
         script = YamlParser.parse_script(yaml_path)
 
-        assert len(script.steps) > 0, f"{yaml_path.name} must have at least one step"
+        assert len(script.execution) > 0, f"{yaml_path.name} must have at least one step"
 
     def test_has_name(self, yaml_path: Path) -> None:
         with open(yaml_path, "r", encoding="utf-8") as f:

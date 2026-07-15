@@ -4,7 +4,11 @@
   "title": "TCK Test File",
   "description": "Validates individual TCK test YAML file structure.",
   "type": "object",
-  "required": ["id", "metadata", "steps"],
+  "required": ["id", "metadata"],
+  "oneOf": [
+    { "required": ["steps"] },
+    { "required": ["execution"] }
+  ],
   "properties": {
     "kind": {
       "type": "string",
@@ -36,6 +40,13 @@
       }
     },
     "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "execution": {
       "type": "array",
       "minItems": 1,
       "items": {

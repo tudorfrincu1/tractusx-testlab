@@ -31,7 +31,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.steps.connector.extract import ExtractDatasetStep
 from tractusx_testlab.steps.industry.semantic import ValidateSemanticSchemaStep
 from tractusx_testlab.steps.utility.json_extract import JsonPathExtractStep
@@ -45,11 +45,13 @@ def _make_mock_context(**variables: Any) -> MagicMock:
     return ctx
 
 
-def _make_step_definition(**overrides: Any) -> StepDefinition:
-    """Create a minimal StepDefinition for step execution tests."""
-    defaults = {"type": "test", "name": "test-step", "params": {}, "validate": []}
-    defaults.update(overrides)
-    return StepDefinition(**defaults)
+def _make_step_definition(**overrides: Any) -> StepDefinitionV2:
+    """Create a minimal StepDefinitionV2 for step execution tests."""
+    uses = overrides.pop("type", "test")
+    name = overrides.pop("name", "test-step")
+    params = overrides.pop("params", {})
+    overrides.pop("validate", None)
+    return StepDefinitionV2(uses=uses, name=name, **{"with_": params} if params else {}, **overrides)
 
 
 class TestGenerateUuidStep:
@@ -63,8 +65,8 @@ class TestGenerateUuidStep:
         output = await step_instance.execute({}, ctx, definition)
 
         assert output.value is not None, "StepOutput must have a value"
-        parsed = uuid.UUID(output.value, version=4)
-        assert str(parsed) == output.value, "Output must be a valid UUID v4 string"
+        parsed = uuid.UUID(output.value["generated_id"], version=4)
+        assert str(parsed) == output.value["generated_id"], "Output must be a valid UUID v4 string"
 
     @pytest.mark.asyncio
     async def test_generate_uuid_with_prefix(self) -> None:
@@ -75,8 +77,8 @@ class TestGenerateUuidStep:
 
         output = await step_instance.execute({"prefix": "urn:uuid:"}, ctx, definition)
 
-        assert output.value.startswith("urn:uuid:"), "UUID should be prefixed"
-        uuid_part = output.value[len("urn:uuid:"):]
+        assert output.value["generated_id"].startswith("urn:uuid:"), "UUID should be prefixed"
+        uuid_part = output.value["generated_id"][len("urn:uuid:"):]
         uuid.UUID(uuid_part, version=4)  # must not raise
 
 

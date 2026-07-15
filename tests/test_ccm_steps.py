@@ -31,7 +31,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.steps.connector.catalog_filter import QueryCatalogWithFiltersStep
 from tractusx_testlab.steps.industry.notification import SendNotificationStep
 from tractusx_testlab.steps.industry.semantic import ValidateSemanticSchemaStep
@@ -40,9 +40,9 @@ from tractusx_testlab.steps.utility.uuid_gen import GenerateUuidStep
 
 
 @pytest.fixture()
-def definition() -> StepDefinition:
-    """Minimal StepDefinition for test use."""
-    return StepDefinition(type="test_step", name="test")
+def definition() -> StepDefinitionV2:
+    """Minimal StepDefinitionV2 for test use."""
+    return StepDefinitionV2(uses="test_step", name="test")
 
 
 # ---------------------------------------------------------------------------
@@ -54,18 +54,18 @@ class TestGenerateUuidStep:
     """Tests for generate_uuid step."""
 
     @pytest.mark.asyncio
-    async def test_generates_valid_uuid(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_generates_valid_uuid(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = GenerateUuidStep()
         result = await step.execute({}, mock_context, definition)
-        parsed = uuid.UUID(result.value)
+        parsed = uuid.UUID(result.value["generated_id"])
         assert parsed.version == 4
 
     @pytest.mark.asyncio
-    async def test_prepends_prefix(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_prepends_prefix(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = GenerateUuidStep()
         result = await step.execute({"prefix": "urn:uuid:"}, mock_context, definition)
-        assert result.value.startswith("urn:uuid:")
-        uuid.UUID(result.value.removeprefix("urn:uuid:"))
+        assert result.value["generated_id"].startswith("urn:uuid:")
+        uuid.UUID(result.value["generated_id"].removeprefix("urn:uuid:"))
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +77,7 @@ class TestJsonPathExtractStep:
     """Tests for json_path_extract step."""
 
     @pytest.mark.asyncio
-    async def test_extracts_nested_value(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_extracts_nested_value(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["catalog"] = {"dcat:dataset": [{"id": "ds-1"}]}
         step = JsonPathExtractStep()
         result = await step.execute(
@@ -86,7 +86,7 @@ class TestJsonPathExtractStep:
         assert result.value == "ds-1"
 
     @pytest.mark.asyncio
-    async def test_stores_in_variable(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_stores_in_variable(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["data"] = {"key": "val"}
         step = JsonPathExtractStep()
         await step.execute(
@@ -96,19 +96,19 @@ class TestJsonPathExtractStep:
         assert mock_context.variables["extracted"] == "val"
 
     @pytest.mark.asyncio
-    async def test_missing_source_raises_key_error(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_missing_source_raises_key_error(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = JsonPathExtractStep()
         with pytest.raises(KeyError, match="requires either 'source' or 'variable'"):
             await step.execute({"path": "x"}, mock_context, definition)
 
     @pytest.mark.asyncio
-    async def test_nonexistent_variable_raises(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_nonexistent_variable_raises(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         step = JsonPathExtractStep()
         with pytest.raises(KeyError, match="not found"):
             await step.execute({"source": "missing", "path": "a"}, mock_context, definition)
 
     @pytest.mark.asyncio
-    async def test_path_no_match_raises(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_path_no_match_raises(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["obj"] = {"a": 1}
         step = JsonPathExtractStep()
         with pytest.raises(KeyError):
@@ -124,7 +124,7 @@ class TestValidateSemanticSchemaStep:
     """Tests for validate_semantic_schema step."""
 
     @pytest.mark.asyncio
-    async def test_valid_payload_passes(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_valid_payload_passes(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["payload"] = {"catenaXId": "x", "childItems": []}
         step = ValidateSemanticSchemaStep()
         result = await step.execute(
@@ -134,7 +134,7 @@ class TestValidateSemanticSchemaStep:
         assert result.value["missing_keys"] == []
 
     @pytest.mark.asyncio
-    async def test_missing_keys_fails(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_missing_keys_fails(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["payload"] = {"catenaXId": "x"}
         step = ValidateSemanticSchemaStep()
         result = await step.execute(
@@ -144,7 +144,7 @@ class TestValidateSemanticSchemaStep:
         assert "childItems" in result.value["missing_keys"]
 
     @pytest.mark.asyncio
-    async def test_unknown_schema_ref_empty_keys(self, mock_context: MagicMock, definition: StepDefinition) -> None:
+    async def test_unknown_schema_ref_empty_keys(self, mock_context: MagicMock, definition: StepDefinitionV2) -> None:
         mock_context.variables["payload"] = {"anything": 1}
         step = ValidateSemanticSchemaStep()
         result = await step.execute(
@@ -155,7 +155,7 @@ class TestValidateSemanticSchemaStep:
 
     @pytest.mark.asyncio
     async def test_non_dict_source_raises_type_error(
-        self, mock_context: MagicMock, definition: StepDefinition
+        self, mock_context: MagicMock, definition: StepDefinitionV2
     ) -> None:
         mock_context.variables["payload"] = [1, 2, 3]
         step = ValidateSemanticSchemaStep()
@@ -175,7 +175,7 @@ class TestQueryCatalogWithFiltersStep:
 
     @pytest.mark.asyncio
     async def test_successful_catalog_query(
-        self, mock_context: MagicMock, definition: StepDefinition
+        self, mock_context: MagicMock, definition: StepDefinitionV2
     ) -> None:
         catalog = {"dcat:dataset": [{"@id": "asset-1"}]}
         consumer = MagicMock()
@@ -192,7 +192,7 @@ class TestQueryCatalogWithFiltersStep:
 
     @pytest.mark.asyncio
     async def test_catalog_error_returns_none_value(
-        self, mock_context: MagicMock, definition: StepDefinition
+        self, mock_context: MagicMock, definition: StepDefinitionV2
     ) -> None:
         consumer = MagicMock()
         consumer.get_catalog_with_filter.return_value = None
@@ -230,7 +230,7 @@ class TestSendNotificationStep:
     @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_dataplane_direct_mode_posts(
-        self, mock_client_cls: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_client_cls: MagicMock, mock_context: MagicMock, definition: StepDefinitionV2
     ) -> None:
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -254,7 +254,7 @@ class TestSendNotificationStep:
     @pytest.mark.asyncio
     @patch("tractusx_sdk.industry.models.notifications.notification.Notification")
     async def test_sdk_mode_calls_service(
-        self, mock_notif_cls: MagicMock, mock_context: MagicMock, definition: StepDefinition
+        self, mock_notif_cls: MagicMock, mock_context: MagicMock, definition: StepDefinitionV2
     ) -> None:
         mock_notif_instance = MagicMock(to_data=MagicMock(return_value={}))
         mock_notif_cls.return_value = mock_notif_instance

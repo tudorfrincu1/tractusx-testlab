@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Evaluates assertion blocks against step outputs."""
@@ -35,7 +35,7 @@ from tractusx_testlab.models import (
     StepResult,
     ValueSource,
 )
-from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models.authoring.definitions import AssertionV2
 from tractusx_testlab.models.primitives.enums import AssertionType
 from tractusx_testlab.steps import _checks
 from tractusx_testlab.steps._checks.extraction import (
@@ -50,12 +50,88 @@ from tractusx_testlab.steps._checks.extraction import (
 )
 
 
+# Maps v2 assertion ``uses`` identifiers to ``AssertionType`` enum values.
+_USES_TO_TYPE: dict[str, AssertionType] = {
+    "assert/not_null": AssertionType.NOT_NULL,
+    "assert/not_empty": AssertionType.NOT_EMPTY,
+    "assert/equals": AssertionType.EQUALS,
+    "assert/not_equals": AssertionType.NOT_EQUALS,
+    "assert/contains": AssertionType.CONTAINS,
+    "assert/not_contains": AssertionType.NOT_CONTAINS,
+    "assert/schema": AssertionType.SCHEMA,
+    "assert/schema_validation": AssertionType.SCHEMA_VALIDATION,
+    "assert/status_code": AssertionType.STATUS_CODE,
+    "assert/exact": AssertionType.EXACT,
+    "assert/regex": AssertionType.REGEX,
+    "assert/greater_than": AssertionType.GREATER_THAN,
+    "assert/less_than": AssertionType.LESS_THAN,
+    "assert/greater_or_equal": AssertionType.GREATER_OR_EQUAL,
+    "assert/less_or_equal": AssertionType.LESS_OR_EQUAL,
+    "assert/between": AssertionType.BETWEEN,
+    "assert/assert_field": AssertionType.ASSERT_FIELD,
+    "assert/json_path_extract": AssertionType.JSON_PATH_EXTRACT,
+    # Legacy flat names for backward compatibility.
+    "NOT_NULL": AssertionType.NOT_NULL,
+    "NOT_EMPTY": AssertionType.NOT_EMPTY,
+    "EQUALS": AssertionType.EQUALS,
+    "STATUS_CODE": AssertionType.STATUS_CODE,
+    "CONTAINS": AssertionType.CONTAINS,
+    "SCHEMA": AssertionType.SCHEMA,
+    "SCHEMA_VALIDATION": AssertionType.SCHEMA_VALIDATION,
+    "REGEX": AssertionType.REGEX,
+    "JSON_PATH_EXTRACT": AssertionType.JSON_PATH_EXTRACT,
+}
+
+
+def _extract_params(assertion: AssertionV2) -> dict:
+    """Extract runtime parameters from an ``AssertionV2.with_`` dict."""
+    return assertion.with_ or {}
+
+
+def _apply_inline_operator(operator: str, actual: object, expected: object) -> tuple[bool, str]:
+    """Apply a named operator for validate/assert inline assertions."""
+    if operator == "not_null":
+        return actual is not None, "Expected non-null value, got None"
+    if operator == "null":
+        return actual is None, f"Expected null, got {actual!r}"
+    if operator == "not_empty":
+        return bool(actual), f"Expected non-empty value, got {actual!r}"
+    if operator == "equals":
+        passed = actual == expected or str(actual) == str(expected)
+        return passed, f"Expected {expected!r}, got {actual!r}"
+    if operator == "not_equals":
+        passed = actual != expected and str(actual) != str(expected)
+        return passed, f"Expected value != {expected!r}, got {actual!r}"
+    if operator == "contains":
+        passed = str(expected) in str(actual) if actual is not None else False
+        return passed, f"Expected {actual!r} to contain {expected!r}"
+    if operator == "not_contains":
+        passed = str(expected) not in str(actual) if actual is not None else True
+        return passed, f"Expected {actual!r} to NOT contain {expected!r}"
+    if operator == "matches_regex":
+        import re
+        passed = isinstance(actual, str) and bool(re.search(str(expected), actual))
+        return passed, f"Pattern {expected!r} not matched in {actual!r}"
+    return False, f"Unknown operator: {operator!r}"
+
+
+def _assertion_type(a: AssertionV2) -> AssertionType:
+    """Resolve AssertionType from ``AssertionV2.uses`` string."""
+    resolved = _USES_TO_TYPE.get(a.uses)
+    if resolved is None:
+        try:
+            resolved = AssertionType(a.uses)
+        except ValueError:
+            resolved = AssertionType.EXACT
+    return resolved
+
+
 class AssertionEngine:
     """Evaluates a list of assertions against a step's output value."""
 
     @staticmethod
     def evaluate(
-        assertions: list[Assertion],
+        assertions: list[AssertionV2],
         output: object,
         context_vars: Optional[dict[str, object]] = None,
     ) -> list[AssertionResult]:
@@ -66,11 +142,22 @@ class AssertionEngine:
 
     @staticmethod
     def _evaluate_one(
-        assertion: Assertion,
+        assertion: AssertionV2,
         output: object,
         context_vars: dict[str, object],
     ) -> AssertionResult:
-        if assertion.type == AssertionType.JSON_PATH_EXTRACT:
+        params = _extract_params(assertion)
+        a_type = _assertion_type(assertion)
+
+        # Handle validate/assert and validate/field when used inline in
+        # a step's validate: block. These use "input" as path and
+        # "operator" as the check — not the standard output/path/EXACT flow.
+        if assertion.uses in ("validate/assert", "validate/field"):
+            return AssertionEngine._evaluate_inline_validate_assert(
+                assertion, output, params, context_vars
+            )
+
+        if a_type == AssertionType.JSON_PATH_EXTRACT:
             from tractusx_testlab.steps._checks.json_path import (
                 evaluate_json_path_extract,
             )
@@ -80,12 +167,14 @@ class AssertionEngine:
                 evaluate_fn=AssertionEngine.evaluate,
             )
 
-        expected = AssertionEngine._resolve_expected(assertion, context_vars)
-        actual = AssertionEngine._extract_actual(output, assertion.path)
+        path = params.get("output") or params.get("path")
+        severity = AssertionSeverity(params.get("severity", "HARD"))
+        expected = AssertionEngine._resolve_expected(assertion, a_type, params, context_vars)
+        actual = AssertionEngine._extract_actual(output, path)
 
-        check = _ASSERTION_CHECKS.get(assertion.type)
+        check = _ASSERTION_CHECKS.get(a_type)
         if check is None:
-            passed, message = False, f"Unknown assertion type: {assertion.type}"
+            passed, message = False, f"Unknown assertion type: {a_type}"
         else:
             passed, message = check(actual, expected, output)
 
@@ -95,7 +184,7 @@ class AssertionEngine:
             expected=expected,
             actual=actual,
             message=message if not passed else "",
-            severity=assertion.severity,
+            severity=severity,
         )
 
     # ------------------------------------------------------------------
@@ -103,27 +192,58 @@ class AssertionEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _resolve_expected(assertion: Assertion, context_vars: dict[str, object]) -> object:
-        if assertion.type == AssertionType.BETWEEN:
-            return [assertion.min, assertion.max]
-        if assertion.type == AssertionType.SCHEMA_VALIDATION:
-            ref = assertion.schema_ref
+    def _resolve_expected(
+        assertion: AssertionV2,
+        a_type: AssertionType,
+        params: dict,
+        context_vars: dict[str, object],
+    ) -> object:
+        if a_type == AssertionType.BETWEEN:
+            return [params.get("min"), params.get("max")]
+        if a_type == AssertionType.SCHEMA_VALIDATION:
+            ref = params.get("schema")
             if isinstance(ref, str) and ref.startswith("@"):
                 return context_vars.get(ref[1:], ref)
             return ref
-        if assertion.type == AssertionType.ASSERT_FIELD:
-            exp_val = assertion.expected
+        if a_type == AssertionType.ASSERT_FIELD:
+            exp_val = params.get("expected")
             if isinstance(exp_val, str) and exp_val.startswith("@"):
                 exp_val = context_vars.get(exp_val[1:], exp_val)
-            return {"operator": assertion.operator or "equals", "value": exp_val}
-        if assertion.source == ValueSource.VARIABLE:
-            var_name = assertion.value
-            return context_vars.get(var_name, assertion.value)
-        # Auto-resolve @var references in inline values
-        val = assertion.value
+            return {"operator": params.get("operator", "equals"), "value": exp_val}
+        source = params.get("source", "INLINE")
+        val = params.get("value")
+        if source == "VARIABLE":
+            return context_vars.get(str(val), val)
         if isinstance(val, str) and val.startswith("@"):
             return context_vars.get(val[1:], val)
         return val
+
+    @staticmethod
+    def _evaluate_inline_validate_assert(
+        assertion: "AssertionV2",
+        output: object,
+        params: dict,
+        context_vars: dict[str, object],
+    ) -> "AssertionResult":
+        """Handle validate/assert and validate/field inline in step validate: blocks.
+
+        Uses ``params["input"]`` as the extraction path into the step output,
+        and ``params["operator"]`` (default ``not_null``) as the check.
+        """
+        input_path = params.get("input")
+        operator = params.get("operator", "not_null")
+        expected = params.get("value")
+        severity = AssertionSeverity(params.get("severity", "HARD"))
+        actual = AssertionEngine.extract_path(output, input_path)
+        passed, message = _apply_inline_operator(operator, actual, expected)
+        return AssertionResult(
+            assertion=assertion,
+            passed=passed,
+            expected=expected,
+            actual=actual,
+            message=message if not passed else "",
+            severity=severity,
+        )
 
     @staticmethod
     def extract_path(output: object, path: Optional[str]) -> object:

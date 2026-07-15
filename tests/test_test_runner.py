@@ -42,7 +42,7 @@ def _write_tck(tmp_path: Path) -> Path:
         "name": "Smoke Test",
         "version": "1.0",
         "dataspace_version": "saturn",
-        "steps": [],
+        "execution": [],
     }
     tck = {
         "kind": "tck",

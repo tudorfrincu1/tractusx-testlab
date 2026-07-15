@@ -19,48 +19,40 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """json_path_extract validation type — extracts and validates nested values inline."""
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
-from tractusx_testlab.models.authoring.definitions import Assertion
+from tractusx_testlab.models import AssertionSeverity
+from tractusx_testlab.models.authoring.definitions import AssertionV2
 from tractusx_testlab.models.runtime.results import AssertionResult
+from tractusx_testlab.steps.utility.json_extract import _extract_by_path
 
 
 def evaluate_json_path_extract(
-    assertion: Assertion,
+    assertion: AssertionV2,
     output: Any,
     context_vars: dict,
     extract_actual_fn: Any,
     evaluate_fn: Any,
 ) -> AssertionResult:
-    """Handle json_path_extract as a validation type.
-
-    Extracts a value from the output/variable using json_path, optionally
-    stores it, and recursively evaluates nested validate assertions.
-
-    Args:
-        assertion: The assertion definition with json_path and optional nested validate.
-        output: The step output to extract from.
-        context_vars: Mutable dict of context variables (for storage and resolution).
-        extract_actual_fn: Callable to extract a value from output by path.
-        evaluate_fn: Callable to recursively evaluate nested assertions.
-    """
-    from tractusx_testlab.steps.utility.json_extract import _extract_by_path
-
-    # Resolve source data: assertion.path comes from 'output' alias in YAML
-    source_name = assertion.path
+    """Handle json_path_extract as a validation type."""
+    params = assertion.with_ or {}
+    source_name = params.get("output") or params.get("path")
     if source_name and source_name in context_vars:
         data = context_vars[source_name]
     else:
         data = extract_actual_fn(output, source_name)
 
-    json_path = assertion.json_path
+    json_path = params.get("json_path")
+    severity_str = params.get("severity", "HARD")
+    severity = AssertionSeverity(severity_str)
+
     if not json_path:
         return AssertionResult(
             assertion=assertion,
@@ -68,7 +60,7 @@ def evaluate_json_path_extract(
             expected="json_path field required",
             actual=None,
             message="json_path_extract validation requires 'json_path' field",
-            severity=assertion.severity,
+            severity=severity,
         )
 
     try:
@@ -79,32 +71,36 @@ def evaluate_json_path_extract(
             passed=False,
             expected=f"value at path '{json_path}'",
             actual=None,
-            message=f"Path extraction failed: {exc}",
-            severity=assertion.severity,
+            message=f"json_path extraction failed: {exc}",
+            severity=severity,
         )
 
-    # Store extracted value in context if requested
-    if assertion.store_in_variable:
-        context_vars[assertion.store_in_variable] = extracted
+    store_in = params.get("store_in_variable")
+    if store_in:
+        context_vars[store_in] = extracted
 
-    # Evaluate nested validations on extracted value
-    nested_failures: list[str] = []
-    if assertion.nested_validate:
-        # Pass context_vars as output so nested assertions can resolve
-        # stored variables via their 'output' field (path alias)
-        nested_results = evaluate_fn(
-            assertion.nested_validate, context_vars, context_vars
+    nested = params.get("validate") or params.get("nested_validate") or []
+    if nested:
+        nested_assertions = [
+            AssertionV2.model_validate(n) if isinstance(n, dict) else n
+            for n in nested
+        ]
+        nested_results = evaluate_fn(nested_assertions, extracted, context_vars)
+        all_passed = all(r.passed for r in nested_results)
+        return AssertionResult(
+            assertion=assertion,
+            passed=all_passed,
+            expected=None,
+            actual=extracted,
+            message="" if all_passed else "Nested validation failed",
+            severity=severity,
         )
-        nested_failures = [r.message for r in nested_results if not r.passed]
-
-    passed = len(nested_failures) == 0
-    message = "; ".join(nested_failures) if nested_failures else ""
 
     return AssertionResult(
         assertion=assertion,
-        passed=passed,
-        expected=f"value at path '{json_path}'",
+        passed=True,
+        expected=None,
         actual=extracted,
-        message=message,
-        severity=assertion.severity,
+        message="",
+        severity=severity,
     )

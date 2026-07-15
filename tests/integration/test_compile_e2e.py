@@ -18,7 +18,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """End-to-end integration tests for the TCK parse → compile → execute pipeline."""
@@ -38,8 +38,7 @@ import yaml
 from fastapi import APIRouter, FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from tractusx_testlab.models.authoring.definitions import ScriptDefinition, TckDefinition
-from tractusx_testlab.models.primitives.enums import ScriptKind
+from tractusx_testlab.models.authoring.definitions import ScriptDefinitionV2, TckDefinitionV2
 from tractusx_testlab.scripting.parser import YamlParser
 from tractusx_testlab.scripting.script import Tck, TestScript
 
@@ -70,77 +69,44 @@ def simple_tck_data(simple_tck_yaml: str) -> dict:
 
 
 class TestTckParseCompilePipeline:
-    """Verify the full parse → TckDefinition → Tck pipeline with a real YAML fixture."""
+    """Verify the full parse → TckDefinitionV2 pipeline with a real YAML fixture."""
 
     def test_parse_tck_from_dict_returns_tck_definition(
         self, simple_tck_data: dict,
     ) -> None:
-        """YamlParser.parse_tck_from_dict produces a valid TckDefinition."""
+        """YamlParser.parse_tck_from_dict produces a valid TckDefinitionV2."""
         definition = YamlParser.parse_tck_from_dict(simple_tck_data)
 
-        assert isinstance(definition, TckDefinition)
-        assert definition.name == "simple-ping-test"
-        assert definition.kind == ScriptKind.TCK
+        assert isinstance(definition, TckDefinitionV2)
+        assert definition.metadata.name == "simple-ping-test"
+        assert definition.syntax == "v2"
 
-    def test_tck_definition_contains_inline_tests(
+    def test_tck_definition_contains_test_paths(
         self, simple_tck_data: dict,
     ) -> None:
-        """Inline test dicts inside ``tests:`` are parsed into ScriptDefinition objects."""
+        """``tests:`` entries are parsed as TckTestEntry models with id and name."""
         definition = YamlParser.parse_tck_from_dict(simple_tck_data)
 
         assert len(definition.tests) == 1
-        test = definition.tests[0]
-        assert isinstance(test, ScriptDefinition)
-        assert test.name == "ping-http"
+        entry = definition.tests[0]
+        assert entry.id == "ping_http.yaml"
+        assert entry.name == "Make a ping"
 
-    def test_tck_definition_test_has_steps(
+    def test_tck_scripts_empty_for_path_based_tck(
         self, simple_tck_data: dict,
     ) -> None:
-        """Each inline ScriptDefinition carries its steps."""
-        definition = YamlParser.parse_tck_from_dict(simple_tck_data)
-        test = definition.tests[0]
-
-        assert isinstance(test, ScriptDefinition)
-        assert len(test.steps) == 1
-        assert test.steps[0].type == "http_request"
-
-    def test_tck_scripts_not_empty(
-        self, simple_tck_data: dict,
-    ) -> None:
-        """Tck wrapper correctly wraps definition tests as TestScript objects (Bug 2 regression)."""
+        """Tck wrapper has no pre-loaded scripts when tests are path-based."""
         definition = YamlParser.parse_tck_from_dict(simple_tck_data)
         tck = Tck(definition)
 
-        assert tck.scripts, "tck.scripts must not be empty — regression on Bug 2"
-        assert len(tck.scripts) == 1
-        assert isinstance(tck.scripts[0], TestScript)
-
-    def test_tck_script_has_steps(
-        self, simple_tck_data: dict,
-    ) -> None:
-        """TestScript exposes its step definitions through the definition wrapper."""
-        definition = YamlParser.parse_tck_from_dict(simple_tck_data)
-        tck = Tck(definition)
-        script = tck.scripts[0]
-
-        assert script.name == "ping-http"
-        assert script.step_count() == 1
-
-    def test_tck_total_steps(
-        self, simple_tck_data: dict,
-    ) -> None:
-        """Tck.total_steps aggregates across all scripts."""
-        definition = YamlParser.parse_tck_from_dict(simple_tck_data)
-        tck = Tck(definition)
-
-        assert tck.total_steps() == 1
+        assert tck.scripts == []
 
     def test_parse_tck_from_file(self) -> None:
         """YamlParser.parse_tck loads from a file path directly."""
         path = _FIXTURES_DIR / "simple_tck.yaml"
         definition = YamlParser.parse_tck(path)
 
-        assert definition.name == "simple-ping-test"
+        assert definition.metadata.name == "simple-ping-test"
         assert len(definition.tests) == 1
 
 

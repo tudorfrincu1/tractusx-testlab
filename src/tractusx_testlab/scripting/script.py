@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6). 
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Runtime wrappers around parsed definitions with execution helpers."""
@@ -28,39 +28,36 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tractusx_testlab.models import (
-    ScriptDefinition as SdkScriptDefinition,
-    TckDefinition as SdkTckDefinition,
-)
 from tractusx_testlab.models.authoring.definitions import (
-    ScriptDefinition,
-    TckDefinition,
+    ScriptDefinitionV2,
+    TckDefinitionV2,
 )
 
 
 class TestScript:
     """Runtime wrapper for a single script definition."""
 
+    __test__ = False  # Prevent pytest from collecting this class
     __slots__ = ("definition",)
 
-    def __init__(self, definition: ScriptDefinition):
+    def __init__(self, definition: ScriptDefinitionV2):
         """Initialize with a parsed script definition."""
         self.definition = definition
 
     @property
     def name(self) -> str:
-        """Script name from the definition."""
-        return self.definition.name
+        """Script name from the definition metadata."""
+        return self.definition.metadata.name
 
     @property
     def dataspace_version(self) -> str:
-        """Target dataspace version (e.g. 'jupiter', 'saturn')."""
+        """Target dataspace version — resolved from the script definition (default: 'saturn')."""
         return self.definition.dataspace_version
 
     @property
     def steps(self):
         """List of step definitions for the main execution phase."""
-        return self.definition.steps
+        return self.definition.execution
 
     @property
     def setup(self):
@@ -74,31 +71,32 @@ class TestScript:
 
     @property
     def services(self):
-        """Service declarations required by this script."""
-        return self.definition.services
+        """Service declarations (resolved from TCK env in v2)."""
+        return []
 
     @property
     def variables(self):
-        """Variable declarations defined in the script."""
-        return self.definition.variables
+        """Variable declarations (resolved from TCK env in v2)."""
+        return {}
 
     @property
     def depends_on(self) -> list[str]:
-        """List of dependency file paths this script depends on."""
-        raw = getattr(self.definition, "depends_on", None) or []
-        return [
-            dep if isinstance(dep, str) else dep.file
-            for dep in raw
-        ]
+        """Dependency list — not used in v2 scripts."""
+        return []
 
     @property
     def outputs(self) -> dict[str, str]:
-        """Declared output variable mappings."""
-        return self.definition.outputs
+        """Declared output variable mappings — not used in v2 scripts."""
+        return {}
 
     def step_count(self) -> int:
         """Return the number of main execution steps."""
-        return len(self.definition.steps)
+        return len(self.definition.execution)
+
+    @property
+    def definition_version(self) -> str:
+        """Test suite version from metadata."""
+        return self.definition.metadata.version
 
 
 class Tck:
@@ -106,24 +104,21 @@ class Tck:
 
     __slots__ = ("definition", "_scripts", "base_dir")
 
-    def __init__(self, definition: TckDefinition | SdkTckDefinition, base_dir: Path | None = None):
-        """Initialize with a TCK definition and optional base directory for file resolution."""
+    def __init__(self, definition: TckDefinitionV2, base_dir: Path | None = None):
+        """Initialize with a TCK definition and optional base directory."""
         self.definition = definition
         self.base_dir = base_dir
         self._scripts: list[TestScript] = []
-        for test_definition in definition.tests:
-            if isinstance(test_definition, (ScriptDefinition, SdkScriptDefinition)):
-                self._scripts.append(TestScript(test_definition))
 
     @property
     def name(self) -> str:
         """TCK package name."""
-        return self.definition.name
+        return self.definition.metadata.name
 
     @property
     def version(self) -> str:
         """TCK version string."""
-        return self.definition.version
+        return self.definition.metadata.version
 
     @property
     def scripts(self) -> list[TestScript]:
@@ -137,3 +132,27 @@ class Tck:
     def total_steps(self) -> int:
         """Return the total step count across all scripts."""
         return sum(script.step_count() for script in self._scripts)
+
+    @classmethod
+    def from_single_script(
+        cls, script_def: ScriptDefinitionV2, base_dir: Path | None = None,
+    ) -> "Tck":
+        """Wrap a single ScriptDefinitionV2 in a minimal TckDefinitionV2 and return a Tck."""
+        from tractusx_testlab.models.authoring.definitions import (
+            TckDefinitionV2,
+            TckMetadataDefinition,
+        )
+        tck_def = TckDefinitionV2(
+            kind="tck",
+            syntax="v2",
+            id=script_def.id,
+            metadata=TckMetadataDefinition(
+                name=script_def.metadata.name,
+                description=script_def.metadata.description,
+                version=script_def.metadata.version,
+            ),
+            tests=[],
+        )
+        instance = cls(tck_def, base_dir=base_dir)
+        instance._scripts = [TestScript(script_def)]
+        return instance

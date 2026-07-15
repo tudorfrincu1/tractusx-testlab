@@ -22,11 +22,9 @@
 ## It was reviewed and tested by a human committer.
 
 kind: tck
-testlab: v1-alpha
+syntax: v2
 
 id: certificate-management-tck
-namespace: ccm-v0.0.1
-name: certificate-management
 
 dataspace:
   ecosystem: Catena-X
@@ -131,45 +129,75 @@ env:
       returns:
         value:
           type: integer
+    - id: ccm_usage_policy
+      uses: config/connector/policy
+      name: Required CCMAPI Usage Policy
+      with:
+        value:
+          permissions:
+            - action: use
+              constraints:
+                and:
+                  - left_operand: Membership
+                    operator: eq
+                    right_operand: "active"
+                  - left_operand: UsagePurpose
+                    operator: isAnyOf
+                    right_operand: "cx.ccm.base:1"
+                  - left_operand: FrameworkAgreement
+                    operator: eq
+                    right_operand: "DataExchangeGovernance:1.0"
+      returns:
+        policy:
+          type: object
+          class: Policy
   schemas:
-    certificate_schema:
-      file: business_partner_certificate_schema.json
-    bpc_v310_schema:
-      file: bpc-v3.1.0.json
+    - id: certificate_schema
+      source: business_partner_certificate_schema.json
+    - id: bpc_v310_schema
+      source: bpc-v3.1.0.json
   testdata:
-    available_notification_body:
-      file: available_notification_body.json
-    certificate_available_response:
-      file: certificate_available_response.json
-    error_unknown_cert_type_body:
-      file: error_unknown_cert_type_body.json
-    expose_available_notification_body:
-      file: expose_available_notification_body.json
-    expose_certificate_data_response:
-      file: expose_certificate_data_response.json
-    push_certificate_body:
-      file: push_certificate_body.json
-    request_certificate_body:
-      file: request_certificate_body.json
-    send_feedback_body:
-      file: send_feedback_body.json
+    - id: available_notification_body
+      source: available_notification_body.json
+      type: application/json
+    - id: certificate_available_response
+      source: certificate_available_response.json
+      type: application/json
+    - id: error_unknown_cert_type_body
+      source: error_unknown_cert_type_body.json
+      type: application/json
+    - id: expose_available_notification_body
+      source: expose_available_notification_body.json
+      type: application/json
+    - id: expose_certificate_data_response
+      source: expose_certificate_data_response.json
+      type: application/json
+    - id: push_certificate_body
+      source: push_certificate_body.json
+      type: application/json
+    - id: request_certificate_body
+      source: request_certificate_body.json
+      type: application/json
+    - id: send_feedback_body
+      source: send_feedback_body.json
+      type: application/json
 
 tests:
-  - test: catalog_policy_validation.yaml
-    description: Validate CX-0135 catalog policy constraints
-  - test: request_certificate.yaml
-    description: Request a certificate via CCMAPI
-  - test: certificate_asset_validation.yaml
-    description: Validate the exposed certificate asset and its usage policy
-  - test: validate_payload.yaml
-    description: Validate certificate payload against the schema
-  - test: push_certificate.yaml
-    description: Push a certificate and verify the feedback callback
-  - test: available_notification.yaml
-    description: Send an available notification and verify acknowledgment
-  - test: send_feedback.yaml
-    description: Send feedback notification and await acknowledgment
-  - test: expose_testlab_asset.yaml
-    description: Expose TestLab as provider and verify SUT consumer behavior
-  - test: error_handling.yaml
-    description: Verify error handling for unknown certificate types
+  - id: catalog_policy_validation.yaml
+    name: Validate CX-0135 catalog policy constraints
+  - id: request_certificate.yaml
+    name: Request a certificate via CCMAPI
+  - id: certificate_asset_validation.yaml
+    name: Validate the exposed certificate asset and its usage policy
+  - id: validate_payload.yaml
+    name: Validate certificate payload against the schema
+  - id: push_certificate.yaml
+    name: Push a certificate and verify the feedback callback
+  - id: available_notification.yaml
+    name: Send an available notification and verify acknowledgment
+  - id: send_feedback.yaml
+    name: Send feedback notification and await acknowledgment
+  - id: expose_testlab_asset.yaml
+    name: Expose TestLab as provider and verify SUT consumer behavior
+  - id: error_handling.yaml
+    name: Verify error handling for unknown certificate types

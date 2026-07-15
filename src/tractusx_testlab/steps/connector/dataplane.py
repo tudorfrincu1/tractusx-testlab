@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import (
@@ -43,11 +43,11 @@ if TYPE_CHECKING:
     from tractusx_testlab.player.execution.context import StepContext
 
 
-@step("dataplane_call", aliases=["http_call_dataplane"])
+@step("dataplane_call", aliases=["http_call_dataplane", "connector/dataplane/http_request"])
 class DataplaneCallStep(BaseStep):
     """Fetch data from a data-plane endpoint using an EDR token."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         endpoint = params.get("dataplane_url") or params.get("url") or params.get("endpoint") or context.get_variable(DATAPLANE_ENDPOINT)
         if isinstance(endpoint, dict):
             endpoint = endpoint.get("endpoint") or endpoint.get("baseUrl")
@@ -78,7 +78,7 @@ class DataplaneCallStep(BaseStep):
 class GetEdrStep(BaseStep):
     """Retrieve the EDR entry for a completed transfer."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         transfer_id = params.get("transfer_id") or context.get_variable(TRANSFER_ID)
         url = f"{context.get_consumer_base_url()}/v3/edrs/{transfer_id}/dataaddress"

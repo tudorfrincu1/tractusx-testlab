@@ -112,10 +112,11 @@ class TestYamlSubmission:
 
         with (
             patch(f"{_STREAMING_MODULE}.YamlParser") as parser_cls,
-            patch(f"{_STREAMING_MODULE}.Tck", return_value=mock_tc),
-            patch(f"{_STREAMING_MODULE}.TckDefinition"),
+            patch(f"{_STREAMING_MODULE}.Tck") as tck_cls,
         ):
             parser_cls.return_value.parse_script_from_dict.return_value = mock_def
+            tck_cls.from_single_script.return_value = mock_tc
+            tck_cls.return_value = mock_tc
             response = await client.post(
                 "/testlab/test-execution/run",
                 content=b"name: my-test\nsteps: []",

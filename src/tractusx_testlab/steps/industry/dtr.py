@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 class CreateShellDescriptorStep(BaseStep):
     """Create an AAS shell descriptor in the Digital Twin Registry."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         aas = context.get_aas_service()
         from tractusx_sdk.industry.models.aas.v3.base import ShellDescriptor
 
@@ -62,7 +62,7 @@ class CreateShellDescriptorStep(BaseStep):
 class GetShellDescriptorStep(BaseStep):
     """Retrieve an AAS shell descriptor by ID."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         aas = context.get_aas_service()
         aas_id = params["aas_identifier"]
         bpn = params.get("bpn")
@@ -82,7 +82,7 @@ class GetShellDescriptorStep(BaseStep):
 class CreateSubmodelDescriptorStep(BaseStep):
     """Create a submodel descriptor under an AAS shell."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         aas = context.get_aas_service()
         from tractusx_sdk.industry.models.aas.v3.base import SubModelDescriptor
 
@@ -105,7 +105,7 @@ class CreateSubmodelDescriptorStep(BaseStep):
 class DeleteShellDescriptorStep(BaseStep):
     """Delete an AAS shell descriptor."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         aas = context.get_aas_service()
         aas_id = params["aas_identifier"]
         bpn = params.get("bpn")

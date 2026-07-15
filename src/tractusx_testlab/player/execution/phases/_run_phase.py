@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """Shared per-step execution loop used by all phase runners."""
@@ -39,6 +39,13 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.scripting.registry import StepRegistry
 from tractusx_testlab.scripting.script import TestScript
 from tractusx_testlab.steps.conditions import ConditionEvaluator
+
+# Maps internal phase_label to the V2 expression namespace (e.g. "steps.ID.field")
+_PHASE_TO_V2_NAMESPACE: dict[str, str] = {
+    "setup": "setup",
+    "main": "steps",
+    "cleanup": "teardown",
+}
 
 
 class FailurePolicy(Enum):
@@ -75,9 +82,9 @@ async def _run_phase(
     for step_idx, step_def in enumerate(steps_source):
         await _handle_pause_gate(jobs, job_id, config)
 
-        step_name = _format_step_name(script.name, step_idx, step_def.type, config.phase_label)
+        step_name = _format_step_name(script.name, step_idx, step_def.uses, config.phase_label)
         monitor.on_step_started(
-            job_id, step_idx, step_def.type,
+            job_id, step_idx, step_def.uses,
             step_name=step_name, phase=config.phase_label,
         )
 
@@ -87,7 +94,7 @@ async def _run_phase(
         if config.evaluate_conditions and not ConditionEvaluator.should_run(
             step_def.if_condition, results, context,
         ):
-            skipped = _make_skipped_result(step_name, step_def.type, config.phase)
+            skipped = _make_skipped_result(step_name, step_def.uses, config.phase)
             results.append(skipped)
             monitor.on_step_completed(job_id, skipped)
             continue
@@ -122,9 +129,9 @@ async def _resolve_and_run_step(
     """Resolve step class, execute, store outputs. Returns True if phase should abort."""
     from tractusx_testlab.player.execution.step_runner import run_step, store_step_outputs
 
-    step_cls = StepRegistry.get(step_def.type, script.definition.version)
+    step_cls = StepRegistry.get(step_def.uses, script.dataspace_version)
     if step_cls is None:
-        missing = _make_missing_step_result(step_name, step_def.type, config.phase)
+        missing = _make_missing_step_result(step_name, step_def.uses, config.phase)
         results.append(missing)
         monitor.on_step_completed(job_id, missing)
         return config.failure_policy == FailurePolicy.STOP
@@ -135,7 +142,8 @@ async def _resolve_and_run_step(
     monitor.on_step_completed(job_id, step_result)
 
     if config.store_outputs:
-        store_step_outputs(step_def, step_result, context)
+        step_namespace = _PHASE_TO_V2_NAMESPACE.get(config.phase_label)
+        store_step_outputs(step_def, step_result, context, step_namespace=step_namespace)
 
     return step_result.status == StepStatus.FAILED and config.failure_policy == FailurePolicy.STOP
 
@@ -146,7 +154,7 @@ def _get_steps_for_phase(script: TestScript, phase: StepPhase) -> list:
         return script.definition.setup
     if phase == StepPhase.CLEANUP:
         return script.definition.teardown
-    return script.definition.steps
+    return script.definition.execution
 
 
 def _format_step_name(script_name: str, idx: int, step_type: str, phase_label: str) -> str:

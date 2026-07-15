@@ -20,9 +20,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Utility steps: UUID generation, JSON extraction, and other helpers."""
+"""Utility steps: UUID generation, JSON extraction, validation, and other helpers."""
 
 import tractusx_testlab.steps.utility.json_extract  # noqa: F401
 import tractusx_testlab.steps.utility.load_schema  # noqa: F401
 import tractusx_testlab.steps.utility.uuid_gen  # noqa: F401
+import tractusx_testlab.steps.utility.validate  # noqa: F401
 import tractusx_testlab.steps.utility.variables  # noqa: F401

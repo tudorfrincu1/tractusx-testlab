@@ -30,7 +30,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from tractusx_sdk.dataspace.tools.dsp_tools import DspTools
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import CATALOG_POLICY, CATALOG_TARGET
@@ -55,7 +55,7 @@ def _resolve_filter_expression(params: dict) -> list[dict]:
 class QueryCatalogStep(BaseStep):
     """Query a provider's catalog via the SDK connector consumer service."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         counter_party_address = params.get("counter_party_address") or params.get("provider_url", "")
         counter_party_id = params.get("counter_party_id") or params.get("bpnl", "")
@@ -92,7 +92,7 @@ class QueryCatalogStep(BaseStep):
 class QueryCatalogByAssetIdStep(BaseStep):
     """Query the catalog filtered by a specific asset ID."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         result = consumer.get_catalog_by_asset_id(
             counter_party_id=params["counter_party_id"],
@@ -125,7 +125,7 @@ class QueryCatalogByAssetIdStep(BaseStep):
 class QueryCatalogByBpnlStep(BaseStep):
     """Query the catalog using BPNL-based connector discovery."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         result = consumer.get_catalog_with_bpnl(
             bpnl=params["bpnl"],

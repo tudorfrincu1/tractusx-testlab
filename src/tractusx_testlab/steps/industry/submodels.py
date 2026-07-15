@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import BACKEND_URL
@@ -55,7 +55,7 @@ class UploadBackendDataStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         base = params["backend_base_url"].rstrip("/")
         unique_url = f"{base}/urn:uuid:{uuid.uuid4()}"

@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 from tractusx_testlab.syntax.context_vars import DATAPLANE_ENDPOINT, EDR_TOKEN
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 class DoDspStep(BaseStep):
     """Run the full DSP flow (catalog → negotiation → transfer) via the SDK."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         endpoint, token = consumer.do_dsp(
             counter_party_id=params["counter_party_id"],
@@ -56,7 +56,7 @@ class DoDspStep(BaseStep):
 class DoDspWithBpnlStep(BaseStep):
     """Run the full DSP flow using BPNL-based connector discovery via the SDK."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         consumer = context.get_consumer_service()
         endpoint, token = consumer.do_dsp_with_bpnl(
             bpnl=params["bpnl"],

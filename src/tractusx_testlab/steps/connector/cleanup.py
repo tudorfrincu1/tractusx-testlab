@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 class DeleteAssetStep(BaseStep):
     """Delete an asset from the provider connector."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         provider = context.get_provider_service()
         asset_id = params.get("asset_id") or context.get_variable("asset_id")
         url = f"{context.get_provider_base_url()}/v3/assets/{asset_id}"
@@ -62,7 +62,7 @@ class DeleteAssetStep(BaseStep):
 class DeletePolicyStep(BaseStep):
     """Delete a policy definition from the provider connector."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         provider = context.get_provider_service()
         policy_id = params.get("policy_id") or context.get_variable("policy_id")
         url = f"{context.get_provider_base_url()}/v3/policydefinitions/{policy_id}"
@@ -81,7 +81,7 @@ class DeletePolicyStep(BaseStep):
 class DeleteContractDefinitionStep(BaseStep):
     """Delete a contract definition from the provider connector."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         provider = context.get_provider_service()
         contract_id = params.get("contract_definition_id") or context.get_variable("contract_definition_id")
         url = f"{context.get_provider_base_url()}/v3/contractdefinitions/{contract_id}"

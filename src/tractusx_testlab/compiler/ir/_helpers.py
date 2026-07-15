@@ -45,14 +45,14 @@ def build_instructions(
         {id, field, type, class, produced_by, source} dicts.
     """
     setup_steps = test_data.get("setup", [])
-    main_steps = test_data.get("steps", [])
+    main_steps = test_data.get("execution", test_data.get("steps", []))
     teardown_steps = test_data.get("teardown", [])
 
     instructions: list[dict[str, Any]] = []
     step_symbols: list[dict[str, Any]] = []
     global_index = 0
 
-    for phase, steps in [("setup", setup_steps), ("steps", main_steps), ("teardown", teardown_steps)]:
+    for phase, steps in [("setup", setup_steps), ("main", main_steps), ("teardown", teardown_steps)]:
         for phase_index, step in enumerate(steps):
             instruction = _build_instruction(step, global_index, phase, phase_index)
             instructions.append(instruction)

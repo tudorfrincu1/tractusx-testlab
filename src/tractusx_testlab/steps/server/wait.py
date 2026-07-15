@@ -30,7 +30,7 @@ import logging
 from urllib.parse import urlparse
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.server.mock_registry import get_callback_manager
 from tractusx_testlab.steps.base import BaseStep, StepOutput
@@ -53,7 +53,7 @@ def _extract_path_from_endpoint_url(endpoint_url: str) -> str:
     return urlparse(endpoint_url).path
 
 
-@step("wait_for_call")
+@step("wait_for_call", aliases=["mock/wait/http_request"])
 class WaitForCallStep(BaseStep):
     """Wait for an inbound HTTP request on a previously-registered mock endpoint.
 
@@ -69,7 +69,7 @@ class WaitForCallStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         raw_endpoint_id: str = params["endpoint_id"]
         method: str = params.get("method", "POST").upper()

@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Opus 4.6).
+## This code was partially generated using artificial intelligence (AI) (Tool: Copilot, Model: Claude Sonnet 4.6).
 ## It was reviewed and tested by a human committer.
 
 """SSE streaming routes for live test execution events."""
@@ -35,7 +35,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 
-from tractusx_testlab.models.authoring.definitions import TckDefinition
+from tractusx_testlab.models.authoring.definitions import TckDefinitionV2
 from tractusx_testlab.models.primitives.enums import ScriptKind
 from tractusx_testlab.player.execution.player import TestlabPlayer
 from tractusx_testlab.scripting.parser import YamlParser
@@ -113,14 +113,14 @@ async def _parse_and_execute_yaml(request: Request, player: TestlabPlayer) -> JS
 
     try:
         if kind == ScriptKind.TCK:
-            definition = parser.parse_tck_from_dict(data)
+            tck_def = parser.parse_tck_from_dict(data)
+            tck = Tck(tck_def)
         else:
             script_def = parser.parse_script_from_dict(data)
-            definition = TckDefinition(name=script_def.name, tests=[script_def])
+            tck = Tck.from_single_script(script_def)
     except (ValueError, KeyError, TypeError) as exc:
         raise HTTPException(422, f"Failed to parse YAML definition: {exc}") from exc
 
-    tck = Tck(definition)
     job = player.jobs.create(tck.name)
     _pending_jobs[job.job_id] = tck
 

@@ -37,21 +37,29 @@ runner = CliRunner()
 
 
 _VALID_YAML = """\
-name: CLI Test
-version: "1.0"
-dataspace: saturn
-steps: []
+syntax: v2
+kind: test
+id: cli-test
+namespace: testlab.cli
+metadata:
+  name: CLI Test
+  version: "1.0"
+execution: []
 """
 
 _INVALID_YAML = "{{not valid yaml"
 
 _BAD_STEP_YAML = """\
-name: Bad Step
-steps:
-  - type: totally_unknown_step
+syntax: v2
+kind: test
+id: bad-step
+namespace: testlab.cli
+metadata:
+  name: Bad Step
+execution:
+  - uses: totally_unknown_step
     name: Nope
 """
-
 
 @pytest.fixture()
 def valid_yaml_file(tmp_path: Path) -> Path:
@@ -137,15 +145,18 @@ class TestPrintReport:
     def test_print_report_with_error(self, tmp_path: Path) -> None:
         """Test report with a step that has an error."""
         yaml_content = """\
-name: Error Test
-steps:
-  - type: http_request
+syntax: v2
+kind: test
+id: error-test
+namespace: testlab.cli
+metadata:
+  name: Error Test
+  version: "1.0"
+execution:
+  - uses: http_request
     name: Bad Request
-    inputs:
+    with:
       url: "http://127.0.0.1:1/nonexistent"
-    validate:
-      - type: STATUS_CODE
-        value: 200
 """
         f = tmp_path / "error.yaml"
         f.write_text(yaml_content)
@@ -156,14 +167,16 @@ steps:
     def test_print_report_with_assertions(self, tmp_path: Path) -> None:
         """Test report printing with step that uses noop executor and assertions."""
         yaml_content = """\
-name: Noop Test
-steps:
-  - type: register_twin
+syntax: v2
+kind: test
+id: noop-test
+namespace: testlab.cli
+metadata:
+  name: Noop Test
+  version: "1.0"
+execution:
+  - uses: register_twin
     name: Register
-    validate:
-      - type: STATUS_CODE
-        value: 200
-        severity: HARD
 """
         f = tmp_path / "noop.yaml"
         f.write_text(yaml_content)

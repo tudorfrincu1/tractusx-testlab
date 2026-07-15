@@ -30,7 +30,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinition
+from tractusx_testlab.models import HttpRequest, HttpResponse, StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
@@ -49,7 +49,7 @@ class SendNotificationStep(BaseStep):
     - **Dataplane-direct mode** (CCM): ``dataplane_url``, ``edr_token``, ``content``
     """
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         # Detect mode: CCM dataplane-direct vs. canonical SDK notification
         if "dataplane_url" in params or "endpoint_url" in params:
             return await self._execute_dataplane_direct(params, context)
@@ -127,7 +127,7 @@ class SendNotificationStep(BaseStep):
 class DiscoverNotificationAssetsStep(BaseStep):
     """Discover notification assets in a provider catalog."""
 
-    async def execute(self, params: dict, context: "StepContext", definition: StepDefinition) -> StepOutput:
+    async def execute(self, params: dict, context: "StepContext", definition: StepDefinitionV2) -> StepOutput:
         notif_service = context.get_notification_service()
         provider_bpn = params["provider_bpn"]
         provider_dsp = params["provider_dsp_url"]

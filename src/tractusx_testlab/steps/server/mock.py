@@ -29,7 +29,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from tractusx_testlab.models import StepDefinition
+from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
 from tractusx_testlab.server.mock_registry import (
     MockResponse,
@@ -60,7 +60,7 @@ def _resolve_variables(obj: dict | list | str, context: "StepContext") -> dict |
     return obj
 
 
-@step("mock_endpoint")
+@step("mock_endpoint", aliases=["mock/api"])
 class MockEndpointStep(BaseStep):
     """Register a mock HTTP endpoint that returns a canned response.
 
@@ -75,7 +75,7 @@ class MockEndpointStep(BaseStep):
     """
 
     async def execute(
-        self, params: dict, context: "StepContext", definition: StepDefinition
+        self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
         path: str = params["path"]
         method: str = params.get("method", "POST").upper()

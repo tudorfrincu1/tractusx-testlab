@@ -3,7 +3,7 @@ package:
   format: tck
   format_version: 1.0.0
   testlab: v1-alpha
-  checksum: blake2b:8c465bf00db621ab519fce03aba3a78f16c36e1800a192469aaef0d3380876e5
+  checksum: blake2b:e4a614ab7b1b05f22cd257aff770b01beadc97b17f3733f765e8e305c31bfe35
 tck:
   id: certificate-management-tck
   namespace: ccm-v0.0.1
@@ -29,31 +29,31 @@ tck:
     - CCM
     dataspace_version: saturn
 compilation:
-  compiled_at: '2026-06-04T20:21:59Z'
+  compiled_at: '2026-07-15T07:51:22Z'
   compiler_version: 0.5.0
   fingerprint:
-    nonce: blake2b:f482e90827a7196626f1b1fe29021140876a61f7ed1da819b2eaade4f88efc13
-    public_key: ed25519:yORG/mdbiDnJ8PQ/aLohTGahgQQ6OmWLMd389EQ0QVk=
-    digest: blake2b:a45653baeaf7b17f20234976306d7a0d22dacab0c3c099eb33efd00663278eec
+    nonce: blake2b:b9f8b66d92972f1ba9bcf27a32c6043f9e41b287bc52188340fb78838572bfd5
+    public_key: ed25519:mzZ4D9hrGB+Gl6vdN41Zv2mOKuu3BCJZLpDjvSAwIkQ=
+    digest: blake2b:68dcf91c2026977171c43dce14cf6f52bf867790bb5ba3786f36ccdc12f3a7f7
 tests:
 - id: catalog-policy-validation
-  source_hash: blake2b:61e7aecc798f63beea6155aac755ffd00b97f22e4cbe912c545db995a1f87ca9
+  source_hash: blake2b:0e31a1f8a793b80325301e1f6e7339cb1435eaca967b9794300416fd449759b6
 - id: request-certificate
-  source_hash: blake2b:f924050e391d33442ba0f238dc63d09bc04aa622391e5faed3e09756e3eadfb7
+  source_hash: blake2b:0713ce0414a37ff8d447e8bf2895271b1903e91f7cdf4a5d5887f822f41fad24
 - id: certificate-asset-validation
-  source_hash: blake2b:61cbf2ced2cd9fc65bd8dac9c4daf31705090af7826fca2b96cbb22c24ee5daa
+  source_hash: blake2b:4bc0400d4d4e763f25498ec307e8ad33a6053d7a6688307e1c8fcbe7cb35f4fa
 - id: validate-certificate-payload
-  source_hash: blake2b:0fba666319102a1890282ed1e4676f30c7a4b1504a2d5802c60946144d70133f
+  source_hash: blake2b:5c2da870729549794c28f66f7868db03f9a11c5164dc2bdd571c895eac3db431
 - id: push-certificate
-  source_hash: blake2b:95d34b9642cd155c23bc251a3182e7d5defbd23a108b96e066e93a9381a75efc
+  source_hash: blake2b:ccc6b2fc4666aa799b8c606a74f329893dc92066d1ac927ee64d70174ee8d04a
 - id: available-notification
-  source_hash: blake2b:75cdbe077b80b01eedf92321ca50c3f82e1e1e195e0772e0b9edeabcaa8801e8
+  source_hash: blake2b:545c91de614d1d117476d46d5ada312adaf71a1bce382d67402b1d21240d7747
 - id: send-feedback-notification
-  source_hash: blake2b:bc4e356f6f65bd1ecf084fc19e4e3716b790712a8316bd374ed437a018094a98
+  source_hash: blake2b:09dff57a4c2bf0faec1bb7bb611a347e9fba6ca8f6a450c382980a4b6edbf94e
 - id: expose-testlab-asset
-  source_hash: blake2b:258063f85a8a34e9e0c3e58adb7d18167b9d2884b9d6294f91a43af101774acb
+  source_hash: blake2b:bfd506cc2cb8b81f800c258f9985ca1c8ca067ea04bc672acd92df5ccf8d117c
 - id: error-handling
-  source_hash: blake2b:421b472c872b1ad14777919adba2a665d19e99618cc91f87875594eee40e6262
+  source_hash: blake2b:383da95da60aec28e7f84418e2af7988ba0f687818730b922c2bc884d0160560
 assets:
   schemas:
   - id: certificate_schema
@@ -116,7 +116,7 @@ assets:
   - id: request_certificate_body
     file: request_certificate_body.json
     path: assets/testdata/request_certificate_body.json
-    digest: blake2b:9765664742e20dca816d59366d436c183154b41dbf7ad4f31764623d3c35e425
+    digest: blake2b:3b2b855615a2e080fb0ff674fd0205489df4d4f1a20920846b6a3c2bb0edefb3
     size: 623
     mediaType: application/json
     location: filesystem
