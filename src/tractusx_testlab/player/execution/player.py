@@ -209,9 +209,38 @@ class TestlabPlayer:
                 if var_def.default is not None:
                     context.set_variable(var_name, var_def.default)
 
+        # V2 env.variables — seed verb-form variables with static values
+        TestlabPlayer._seed_env_variables(context, tck)
+
         if runtime_vars:
             for key, value in runtime_vars.items():
                 context.set_variable(key, value)
+
+    @staticmethod
+    def _seed_env_variables(context: StepContext, tck: Tck) -> None:
+        """Seed V2 env.variables that have static with.value into context."""
+        env = getattr(tck.definition, "env", None)
+        if env is None:
+            return
+        variables = getattr(env, "variables", None)
+        if not variables or not isinstance(variables, list):
+            return
+        for var in variables:
+            if not isinstance(var, dict):
+                continue
+            var_id = var.get("id")
+            if not var_id:
+                continue
+            with_block = var.get("with") or {}
+            value = with_block.get("value")
+            if value is None:
+                continue
+            # Store the bare variable id → value
+            context.set_variable(var_id, value)
+            # Store each return field → value (e.g. "ccm_usage_policy.policy")
+            returns = var.get("returns") or {}
+            for field_name in returns:
+                context.set_variable(f"{var_id}.{field_name}", value)
 
     async def _execute_scripts_in_order(
         self,

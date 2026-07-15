@@ -153,6 +153,14 @@ async def _do_dsp_flow(
     except (requests.RequestException, ConnectionError, TimeoutError) as exc:
         logger.debug("Pre-catalog fetch failed (will retry in do_dsp): %s", exc)
 
+    catalog_participant_id = catalog.get("participantId")
+    if catalog_participant_id and catalog_participant_id != counter_party_id:
+        logger.info(
+            "Resolved provider participantId from catalog: %s (config had: %s)",
+            catalog_participant_id, counter_party_id,
+        )
+        counter_party_id = catalog_participant_id
+
     # Full DSP flow: use get_transfer_id + get_endpoint_with_token to expose
     # transfer_process_id as a distinct return value.
     transfer_process_id = consumer.get_transfer_id(

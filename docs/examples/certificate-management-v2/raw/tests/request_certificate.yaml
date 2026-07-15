@@ -34,30 +34,6 @@ metadata:
     Request certificate via CCMAPI endpoint per CX-0135 v3.1.0.
     Validates full 7-field header envelope on response and requestStatus enum.
 
-setup:
-  - id: ccm_policy
-    uses: precondition/provide
-    name: Required CCMAPI Usage Policy
-    with:
-      value:
-        permissions:
-          - action: use
-            constraints:
-              and:
-                - left_operand: Membership
-                  operator: eq
-                  right_operand: "active"
-                - left_operand: UsagePurpose
-                  operator: isAnyOf
-                  right_operand: "cx.ccm.base:1"
-                - left_operand: FrameworkAgreement
-                  operator: eq
-                  right_operand: "DataExchangeGovernance:1.0"
-    returns:
-      policy:
-        type: object
-        class: Policy
-
 execution:
   - id: pull_data_1
     uses: connector/pull_data_filtered
@@ -66,7 +42,7 @@ execution:
       connector_service: ${{ infrastructure.engine.connector }}
       counter_party_address: ${{ infrastructure.sut.connector.counter_party_address }}
       counter_party_id: ${{ infrastructure.sut.connector.counter_party_id }}
-      policy: ${{ setup.ccm_policy.policy }}
+      policy: ${{ env.ccm_usage_policy.policy }}
       filters:
         - operand_left: "'http://purl.org/dc/terms/type'.'@id'"
           operator: "="
