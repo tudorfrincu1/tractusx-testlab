@@ -66,14 +66,8 @@ metadata:
 
 env:
   variables:
-    - id: provider_url
-      uses: variable/type/string
-      with:
-        source: input
-      returns:
-        value:
-          type: string
     - id: provider_bpn
+      description: BPN-L of the SUT organization acting as the certificate provider.
       uses: variable/type/string
       with:
         source: input
@@ -81,6 +75,7 @@ env:
         value:
           type: string
     - id: consumer_bpn
+      description: BPN-L of the TestLab engine connector acting as the certificate consumer.
       uses: variable/type/string
       with:
         source: input
@@ -88,6 +83,7 @@ env:
         value:
           type: string
     - id: certificate_type
+      description: Type of the business partner certificate to request (e.g. iso9001, iso14001). Defaults to iso9001.
       uses: variable/type/string
       with:
         value: iso9001
@@ -95,6 +91,7 @@ env:
         value:
           type: string
     - id: location_bpns
+      description: BPN-S of the SUT physical location (used in certificate availability checks).
       uses: variable/type/string
       with:
         source: input
@@ -102,6 +99,7 @@ env:
         value:
           type: string
     - id: testlab_management_url
+      description: Base URL of the TestLab engine connector management API (used to register mock callbacks).
       uses: variable/type/string
       with:
         source: input
@@ -109,6 +107,7 @@ env:
         value:
           type: string
     - id: testlab_dsp_url
+      description: DSP endpoint URL of the TestLab engine connector (provider address for inbound notifications).
       uses: variable/type/string
       with:
         source: input
@@ -116,6 +115,7 @@ env:
         value:
           type: string
     - id: testlab_mock_base_url
+      description: Base URL of the TestLab mock server reachable by the SUT for async callbacks.
       uses: variable/type/string
       with:
         source: input
@@ -123,6 +123,7 @@ env:
         value:
           type: string
     - id: sut_response_timeout
+      description: Maximum seconds to wait for an asynchronous SUT response. Defaults to 300.
       uses: variable/type/integer
       with:
         value: 300
