@@ -48,6 +48,7 @@ class ScriptInspection(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str
+    skippable: bool = False
     steps: tuple[StepMeta, ...]
 
 

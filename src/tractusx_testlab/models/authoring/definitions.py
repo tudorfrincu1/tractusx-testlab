@@ -186,11 +186,13 @@ class TckTestEntry(BaseModel):
 
     ``id`` is the test filename, relative to the ``tests/`` sub-folder of the
     TCK package.  ``name`` is an optional human-readable label used in reports
-    and log output.
+    and log output.  ``skippable`` controls whether the operator may omit this
+    test at runtime via the ``skip_tests`` runtime variable.
     """
 
     id: str = Field(pattern=r"^[a-zA-Z0-9_\-\.]+\.yaml$")
     name: Optional[str] = None
+    skippable: bool = False
 
 
 class TckDefinitionV2(BaseModel):

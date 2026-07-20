@@ -56,7 +56,7 @@ def build_inspection_result(tck: object) -> TckInspectionResult:
         step_metas.extend(_map_steps(script.steps, StepPhase.EXECUTION))
         step_metas.extend(_map_steps(script.teardown, StepPhase.TEARDOWN))
         script_inspections.append(
-            ScriptInspection(name=script.name, steps=tuple(step_metas))
+            ScriptInspection(name=script.name, skippable=script.skippable, steps=tuple(step_metas))
         )
 
     total_steps = sum(len(s.steps) for s in script_inspections)

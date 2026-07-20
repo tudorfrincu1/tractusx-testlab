@@ -55,7 +55,8 @@ def _load_test_scripts(tests: list, base_dir: Path) -> list[TestScript]:
     """Resolve TCK ``tests:`` entries into TestScript objects.
 
     Each entry is a ``TckTestEntry`` with an ``id`` filename relative to
-    ``<base_dir>/tests/``.
+    ``<base_dir>/tests/``.  The ``skippable`` flag from the manifest entry is
+    forwarded to the ``TestScript`` so the player can enforce skip rules.
     """
     scripts: list[TestScript] = []
     tests_dir = base_dir / "tests"
@@ -65,7 +66,7 @@ def _load_test_scripts(tests: list, base_dir: Path) -> list[TestScript]:
             logger.warning("Test file not found, skipping: %s", test_path)
             continue
         script_def = parse_script_file(test_path)
-        scripts.append(TestScript(script_def))
+        scripts.append(TestScript(script_def, skippable=entry.skippable, test_id=entry.id))
     return scripts
 
 

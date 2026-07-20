@@ -73,6 +73,7 @@ from tractusx_testlab.models.primitives.exceptions import (
     ServiceNotFoundError,
     ServiceNotReadyError,
     ServiceTypeMismatchError,
+    SkipNotAllowedError,
     StepConfigError,
 )
 from tractusx_testlab.models.runtime.jobs import (
@@ -173,5 +174,6 @@ __all__ = [
     "ServiceNotFoundError",
     "ServiceNotReadyError",
     "ServiceTypeMismatchError",
+    "SkipNotAllowedError",
     "StepConfigError",
 ]

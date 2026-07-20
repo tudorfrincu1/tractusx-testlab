@@ -43,11 +43,29 @@ class TestScript:
     """Runtime wrapper for a single script definition."""
 
     __test__ = False  # Prevent pytest from collecting this class
-    __slots__ = ("definition",)
+    __slots__ = ("definition", "_skippable", "_test_id")
 
-    def __init__(self, definition: ScriptDefinitionV2):
+    def __init__(
+        self,
+        definition: ScriptDefinitionV2,
+        *,
+        skippable: bool = False,
+        test_id: str = "",
+    ):
         """Initialize with a parsed script definition."""
         self.definition = definition
+        self._skippable = skippable
+        self._test_id = test_id
+
+    @property
+    def skippable(self) -> bool:
+        """Whether the operator is allowed to skip this test at runtime."""
+        return self._skippable
+
+    @property
+    def test_id(self) -> str:
+        """The manifest entry filename (e.g. 'test-request.yaml') used for skip matching."""
+        return self._test_id
 
     @property
     def name(self) -> str:
@@ -184,6 +202,14 @@ class Tck:
         """
         return collect_infrastructure_requirements(self)
 
+    def skippable_tests(self) -> list[str]:
+        """Return the test IDs of scripts marked ``skippable: true`` in the TCK manifest.
+
+        These are the IDs an operator may legally pass via the ``skip_tests``
+        runtime variable to omit a test from a run.
+        """
+        return [s.test_id for s in self._scripts if s.skippable]
+
     @classmethod
     def from_single_script(
         cls, script_def: ScriptDefinitionV2, base_dir: Path | None = None,
@@ -205,5 +231,5 @@ class Tck:
             tests=[],
         )
         instance = cls(tck_def, base_dir=base_dir)
-        instance._scripts = [TestScript(script_def)]
+        instance._scripts = [TestScript(script_def, skippable=False, test_id=script_def.id)]
         return instance
