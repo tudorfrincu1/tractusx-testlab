@@ -34,4 +34,4 @@
 | New example | `public/examples/{name}/`, `WelcomeScreen.tsx`, `TopBar.tsx` | — |
 | New YAML field | `models/schema.ts`, `workspaceToModel.ts`, `populateTest.ts`, `modelToYaml.ts`, `yamlToModel.ts`, `validator.ts` | `models/definitions.py`, `compiler/validator.py` |
 | New component | `components/{Name}/{Name}.tsx`, `components/{Name}/{Name}.css` | — |
-| Inspect a `.tck`/`.stck` package | — | `testlab inspect <file> [--json]` |
+| Inspect a `.tck`/`.stck` package | — | `testlab inspect <file> [--variables] [--infrastructure] [--json]` |

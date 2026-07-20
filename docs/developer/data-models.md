@@ -100,27 +100,57 @@ interface StepDefinition {
 
 Declares a variable with metadata for runtime resolution.
 
-```typescript
-interface VariableDefinition {
-  type: string;            // "str" | "int" | "bool" | "float"
-  default?: unknown;       // Default value
-  runtime?: boolean;       // Prompt user at runtime
-  description?: string;
-}
-```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | `str` | yes | Variable identifier, referenced as `${{ env.<id> }}` |
+| `type` | `str` | yes | `"string"` \| `"integer"` \| `"boolean"` \| `"float"` |
+| `source` | `VariableSource` | yes | `"value"` (static default) \| `"input"` (operator-supplied) \| `"generated"` (auto-generated UUID/token) |
+| `scope` | `VariableScope \| None` | required when `source == "input"` | `"engine"` — the TestLab engine operator provides this value; `"sut"` — the SUT operator provides this value |
+| `default` | `Any \| None` | no | Default value used when `source == "value"` |
+| `description` | `str \| None` | no | Human-readable description shown in pre-run forms |
+| `placeholder` | `str \| None` | no | Example value shown in input forms |
+| `generator` | `str \| None` | no | Generator kind used when `source == "generated"` (e.g. `"uuid"`) |
+| `format` | `str \| None` | no | Expected format hint (e.g. `"uri"`, `"bpn"`) |
 
-Variables appear in the YAML under the `variables:` key:
+The `scope` field was introduced by [ADR-0023](decision-records/backend/ADR-0023-variable-scope-annotation.md).
+It is **only required** for `source: input` variables and identifies which participant is
+responsible for providing the value. The compiler enforces this — a package with unscoped
+`source: input` variables cannot be compiled.
+
+Variables appear in the YAML under `env.variables` using the verb-form syntax:
 
 ```yaml
-variables:
-  asset_url:
-    type: str
-    default: "https://example.com/data"
-    description: "URL of the data asset"
-  timeout:
-    type: int
-    default: 30
-    runtime: true
+env:
+  variables:
+    - id: provider_bpn
+      description: BPN-L of the SUT certificate provider.
+      uses: variable/type/string
+      with:
+        source: input
+        scope: sut          # SUT operator provides this value
+      returns:
+        value:
+          type: string
+
+    - id: testlab_management_url
+      description: TestLab engine connector management API.
+      uses: variable/type/string
+      with:
+        source: input
+        scope: engine       # engine operator provides this value
+      returns:
+        value:
+          type: string
+
+    - id: certificate_type
+      description: Certificate type (default iso9001).
+      uses: variable/type/string
+      with:
+        source: value
+        value: iso9001      # static default — scope not required
+      returns:
+        value:
+          type: string
 ```
 
 ### Assertion

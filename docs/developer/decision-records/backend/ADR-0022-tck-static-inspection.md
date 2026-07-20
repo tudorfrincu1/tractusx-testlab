@@ -108,17 +108,55 @@ The function has no side effects and does not touch the network or filesystem.
 A new Typer command in `cli/inspect.py` exposes the feature at the command line:
 
 ```
-testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--json]
+testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--variables] [--infrastructure] [--json]
 ```
 
 - `<package>` accepts both `.tck` (plain) and `.stck` (encrypted) files.
 - `--player-keys` and `--compiler-pub` are required for `.stck` packages; the command
   rejects `.stck` without keys with a clear error message.
+- `--variables` flag: additionally prints the variable list returned by `Tck.all_variables()`
+  (ID, source, scope, type — as a human-readable table or embedded in the JSON envelope).
+- `--infrastructure` flag: additionally prints the infrastructure requirements returned by
+  `Tck.infrastructure_requirements()` (capability, side, required flag, standard — as a
+  human-readable table or embedded in the JSON envelope).
 - Default output: human-readable table printed to stdout.
-- `--json` flag: outputs `TckInspectionResult.model_dump_json(indent=2)` — suitable
-  for machine consumption by backends.
+- `--json` flag: outputs a JSON envelope
+  `{"inspection": ..., "variables": [...], "infrastructure": {...}}` — only the sections
+  requested via `--variables` / `--infrastructure` are populated in the envelope.
 
-### 5. `StepPhase` enum value rename
+The three sections (`inspection`, `variables`, `infrastructure`) are independently optional.
+At least one of the three must be requested or the command prints the inspection table by
+default.
+
+### 5. Amendment (2026-07): `Tck.infrastructure_requirements()`
+
+Following the same pattern as `Tck.inspect()` and `Tck.all_variables()`, a method
+`Tck.infrastructure_requirements() -> InfrastructureConfig` is added to `scripting/script.py`.
+
+```
+Tck.infrastructure_requirements()
+    └── calls collect_infrastructure_requirements(self)   # scripting/_infrastructure.py
+            └── returns InfrastructureConfig              # models/authoring/infrastructure.py
+```
+
+`collect_infrastructure_requirements(tck)` applies a two-pass merge:
+
+1. If the TCK manifest declares a top-level `infrastructure:` block, that block wins as-is.
+2. Otherwise, the function iterates all `TestScript` objects and merges their per-script
+   `infrastructure:` blocks: `required: true` wins over `required: false`, and the first
+   non-`None` `standard` wins.
+
+`InfrastructureConfig`, `CapabilityRequirement`, `Standard`, and `DataspaceContext` are
+all exported from `tractusx_testlab.models`:
+
+```python
+from tractusx_testlab.models import InfrastructureConfig, CapabilityRequirement, Standard
+```
+
+This amendment does **not** change the decision recorded in the original sections. It extends
+the pattern documented in § 2 and § 3 with a third static-metadata accessor.
+
+### 6. `StepPhase` enum value rename
 
 The `StepPhase` enum values in `models/primitives/enums.py` are renamed to align
 with user-facing and JSON-serialized terminology:
@@ -139,8 +177,11 @@ This rename is applied to all callers in `player/execution/phases/`.
   environment — significantly reduces onboarding friction.
 - The `--json` output of `testlab inspect` provides a stable, machine-readable
   contract for engine integrations.
-- Pattern is consistent with `Tck.all_variables()` — the codebase has one way to
-  extract static metadata from a loaded `Tck`.
+- Pattern is consistent with `Tck.all_variables()` and `Tck.infrastructure_requirements()` — the
+  codebase has one way to extract each kind of static metadata from a loaded `Tck`.
+- `--variables` and `--infrastructure` flags give engine backends a complete pre-run picture
+  (what the TCK does, what variables it needs, what infrastructure it requires) from a single
+  `testlab inspect` call.
 - `StepPhase` values now match the domain language (`EXECUTION`, `TEARDOWN`) and
   serialize correctly to JSON without needing a display mapping.
 
