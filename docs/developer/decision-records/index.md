@@ -54,6 +54,7 @@ library (`src/tractusx_testlab/`) or **shared** concerns that span the system. T
 | [0016](backend/ADR-0016-execution-trace-format.md) | Execution Trace Format | Proposed |
 | [0017](backend/ADR-0017-input-callback-endpoint.md) | Input Callback Endpoint | Proposed |
 | [0019](backend/ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
+| [0022](backend/ADR-0022-tck-static-inspection.md) | TCK Static Inspection | Accepted |
 
 ### Shared
 

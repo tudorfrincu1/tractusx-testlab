@@ -318,3 +318,87 @@ interface ValidationError {
 
 - At least one test entry (warning if empty)
 - Test ref names resolve to existing tests in the project
+
+---
+
+# Python Backend Models
+
+The models below live in `src/tractusx_testlab/models/` and are importable directly
+from the library root:
+
+```python
+from tractusx_testlab.models import TckInspectionResult, ScriptInspection, StepMeta
+```
+
+## `StepPhase` enum
+
+`models/primitives/enums.py` — the execution phase a step belongs to.
+
+| Value | Meaning |
+|-------|---------|
+| `SETUP` | Pre-test steps — run before the main test body |
+| `EXECUTION` | Main test steps (the `steps:` block) |
+| `TEARDOWN` | Cleanup steps — run after the main body regardless of outcome |
+
+## Inspection models (`models/runtime/inspection.py`)
+
+Frozen Pydantic v2 models returned by `Tck.inspect()`. They contain static metadata
+extracted from a compiled TCK without executing any steps.
+
+### `StepMeta`
+
+Metadata for a single step.
+
+```python
+class StepMeta(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    step_name: str         # step.name if set, otherwise falls back to step.uses
+    uses: str              # block identifier, e.g. "connector/consumer/get_catalog"
+    phase: StepPhase       # SETUP | EXECUTION | TEARDOWN
+    validation_count: int  # number of validate: entries on this step
+```
+
+### `ScriptInspection`
+
+Metadata for one test script within a TCK.
+
+```python
+class ScriptInspection(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    name: str
+    steps: tuple[StepMeta, ...]
+```
+
+### `TckInspectionResult`
+
+Top-level result returned by `Tck.inspect()`.
+
+```python
+class TckInspectionResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    name: str
+    total_steps: int
+    total_validations: int
+    scripts: tuple[ScriptInspection, ...]
+```
+
+### Usage
+
+```python
+from tractusx_testlab.scripting import Loader
+
+loader = Loader()
+tck = loader.load("my-test.tck")
+result = tck.inspect()
+
+print(result.name)              # "Certificate Management Conformity"
+print(result.total_steps)       # 12
+print(result.total_validations) # 8
+
+for script in result.scripts:
+    for step in script.steps:
+        print(step.uses, step.phase.value)  # "connector/consumer/get_catalog" "EXECUTION"
+```
+
+See [ADR-0022: TCK Static Inspection](decision-records/backend/ADR-0022-tck-static-inspection.md)
+for the full architectural rationale.

@@ -91,3 +91,79 @@ For detailed rationale: [ADR-0010: YAML Syntax v2](../developer/decision-records
 |---------|-------------|
 | [Block & Assertion Reference](blocks.md) | Full catalog of all blocks by category |
 | [TCK Manifest](blocks/manifest.md) | Environment configuration format |
+
+---
+
+## CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `testlab compile <source>` | Compile a TCK source directory into a `.tck` or `.stck` package |
+| `testlab run <package>` | Execute a compiled TCK package against a live dataspace |
+| `testlab validate <package>` | Validate a compiled TCK package without executing steps |
+| `testlab inspect <package>` | Extract and display static metadata (name, steps, validations) without running the TCK |
+
+### `testlab inspect`
+
+Inspects a compiled `.tck` or `.stck` package and prints its static metadata without
+executing any steps against a live environment.
+
+```
+testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `<package>` | Path to a `.tck` (plain) or `.stck` (encrypted) file |
+| `--player-keys` | Path to player RSA private key file — required for `.stck` packages |
+| `--compiler-pub` | Path to compiler RSA public key file — required for `.stck` packages |
+| `--json` | Output a machine-readable JSON object instead of the human-readable table |
+
+**Default output** (human-readable table):
+
+```
+TCK: Certificate Management Conformity
+  Total Steps       : 12
+  Total Validations : 8
+
+  Script: request-certificate
+  ┌────────────────────────────────────────────────┬────────────────────────────────────────────────┬───────────┬─────────────┐
+  │ Step Name                                      │ Uses                                           │ Phase     │ Validations │
+  ├────────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────┼─────────────┤
+  │ Request certificate                            │ connector/consumer/request_certificate         │ Execution │ 2           │
+  └────────────────────────────────────────────────┴────────────────────────────────────────────────┴───────────┴─────────────┘
+```
+
+**JSON output** (`--json` flag) — returns a `TckInspectionResult`:
+
+```json
+{
+  "name": "Certificate Management Conformity",
+  "total_steps": 12,
+  "total_validations": 8,
+  "scripts": [
+    {
+      "name": "request-certificate",
+      "steps": [
+        {
+          "step_name": "Request certificate",
+          "uses": "connector/consumer/request_certificate",
+          "phase": "EXECUTION",
+          "validation_count": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+The JSON output is consumed by engine backends to
+display test metadata before scheduling a run. Import the result model directly
+from the library:
+
+```python
+from tractusx_testlab.models import TckInspectionResult, ScriptInspection, StepMeta
+```
+
+For the architectural rationale see
+[ADR-0022: TCK Static Inspection](../developer/decision-records/backend/ADR-0022-tck-static-inspection.md).
