@@ -40,7 +40,7 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.scripting.script import TestScript
 
 _MAIN_CONFIG = PhaseConfig(
-    phase=StepPhase.MAIN,
+    phase=StepPhase.EXECUTION,
     phase_label="main",
     failure_policy=FailurePolicy.STOP,
     evaluate_conditions=True,

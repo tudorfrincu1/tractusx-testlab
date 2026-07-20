@@ -73,6 +73,11 @@ from tractusx_testlab.models.runtime.jobs import (
     JobEvent,
     JobMemory,
 )
+from tractusx_testlab.models.runtime.inspection import (
+    ScriptInspection,
+    StepMeta,
+    TckInspectionResult,
+)
 from tractusx_testlab.models.runtime.results import (
     AssertionResult,
     AssertionSummary,
@@ -132,6 +137,10 @@ __all__ = [
     # server
     "UploadedPackage",
     "VaultConfig",
+    # inspection
+    "ScriptInspection",
+    "StepMeta",
+    "TckInspectionResult",
     # results
     "AssertionResult",
     "AssertionSummary",

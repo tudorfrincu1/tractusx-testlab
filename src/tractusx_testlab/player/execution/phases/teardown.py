@@ -40,7 +40,7 @@ from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.scripting.script import TestScript
 
 _TEARDOWN_CONFIG = PhaseConfig(
-    phase=StepPhase.CLEANUP,
+    phase=StepPhase.TEARDOWN,
     phase_label="cleanup",
     failure_policy=FailurePolicy.CONTINUE,
     evaluate_conditions=False,
