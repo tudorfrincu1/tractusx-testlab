@@ -117,6 +117,7 @@ FORMAT = "format"
 # variables use `generate/<gen>`.
 VARIABLE = "variable"
 GENERATE = "generate"
+SCOPE = "scope"
 
 # -- Test case entry ----------------------------------------------------------
 TEST = "test"

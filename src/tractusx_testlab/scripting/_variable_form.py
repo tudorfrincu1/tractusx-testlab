@@ -35,7 +35,7 @@ from __future__ import annotations
 from typing import Any, Optional, Union
 
 import tractusx_testlab.syntax.keys as keys
-from tractusx_testlab.models import VariableDefinition, VariableSource
+from tractusx_testlab.models import VariableDefinition, VariableScope, VariableSource
 
 # A raw variable spec is either a scalar literal (legacy flat form) or a mapping
 # (legacy ``{type, default}`` form or the new verb form).
@@ -92,6 +92,9 @@ def _build_verb_variable(name: str, spec: dict) -> VariableDefinition:
     source, generator, default, placeholder = _resolve_origin(namespace, segments, with_block)
     declared_type = value_return.get(keys.TYPE) or _type_from_verb_path(namespace, segments)
 
+    raw_scope = with_block.get(keys.SCOPE)
+    scope: Optional[VariableScope] = VariableScope(raw_scope) if raw_scope else None
+
     return VariableDefinition(
         name=name,
         type=declared_type or _DEFAULT_TYPE,
@@ -102,6 +105,7 @@ def _build_verb_variable(name: str, spec: dict) -> VariableDefinition:
         generator=generator,
         format=value_return.get(keys.FORMAT),
         placeholder=placeholder,
+        scope=scope,
     )
 
 

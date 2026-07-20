@@ -80,6 +80,10 @@ def validate_tck_manifest(
     # Validate referenced file existence
     all_errors.extend(_validate_file_refs(manifest_data, base_dir))
 
+    # Validate variable scope annotations
+    env = manifest_data.get("env") or {}
+    all_errors.extend(_validate_variable_scopes(env))
+
     # Validate each test file
     tests = manifest_data.get("tests", [])
     test_schema = _load_schema("tck_test.schema.json")
@@ -113,6 +117,40 @@ def validate_tck_manifest(
         )
 
     logger.info("TCK manifest validation passed")
+
+
+_VALID_SCOPES: frozenset[str] = frozenset({"engine", "sut"})
+
+
+def _validate_variable_scopes(env_data: dict[str, Any]) -> list[str]:
+    """Validate that every ``source: input`` variable declares a valid scope.
+
+    Variables with ``source: value`` or ``source: generated`` are exempt.
+    """
+    errors: list[str] = []
+    variables = env_data.get("variables") or []
+    if not isinstance(variables, list):
+        return errors
+    for entry in variables:
+        if not isinstance(entry, dict):
+            continue
+        with_block = entry.get("with") or {}
+        if str(with_block.get("source", "")) != "input":
+            continue
+        var_id = entry.get("id", "?")
+        scope = with_block.get("scope")
+        if scope is None:
+            errors.append(
+                f"Variable '{var_id}' has source: input but no scope declared. "
+                f"Add scope: engine or scope: sut to identify who is responsible "
+                f"for providing this value at runtime."
+            )
+        elif scope not in _VALID_SCOPES:
+            errors.append(
+                f"Variable '{var_id}' has an unrecognized scope: '{scope}'. "
+                f"Valid values are: engine, sut."
+            )
+    return errors
 
 
 def _validate_file_refs(
