@@ -40,6 +40,7 @@ from tractusx_testlab.cli import validate as _validate  # noqa: E402, F401
 from tractusx_testlab.cli import compile as _compile  # noqa: E402, F401
 from tractusx_testlab.cli import run as _run  # noqa: E402, F401
 from tractusx_testlab.cli import serve as _serve  # noqa: E402, F401
+from tractusx_testlab.cli import inspect as _inspect  # noqa: E402, F401
 
 
 def main() -> None:

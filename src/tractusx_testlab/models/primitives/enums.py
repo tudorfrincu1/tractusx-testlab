@@ -163,8 +163,8 @@ class ServiceState(str, enum.Enum):
 class StepPhase(str, enum.Enum):
     """Identifies which execution phase a step belongs to."""
     SETUP = "SETUP"
-    MAIN = "MAIN"
-    CLEANUP = "CLEANUP"
+    EXECUTION = "EXECUTION"
+    TEARDOWN = "TEARDOWN"
 
 
 class ScriptKind(str, enum.Enum):

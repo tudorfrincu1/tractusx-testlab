@@ -74,7 +74,7 @@ class StepResult(BaseModel):
 
     step_name: str
     step_type: str = ""
-    phase: StepPhase = StepPhase.MAIN
+    phase: StepPhase = StepPhase.EXECUTION
     status: StepStatus = StepStatus.PENDING
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None

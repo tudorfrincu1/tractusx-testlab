@@ -33,6 +33,8 @@ from tractusx_testlab.models.authoring.definitions import (
     TckDefinitionV2,
     VariableDefinition,
 )
+from tractusx_testlab.models.runtime.inspection import TckInspectionResult
+from tractusx_testlab.scripting._inspection import build_inspection_result
 from tractusx_testlab.scripting._variable_form import parse_variables_block
 
 class TestScript:
@@ -155,6 +157,17 @@ class Tck:
             for name, var in self.all_variables().items()
             if var.runtime and var.default is None
         }
+
+    def inspect(self) -> "TckInspectionResult":
+        """Extract static metadata from this TCK without executing any steps.
+
+        Returns general metadata (name, total steps, total validations) and
+        per-step metadata (name, ``uses`` identifier, phase) for every script.
+
+        Returns:
+            A frozen :class:`~tractusx_testlab.models.runtime.inspection.TckInspectionResult`.
+        """
+        return build_inspection_result(self)
 
     @classmethod
     def from_single_script(

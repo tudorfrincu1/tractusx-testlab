@@ -152,7 +152,7 @@ def _get_steps_for_phase(script: TestScript, phase: StepPhase) -> list:
     """Return the step definitions list for the given phase."""
     if phase == StepPhase.SETUP:
         return script.definition.setup
-    if phase == StepPhase.CLEANUP:
+    if phase == StepPhase.TEARDOWN:
         return script.definition.teardown
     return script.definition.execution
 
