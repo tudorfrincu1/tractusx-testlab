@@ -161,7 +161,88 @@ This performs validate → compile-in-memory → execute in one step. Useful for
 
 ---
 
-## Step 3 — Run Encrypted Packages (Default)
+## Step 3 — Skip Optional Tests
+
+Some tests in a TCK are marked `skippable: true` by the author, indicating they cover
+optional capabilities that the SUT may not yet support. You can bypass them at runtime
+using the `skip_tests` variable — without modifying the package itself.
+
+### Discover which tests are skippable
+
+```bash
+testlab inspect connector_e2e-1.0.tckpkg
+```
+
+Each test in the output shows its **ID** and whether it is skippable:
+
+```
+  Script: Validate catalog policy  |  ID: catalog_policy_validation.yaml  |  Skippable: Yes
+  Script: Request certificate       |  ID: request_certificate.yaml        |  Skippable: No
+```
+
+The **ID** (e.g. `catalog_policy_validation.yaml`) is what you pass to `skip_tests`.
+The display name is for humans only — it cannot be used to identify a test for skipping.
+
+### Skip a single test
+
+```bash
+testlab run connector_e2e-1.0.tckpkg \
+  --var skip_tests=catalog_policy_validation.yaml \
+  --var provider_url=https://provider.example.com \
+  --var ...
+```
+
+### Skip multiple tests
+
+Repeating `--var skip_tests=...` overwrites the previous value. Use a config YAML
+to skip more than one test:
+
+```yaml
+# skip.yaml
+skip_tests:
+  - catalog_policy_validation.yaml
+  - error_handling.yaml
+```
+
+```bash
+testlab run connector_e2e-1.0.tckpkg \
+  --config skip.yaml \
+  --var provider_url=https://provider.example.com \
+  --var ...
+```
+
+### Result
+
+Skipped tests appear in the output with status `SKIPPED`:
+
+```
+── catalog_policy_validation ────────────────────────────────────
+  [SKIPPED] Test intentionally skipped by operator request.
+─────────────────────────────────────────────────────────────────
+
+Test case COMPLETED — 5/5 executed, 1 skipped
+```
+
+The overall TCK result is `COMPLETED` when all executed tests pass and any number
+of `SKIPPED` tests are present. A single `FAILED` test makes the TCK `FAILED`.
+
+### Error: invalid skip request
+
+Validation runs **before any test executes**. If you request skipping a test that does
+not exist or is not marked skippable, the run aborts immediately:
+
+```
+Error: Cannot skip test(s) 'request_certificate.yaml': not marked skippable.
+Set skippable: true on the test entry in the TCK manifest to allow skipping.
+```
+
+!!! note
+    Only the TCK author can allow skipping. Tests without `skippable: true` are
+    mandatory conformance checks that cannot be bypassed by the operator.
+
+---
+
+## Step 5 — Run Encrypted Packages (Default)
 
 Packages are encrypted by default. To run them, the Player must have:
 
@@ -217,7 +298,7 @@ Loading connector_e2e-1.0.tckpkg
 
 ---
 
-## Step 4 — Result Logs and Reports
+## Step 6 — Result Logs and Reports
 
 ### JSON-Lines Log
 
@@ -437,7 +518,7 @@ testlab run connector_e2e-1.0.tckpkg \
 
 ---
 
-## Step 5 — Programmatic Execution (Python API)
+## Step 7 — Programmatic Execution (Python API)
 
 You can run packages from Python code:
 
