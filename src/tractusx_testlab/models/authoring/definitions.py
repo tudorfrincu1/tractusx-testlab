@@ -38,7 +38,7 @@ from tractusx_testlab.models.authoring.infrastructure import (
     DataspaceContext,
     InfrastructureConfig,
 )
-from tractusx_testlab.models.primitives.enums import FailurePolicy, ServiceType, VariableSource
+from tractusx_testlab.models.primitives.enums import FailurePolicy, ServiceType, VariableScope, VariableSource
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +57,7 @@ class VariableDefinition(BaseModel):
     generator: Optional[str] = None
     format: Optional[str] = None
     placeholder: Optional[str] = None
+    scope: Optional[VariableScope] = None
 
 
 class ServiceDefinition(BaseModel):

@@ -44,6 +44,12 @@ from tractusx_testlab.models.authoring.definitions import (
     TckMetadataDefinition,
     VariableDefinition,
 )
+from tractusx_testlab.models.authoring.infrastructure import (
+    CapabilityRequirement,
+    DataspaceContext,
+    InfrastructureConfig,
+    Standard,
+)
 from tractusx_testlab.models.primitives.enums import (
     AssertionSeverity,
     FailurePolicy,
@@ -56,6 +62,7 @@ from tractusx_testlab.models.primitives.enums import (
     ValueSource,
 )
 from tractusx_testlab.models.primitives.enums import VariableSource  # verb-form variable source
+from tractusx_testlab.models.primitives.enums import VariableScope  # verb-form variable scope
 from tractusx_testlab.models.primitives.enums import AssertionType  # local override — adds typed assertion types
 from tractusx_testlab.models.primitives.enums import ScriptKind  # local override — adds TCK
 from tractusx_testlab.models.primitives.enums import ServiceType  # local override — adds EDC connector types
@@ -114,6 +121,12 @@ __all__ = [
     "StepPhase",
     "StepStatus",
     "ValueSource",
+    "VariableScope",
+    # infrastructure
+    "CapabilityRequirement",
+    "DataspaceContext",
+    "InfrastructureConfig",
+    "Standard",
     # definitions (v2)
     "AssertionV2",
     "EnvDefinition",

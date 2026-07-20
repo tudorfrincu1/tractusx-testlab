@@ -121,6 +121,21 @@ class VariableSource(str, enum.Enum):
     GENERATED = "generated"
 
 
+class VariableScope(str, enum.Enum):
+    """Identifies which participant is responsible for providing a runtime input variable.
+
+    ``ENGINE`` means the TestLab engine operator supplies the value (e.g. connector
+    management URL). ``SUT`` means the System-Under-Test operator supplies the value
+    (e.g. provider BPN-L).
+
+    Only meaningful when ``source: input``; variables with ``source: value`` or
+    ``source: generated`` leave ``scope`` as ``None``.
+    """
+
+    ENGINE = "engine"
+    SUT = "sut"
+
+
 class SdkCallMode(str, enum.Enum):
     """Controls which SDK calls are permitted during execution."""
 

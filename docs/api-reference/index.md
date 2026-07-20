@@ -109,7 +109,7 @@ Inspects a compiled `.tck` or `.stck` package and prints its static metadata wit
 executing any steps against a live environment.
 
 ```
-testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--json]
+testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--variables] [--infrastructure] [--json]
 ```
 
 | Option | Description |
@@ -117,7 +117,9 @@ testlab inspect <package> [--player-keys <path>] [--compiler-pub <path>] [--json
 | `<package>` | Path to a `.tck` (plain) or `.stck` (encrypted) file |
 | `--player-keys` | Path to player RSA private key file — required for `.stck` packages |
 | `--compiler-pub` | Path to compiler RSA public key file — required for `.stck` packages |
-| `--json` | Output a machine-readable JSON object instead of the human-readable table |
+| `--variables` | Also print the variable list (ID, source, scope, type) declared in the TCK |
+| `--infrastructure` | Also print the infrastructure requirements (capability, side, required, standard) declared in the TCK |
+| `--json` | Output a machine-readable JSON envelope instead of the human-readable table |
 
 **Default output** (human-readable table):
 
@@ -134,35 +136,52 @@ TCK: Certificate Management Conformity
   └────────────────────────────────────────────────┴────────────────────────────────────────────────┴───────────┴─────────────┘
 ```
 
-**JSON output** (`--json` flag) — returns a `TckInspectionResult`:
+**JSON output** (`--json` flag) — returns an envelope with the requested sections:
 
 ```json
 {
-  "name": "Certificate Management Conformity",
-  "total_steps": 12,
-  "total_validations": 8,
-  "scripts": [
-    {
-      "name": "request-certificate",
-      "steps": [
-        {
-          "step_name": "Request certificate",
-          "uses": "connector/consumer/request_certificate",
-          "phase": "EXECUTION",
-          "validation_count": 2
-        }
-      ]
-    }
-  ]
+  "inspection": {
+    "name": "Certificate Management Conformity",
+    "total_steps": 12,
+    "total_validations": 8,
+    "scripts": [
+      {
+        "name": "request-certificate",
+        "steps": [
+          {
+            "step_name": "Request certificate",
+            "uses": "connector/consumer/request_certificate",
+            "phase": "EXECUTION",
+            "validation_count": 2
+          }
+        ]
+      }
+    ]
+  },
+  "variables": [
+    { "id": "provider_bpn", "source": "input", "scope": "sut",    "type": "string" },
+    { "id": "testlab_management_url", "source": "input", "scope": "engine", "type": "string" },
+    { "id": "certificate_type",  "source": "value", "scope": null, "type": "string" }
+  ],
+  "infrastructure": {
+    "engine": { "connector": { "required": true, "standard": null } },
+    "sut":    { "connector": { "required": true, "standard": null } }
+  }
 }
 ```
 
-The JSON output is consumed by engine backends to
-display test metadata before scheduling a run. Import the result model directly
-from the library:
+`variables` and `infrastructure` keys are only populated when their respective flags
+(`--variables`, `--infrastructure`) are passed; otherwise their values are `null`.
+
+The `inspection` key (step/validation counts) is always populated. Import the result
+models directly from the library:
 
 ```python
-from tractusx_testlab.models import TckInspectionResult, ScriptInspection, StepMeta
+from tractusx_testlab.models import (
+    TckInspectionResult, ScriptInspection, StepMeta,   # inspection
+    VariableDefinition, VariableScope, VariableSource,  # variables
+    InfrastructureConfig, CapabilityRequirement,        # infrastructure
+)
 ```
 
 For the architectural rationale see

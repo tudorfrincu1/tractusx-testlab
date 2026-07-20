@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -45,9 +46,17 @@ def inspect(
         None, "--compiler-pub", "-c",
         help="Path to the compiler's signing public key (signing.pub). Required for .stck files.",
     ),
+    show_variables: bool = typer.Option(
+        False, "--variables",
+        help="Show declared variables with their source and scope.",
+    ),
+    show_infrastructure: bool = typer.Option(
+        False, "--infrastructure",
+        help="Show infrastructure capability requirements (engine and SUT sides).",
+    ),
     as_json: bool = typer.Option(
         False, "--json",
-        help="Output inspection result as JSON.",
+        help="Output as JSON. Combines all requested sections into one object.",
     ),
 ) -> None:
     """Inspect metadata of a .tck or .stck package without executing it."""
@@ -62,10 +71,14 @@ def inspect(
     result = tck.inspect()
 
     if as_json:
-        typer.echo(result.model_dump_json(indent=2))
+        _print_json(result, tck, show_variables, show_infrastructure)
         return
 
     _print_inspection(package, result)
+    if show_variables:
+        _print_variables(tck)
+    if show_infrastructure:
+        _print_infrastructure(tck)
 
 
 def _require_keys(player_keys: Optional[Path], compiler_pub: Optional[Path]) -> None:
@@ -132,3 +145,69 @@ def _print_inspection(package: Path, result: object) -> None:
 
     typer.echo("=" * width)
     typer.echo()
+
+
+def _print_variables(tck: object) -> None:
+    """Print a human-readable variables table."""
+    variables = tck.all_variables()  # type: ignore[attr-defined]
+    width = 72
+    typer.echo("  VARIABLES")
+    typer.echo(f"  {'ID':<30} {'Source':<12} {'Scope':<10} {'Type'}")
+    typer.echo(f"  {'-'*30} {'-'*12} {'-'*10} {'-'*10}")
+    for name, var in variables.items():
+        scope = var.scope.value if var.scope else "—"
+        typer.echo(f"  {name:<30} {var.source.value:<12} {scope:<10} {var.type}")
+    typer.echo()
+    typer.echo("=" * width)
+    typer.echo()
+
+
+def _print_infrastructure(tck: object) -> None:
+    """Print a human-readable infrastructure requirements table."""
+    infra = tck.infrastructure_requirements()  # type: ignore[attr-defined]
+    width = 72
+    typer.echo("  INFRASTRUCTURE")
+    typer.echo(f"  {'Capability':<25} {'Required':<10} {'Standard'}")
+    typer.echo(f"  {'-'*25} {'-'*10} {'-'*20}")
+    for cap, req in infra.engine.items():
+        std = req.standard.id if req.standard else "—"
+        typer.echo(f"  engine.{cap:<18} {str(req.required):<10} {std}")
+    for cap, req in infra.sut.items():
+        std = req.standard.id if req.standard else "—"
+        typer.echo(f"  sut.{cap:<21} {str(req.required):<10} {std}")
+    typer.echo()
+    typer.echo("=" * width)
+    typer.echo()
+
+
+def _print_json(
+    result: object,
+    tck: object,
+    show_variables: bool,
+    show_infrastructure: bool,
+) -> None:
+    """Emit JSON output, combining requested sections into one envelope."""
+    from tractusx_testlab.models.runtime.inspection import TckInspectionResult
+
+    r: TckInspectionResult = result  # type: ignore[assignment]
+
+    if not show_variables and not show_infrastructure:
+        # backward-compatible: plain inspection result
+        typer.echo(r.model_dump_json(indent=2))
+        return
+
+    envelope: dict = {"inspection": r.model_dump()}
+    if show_variables:
+        envelope["variables"] = {
+            name: {
+                "type": var.type,
+                "source": var.source.value,
+                "scope": var.scope.value if var.scope else None,
+                "default": var.default,
+                "description": var.description,
+            }
+            for name, var in tck.all_variables().items()  # type: ignore[attr-defined]
+        }
+    if show_infrastructure:
+        envelope["infrastructure"] = tck.infrastructure_requirements().model_dump()  # type: ignore[attr-defined]
+    typer.echo(json.dumps(envelope, indent=2))

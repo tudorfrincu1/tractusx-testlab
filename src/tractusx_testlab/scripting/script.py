@@ -33,7 +33,9 @@ from tractusx_testlab.models.authoring.definitions import (
     TckDefinitionV2,
     VariableDefinition,
 )
+from tractusx_testlab.models.authoring.infrastructure import InfrastructureConfig
 from tractusx_testlab.models.runtime.inspection import TckInspectionResult
+from tractusx_testlab.scripting._infrastructure import collect_infrastructure_requirements
 from tractusx_testlab.scripting._inspection import build_inspection_result
 from tractusx_testlab.scripting._variable_form import parse_variables_block
 
@@ -168,6 +170,19 @@ class Tck:
             A frozen :class:`~tractusx_testlab.models.runtime.inspection.TckInspectionResult`.
         """
         return build_inspection_result(self)
+
+    def infrastructure_requirements(self) -> InfrastructureConfig:
+        """Extract consolidated infrastructure requirements from this TCK.
+
+        Returns the TCK-level ``infrastructure:`` block when present. Otherwise
+        merges per-script ``infrastructure:`` blocks: ``required=True`` wins and
+        the first non-``None`` standard wins per capability key.
+
+        Returns:
+            Merged :class:`~tractusx_testlab.models.authoring.infrastructure.InfrastructureConfig`;
+            an empty config when nothing is declared.
+        """
+        return collect_infrastructure_requirements(self)
 
     @classmethod
     def from_single_script(

@@ -55,6 +55,7 @@ library (`src/tractusx_testlab/`) or **shared** concerns that span the system. T
 | [0017](backend/ADR-0017-input-callback-endpoint.md) | Input Callback Endpoint | Proposed |
 | [0019](backend/ADR-0019-service-requirements-and-engine-bindings.md) | Service Requirements and Engine Bindings | Proposed |
 | [0022](backend/ADR-0022-tck-static-inspection.md) | TCK Static Inspection | Accepted |
+| [0023](backend/ADR-0023-variable-scope-annotation.md) | Variable Scope Annotation (`engine` / `sut`) | Accepted |
 
 ### Shared
 
