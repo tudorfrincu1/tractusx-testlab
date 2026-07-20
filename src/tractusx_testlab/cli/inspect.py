@@ -130,7 +130,7 @@ def _print_inspection(package: Path, result: object) -> None:
 
     for script in r.scripts:
         skippable_label = "Yes" if script.skippable else "No"
-        typer.echo(f"  Script: {script.name}  |  Skippable: {skippable_label}")
+        typer.echo(f"  Script: {script.name}  |  ID: {script.test_id}  |  Skippable: {skippable_label}")
         typer.echo(f"  {'Step Name':<40} {'Uses':<35} {'Phase':<10} {'Validations'}")
         typer.echo(f"  {'-'*40} {'-'*35} {'-'*10} {'-'*11}")
 
