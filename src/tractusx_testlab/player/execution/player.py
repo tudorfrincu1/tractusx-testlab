@@ -142,6 +142,7 @@ class TestlabPlayer:
         self._ensure_callback_manager()
 
         seed_context_variables(context, tck, runtime_vars)
+        seed_infrastructure_services(svc_mgr, context)
 
         skip_ids = resolve_skip_ids(tck, runtime_vars)
 
