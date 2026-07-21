@@ -41,6 +41,11 @@ from tractusx_testlab.player.execution.monitor import ExecutionMonitor
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.scripting.script import TestScript
 
+_NON_FAILING_STATUSES: frozenset[ScriptStatus] = frozenset({
+    ScriptStatus.COMPLETED,
+    ScriptStatus.SKIPPED,
+})
+
 
 def make_skipped_result(script: TestScript, unmet_deps: list[str]) -> ScriptResult:
     """Build a FAILED result for a script whose dependencies were not met."""
@@ -58,17 +63,42 @@ def make_skipped_result(script: TestScript, unmet_deps: list[str]) -> ScriptResu
     )
 
 
+def make_intentionally_skipped_result(script: TestScript) -> ScriptResult:
+    """Build a SKIPPED result for a test intentionally omitted by the operator.
+
+    Unlike ``make_skipped_result`` (which marks a dependency failure as FAILED),
+    this result uses ``ScriptStatus.SKIPPED`` so the overall TCK result remains
+    ``COMPLETED`` when all non-skipped tests pass.
+    """
+    now = datetime.now(timezone.utc)
+    return ScriptResult(
+        script_name=script.name,
+        dataspace_version=script.definition.dataspace_version,
+        status=ScriptStatus.SKIPPED,
+        execution=[],
+        started_at=now,
+        finished_at=now,
+        total_duration_s=0.0,
+        assertion_summary=AssertionSummary(total=0, passed=0, failed_hard=0, failed_soft=0),
+    )
+
+
 def build_tck_result(
     tck_name: str,
     script_results: list[ScriptResult],
     started_at: datetime,
     finished_at: datetime,
 ) -> TckResult:
-    """Aggregate script results into a single TckResult."""
-    all_passed = all(script.status == ScriptStatus.COMPLETED for script in script_results)
+    """Aggregate script results into a single TckResult.
+
+    The overall status is ``COMPLETED`` when every script is either ``COMPLETED``
+    or ``SKIPPED`` (intentionally omitted by the operator).  Any ``FAILED`` or
+    ``CANCELLED`` script makes the overall result ``FAILED``.
+    """
+    all_ok = all(script.status in _NON_FAILING_STATUSES for script in script_results)
     return TckResult(
         tck_id=tck_name,
-        status=ScriptStatus.COMPLETED if all_passed else ScriptStatus.FAILED,
+        status=ScriptStatus.COMPLETED if all_ok else ScriptStatus.FAILED,
         scripts=script_results,
         started_at=started_at,
         finished_at=finished_at,

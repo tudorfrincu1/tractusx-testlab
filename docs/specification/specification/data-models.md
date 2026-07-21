@@ -24,7 +24,7 @@ SPDX-License-Identifier: CC-BY-4.0
 | Enum | Values | Description |
 |------|--------|-------------|
 | `StepStatus` | `PENDING`, `RUNNING`, `WAITING`, `PASSED`, `FAILED`, `SKIPPED` | Lifecycle state of a single step |
-| `ScriptStatus` | `IDLE`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED` | Lifecycle state of a script run |
+| `ScriptStatus` | `IDLE`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, `SKIPPED` | Lifecycle state of a script run |
 | `JobStatus` | `QUEUED`, `RUNNING`, `WAITING`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMED_OUT` | Lifecycle state of a job (test execution) |
 | `AssertionType` | `EXACT`, `SCHEMA`, `CONTAINS`, `REGEX`, `STATUS_CODE` | Type of assertion check |
 | `AssertionSeverity` | `HARD`, `SOFT` | Whether assertion failure fails the step or is a warning |
@@ -88,12 +88,18 @@ classDiagram
         +dict params?
     }
 
+    class TckTestEntry {
+        +str id
+        +str name?
+        +bool skippable = False
+    }
+
     class TckDefinition {
         +str name
         +str version
         +str description?
         +dict~str, VariableDefinition~ shared_variables?
-        +list~ScriptDefinition~ tests
+        +list~TckTestEntry~ tests
         +list~ImportDefinition~ imports?
     }
 
@@ -143,7 +149,7 @@ classDiagram
     ScriptDefinition --> "*" StepDefinition : cleanup
     ScriptDefinition --> "*" ServiceDefinition : services
     StepDefinition --> "*" Assertion : validate
-    TckDefinition --> "*" ScriptDefinition : tests
+    TckDefinition --> "*" TckTestEntry : tests
     TckDefinition --> "*" VariableDefinition : shared_variables
     TckDefinition --> "*" ImportDefinition : imports
 ```
@@ -406,6 +412,7 @@ Top-level security metadata in `manifest.yaml` for encrypted packages.
 | `StepConfigError` | Step has neither `params.service` nor direct connection params | `step_type`, `message` |
 | `DuplicateServiceError` | Two services in `services` block share the same name | `name` |
 | `ServiceInitError` | Service fails to initialize (connection, auth failure) | `name`, `cause` |
+| `SkipNotAllowedError` | `skip_tests` runtime variable references an unknown ID or one not marked `skippable: true` | `test_ids`, `reason` |
 
 ---
 

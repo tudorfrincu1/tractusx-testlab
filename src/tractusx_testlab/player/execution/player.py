@@ -26,7 +26,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -56,8 +55,11 @@ from tractusx_testlab.player.execution.step_runner import (
 from tractusx_testlab.player.execution._trace_formatter import (
     build_tck_result,
     finalize_job,
+    make_intentionally_skipped_result,
     make_skipped_result,
 )
+from tractusx_testlab.player.execution._skip import resolve_skip_ids
+from tractusx_testlab.player.execution._context_seeder import seed_context_variables
 from tractusx_testlab.player.jobs import JobManager
 from tractusx_testlab.player.loading.loader import Loader
 from tractusx_testlab.player.loading.ordering import topological_sort
@@ -139,13 +141,14 @@ class TestlabPlayer:
 
         self._ensure_callback_manager()
 
-        self._seed_context_variables(context, tck, runtime_vars)
-        seed_infrastructure_services(svc_mgr, context)
+        seed_context_variables(context, tck, runtime_vars)
+
+        skip_ids = resolve_skip_ids(tck, runtime_vars)
 
         tck_started_at = datetime.now(timezone.utc)
         ordered_scripts = topological_sort(tck.scripts)
         script_results = await self._execute_scripts_in_order(
-            ordered_scripts, context, job, monitor,
+            ordered_scripts, context, job, monitor, skip_ids,
         )
         tck_finished_at = datetime.now(timezone.utc)
 
@@ -192,68 +195,28 @@ class TestlabPlayer:
         )
         self._mock_server.start()
 
-    @staticmethod
-    def _seed_context_variables(
-        context: StepContext,
-        tck: Tck,
-        runtime_vars: Optional[dict],
-    ) -> None:
-        """Seed context with shared variables (medium priority) and runtime vars (highest)."""
-        if tck.base_dir is not None:
-            context.set_variable("_tck_root", str(tck.base_dir))
-            TestlabPlayer._load_testdata(context, tck)
-
-        shared_vars = getattr(tck.definition, "shared_variables", None) or {}
-        if shared_vars:
-            for var_name, var_def in shared_vars.items():
-                if var_def.default is not None:
-                    context.set_variable(var_name, var_def.default)
-
-        # V2 env.variables — seed verb-form variables with static values
-        TestlabPlayer._seed_env_variables(context, tck)
-
-        if runtime_vars:
-            for key, value in runtime_vars.items():
-                context.set_variable(key, value)
-
-    @staticmethod
-    def _seed_env_variables(context: StepContext, tck: Tck) -> None:
-        """Seed V2 env.variables that have static with.value into context."""
-        env = getattr(tck.definition, "env", None)
-        if env is None:
-            return
-        variables = getattr(env, "variables", None)
-        if not variables or not isinstance(variables, list):
-            return
-        for var in variables:
-            if not isinstance(var, dict):
-                continue
-            var_id = var.get("id")
-            if not var_id:
-                continue
-            with_block = var.get("with") or {}
-            value = with_block.get("value")
-            if value is None:
-                continue
-            # Store the bare variable id → value
-            context.set_variable(var_id, value)
-            # Store each return field → value (e.g. "ccm_usage_policy.policy")
-            returns = var.get("returns") or {}
-            for field_name in returns:
-                context.set_variable(f"{var_id}.{field_name}", value)
-
     async def _execute_scripts_in_order(
         self,
         ordered_scripts: list[TestScript],
         context: StepContext,
         job: Any,
         monitor: ExecutionMonitor,
+        skip_ids: frozenset[str],
     ) -> list[ScriptResult]:
         """Execute scripts respecting dependency order, skipping on unmet deps."""
         script_results: list[ScriptResult] = []
         completed_tests: set[str] = set()
 
         for idx, script in enumerate(ordered_scripts):
+            # 1. Intentional skip requested by the operator.
+            if script.test_id in skip_ids:
+                skipped = make_intentionally_skipped_result(script)
+                script_results.append(skipped)
+                monitor.on_script_started(job.job_id, script.name, idx)
+                monitor.on_script_completed(job.job_id, skipped)
+                continue
+
+            # 2. Dependency skip — unmet deps produce a FAILED result.
             unmet_deps = [dep for dep in script.depends_on if dep not in completed_tests]
 
             if unmet_deps:
@@ -287,27 +250,3 @@ class TestlabPlayer:
             if value is not None:
                 context.set_variable(export_name, value)
                 context.set_variable(f"!{script.name}:{export_name}", value)
-
-    @staticmethod
-    def _load_testdata(context: StepContext, tck: Any) -> None:
-        """Seed context with testdata files declared in the TCK env block.
-
-        Each entry in ``env.testdata`` is loaded from ``<base_dir>/testdata/<source>``
-        and stored under both ``testdata.<id>`` and ``env.testdata.<id>`` to support
-        both reference styles used in test YAMLs.
-        """
-        env_def = getattr(tck.definition, "env", None)
-        testdata_entries = getattr(env_def, "testdata", None) or []
-        for td in testdata_entries:
-            td_path = tck.base_dir / "testdata" / td.source
-            if not td_path.exists():
-                logger.warning("Testdata file not found, skipping: %s", td_path)
-                continue
-            try:
-                content = json.loads(td_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError) as exc:
-                logger.warning("Failed to load testdata file %s: %s", td_path, exc)
-                continue
-            context.set_variable(f"testdata.{td.id}", content)
-            context.set_variable(f"env.testdata.{td.id}", content)
-            logger.debug("Loaded testdata '%s' from %s", td.id, td_path.name)

@@ -58,6 +58,22 @@ class StepConfigError(Exception):
         super().__init__(f"Step config error in '{step_type}': {message}")
 
 
+class SkipNotAllowedError(Exception):
+    """Raised when the operator requests skipping a test not marked ``skippable: true``.
+
+    The error is raised before the run starts so the operator can correct the
+    request without any test having executed.
+    """
+
+    def __init__(self, test_ids: list[str], reason: str = "not marked skippable") -> None:
+        self.test_ids = test_ids
+        ids_str = ", ".join(f"'{t}'" for t in test_ids)
+        super().__init__(
+            f"Cannot skip test(s) {ids_str}: {reason}. "
+            f"Set skippable: true on the test entry in the TCK manifest to allow skipping."
+        )
+
+
 class DuplicateServiceError(Exception):
     def __init__(self, name: str):
         self.name = name

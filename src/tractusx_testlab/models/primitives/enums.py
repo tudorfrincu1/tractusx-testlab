@@ -48,6 +48,7 @@ class ScriptStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+    SKIPPED = "SKIPPED"
 
 
 class JobStatus(str, enum.Enum):

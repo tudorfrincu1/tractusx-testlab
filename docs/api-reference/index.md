@@ -128,11 +128,18 @@ TCK: Certificate Management Conformity
   Total Steps       : 12
   Total Validations : 8
 
-  Script: request-certificate
+  Script: request-certificate  |  ID: request_certificate.yaml  |  Skippable: No
   ┌────────────────────────────────────────────────┬────────────────────────────────────────────────┬───────────┬─────────────┐
   │ Step Name                                      │ Uses                                           │ Phase     │ Validations │
   ├────────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────┼─────────────┤
   │ Request certificate                            │ connector/consumer/request_certificate         │ Execution │ 2           │
+  └────────────────────────────────────────────────┴────────────────────────────────────────────────┴───────────┴─────────────┘
+
+  Script: catalog_policy_validation  |  ID: catalog_policy_validation.yaml  |  Skippable: Yes
+  ┌────────────────────────────────────────────────┬────────────────────────────────────────────────┬───────────┬─────────────┐
+  │ Step Name                                      │ Uses                                           │ Phase     │ Validations │
+  ├────────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────┼─────────────┤
+  │ Validate catalog policy                        │ validate/assert                                │ Execution │ 3           │
   └────────────────────────────────────────────────┴────────────────────────────────────────────────┴───────────┴─────────────┘
 ```
 
@@ -147,12 +154,27 @@ TCK: Certificate Management Conformity
     "scripts": [
       {
         "name": "request-certificate",
+        "test_id": "request_certificate.yaml",
+        "skippable": false,
         "steps": [
           {
             "step_name": "Request certificate",
             "uses": "connector/consumer/request_certificate",
             "phase": "EXECUTION",
             "validation_count": 2
+          }
+        ]
+      },
+      {
+        "name": "catalog_policy_validation",
+        "test_id": "catalog_policy_validation.yaml",
+        "skippable": true,
+        "steps": [
+          {
+            "step_name": "Validate catalog policy",
+            "uses": "validate/assert",
+            "phase": "EXECUTION",
+            "validation_count": 3
           }
         ]
       }
@@ -181,8 +203,51 @@ from tractusx_testlab.models import (
     TckInspectionResult, ScriptInspection, StepMeta,   # inspection
     VariableDefinition, VariableScope, VariableSource,  # variables
     InfrastructureConfig, CapabilityRequirement,        # infrastructure
+    ScriptStatus, SkipNotAllowedError,                  # skip configuration
 )
 ```
 
+---
+
+### `testlab run` — Skipping Optional Tests
+
+Tests marked `skippable: true` in the TCK manifest can be bypassed at runtime via the
+`skip_tests` runtime variable. Skipped tests produce a `SKIPPED` result and are **not**
+counted as failures.
+
+**Single test:**
+
+```bash
+testlab run index.yaml \
+  --var skip_tests=catalog_policy_validation.yaml \
+  --config your-env.yaml
+```
+
+**Multiple tests** — use a config YAML (repeating `--var` overwrites the previous value):
+
+```yaml
+# skip.yaml
+skip_tests:
+  - catalog_policy_validation.yaml
+  - error_handling.yaml
+```
+
+```bash
+testlab run index.yaml --config skip.yaml
+```
+
+**Error handling** — validation runs *before* any test executes. Requesting a skip on
+an unknown or non-skippable test raises `SkipNotAllowedError` immediately:
+
+```
+Error: Cannot skip test(s) 'request_certificate.yaml': not marked skippable.
+Set skippable: true on the test entry in the TCK manifest to allow skipping.
+```
+
+!!! note "Author opt-in required"
+    A test can only be skipped at runtime when the TCK author has set
+    `skippable: true` on that test entry. Tests without this flag cannot be bypassed,
+    protecting mandatory conformance checks.
+
 For the architectural rationale see
-[ADR-0022: TCK Static Inspection](../developer/decision-records/backend/ADR-0022-tck-static-inspection.md).
+[ADR-0024: Test-Level Skip Configuration](../developer/decision-records/backend/ADR-0024-test-skip-configuration.md).
