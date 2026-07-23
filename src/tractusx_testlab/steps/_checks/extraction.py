@@ -70,19 +70,78 @@ def _match_predicate_value(actual: Any, expected: str) -> bool:
     return str(actual) == expected
 
 
+def _iter_predicate_values(item: Any, key: str) -> Any:
+    """Yield every value reachable at *key* within *item*, fanning out over lists.
+
+    *key* may be a dotted path rather than a single field, so an element can be
+    selected by a nested property: ``endpoints.interface`` matches when **any**
+    endpoint carries the interface, and ``semanticId.keys.value`` reaches into
+    the AAS reference structure.  Intermediate lists fan out rather than
+    requiring an index, which is what gives the match its "any" semantics.
+    """
+    current: list[Any] = [item]
+    for segment in _split_path(key):
+        following: list[Any] = []
+        for node in current:
+            if isinstance(node, dict):
+                value = _dict_get(node, segment)
+                if value is not None:
+                    following.append(value)
+            elif isinstance(node, list):
+                if segment.isdigit():
+                    index = int(segment)
+                    if index < len(node):
+                        following.append(node[index])
+                    continue
+                for element in node:
+                    if isinstance(element, dict):
+                        value = _dict_get(element, segment)
+                        if value is not None:
+                            following.append(value)
+        if not following:
+            return
+        current = following
+    yield from current
+
+
 def _find_by_predicate(items: list, key: str, value: str) -> Any:
     """Return the first element in *items* whose *key* matches *value*."""
     for item in items:
-        if isinstance(item, dict) and _match_predicate_value(item.get(key), value):
-            return item
+        for candidate in _iter_predicate_values(item, key):
+            if _match_predicate_value(candidate, value):
+                return item
     return None
 
 
-def _traverse_dict(data: dict, path: str) -> Any:
+def _split_path(path: str) -> list[str]:
+    """Split *path* on dots, ignoring dots nested inside ``[...]`` predicates.
+
+    A predicate value routinely contains dots — semantic IDs and interface
+    names such as ``endpoints[interface='SUBMODEL-VALUE-3.1']`` are the common
+    case — so a naive ``path.split(".")`` shreds the segment and the lookup
+    silently yields ``None``.
+    """
+    parts: list[str] = []
+    current: list[str] = []
+    depth = 0
+    for char in path:
+        if char == "[":
+            depth += 1
+        elif char == "]":
+            depth = max(0, depth - 1)
+        if char == "." and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    parts.append("".join(current))
+    return [part for part in parts if part]
+
+
+def _traverse_dict(data: Any, path: str) -> Any:
     """Walk a nested dict/list structure along a dot-separated *path*."""
-    parts = path.split(".")
     current: Any = data
-    for part in parts:
+    for part in _split_path(path):
         if current is None:
             return None
         current = _resolve_path_segment(current, part)
@@ -94,6 +153,16 @@ def _resolve_path_segment(current: Any, part: str) -> Any:
     m = _PREDICATE_RE.match(part)
     if m:
         name, pred_key, pred_val = m.group(1), m.group(2), m.group(3)
+        # When the current value is itself a list, apply the predicate to each
+        # element's container in turn.  This lets a path step over an
+        # intermediate array without naming an index:
+        # ``submodelDescriptors.endpoints[interface='…']``.
+        if isinstance(current, list):
+            for element in current:
+                found = _resolve_path_segment(element, part)
+                if found is not None:
+                    return found
+            return None
         container = _dict_get(current, name) if isinstance(current, dict) else None
         if not isinstance(container, list):
             return None
@@ -127,15 +196,17 @@ def extract_path(output: Any, path: Optional[str]) -> Any:
 
 def _extract_from_step_output(output: Any, path: str) -> Any:
     """Extract a value from a StepOutput by resolving the first segment then traversing."""
-    parts = path.split(".", 1)
-    first = parts[0]
-    rest = parts[1] if len(parts) > 1 else None
+    segments = _split_path(path)
+    first = segments[0] if segments else path
+    rest = ".".join(segments[1:]) if len(segments) > 1 else None
 
     resolved = _resolve_first_segment(output, first, rest, path)
 
-    # If there's a remaining path and resolved is navigable, continue
+    # If there's a remaining path and resolved is navigable, continue.  Lists
+    # count as navigable: the remaining path may index into them (``0.id``) or
+    # filter them (``[interface='…']``).
     if rest and resolved is not None:
-        if isinstance(resolved, dict):
+        if isinstance(resolved, (dict, list)):
             return _traverse_dict(resolved, rest)
         return getattr(resolved, rest, None)
 
@@ -195,7 +266,10 @@ def _fallback_resolution(output: Any, first: str) -> Any:
 
 def _resolve_from_value_dict(output: Any, first: str, rest: Optional[str], full_path: str) -> Any:
     """Try to resolve the first segment from the StepOutput.value dict."""
-    result = _dict_get(output.value, first)
+    # _resolve_path_segment handles both plain keys and ``name[key=value]``
+    # predicates, so a filtered first segment resolves here rather than
+    # falling through to the whole-path retry below.
+    result = _resolve_path_segment(output.value, first)
     if result is not None:
         return result
     if not rest and ("." in full_path or "[" in full_path):

@@ -27,10 +27,16 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING
 
 from tractusx_testlab.models import StepDefinitionV2
 from tractusx_testlab.scripting.registry import step
+from tractusx_testlab.steps._checks.extraction import (
+    _PREDICATE_RE,
+    _find_by_predicate,
+    _split_path,
+)
 from tractusx_testlab.steps.base import BaseStep, StepOutput
 
 if TYPE_CHECKING:
@@ -39,18 +45,50 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _resolve_predicate(current: object, segment: str, match: re.Match) -> object:
+    """Resolve a ``name[key=value]`` segment, selecting the first matching element."""
+    name, pred_key, pred_val = match.group(1), match.group(2), match.group(3)
+    if isinstance(current, list):
+        # Step over an intermediate array: apply the predicate to each element.
+        containers = [
+            item.get(name) for item in current
+            if isinstance(item, dict) and isinstance(item.get(name), list)
+        ]
+        container = [entry for sublist in containers for entry in sublist]
+    else:
+        container = current.get(name) if isinstance(current, dict) else None
+    if not isinstance(container, list):
+        raise TypeError(
+            f"Cannot filter '{name}' — expected a list, got "
+            f"{type(container).__name__}"
+        )
+    found = _find_by_predicate(container, pred_key, pred_val)
+    if found is None:
+        raise KeyError(
+            f"No element in '{name}' where {pred_key}={pred_val} (segment '{segment}')"
+        )
+    return found
+
+
 def _extract_by_path(data: object, path: str) -> object:
     """Walk a dot-separated path through nested dicts/lists.
 
-    Supports ``key.0.nested`` where numeric segments index into lists.
+    Supports ``key.0.nested`` where numeric segments index into lists, and
+    ``key[field=value].nested`` which selects the first list element whose
+    *field* equals *value*.  Dots inside a predicate are not separators, so
+    values such as ``[interface='SUBMODEL-VALUE-3.1']`` survive intact.
 
     Raises:
-        KeyError: When a dict key is missing.
+        KeyError: When a dict key is missing or a predicate matches nothing.
         IndexError: When a list index is out of range.
         TypeError: When traversal hits a non-subscriptable value.
     """
     current = data
-    for segment in path.split("."):
+    for segment in _split_path(path):
+        predicate = _PREDICATE_RE.match(segment)
+        if predicate:
+            current = _resolve_predicate(current, segment, predicate)
+            continue
         # Handle bracket notation: [0], [1], etc.
         if segment.startswith("[") and segment.endswith("]"):
             segment = segment[1:-1]
