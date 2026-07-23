@@ -94,16 +94,20 @@ env:
           type: class
           class: ConnectorService
   schemas:
-    certificate_schema:
-      file: certificate_schema.json
+    - id: certificate_schema
+      source: certificate_schema.json
   testdata:
-    request_body:
-      file: request_body.json
+    - id: request_body
+      source: request_body.json
 
 tests:
   - ping_catalog.yaml
   - request_certificate.yaml
 ```
+
+> `schemas` and `testdata` are **lists** of `{ id, source }` entries — `source`
+> is the file name under `schemas/` or `testdata/`. Each is bound to
+> `${{ env.schemas.<id> }}` / `${{ env.testdata.<id> }}` at run time.
 
 Key points:
 
@@ -257,6 +261,61 @@ validate:
 ```
 
 Available operators: `equals`, `not_null`, `contains`, `not_equals`, `greater_than`, `less_than`, `matches` (regex).
+
+## Step 6 — Validate Against a Schema, Then Extract a Nested Value
+
+A common pattern: query a response, validate its whole shape against a JSON
+Schema declared in `env.schemas`, then pull a specific nested value out for a
+follow-up request. The steps below query a digital twin, confirm it conforms,
+and extract the data-plane `href` of its `SUBMODEL-VALUE-3.1` endpoint.
+
+```yaml
+steps:
+  # 1. Query the twin and keep the whole body
+  - id: query_dt
+    uses: get_shell_descriptor
+    with:
+      aas_identifier: "${{ env.variables.twin_id }}"
+    returns:
+      response_body:
+        type: object
+        class: ResponseBody
+
+  # 2. Validate the whole descriptor against a schema from env.schemas
+  - id: validate_dt
+    uses: validate/schema
+    with:
+      input: "${{ steps.query_dt.response_body }}"
+      schema: "${{ env.schemas.shell_descriptor_schema }}"
+
+  # 3. Extract the SUBMODEL-VALUE-3.1 endpoint's subprotocolBody.
+  #    The predicate steps over the descriptor/endpoint arrays without indices,
+  #    so it does not depend on ordering or on any idShort.
+  - id: get_subprotocol_body
+    uses: json_path_extract
+    with:
+      source: response_body
+      path: "submodelDescriptors.endpoints[interface='SUBMODEL-VALUE-3.1'].protocolInformation.subprotocolBody"
+      store_in_variable: subprotocol_body
+
+  # 4. The subprotocolBody is "dspEndpoint=...;id=..." — pull just the asset id
+  - id: get_asset_id
+    uses: util/parse_kv
+    with:
+      input: "${{ subprotocol_body }}"
+      select: id
+      store_in_variable: edc_asset_id
+```
+
+- `validate/schema` fails the step (and the test) when the body does not match
+  the schema, reporting the offending field paths.
+- The quotes around `'SUBMODEL-VALUE-3.1'` are required — predicate values that
+  contain `.`, `;`, or `#` must be quoted.
+- `util/parse_kv` splits each pair on the first `=` only, so a `dspEndpoint`
+  value containing its own query string survives intact.
+
+See the [Cheat Sheet](../reference/syntax/cheat-sheet.md#extracting-values-json_path_extract)
+for the full predicate syntax and utility-step options.
 
 ## Key Differences from v0
 
