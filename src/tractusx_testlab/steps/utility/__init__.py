@@ -25,6 +25,7 @@
 import tractusx_testlab.steps.utility.json_extract  # noqa: F401
 import tractusx_testlab.steps.utility.load_schema  # noqa: F401
 import tractusx_testlab.steps.utility.log  # noqa: F401
+import tractusx_testlab.steps.utility.parse_kv  # noqa: F401
 import tractusx_testlab.steps.utility.uuid_gen  # noqa: F401
 import tractusx_testlab.steps.utility.validate  # noqa: F401
 import tractusx_testlab.steps.utility.variables  # noqa: F401
