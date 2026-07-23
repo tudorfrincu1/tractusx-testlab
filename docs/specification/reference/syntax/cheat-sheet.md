@@ -205,6 +205,112 @@ validate:
 | `less_or_equal` | Numeric ≤ |
 | `between` | Numeric range (inclusive) |
 
+### JSON Schema Validation (`validate/schema`)
+
+`validate/schema` validates a value against a full [JSON Schema](https://json-schema.org)
+document — distinct from the scalar operators above, which compare single values.
+The `schema` is normally a reference to a file declared in the TCK `env.schemas`
+block; the step fails (marking the step FAILED) when the payload does not conform,
+reporting the offending field paths.
+
+```yaml
+- id: validate_twin
+  uses: validate/schema
+  with:
+    input: "${{ steps.query_dt.response_body }}"     # dict, list, or JSON string
+    schema: "${{ env.schemas.shell_descriptor_schema }}"
+```
+
+An inline schema object is also accepted — useful for a one-off existence check,
+e.g. asserting an array `contains` an element with a given field:
+
+```yaml
+- id: has_submodel_value_endpoint
+  uses: validate/schema
+  with:
+    input: "${{ steps.query_dt.response_body }}"
+    schema:
+      type: object
+      required: [submodelDescriptors]
+      properties:
+        submodelDescriptors:
+          type: array
+          contains:
+            type: object
+            properties:
+              endpoints:
+                type: array
+                contains:
+                  properties:
+                    interface: { const: SUBMODEL-VALUE-3.1 }
+```
+
+---
+
+## Extracting Values (`json_path_extract`)
+
+`json_path_extract` reads a value out of a dict/list using a dot-separated path,
+storing it in a variable for later steps.
+
+```yaml
+- id: get_asset_id
+  uses: json_path_extract
+  with:
+    source: response_body        # variable NAME, or a ${{ }} expression
+    path: "datasets.0.id"        # dot path; numeric segments index lists
+    store_in_variable: asset_id  # optional; step output is the value either way
+```
+
+- **`source`** — either the *name* of a context variable (`response_body`), or a
+  `${{ }}` expression that resolves to the data itself
+  (`"${{ steps.query.response_body }}"`). Both forms work.
+- **`path`** — dot-separated. Numeric segments index into lists (`endpoints.0.href`).
+
+**Predicate filters** — select the first list element whose field matches a value,
+instead of relying on a positional index:
+
+| Path | Selects |
+|------|---------|
+| `items[id=abc].value` | first `items` element with `id == abc` |
+| `endpoints[interface='SUBMODEL-VALUE-3.1']` | quote values that contain `.`, `;`, `#`, etc. |
+| `descriptors.endpoints[interface='…']` | steps over an intermediate array — no index needed |
+| `descriptors[endpoints.interface='…'].id` | select by a **nested** field (dotted predicate key) |
+
+Quote a predicate value (`'…'`) when it contains dots or other separators —
+interface names and semantic IDs always need quoting. A predicate that matches
+nothing raises a clear error rather than returning a wrong value.
+
+---
+
+## Utility Steps
+
+**`util/parse_kv`** — parse a delimited `key=value` string (e.g. an EDC
+`subprotocolBody`) into a dict, or select one key. Each pair is split on the
+**first** `=` only, so a value may itself contain `=` (a URL query string, base64).
+
+```yaml
+- id: get_edc_asset_id
+  uses: util/parse_kv
+  with:
+    input: "${{ subprotocol_body }}"   # "dspEndpoint=https://…;id=urn:uuid:1234"
+    select: id                          # omit to return the whole dict
+    store_in_variable: edc_asset_id
+    # pair_separator: ";"   (default)
+    # kv_separator: "="     (default)
+```
+
+**`util/log`** — echo a resolved value to stdout and the run log while authoring.
+Asserts nothing and always passes; remove once a test is finalised.
+
+```yaml
+- id: show_href
+  uses: util/log
+  with:
+    message: SUBMODEL-VALUE-3.1 href
+    value: "${{ submodel_value_href }}"
+```
+
+---
 
 ## Complex Variables (TCK only)
 
@@ -274,11 +380,15 @@ env:
 |--------|----------|
 | `mock/` | `mock/api`, `mock/wait/http_request` |
 | `connector/` | `connector/pull_data_filtered`, `connector/create_asset`, `connector/health_check` |
-| `util/` | `util/generate_uuid`, `util/wait` |
-| `validate/` | `validate/assert`, `validate/schema` |
+| `util/` | `util/generate_uuid`, `util/log`, `util/parse_kv` |
+| `validate/` | `validate/assert`, `validate/field`, `validate/schema` |
 | `variable/` | `variable/type/string`, `variable/type/integer`, `variable/type/boolean` |
 | `config/` | `config/connector/policy` |
 | `service/` | `service/connector_service` |
+| _(no prefix)_ | `json_path_extract` |
+
+See [Extracting Values](#extracting-values-json_path_extract) and
+[Utility Steps](#utility-steps) below for the extraction and helper handlers.
 
 
 ## Dataspace Versions
