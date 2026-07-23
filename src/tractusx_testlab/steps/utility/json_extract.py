@@ -108,7 +108,9 @@ class JsonPathExtractStep(BaseStep):
     """Extract a value from a context variable using dot-notation path.
 
     Params:
-        source (str): Name of the context variable containing the JSON/dict data.
+        source: Either the *name* of the context variable holding the JSON/dict
+            data (e.g. ``response_body``), or the data itself when a ``${{ }}``
+            expression is passed (it resolves before the step runs).
         path (str): Dot-notation path to the desired value (e.g. ``datasets.0.id``).
 
     Output:
@@ -118,17 +120,27 @@ class JsonPathExtractStep(BaseStep):
     async def execute(
         self, params: dict, context: "StepContext", definition: StepDefinitionV2
     ) -> StepOutput:
-        source_name = params.get("source") or params.get("variable")
-        if source_name is None:
+        source = params.get("source")
+        if source is None:
+            source = params.get("variable")
+        if source is None:
             raise KeyError("json_path_extract requires either 'source' or 'variable' param")
         path = params["path"]
 
-        data = context.get_variable(source_name)
-        if data is None:
-            raise KeyError(f"Context variable '{source_name}' not found")
+        # ``source`` is normally a variable name (a string) that we look up.  But
+        # a ``${{ }}`` expression resolves to the value itself before the step
+        # runs, so a dict/list arriving here is the data, not a name — use it
+        # directly rather than attempting an unhashable dict lookup.
+        if isinstance(source, str):
+            data = context.get_variable(source)
+            if data is None:
+                raise KeyError(f"Context variable '{source}' not found")
+        else:
+            data = source
 
         extracted = _extract_by_path(data, path)
-        logger.debug("Extracted '%s' from '%s': %s", path, source_name, type(extracted).__name__)
+        source_label = source if isinstance(source, str) else f"<{type(source).__name__}>"
+        logger.debug("Extracted '%s' from '%s': %s", path, source_label, type(extracted).__name__)
 
         store_in = params.get("store_in_variable")
         if store_in:

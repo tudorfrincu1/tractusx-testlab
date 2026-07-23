@@ -194,6 +194,27 @@ class TestJsonPathExtractPredicates:
             )
 
     @pytest.mark.asyncio
+    async def test_source_may_be_resolved_object_not_only_a_name(
+        self, context: StepContext,
+    ) -> None:
+        # A ``${{ }}`` expression resolves before the step runs, so ``source``
+        # arrives as the dict itself rather than a variable name.  This must not
+        # raise ``TypeError: unhashable type: dict``.
+        output = await JsonPathExtractStep().execute(
+            {"source": SHELL_DESCRIPTOR, "path": _HREF_PATH},
+            context,
+            self._definition(),
+        )
+        assert output.value == _HREF
+
+    @pytest.mark.asyncio
+    async def test_missing_named_source_raises_key_error(self, context: StepContext) -> None:
+        with pytest.raises(KeyError, match="Context variable 'nope' not found"):
+            await JsonPathExtractStep().execute(
+                {"source": "nope", "path": "a"}, context, self._definition(),
+            )
+
+    @pytest.mark.asyncio
     async def test_numeric_index_still_works(self, context: StepContext) -> None:
         output = await JsonPathExtractStep().execute(
             {"source": "dt_body", "path": "submodelDescriptors.0.idShort"},
